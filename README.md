@@ -1,6 +1,6 @@
 # PKM - Personal Knowledge Map  
 
-2022.06.09
+2022.06.10
 
 ![image text](./resources/title_small.png)
 
@@ -13,6 +13,13 @@
 [增值计划](https://mp.weixin.qq.com/s/ZsyQF_1GkhmzLBzkzwwmQw)包含四部分，**阅读增值**，解释为知识或技能本身；**运动增值**，解释为身体机能的锻炼，**习惯增值**，解释为方法的调整，**时间增值**，解释为效率的提升。（目前为PKM，以后会逐步将后三个也纳入其中😁）
 
 [个人系统](https://mp.weixin.qq.com/s/0rQYsTMU1mmTcyVq8__Okg?accessToken=eyJhbGciOiJIUzI1NiIsImtpZCI6ImRlZmF1bHQiLCJ0eXAiOiJKV1QifQ.eyJhdWQiOiJhY2Nlc3NfcmVzb3VyY2UiLCJleHAiOjE2NDQ5NzcwNzcsImciOiIxTFZLb2dvWEkxQWgyZ2gzIiwiaWF0IjoxNjQ0OTc2Nzc3LCJ1c2VySWQiOi0xNzc4NTU2MDA4fQ.jEYAE0iYCrzF-L6PAGwqFFohGAOjDAnX4AOABpuK8lU)的分类则更加丰富，个人系统社群现在(2023.2.16)分为**时间管理**，**知识管理**，**目标管理**，**情绪管理**，**健康管理**，**财务管理**，**人际交往**八个小组。
+
+|          |          |          |          |
+| -------- | -------- | -------- | -------- |
+| 阅读增值 | 运动增值 | 习惯增值 | 时间增值 |
+| 知识管理 | 财务管理 | 目标管理 | 时间管理 |
+| 人际交往 | 决策管理 | 健康管理 | 情绪管理 |
+|          |          |          |          |
 
 **PKM(Personal Knowledge Map)计划**是为阅读增值部分或知识系统设计的方案，个人知识地图致力于在构建知识树的基础上加入其他要素，使之成为具有可发展性，强关联性的新型知识树。  
 
@@ -29,7 +36,7 @@
 3. “**哲学**是人的大脑”。
    1. PKM哲学部分聚焦于马克思主义与马克思主义中国化内容及其相关领域。
    2. 会兼顾哲学史，但不是重点。
-   2. 文科与哲学都归纳于文史哲目录中。
+   3. 文科与哲学都归纳于文史哲目录中。
 4. “**艺术**是衣服”。
    1. PKM艺术部分为画龙点睛部分，作用是锦上添花，而不是雪中送炭。
 
@@ -82,35 +89,48 @@
 
 |                                                              |                                                              |                                                              |
 | :----------------------------------------------------------: | :----------------------------------------------------------: | :----------------------------------------------------------: |
-|                            (VHDL)                            | 🔗[Verilog](https://www.runoob.com/w3cnote/verilog-tutorial.html) |                          (Assembly)                          |
-|                             (C)                              |                            (C++)                             |                             (C#)                             |
-|                            (Java)                            |                                                              |                                                              |
-|                  🔗[Go](https://go.dev/doc/)                  |            🔗[Python](https://docs.python.org/3/)             |         🔗[Julia](https://docs.julialang.org/en/v1/)          |
-|     🔗[SQL](https://www.runoob.com/sql/sql-tutorial.html)     |     🔗[Matlab](https://www.mathworks.com/help/index.html)     | 🔗[Solidity](https://solidity-cn.readthedocs.io/zh/develop/)  |
-|  🔗[Swift](https://www.runoob.com/swift/swift-tutorial.html)  |                                                              |                                                              |
+|                         **全能语言**                         |                                                              |                                                              |
+|            🔗[Python](https://docs.python.org/3/)             |                            (Java)                            |                            (C++)                             |
+|                             (C#)                             |                  🔗[Go](https://go.dev/doc/)                  |  🔗[Swift](https://www.runoob.com/swift/swift-tutorial.html)  |
+|             🔗[ceylon](https://ceylon-lang.org/)              | ([clojure](https://baike.baidu.com/item/clojure/1414536?fr=aladdin)) |     ([crystal](https://github.com/crystal-lang/crystal))     |
+| ([rust]([https://baike.baidu.com/item/Rust%E8%AF%AD%E8%A8%80/9502634?fr=aladdin](https://baike.baidu.com/item/Rust语言/9502634?fr=aladdin))) | ([D]([https://baike.baidu.com/item/D%E8%AF%AD%E8%A8%80/11058445?fr=aladdin](https://baike.baidu.com/item/D语言/11058445?fr=aladdin))) | ([dart](https://baike.baidu.com/item/DART/22500518?fr=aladdin)) |
+| ([elixir](https://baike.baidu.com/item/Elixir/17511979?fr=aladdin)) | ([F#](https://docs.microsoft.com/zh-cn/dotnet/fsharp/language-reference/)) | ([forth](https://baike.baidu.com/item/Forth%E8%AF%AD%E8%A8%80/5598633?fr=aladdin)) |
+| ([groovy](https://baike.baidu.com/item/Groovy/180590?fr=aladdin)) |                                                              |                                                              |
+|                         **硬件设计**                         |                                                              |                                                              |
+|                            (VHDL)                            | 🔗[Verilog](https://www.runoob.com/w3cnote/verilog-tutorial.html) |                                                              |
+|                         **底层开发**                         |                                                              |                                                              |
+|                             (C)                              |     ([clike](https://github.com/combinatorylogic/clike))     |                 🔗[cmake](https://cmake.org/)                 |
+|                          (Assembly)                          |                            (erb)                             | ([gas](https://baike.baidu.com/item/GAS/13876199?fr=aladdin)) |
+|                           **脚本**                           |                                                              |                                                              |
+| ([bash](https://baike.baidu.com/item/Bash/6367661?fr=aladdin)) | ([basic](https://baike.baidu.com/item/BASIC/207698?fr=aladdin)) |                                                              |
+|                    **数据科学与人工智能**                    |                                                              |                                                              |
+|         🔗[Julia](https://docs.julialang.org/en/v1/)          |     🔗[Matlab](https://www.mathworks.com/help/index.html)     | ([cobol]([https://baike.baidu.com/item/COBOL%E8%AF%AD%E8%A8%80/12789101?fromtitle=COBOL&fromid=1641359&fr=aladdin](https://baike.baidu.com/item/COBOL语言/12789101?fromtitle=COBOL&fromid=1641359&fr=aladdin))) |
+| ([lisp]([https://baike.baidu.com/item/lisp%E8%AF%AD%E8%A8%80](https://baike.baidu.com/item/lisp语言))) | ([commonlisp]([https://baike.baidu.com/item/Common%20Lisp/7786268?fr=aladdin](https://baike.baidu.com/item/Common Lisp/7786268?fr=aladdin))) |      ([cython](https://zhuanlan.zhihu.com/p/373236956))      |
+| ([fortran]([https://baike.baidu.com/item/FORTRAN%E8%AF%AD%E8%A8%80/295590?fr=aladdin](https://baike.baidu.com/item/FORTRAN语言/295590?fr=aladdin))) |                                                              |                                                              |
+|                          **数据库**                          |                                                              |                                                              |
+|     🔗[SQL](https://www.runoob.com/sql/sql-tutorial.html)     | ([cassandra](https://baike.baidu.com/item/cassandra/20140772?fr=aladdin)) | ([CQL](https://www.w3cschool.cn/neo4j/neo4j_cql_introduction.html)) |
+| ([cypher](https://blog.csdn.net/AinUser/article/details/72268344)) |                                                              |                                                              |
+|                           **网站**                           |                                                              |                                                              |
+|  🔗[Javascript](https://www.runoob.com/js/js-tutorial.html)   | 🔗[TypeScript](https://www.runoob.com/typescript/ts-tutorial.html) |         ([coffeescript](http://coffee-script.org/))          |
+|      🔗[asp](https://www.runoob.com/asp/asp-syntax.html)      |     🔗[PHP](https://www.runoob.com/php/php-tutorial.html)     |       ([elm](https://www.zhihu.com/question/49028379))       |
+|                          **区块链**                          |                                                              |                                                              |
+| 🔗[Solidity](https://solidity-cn.readthedocs.io/zh/develop/)  |                                                              |                                                              |
+|                           **标记**                           |                                                              |                                                              |
 |    🔗[HTML](https://www.runoob.com/html/html5-intro.html)     |    🔗[CSS](https://www.runoob.com/css3/css3-tutorial.html)    |  ✏️[Markdown](./KnowledgeMap/计算机科学/Markdown/README.md)   |
-|  🔗[Javascript](https://www.runoob.com/js/js-tutorial.html)   | 🔗[TypeScript](https://www.runoob.com/typescript/ts-tutorial.html) |     🔗[PHP](https://www.runoob.com/php/php-tutorial.html)     |
+| ([ASN.1](https://baike.baidu.com/item/ASN.1/498523?fr=aladdin)) |    ([dtd](https://www.runoob.com/dtd/dtd-tutorial.html))     |                            (gfm)                             |
+|                         **商务应用**                         |                                                              |                                                              |
+| ([ABAP](https://baike.baidu.com/item/abap/6297737?fr=aladdin)) | ([APL](https://baike.baidu.com/item/APL%E8%AF%AD%E8%A8%80%E6%A0%87%E5%87%86/22105649?fr=aladdin)) |                                                              |
+|                           **其他**                           |                                                              |                                                              |
+| ([asciiarmor](https://www.techopedia.com/definition/23150/ascii-armor)) | ([erlang]([https://baike.baidu.com/item/Erlang%E8%AF%AD%E8%A8%80/20864044?fr=aladdin](https://baike.baidu.com/item/Erlang语言/20864044?fr=aladdin))) | ([glsl](https://baike.baidu.com/item/GLSL/2881120?fr=aladdin)) |
+|                           **过时**                           |                                                              |                                                              |
+|     ([dylan](https://en.wikipedia.org/wiki/Apple_Dylan))     |                                                              |                                                              |
 |                                                              |                                                              |                                                              |
-| ([ABAP](https://baike.baidu.com/item/abap/6297737?fr=aladdin)) | ([APL](https://baike.baidu.com/item/APL%E8%AF%AD%E8%A8%80%E6%A0%87%E5%87%86/22105649?fr=aladdin)) | ([asciiarmor](https://www.techopedia.com/definition/23150/ascii-armor)) |
-| ([ASN.1](https://baike.baidu.com/item/ASN.1/498523?fr=aladdin)) |      🔗[asp](https://www.runoob.com/asp/asp-syntax.html)      | ([bash](https://baike.baidu.com/item/Bash/6367661?fr=aladdin)) |
-| ([basic](https://baike.baidu.com/item/BASIC/207698?fr=aladdin)) | ([cassandra](https://baike.baidu.com/item/cassandra/20140772?fr=aladdin)) |             🔗[ceylon](https://ceylon-lang.org/)              |
-|     ([clike](https://github.com/combinatorylogic/clike))     | ([clojure](https://baike.baidu.com/item/clojure/1414536?fr=aladdin)) |                 🔗[cmake](https://cmake.org/)                 |
-|                           (cobol)                            |                        (coffeescript)                        |                         (commonlisp)                         |
-|                            (CQL)                             |                          (crystal)                           |                           (cypher)                           |
-|                           (cython)                           |                             (D)                              |                            (dart)                            |
-|                            (diff)                            |                           (django)                           |                         (dockerfile)                         |
-|                            (dtd)                             |                           (dylan)                            |                            (ejs)                             |
-|                           (elixir)                           |                            (elm)                             |                         (embeddedjs)                         |
-|                            (erb)                             |                           (erlang)                           |                             (F#)                             |
-|                            (flow)                            |                           (forth)                            |                          (fortran)                           |
-|                           (fsharp)                           |                            (gas)                             |                            (gfm)                             |
-|                          (gherkin)                           |                            (glsl)                            |                           (groovy)                           |
 |                         (handlebars)                         |                          (haskell)                           |                            (haxe)                            |
 |                          (htaccess)                          |                            (http)                            |                            (hxml)                            |
 |                            (idl)                             |                            (ini)                             |                            (jade)                            |
 |                           (jinja2)                           |                            (json)                            |                            (jsp)                             |
 |                            (jsx)                             |                           (kotlin)                           |                           (latex)                            |
-|                            (less)                            |                            (lisp)                            |                         (livescript)                         |
+|                            (less)                            |                                                              |                         (livescript)                         |
 |                            (lua)                             |                          (makefile)                          |                          (mariadb)                           |
 |                                                              |                        (mathematica)                         |                            (mbox)                            |
 |                          (mermaid)                           |                           (mssql)                            |                           (nginx)                            |
@@ -121,7 +141,7 @@
 |                         (powershell)                         |                         (properties)                         |                          (protobuf)                          |
 |                         (pseudocode)                         |                             (q)                              |                             (R)                              |
 |                           (react)                            |                      (reStructuredText)                      |                            (rst)                             |
-|                            (ruby)                            |                            (rust)                            |                            (SAS)                             |
+|                            (ruby)                            |                                                              |                            (SAS)                             |
 |                           (scala)                            |                           (scheme)                           |                            (scss)                            |
 |                          (sequence)                          |                             (sh)                             |                         (smalltalk)                          |
 |                           (SPARQL)                           |                        (spreadsheet)                         |                           (sqlite)                           |
@@ -139,15 +159,17 @@
 
 **[计算机科学](./KnowledgeMap/计算机科学/README.md)** **—— 软件与技术**
 
-|                                                             |                                                         |                                                         |
-| :---------------------------------------------------------: | :-----------------------------------------------------: | :-----------------------------------------------------: |
-|    ⭐️[以太坊](./KnowledgeMap/计算机科学/以太坊/README.md)    | 🔗[Arduino](https://www.arduino.cn/thread-1066-1-1.html) | ✏️[ESP8266](./KnowledgeMap/计算机科学/ESP8266/README.md) |
-| 🔗[Git](https://www.runoob.com/regexp/regexp-tutorial.html)  |                         (Xcode)                         |                        (Protege)                        |
-|                          (OpenGL)                           |                         (Unity)                         |         🔗[Vue](https://cn.vuejs.org/v2/guide/)          |
-|                           (React)                           |                        (Angular)                        |                        (MongoDB)                        |
-|                          (Sqlite)                           |                         (Ajax)                          |                         (Linux)                         |
-| ✏️[Minecraft](./KnowledgeMap/计算机科学/Minecraft/README.md) |      ✏️[PS](./KnowledgeMap/计算机科学/PS/README.md)      |                           AU                            |
-|                                                             |                                                         |                                                         |
+|                                                             |                                                              |                                                         |
+| :---------------------------------------------------------: | :----------------------------------------------------------: | :-----------------------------------------------------: |
+|    ⭐️[以太坊](./KnowledgeMap/计算机科学/以太坊/README.md)    |   🔗[Arduino](https://www.arduino.cn/thread-1066-1-1.html)    | ✏️[ESP8266](./KnowledgeMap/计算机科学/ESP8266/README.md) |
+| 🔗[Git](https://www.runoob.com/regexp/regexp-tutorial.html)  |                           (Xcode)                            |                        (Protege)                        |
+|                          (OpenGL)                           |                           (Unity)                            |         🔗[Vue](https://cn.vuejs.org/v2/guide/)          |
+|                           (React)                           |                          (Angular)                           |                        (MongoDB)                        |
+|                          (Sqlite)                           |                            (Ajax)                            |                         (Linux)                         |
+| ✏️[Minecraft](./KnowledgeMap/计算机科学/Minecraft/README.md) |        ✏️[PS](./KnowledgeMap/计算机科学/PS/README.md)         |                           AU                            |
+|                          (Django)                           |                            (diff)                            |                        (docker)                         |
+|              ([ejs](https://ejs.bootcss.com/))              | ([embeddedjs](https://www.embedthis.com/goahead/doc/users/js.html)) |   ([gherkin](https://zhuanlan.zhihu.com/p/321929049))   |
+|                                                             |                                                              |                                                         |
 
 
 
@@ -196,6 +218,8 @@
 * 🔗：连接他人学习系统
 * (  )：草稿构建
 
+计算机历史：[点击我](https://www.uc23.net/lishi/bcyyls/)
+
 #  零碎专题
 
 | **正则表达式**                                          |                                           |                                                              |
@@ -240,7 +264,7 @@ Matlab资源：[公众号](https://mp.weixin.qq.com/mp/appmsgalbum?__biz=MzA3NDc
 4. 可以将数据提炼为关系，插入到Neoj4知识图谱中。
 
    ![将数据插入到知识图谱中](./resources/demo2.png)
-   
+
 5. 知识结构为通过思维导图连接的知识点（项目/领域标题），与通过Markdown文档表现的具体内容笔记。通过[**Docusaurus**](https://docusaurus.io/zh-CN/)进行静态网络的搭建，快速生成对应[博客](https://charlesshan-hub.github.io)。
 
 ## 想挖的坑
