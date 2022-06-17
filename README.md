@@ -69,7 +69,8 @@
 |             ([kotlin](https://kotlinlang.org/))              |                ([lua](https://www.lua.org/))                 |                ([nim](https://nim-lang.org/))                |
 | ([objective-c](https://www.runoob.com/w3cnote/objective-c-tutorial.html)) |              ([ocaml](https://www.ocaml.org/))               | ([oz](https://baike.baidu.com/item/OZ/18751618?fr=aladdin))  |
 | ([pascal](https://baike.baidu.com/item/Pascal/241171?fr=aladdin)) | ([perl](https://baike.baidu.com/item/perl/851577?fr=aladdin)) |           ([ruby](https://www.ruby-lang.org/en/))            |
-|            ([scala](https://www.scala-lang.org/))            |      ([scheme](https://zh.wikipedia.org/zh-cn/Scheme))       |                                                              |
+|            ([scala](https://www.scala-lang.org/))            |      ([scheme](https://zh.wikipedia.org/zh-cn/Scheme))       | ([smalltalk](https://baike.baidu.com/item/Smalltalk%E8%AF%AD%E8%A8%80/22381841)) |
+|                   ([V](https://vlang.io/))                   | ([vb](https://docs.microsoft.com/en-us/dotnet/visual-basic/)) |                                                              |
 |                         **硬件设计**                         |                                                              |                                                              |
 |                            (VHDL)                            | 🔗[Verilog](https://www.runoob.com/w3cnote/verilog-tutorial.html) |                                                              |
 |                         **底层开发**                         |                                                              |                                                              |
@@ -77,47 +78,41 @@
 |                          (Assembly)                          |                            (erb)                             | ([gas](https://baike.baidu.com/item/GAS/13876199?fr=aladdin)) |
 |                           **脚本**                           |                                                              |                                                              |
 | ([bash](https://baike.baidu.com/item/Bash/6367661?fr=aladdin)) | ([basic](https://baike.baidu.com/item/BASIC/207698?fr=aladdin)) | ([makefile](https://seisman.github.io/how-to-write-makefile/introduction.html)) |
-| ([powershell](https://docs.microsoft.com/en-us/powershell/)) |                                                              |                                                              |
+| ([powershell](https://docs.microsoft.com/en-us/powershell/)) |      ([sh](http://c.biancheng.net/cpp/view/6995.html))       |           ([squirrel](http://squirrel-lang.org/))            |
+|       ([tcl](https://www.tcl.tk/about/language.html))        | ([vbscript](https://www.tutorialspoint.com/vbscript/index.htm)) |                                                              |
 |                    **数据科学与人工智能**                    |                                                              |                                                              |
 |         🔗[Julia](https://docs.julialang.org/en/v1/)          |     🔗[Matlab](https://www.mathworks.com/help/index.html)     | ([cobol]([https://baike.baidu.com/item/COBOL%E8%AF%AD%E8%A8%80/12789101?fromtitle=COBOL&fromid=1641359&fr=aladdin](https://baike.baidu.com/item/COBOL语言/12789101?fromtitle=COBOL&fromid=1641359&fr=aladdin))) |
 | ([lisp]([https://baike.baidu.com/item/lisp%E8%AF%AD%E8%A8%80](https://baike.baidu.com/item/lisp语言))) | ([commonlisp]([https://baike.baidu.com/item/Common%20Lisp/7786268?fr=aladdin](https://baike.baidu.com/item/Common Lisp/7786268?fr=aladdin))) |      ([cython](https://zhuanlan.zhihu.com/p/373236956))      |
 | ([fortran]([https://baike.baidu.com/item/FORTRAN%E8%AF%AD%E8%A8%80/295590?fr=aladdin](https://baike.baidu.com/item/FORTRAN语言/295590?fr=aladdin))) |    ([mathematica](https://www.wolfram.com/mathematica/))     |              ([R](https://www.r-project.org/))               |
-|               ([octave](https://octave.org/))                | ([q](https://en.wikipedia.org/wiki/Q_(programming_language_from_Kx_Systems))) |                                                              |
+|               ([octave](https://octave.org/))                | ([q](https://en.wikipedia.org/wiki/Q_(programming_language_from_Kx_Systems))) | ([spreadsheet](https://subjectguides.york.ac.uk/coding/spreadsheets)) |
+|        ([yacas](https://en.wikipedia.org/wiki/Yacas))        |                                                              |                                                              |
 |                          **数据库**                          |                                                              |                                                              |
 |     🔗[SQL](https://www.runoob.com/sql/sql-tutorial.html)     | ([cassandra](https://baike.baidu.com/item/cassandra/20140772?fr=aladdin)) | ([CQL](https://www.w3cschool.cn/neo4j/neo4j_cql_introduction.html)) |
 | ([cypher](https://blog.csdn.net/AinUser/article/details/72268344)) | ([jade](https://en.wikipedia.org/wiki/JADE_(programming_language))) |              ([mariadb](https://mariadb.org/))               |
-| ([plsql](https://baike.baidu.com/item/plsql/9042661?fr=aladdin)) |        ([sqlite](https://www.sqlite.org/index.html))         |                                                              |
+| ([plsql](https://baike.baidu.com/item/plsql/9042661?fr=aladdin)) |        ([sqlite](https://www.sqlite.org/index.html))         |   ([SPARQL](https://baike.baidu.com/item/SparQL/10956405))   |
 |                           **网站**                           |                                                              |                                                              |
 |  🔗[Javascript](https://www.runoob.com/js/js-tutorial.html)   | 🔗[TypeScript](https://www.runoob.com/typescript/ts-tutorial.html) |         ([coffeescript](http://coffee-script.org/))          |
 |      🔗[asp](https://www.runoob.com/asp/asp-syntax.html)      |     🔗[PHP](https://www.runoob.com/php/php-tutorial.html)     |       ([elm](https://www.zhihu.com/question/49028379))       |
 |      ([jsp](https://www.runoob.com/jsp/jsp-intro.html))      |           ([livescript](https://livescript.net/))            | ([reStructuredText](https://docutils.sourceforge.io/rst.html)) |
+| ([twig](https://en.wikipedia.org/wiki/Twig_(template_engine))) |          ([velocity](https://velocity.apache.org/))          |      ([web-idl](https://en.wikipedia.org/wiki/Web_IDL))      |
 |                          **区块链**                          |                                                              |                                                              |
 | 🔗[Solidity](https://solidity-cn.readthedocs.io/zh/develop/)  |                                                              |                                                              |
 |                           **标记**                           |                                                              |                                                              |
-|      ⭐️[JSON](./KnowledgeMap/计算机科学/JSON/README.md)       |  ⭐️[Markdown](./KnowledgeMap/计算机科学/Markdown/README.md)   |          ([latex](https://www.latex-project.org/))           |
+|      ⭐️[JSON](./KnowledgeMap/计算机科学/JSON/README.md)       |      ✏️[YAML](./KnowledgeMap/计算机科学/YAML/README.md)       |                ([toml](https://toml.io/en/))                 |
+|       ([ini](https://en.wikipedia.org/wiki/INI_file))        |  ([properties](https://en.wikipedia.org/wiki/.properties))   |                                                              |
+|  ⭐️[Markdown](./KnowledgeMap/计算机科学/Markdown/README.md)   |          ([latex](https://www.latex-project.org/))           |                                                              |
+|         ([wiki](https://zh.wikipedia.org/wiki/Wiki))         |           ([tiddlywiki](https://tiddlywiki.com/))            |           ([tiki wiki](https://tiki.org/HomePage))           |
 |    🔗[HTML](https://www.runoob.com/html/html5-intro.html)     |    🔗[CSS](https://www.runoob.com/css3/css3-tutorial.html)    |   ([scss](https://fontawesome.com/docs/web/use-with/scss))   |
 | ([ASN.1](https://baike.baidu.com/item/ASN.1/498523?fr=aladdin)) |    ([dtd](https://www.runoob.com/dtd/dtd-tutorial.html))     |                            (gfm)                             |
-|       ([ini](https://en.wikipedia.org/wiki/INI_file))        |  ([properties](https://en.wikipedia.org/wiki/.properties))   |         ([wiki](https://zh.wikipedia.org/wiki/Wiki))         |
+|             ([stylus](https://stylus-lang.com/))             |    ([xml](https://www.w3schools.com/xml/xml_whatis.asp))     |    ([xml-dtd](https://www.w3schools.com/xml/xml_dtd.asp))    |
+| ([xaml](https://docs.microsoft.com/en-us/dotnet/desktop/wpf/xaml/?view=netdesktop-6.0)) |  ([xquery](https://www.w3schools.com/xml/xquery_intro.asp))  |                                                              |
 |                         **商务应用**                         |                                                              |                                                              |
 | ([ABAP](https://baike.baidu.com/item/abap/6297737?fr=aladdin)) | ([APL](https://baike.baidu.com/item/APL%E8%AF%AD%E8%A8%80%E6%A0%87%E5%87%86/22105649?fr=aladdin)) |                                                              |
 |                         **编程教学**                         |                                                              |                                                              |
-|               ([idl](https://idlsgroup.com/))                | ([pseudocode](https://www.unf.edu/~broggio/cop2221/2221pseu.htm)) |                                                              |
+|               ([idl](https://idlsgroup.com/))                | ([pseudocode](https://www.unf.edu/~broggio/cop2221/2221pseu.htm)) |           ([turtle](https://www.turtle.ox.ac.uk/))           |
 |                           **其他**                           |                                                              |                                                              |
 | ([asciiarmor](https://www.techopedia.com/definition/23150/ascii-armor)) | ([erlang]([https://baike.baidu.com/item/Erlang%E8%AF%AD%E8%A8%80/20864044?fr=aladdin](https://baike.baidu.com/item/Erlang语言/20864044?fr=aladdin))) | ([glsl](https://baike.baidu.com/item/GLSL/2881120?fr=aladdin)) |
-|            ([haskell](https://www.haskell.org/))             |                                                              |                                                              |
-|                                                              |                                                              |                                                              |
-|                                                              |                                                              |                                                              |
-|                          (sequence)                          |                             (sh)                             |                         (smalltalk)                          |
-|                           (SPARQL)                           |                        (spreadsheet)                         |                                                              |
-|                          (squirrel)                          |                           (stylus)                           |                            (tcl)                             |
-|                            (tex)                             |                         (tiddlywiki)                         |                         (tiki wiki)                          |
-|                            (toml)                            |                            (tsx)                             |                           (turtle)                           |
-|                            (twig)                            |                             (V)                              |                             (vb)                             |
-|                          (vbscript)                          |                                                              |                          (velocity)                          |
-|                          (web-idl)                           |                                                              |                            (xaml)                            |
-|                            (xml)                             |                          (xml-dtd)                           |                           (xquery)                           |
-|                           (yacas)                            |                            (yaml)                            |                                                              |
-|                                                              |                                                              |                                                              |
+|            ([haskell](https://www.haskell.org/))             | ([Logo](https://en.wikipedia.org/wiki/Logo_(programming_language))) |                                                              |
 
 
 
