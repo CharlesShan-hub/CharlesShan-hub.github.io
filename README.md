@@ -1,6 +1,6 @@
 # PKM - Personal Knowledge Map  
 
-2022.06.17
+2022.06.19
 
 [toc]
 
@@ -98,14 +98,13 @@
 |                          **区块链**                          |                                                              |                                                              |
 | 🔗[Solidity](https://solidity-cn.readthedocs.io/zh/develop/)  |                                                              |                                                              |
 |                           **标记**                           |                                                              |                                                              |
-|      ⭐️[JSON](./KnowledgeMap/计算机科学/JSON/README.md)       |      ✏️[YAML](./KnowledgeMap/计算机科学/YAML/README.md)       |                ([toml](https://toml.io/en/))                 |
-|       ([ini](https://en.wikipedia.org/wiki/INI_file))        |  ([properties](https://en.wikipedia.org/wiki/.properties))   |                                                              |
+|    ([xml](https://www.w3schools.com/xml/xml_whatis.asp))     |    ([dtd](https://www.runoob.com/dtd/dtd-tutorial.html))     | ([xaml](https://docs.microsoft.com/en-us/dotnet/desktop/wpf/xaml/?view=netdesktop-6.0)) |
+|  ([xquery](https://www.w3schools.com/xml/xquery_intro.asp))  |      ⭐️[JSON](./KnowledgeMap/计算机科学/JSON/README.md)       |      ✏️[YAML](./KnowledgeMap/计算机科学/YAML/README.md)       |
+|        🔗[ini](https://en.wikipedia.org/wiki/INI_file)        |                 🔗[toml](https://toml.io/cn/)                 |  ([properties](https://en.wikipedia.org/wiki/.properties))   |
 |  ⭐️[Markdown](./KnowledgeMap/计算机科学/Markdown/README.md)   |          ([latex](https://www.latex-project.org/))           |                                                              |
 |         ([wiki](https://zh.wikipedia.org/wiki/Wiki))         |           ([tiddlywiki](https://tiddlywiki.com/))            |           ([tiki wiki](https://tiki.org/HomePage))           |
 |    🔗[HTML](https://www.runoob.com/html/html5-intro.html)     |    🔗[CSS](https://www.runoob.com/css3/css3-tutorial.html)    |   ([scss](https://fontawesome.com/docs/web/use-with/scss))   |
-| ([ASN.1](https://baike.baidu.com/item/ASN.1/498523?fr=aladdin)) |    ([dtd](https://www.runoob.com/dtd/dtd-tutorial.html))     |                            (gfm)                             |
-|             ([stylus](https://stylus-lang.com/))             |    ([xml](https://www.w3schools.com/xml/xml_whatis.asp))     |    ([xml-dtd](https://www.w3schools.com/xml/xml_dtd.asp))    |
-| ([xaml](https://docs.microsoft.com/en-us/dotnet/desktop/wpf/xaml/?view=netdesktop-6.0)) |  ([xquery](https://www.w3schools.com/xml/xquery_intro.asp))  |                                                              |
+|             ([stylus](https://stylus-lang.com/))             | ([ASN.1](https://baike.baidu.com/item/ASN.1/498523?fr=aladdin)) |                            (gfm)                             |
 |                         **商务应用**                         |                                                              |                                                              |
 | ([ABAP](https://baike.baidu.com/item/abap/6297737?fr=aladdin)) | ([APL](https://baike.baidu.com/item/APL%E8%AF%AD%E8%A8%80%E6%A0%87%E5%87%86/22105649?fr=aladdin)) |                                                              |
 |                         **编程教学**                         |                                                              |                                                              |
@@ -132,7 +131,7 @@
 |  ([hxml](https://haxe.org/manual/compiler-usage-hxml.html))  |   ([jinja2](https://jinja.palletsprojects.com/en/3.1.x/))    |    ([jsx](https://reactjs.org/docs/introducing-jsx.html))    |
 |                ([less](https://lesscss.org/))                |         ([mbox](https://en.wikipedia.org/wiki/Mbox))         |        ([mssql](https://www.npmjs.com/package/mssql))        |
 | ([nsis](https://baike.baidu.com/item/nsis/5237663?fr=aladdin)) |              ([nginx](https://www.nginx.com/))               |           ([pgp](https://www.e-learn.cn/tag/pgp))            |
-| ([protobuf](https://developers.google.com/protocol-buffers)) |         ([SAS](https://www.sas.com/zh_cn/home.html))         |                                                              |
+| ([protobuf](https://developers.google.com/protocol-buffers)) |         ([SAS](https://www.sas.com/zh_cn/home.html))         |   ✏️[Pytorch](./KnowledgeMap/计算机科学/Pytorch/README.md)    |
 |                                                              |                                                              |                                                              |
 
 
