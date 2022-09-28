@@ -4,8 +4,6 @@
 
 
 
-
-
 ![image text](./resources/title_small.png)
 
 
