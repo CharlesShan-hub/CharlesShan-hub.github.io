@@ -1,8 +1,6 @@
 # PKM - Personal Knowledge Map  
 
-2022.09.29
-
-
+2022.10.06
 
 ![image text](./resources/title_small.png)
 
