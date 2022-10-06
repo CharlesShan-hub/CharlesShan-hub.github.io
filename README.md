@@ -2,7 +2,7 @@
 
 2022.10.06
 
-![image text](./resources/title_small.png)
+![image text](./resources/title_small.webp)
 
 
 
@@ -11,8 +11,6 @@
 <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=2&id=1437274865&auto=0&height=66"></iframe>
 
 ## 内容地图
-
-
 
 **[计算机科学](./KnowledgeMap/计算机科学/README.md)** **—— 基础理论/专题**
 
