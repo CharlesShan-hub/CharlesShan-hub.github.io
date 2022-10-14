@@ -4,8 +4,6 @@
 
 https://oms.pintia.cn/exams/1580530030643798016/landing 
 
-
-
 ![image text](./resources/title_small.webp)
 
 
