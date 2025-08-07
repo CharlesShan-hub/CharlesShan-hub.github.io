@@ -89,7 +89,7 @@
                             <p id="weatherDescription" class="text-gray-600 mt-1"></p>
                             <div class="mt-4 flex items-center justify-center md:justify-start">
                                 <span id="temperature" class="text-5xl font-bold text-primary"></span>
-                                <span class="text-2xl text-gray-500 ml-1">°C</span>
+                                <!-- <span class="text-2xl text-gray-500 ml-1">°C</span> -->
                             </div>
                         </div>
                         <div class="w-24 h-24">
@@ -156,13 +156,13 @@
     </footer>
 
     <script>
-        // API密钥（注意：实际部署时应使用后端代理或安全存储）
-        const API_KEY = 'YOUR_API_KEY';
-        const BASE_URL = 'https://api.openweathermap.org/data/2.5';
+        // 高德API配置
+        const AMAP_KEY = '7e20c85a5c7202f087558e2dd15fddb3';
+        const IP_LOCATION_URL = 'https://restapi.amap.com/v3/ip';
+        const WEATHER_URL = 'https://restapi.amap.com/v3/weather/weatherInfo';
+        const STATIC_MAP_URL = 'https://restapi.amap.com/v3/staticmap';
 
         // DOM元素
-        const weatherForm = document.getElementById('weatherForm');
-        const cityInput = document.getElementById('cityInput');
         const weatherResult = document.getElementById('weatherResult');
         const loading = document.getElementById('loading');
         const error = document.getElementById('error');
@@ -176,94 +176,190 @@
         const visibility = document.getElementById('visibility');
         const themeToggle = document.getElementById('themeToggle');
         const confettiBtn = document.getElementById('confettiBtn');
+        const mapContainer = document.getElementById('mapContainer');
+        const locationInfo = document.getElementById('locationInfo');
 
         // 温度图表
         let temperatureChart = null;
 
-        // 提交表单事件
-        weatherForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const city = cityInput.value.trim();
-            if (city) {
-                await getWeatherData(city);
+        // 页面加载时自动获取位置和天气
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await getLocationAndWeather();
+            } catch (err) {
+                error.textContent = '获取位置失败: ' + err.message;
+                error.classList.remove('hidden');
             }
         });
 
-        // 获取天气数据
-        async function getWeatherData(city) {
+        // 获取位置和天气数据
+        async function getLocationAndWeather() {
             try {
                 // 显示加载状态
                 weatherResult.classList.add('hidden');
                 error.classList.add('hidden');
                 loading.classList.remove('hidden');
+                locationInfo.textContent = '正在获取您的位置...';
 
-                // 获取当前天气
-                const currentWeatherUrl = `${BASE_URL}/weather?q=${city}&appid=${API_KEY}&units=metric&lang=zh_cn`;
-                const currentResponse = await fetch(currentWeatherUrl);
-                if (!currentResponse.ok) {
-                    throw new Error('无法获取当前天气数据，请检查城市名称是否正确');
+                // 1. IP定位获取城市信息
+                const locationResponse = await fetch(`${IP_LOCATION_URL}?key=${AMAP_KEY}`);
+                const locationData = await locationResponse.json();
+                if (locationData.status !== '1') {
+                    throw new Error('无法获取位置信息');
                 }
-                const currentData = await currentResponse.json();
+                const { city, adcode } = locationData;
+                locationInfo.textContent = `当前位置: ${city}`;
 
-                // 获取5天预报
-                const forecastUrl = `${BASE_URL}/forecast?q=${city}&appid=${API_KEY}&units=metric&lang=zh_cn`;
-                const forecastResponse = await fetch(forecastUrl);
-                if (!forecastResponse.ok) {
-                    throw new Error('无法获取天气预报数据');
+                // 2. 获取天气数据
+                const weatherResponse = await fetch(`${WEATHER_URL}?key=${AMAP_KEY}&city=${adcode}&extensions=all`);
+                const weatherData = await weatherResponse.json();
+                if (weatherData.status !== '1') {
+                    throw new Error('无法获取天气数据');
                 }
-                const forecastData = await forecastResponse.json();
 
-                // 显示天气数据
-                displayWeatherData(currentData, forecastData);
+                // 3. 获取坐标用于地图显示
+                const geocodeResponse = await fetch(`https://restapi.amap.com/v3/geocode/geo?key=${AMAP_KEY}&address=${encodeURIComponent(city)}`);
+                const geocodeData = await geocodeResponse.json();
+                if (geocodeData.status !== '1') {
+                    throw new Error('无法获取位置坐标');
+                }
+                const { location } = geocodeData.geocodes[0];
+                const [lng, lat] = location.split(',');
+
+                // 4. 显示静态地图
+                displayStaticMap(lng, lat);
+
+                // 5. 显示天气数据
+                displayWeatherData(weatherData);
 
             } catch (err) {
-                // 显示错误
                 error.textContent = err.message;
                 error.classList.remove('hidden');
             } finally {
-                // 隐藏加载状态
                 loading.classList.add('hidden');
             }
         }
 
+        // 显示静态地图
+        function displayStaticMap(lng, lat) {
+            // 构建静态地图URL - 调整大小为300*200，缩放级别为12，使用红色大标记
+            const mapUrl = `${STATIC_MAP_URL}?key=${AMAP_KEY}&location=${lng},${lat}&zoom=12&size=300*200&markers=large,red,,A:${lng},${lat}`;
+            // 创建img元素并设置src
+            const mapImg = document.createElement('img');
+            mapImg.src = mapUrl;
+            mapImg.alt = '位置地图';
+            mapImg.classList.add('rounded-lg', 'shadow-md', 'w-full', 'max-w-xs', 'h-auto', 'mx-auto');
+            // 清空地图容器并添加图片
+            mapContainer.innerHTML = '';
+            mapContainer.appendChild(mapImg);
+        }
+
         // 显示天气数据
-        function displayWeatherData(currentData, forecastData) {
-            // 当前天气
-            cityName.textContent = `${currentData.name}, ${currentData.sys.country}`;
-            weatherDescription.textContent = currentData.weather[0].description;
-            temperature.textContent = Math.round(currentData.main.temp);
-            weatherIcon.src = `https://openweathermap.org/img/wn/${currentData.weather[0].icon}@2x.png`;
-            weatherIcon.alt = currentData.weather[0].description;
-            humidity.textContent = `${currentData.main.humidity}%`;
-            windSpeed.textContent = `${currentData.wind.speed} m/s`;
-            pressure.textContent = `${currentData.main.pressure} hPa`;
-            visibility.textContent = `${(currentData.visibility / 1000).toFixed(1)} km`;
+        function displayWeatherData(weatherData) {
+            console.log(weatherData);
+            // 提取当前天气数据并添加安全检查
+            const forecastInfo = weatherData.forecasts && weatherData.forecasts[0];
+            const forecasts = forecastInfo && forecastInfo.casts;
 
-            // 处理5天预报数据（每天取一个时间点）
-            const dailyForecasts = [];
-            const today = new Date().toDateString();
-
-            for (const item of forecastData.list) {
-                const date = new Date(item.dt * 1000);
-                // 跳过今天的数据
-                if (date.toDateString() === today) continue;
-                // 只取每天12点的数据
-                if (date.getHours() === 12) {
-                    dailyForecasts.push({
-                        date: date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' }),
-                        temp: item.main.temp,
-                        icon: item.weather[0].icon
-                    });
-                    // 只取5天
-                    if (dailyForecasts.length === 5) break;
-                }
+            // 检查必要数据是否存在
+            if (!forecastInfo || !forecasts || forecasts.length === 0) {
+                throw new Error('无法解析天气数据格式');
             }
 
-            // 绘制温度图表
-            drawTemperatureChart(dailyForecasts);
+            // 使用第一天的预报作为当前天气近似值
+            const nowWeather = forecasts[0];
 
-            // 显示结果
+            // 更新当前天气
+            cityName.textContent = forecastInfo.city;
+            weatherDescription.textContent = nowWeather.dayweather;
+            temperature.textContent = `${nowWeather.daytemp}°C`;
+            
+            // 设置天气图标
+            weatherIcon.src = getWeatherIcon(nowWeather.dayweather);
+            weatherIcon.alt = nowWeather.dayweather;
+            
+            windSpeed.textContent = `${nowWeather.daypower}级 ${nowWeather.daywind}`;
+            pressure.textContent = '暂无数据'; // 高德API未提供气压数据
+            visibility.textContent = '暂无数据'; // 高德API未提供能见度数据
+
+            // 准备温度图表数据
+            const labels = [];
+            const temps = [];
+
+            // 添加未来几天的最高和最低温度
+            forecasts.slice(0, 4).forEach((cast, index) => {
+                const day = ['今天', '明天', '后天', '大后天'][index];
+                labels.push(`${day} 最高`);
+                temps.push(parseInt(cast.daytemp));
+                labels.push(`${day} 最低`);
+                temps.push(parseInt(cast.nighttemp));
+            });
+
+            // 计算温度范围并添加边距
+            const minTemp = Math.min(...temps);
+            const maxTemp = Math.max(...temps);
+            const tempMargin = 5;
+
+            // 更新或创建图表
+            const ctx = document.getElementById('temperatureChart').getContext('2d');
+            if (temperatureChart) {
+                temperatureChart.destroy();
+            }
+
+            temperatureChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '温度 (°C)',
+                        data: temps,
+                        borderColor: 'rgb(255, 99, 132)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: minTemp - tempMargin,
+                            max: maxTemp + tempMargin,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '°C';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 显示天气结果
             weatherResult.classList.remove('hidden');
+        }
+
+        // 根据天气状况获取图标
+        function getWeatherIcon(weather) {
+            // 简化的图标映射
+            weather = weather.toLowerCase();
+            if (weather.includes('晴')) {
+                return 'https://charlesshan.top/weather/assets/sun.png';
+                //return 'https://cdn-icons-png.flaticon.com/512/1779/1779938.png';
+            } else if (weather.includes('雨')) {
+                return 'https://charlesshan.top/weather/assets/rain.png';
+                //return 'https://cdn-icons-png.flaticon.com/512/1779/1779946.png';
+            } else if (weather.includes('云')) {
+                return 'https://charlesshan.top/weather/assets/cloud.png';
+                //return 'https://cdn-icons-png.flaticon.com/512/1779/1779935.png';
+            } else if (weather.includes('雪')) {
+                return 'https://charlesshan.top/weather/assets/snow.png';
+                //return 'https://cdn-icons-png.flaticon.com/512/1779/1779968.png';
+            } else {
+                return 'https://charlesshan.top/weather/assets/others.png';
+                //return 'https://cdn-icons-png.flaticon.com/512/1779/1779958.png';
+            }
         }
 
         // 绘制温度图表
