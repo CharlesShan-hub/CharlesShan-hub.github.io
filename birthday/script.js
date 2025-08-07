@@ -272,6 +272,7 @@ function drawTemperatureChart(data) {
 
 // 主题切换
 themeToggle.addEventListener('click', () => {
+    document.documentElement.classList.toggle('dark');
     document.body.classList.toggle('dark-mode');
     const icon = themeToggle.querySelector('i');
     const cards = document.querySelectorAll('.bg-white, .bg-gray-50, .bg-gray-800, .bg-gray-700');
@@ -384,8 +385,9 @@ themeToggle.addEventListener('click', () => {
         
         // 更新header文字颜色
         const headerTitle = header.querySelector('h1');
-        headerTitle.classList.remove('text-white');
+        headerTitle.classList.remove('text-white', 'text-gray-200', 'text-gray-300');
         headerTitle.classList.add('text-primary');
+        headerTitle.style.color = ''; // 重置内联样式
         
         // 更新主题切换按钮
         themeToggle.classList.remove('bg-gray-700');
@@ -528,20 +530,33 @@ if (giftCard) {
 // 轮播图控制
 if (prevBtn && nextBtn) {
     prevBtn.addEventListener('click', () => {
-        currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-        updateCarousel();
-    });
+            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+            updateCarousel();
+            createConfetti();
+        });
     
     nextBtn.addEventListener('click', () => {
-        currentSlide = (currentSlide + 1) % totalSlides;
-        updateCarousel();
-    });
+            currentSlide = (currentSlide + 1) % totalSlides;
+            updateCarousel();
+            createConfetti();
+        });
 }
 
 function updateCarousel() {
     if (carousel) {
         carousel.style.transform = `translateX(-${currentSlide * 100}%)`;
     }
+    // 更新进度条
+    const dots = document.querySelectorAll('.carousel-dot');
+    dots.forEach((dot, index) => {
+        if (index === currentSlide) {
+            dot.classList.remove('bg-gray-300');
+            dot.classList.add('bg-primary', 'w-6');
+        } else {
+            dot.classList.remove('bg-primary', 'w-6');
+            dot.classList.add('bg-gray-300');
+        }
+    });
 }
 
 // 导入CSS动画
