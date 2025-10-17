@@ -483,7 +483,7 @@ const carousel = document.getElementById('carousel');
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
 let currentSlide = 0;
-const totalSlides = 3;
+const totalSlides = 2;
 
 // 点击礼物卡片触发拆包裹动画
 if (giftCard) {
@@ -542,8 +542,10 @@ if (prevBtn && nextBtn) {
         });
 }
 
+// 简化updateCarousel函数
 function updateCarousel() {
     if (carousel) {
+        // 使用简单直接的transform计算
         carousel.style.transform = `translateX(-${currentSlide * 100}%)`;
     }
     // 更新进度条
@@ -555,6 +557,33 @@ function updateCarousel() {
         } else {
             dot.classList.remove('bg-primary', 'w-6');
             dot.classList.add('bg-gray-300');
+        }
+    });
+}
+
+// 保留基本的触摸滑动支持，但简化实现
+let touchStartX = 0;
+
+const carouselContainer = document.querySelector('.relative.overflow-hidden');
+
+if (carouselContainer) {
+    carouselContainer.addEventListener('touchstart', (e) => {
+        touchStartX = e.touches[0].clientX;
+    });
+    
+    carouselContainer.addEventListener('touchend', (e) => {
+        const touchEndX = e.changedTouches[0].clientX;
+        const diffX = touchEndX - touchStartX;
+        const threshold = 50;
+        
+        if (diffX < -threshold) {
+            currentSlide = (currentSlide + 1) % totalSlides;
+            updateCarousel();
+            createConfetti();
+        } else if (diffX > threshold) {
+            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+            updateCarousel();
+            createConfetti();
         }
     });
 }
