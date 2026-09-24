@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>einops</title>
+<link id="theme-css" rel="stylesheet" href="../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="einops">einops</h1>
+<blockquote>
+<p>通过不停的对 GPT 提问，结合源码，可以达到怎样的学习体验呢？</p>
+</blockquote>
+<hr />
+<h2 id="overview">Overview</h2>
+<h3 id="einops_1">einops概况</h3>
+<blockquote>
+<p>直观的有个印象，einops在做什么
+1. einops 是一个在处理多维数组（例如在深度学习中常用的张量）时非常有用的 Python 库。它提供了一种简洁且统一的表达方式来重排、拆分和合并张量的维度。使用 einops 可以让代码更加易于理解和维护。
+2. 安装 einops：<code>pip install einops</code>
+3. 链接
+    1. 官网：<a href="https://einops.rocks/">https://einops.rocks/</a>
+    2. <a href="https://medium.com/@kyeg/einops-in-30-seconds-377a5f4d641a">medium：Einops in 30 seconds</a>
+    3. <a href="https://blog.csdn.net/angel_hben/article/details/129079635">https://blog.csdn.net/angel_hben/article/details/129079635</a>
+4. 应用场景
+    1. 维度重排：在卷积神经网络（CNN）、循环神经网络（RNN）和变压器（Transformer）模型中，经常需要重新排列张量的维度以匹配层之间的输入和输出要求。【<strong>这个是我用到的，把一个图片分成小块放到Transformer里边</strong>】
+    2. 维度缩减：在池化层或全局平均池化中，减少张量的维度，例如从 (batch_size, height, width, channels) 到 (batch_size, channels)。
+    3. 维度扩展：在数据增强或某些层中，可能需要增加额外的维度，例如将 (batch_size, channels) 扩展为 (batch_size, 1, 1, channels)。【这么看确实比使用 pytorch 更直观】
+    4. ... and so on</p>
+</blockquote>
+<h3 id="einops_2">einops内容</h3>
+<blockquote>
+<p>直击源码，打通所有的代码框架
+1. 所有内容都有什么</p>
+</blockquote>
+<pre lang="bash"><code class="language-bash md-fencescode"><span class="o">(</span>Pytorch2<span class="o">)</span><span class="w"> </span>kimshan@MacBook-Pro<span class="w"> </span>einops<span class="w"> </span>%<span class="w"> </span>ls
+__init__.py<span class="w">             </span>experimental
+__pycache__<span class="w">             </span>layers
+_backends.py<span class="w">            </span>packing.py
+_torch_specific.py<span class="w">      </span>parsing.py
+array_api.py<span class="w">            </span>py.typed
+einops.py
+</code></pre>
+<ol>
+<li>直接使用的API：<code>__init__.py</code><ol>
+<li><code>einops.py</code>：（核心）张量的高级操作<ol>
+<li><strong>rearrange</strong>: 用于重新排列和重塑张量的维度，以匹配所需的格式。</li>
+<li><strong>reduce</strong>: 通过指定的操作（如求和、平均等）减少张量的维度。</li>
+<li><strong>repeat</strong>: 在指定的维度上复制张量，以增加其大小。</li>
+<li><strong>einsum</strong>: 提供了一种简洁的方式来执行张量之间的逐元素乘法和累加操作。</li>
+<li><strong>parse_shape</strong>: 解析和计算张量的形状，特别是在形状包含表达式或未知维度时。</li>
+<li><strong>asnumpy</strong>: 将张量转换为 NumPy 数组，以便使用 NumPy 提供的功能。</li>
+<li><strong>EinopsError</strong>: 在执行 einops 操作时抛出的异常，用于指示发生了错误。</li>
+</ol>
+</li>
+<li><code>packing.py</code>：用于处理张量的打包和解包<ol>
+<li><strong>pack</strong>: 将多个张量打包成一个更大的张量，通常用于批处理操作。</li>
+<li><strong>unpack</strong>: 将一个打包的张量解包回多个单独的张量。 </li>
+</ol>
+</li>
+</ol>
+</li>
+<li>为各种框架提供实现：<code>layers</code>文件夹<ol>
+<li><code>__init__.py</code>：提供了底层的 class RearrangeMixin，class ReduceMixin</li>
+<li><code>_einmix.py</code>：提供了一个混合器类，用于在深度学习框架中实现 <strong>EinMix</strong> 层，该层可以简化多维张量的混合操作，并自动处理权重和偏差张量的初始化和管理。这个类需要在特定的深度学习框架中进一步实现。</li>
+<li><code>flax.py</code>：为 flax 框架提供了三个自定义层：Rearrange、Reduce 和 EinMix</li>
+<li><code>oneflow.py</code>：为 oneflow 框架提供了三个自定义层</li>
+<li><code>tensorflow.py</code>：为 tensorflow 框架提供了三个自定义层</li>
+<li><code>chainer.py</code>：为 chainer 框架提供了三个自定义层</li>
+<li><code>keras.py</code>：为 keras 框架提供了三个自定义层</li>
+<li><code>paddle.py</code>：为 paddle 框架提供了三个自定义层</li>
+<li><code>torch.py</code>：为 pytorch 框架提供了三个自定义层</li>
+</ol>
+</li>
+<li>持作用的底层操作<ol>
+<li><code>parsing.py</code>：这些类和方法是 einops 库内部用于解析和处理张量操作表达式的工具。它们使得用户能够使用简洁的字符串表达式来指定复杂的张量操作，例如重新排列、重塑和组合轴。</li>
+<li><code>array_api.py</code>：一个说明文件，和<code>einops.py</code>很多代码相同。</li>
+<li><code>_torch_specific.py</code>：支持与 PyTorch 的 JIT 编译兼容。</li>
+<li><code>_backends.py</code>：各种实现的后端。【我感觉这个才是这个库的精髓，他把不同的框架的 tensor 都抽象起来了，在实现具体功能的时候各种逻辑只需要写一遍】</li>
+</ol>
+</li>
+<li>再加入的功能：<code>experimental</code>文件夹</li>
+</ol>
+<hr />
+<h2 id="apis">APIs</h2>
+<blockquote>
+<p>经过以上分析，这个库实现了对多个框架的，函数或者模块化的高级张量操作。
+下面我把源码中的文档字符串粘贴进来，然后如果有不容易懂得再展开说。</p>
+</blockquote>
+<h3 id="reduce">reduce</h3>
+<pre><code class="md-fencescode">"""
+einops.reduce provides combination of reordering and reduction using reader-friendly notation.
+
+Examples for reduce operation:
+</code></pre>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
+
+<span class="c1"># perform max-reduction on the first axis</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">reduce</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">'t b c -&gt; b c'</span><span class="p">,</span> <span class="s1">'max'</span><span class="p">)</span>
+
+<span class="c1"># same as previous, but with clearer axes meaning</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">reduce</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">'time batch channel -&gt; batch channel'</span><span class="p">,</span> <span class="s1">'max'</span><span class="p">)</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+
+<span class="c1"># 2d max-pooling with kernel size = 2 * 2 for image processing</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y1</span> <span class="o">=</span> <span class="n">reduce</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">'b c (h1 h2) (w1 w2) -&gt; b c h1 w1'</span><span class="p">,</span> <span class="s1">'max'</span><span class="p">,</span> <span class="n">h2</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">w2</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="c1"># if one wants to go back to the original height and width, depth-to-space trick can be applied</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">y1</span><span class="p">,</span> <span class="s1">'b (c h2 w2) h1 w1 -&gt; b c (h1 h2) (w1 w2)'</span><span class="p">,</span> <span class="n">h2</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">w2</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="k">assert</span> <span class="n">parse_shape</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">'b _ h w'</span><span class="p">)</span> <span class="o">==</span> <span class="n">parse_shape</span><span class="p">(</span><span class="n">y2</span><span class="p">,</span> <span class="s1">'b _ h w'</span><span class="p">)</span>
+
+<span class="c1"># Adaptive 2d max-pooling to 3 * 4 grid</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">reduce</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">'b c (h1 h2) (w1 w2) -&gt; b c h1 w1'</span><span class="p">,</span> <span class="s1">'max'</span><span class="p">,</span> <span class="n">h1</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">w1</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+
+<span class="c1"># Global average pooling</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">reduce</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">'b c h w -&gt; b c'</span><span class="p">,</span> <span class="s1">'mean'</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+
+<span class="c1"># Subtracting mean over batch for each channel</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">reduce</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">'b c h w -&gt; () c () ()'</span><span class="p">,</span> <span class="s1">'mean'</span><span class="p">)</span>
+
+<span class="c1"># Subtracting per-image mean for each channel</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">reduce</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">'b c h w -&gt; b c () ()'</span><span class="p">,</span> <span class="s1">'mean'</span><span class="p">)</span>
+</code></pre>
+<pre><code class="md-fencescode">Parameters:
+    tensor: tensor: tensor of any supported library (e.g. numpy.ndarray, tensorflow, pytorch).
+        list of tensors is also accepted, those should be of the same type and shape
+    pattern: string, reduction pattern
+    reduction: one of available reductions ('min', 'max', 'sum', 'mean', 'prod'), case-sensitive
+        alternatively, a callable f(tensor, reduced_axes) -&gt; tensor can be provided.
+        This allows using various reductions, examples: np.max, tf.reduce_logsumexp, torch.var, etc.
+    axes_lengths: any additional specifications for dimensions
+
+Returns:
+    tensor of the same type as input
+"""
+</code></pre>
+<ol>
+<li>一个 <strong>Demo</strong>：求最大值</li>
+</ol>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">reduce</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">'t a -&gt; a'</span><span class="p">,</span> <span class="s1">'max'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span>
+<span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mf">0.09399422</span><span class="p">,</span>  <span class="mf">0.98488931</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.83173863</span><span class="p">],</span>
+       <span class="p">[</span><span class="o">-</span><span class="mf">0.0140485</span> <span class="p">,</span>  <span class="mf">0.55658672</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.11621765</span><span class="p">],</span>
+       <span class="p">[</span><span class="o">-</span><span class="mf">1.73142355</span><span class="p">,</span>  <span class="mf">0.49761059</span><span class="p">,</span>  <span class="mf">0.31423137</span><span class="p">],</span>
+       <span class="p">[</span> <span class="mf">0.48302816</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.68043368</span><span class="p">,</span>  <span class="mf">1.39221535</span><span class="p">],</span>
+       <span class="p">[</span><span class="o">-</span><span class="mf">0.33247845</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.58816318</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.01502158</span><span class="p">]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span>
+<span class="n">array</span><span class="p">([</span><span class="mf">0.48302816</span><span class="p">,</span> <span class="mf">0.98488931</span><span class="p">,</span> <span class="mf">1.39221535</span><span class="p">])</span>
+</code></pre>
+<ol>
+<li>上边的例子中，t、a 都是我们取的名字，我们可以自己取更明确的<strong>代称</strong></li>
+</ol>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">reduce</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">'time batch channel -&gt; batch channel'</span><span class="p">,</span> <span class="s1">'max'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">)</span>
+</code></pre>
+<ol>
+<li>另一个 Demo，2d max-pooling with kernel size = 2 * 2，用到了<strong>倍数缩减</strong>某个维度大小</li>
+</ol>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">reduce</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">'b c (h1 h2) (w1 w2) -&gt; b c h1 w1'</span><span class="p">,</span> <span class="s1">'max'</span><span class="p">,</span> <span class="n">h2</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">w2</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">)</span>
+</code></pre>
+<ol>
+<li>除了缩减一个维度，我们可以使用（）来<strong>保留维度</strong></li>
+</ol>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">x</span> <span class="o">-</span> <span class="n">reduce</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">'c w h -&gt; c () ()'</span><span class="p">,</span> <span class="s1">'mean'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">reduce</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">'c w h -&gt; c () ()'</span><span class="p">,</span> <span class="s1">'mean'</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([[[</span><span class="o">-</span><span class="mf">0.13433713</span><span class="p">]],</span>
+
+       <span class="p">[[</span><span class="o">-</span><span class="mf">0.07317865</span><span class="p">]]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">reduce</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">'c w h -&gt; c () ()'</span><span class="p">,</span> <span class="s1">'mean'</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</code></pre>
+<p>最后我们进行维度缩减时进行的操作有：<strong>'min', 'max', 'sum', 'mean', 'prod'</strong></p>
+<h3 id="rearrange">rearrange</h3>
+<pre><code class="md-fencescode">"""
+einops.rearrange is a reader-friendly smart element reordering for multidimensional tensors.
+This operation includes functionality of transpose (axes permutation), reshape (view), squeeze, unsqueeze,
+stack, concatenate and other operations.
+
+Examples for rearrange operation:
+</code></pre>
+<pre lang="python"><code class="language-python md-fencescode"><span class="c1"># suppose we have a set of 32 images in "h w c" format (height-width-channel)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">images</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">32</span><span class="p">)]</span>
+
+<span class="c1"># stack along first (batch) axis, output is a single array</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b h w c -&gt; b h w c'</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="c1"># concatenate images along height (vertical axis), 960 = 32 * 30</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b h w c -&gt; (b h) w c'</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">960</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="c1"># concatenated images along horizontal axis, 1280 = 32 * 40</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b h w c -&gt; h (b w) c'</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">1280</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="c1"># reordered axes to "b c h w" format for deep learning</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b h w c -&gt; b c h w'</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+
+<span class="c1"># flattened each image into a vector, 3600 = 30 * 40 * 3</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b h w c -&gt; b (c h w)'</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">3600</span><span class="p">)</span>
+
+<span class="c1"># split each image into 4 smaller (top-left, top-right, bottom-left, bottom-right), 128 = 32 * 2 * 2</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b (h1 h) (w1 w) c -&gt; (b h1 w1) h w c'</span><span class="p">,</span> <span class="n">h1</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">w1</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="c1"># space-to-depth operation</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b (h h1) (w w1) c -&gt; b h w (c h1 w1)'</span><span class="p">,</span> <span class="n">h1</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">w1</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
+</code></pre>
+<pre><code class="md-fencescode">When composing axes, C-order enumeration used (consecutive elements have different last axis)
+Find more examples in einops tutorial.
+
+Parameters:
+    tensor: tensor of any supported library (e.g. numpy.ndarray, tensorflow, pytorch).
+            list of tensors is also accepted, those should be of the same type and shape
+    pattern: string, rearrangement pattern
+    axes_lengths: any additional specifications for dimensions
+
+Returns:
+    tensor of the same type as input. If possible, a view to the original tensor is returned.
+
+"""
+</code></pre>
+<ol>
+<li>通过列表得到的维度可以被合并进去</li>
+</ol>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">images</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">32</span><span class="p">)]</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b h w c -&gt; b h w c'</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+</code></pre>
+<ol>
+<li>可以进行指定维度的转置</li>
+</ol>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">images</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">32</span><span class="p">)]</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b h w c -&gt; b c h w'</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+</code></pre>
+<ol>
+<li>可以进行指定维度的合并（这里的图片是一个 batch 为 1 的，2x3 大小的灰度图，255 单独算一个颜色）</li>
+</ol>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">images</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[[[</span><span class="mi">255</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">150</span><span class="p">],[</span><span class="mi">200</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">130</span><span class="p">]]]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="c1"># 拿到图片 tensor</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b c h w -&gt; b c h w'</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b c h w -&gt; b c h w'</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([[[[</span><span class="mi">255</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">150</span><span class="p">],</span>
+         <span class="p">[</span><span class="mi">200</span><span class="p">,</span>  <span class="mi">40</span><span class="p">,</span> <span class="mi">130</span><span class="p">]]]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="c1"># 合并</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b c h w -&gt; (b c) h w'</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b c h w -&gt; (b c) h w'</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([[[</span><span class="mi">255</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">150</span><span class="p">],</span>
+        <span class="p">[</span><span class="mi">200</span><span class="p">,</span>  <span class="mi">40</span><span class="p">,</span> <span class="mi">130</span><span class="p">]]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="c1"># 交换顺序结果不一定一样</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b c h w -&gt; b c (h w)'</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b c h w -&gt; b c (w h)'</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b c h w -&gt; b c (h w)'</span><span class="p">)</span> <span class="c1"># h 拼在 w 后边，保留 w 完整性</span>
+<span class="n">array</span><span class="p">([[[</span><span class="mi">255</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span>  <span class="mi">40</span><span class="p">,</span> <span class="mi">130</span><span class="p">]]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b c h w -&gt; b c (w h)'</span><span class="p">)</span> <span class="c1"># w 拼在 h 后边，保留 h 完整性</span>
+<span class="n">array</span><span class="p">([[[</span><span class="mi">255</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span>  <span class="mi">40</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">130</span><span class="p">]]])</span>
+</code></pre>
+<ol>
+<li>图片的flatten，这里就要注意顺序了（这里改成了 bhwc 了，[255, 200, 150]算一个 RGB 颜色）</li>
+</ol>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">images</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[[[</span><span class="mi">255</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">150</span><span class="p">],[</span><span class="mi">200</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">130</span><span class="p">]]]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b h w c -&gt; b (c h w)'</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b h w c -&gt; b (c h w)'</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([[</span><span class="mi">255</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span>  <span class="mi">40</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">130</span><span class="p">]])</span>
+</code></pre>
+<ol>
+<li>图片的分块：下边的例子就是根据图片的宽和高，各分两份，然后叠加在 batch 上边。</li>
+</ol>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">images</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[[[</span><span class="mi">255</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">100</span><span class="p">],[</span><span class="mi">200</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">130</span><span class="p">,</span> <span class="mi">200</span><span class="p">]]]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b c h w -&gt; b c h w'</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([[[[</span><span class="mi">255</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">100</span><span class="p">],</span>
+         <span class="p">[</span><span class="mi">200</span><span class="p">,</span>  <span class="mi">40</span><span class="p">,</span> <span class="mi">130</span><span class="p">,</span> <span class="mi">200</span><span class="p">]]]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b c (h1 h) (w1 w) -&gt; (b h1 w1) c h w'</span><span class="p">,</span> <span class="n">h1</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">w1</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b c (h1 h) (w1 w) -&gt; (b h1 w1) c h w'</span><span class="p">,</span> <span class="n">h1</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">w1</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([[[[</span><span class="mi">255</span><span class="p">,</span> <span class="mi">200</span><span class="p">]]],</span>
+       <span class="p">[[[</span><span class="mi">150</span><span class="p">,</span> <span class="mi">100</span><span class="p">]]],</span>
+       <span class="p">[[[</span><span class="mi">200</span><span class="p">,</span>  <span class="mi">40</span><span class="p">]]],</span>
+       <span class="p">[[[</span><span class="mi">130</span><span class="p">,</span> <span class="mi">200</span><span class="p">]]]])</span>
+</code></pre>
+<ol>
+<li>space-to-depth operation，但我觉得像下采样，然后遍历一下</li>
+</ol>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">images</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[[[</span><span class="mi">255</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],[</span><span class="mi">200</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">130</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],[</span><span class="mi">255</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">253</span><span class="p">,</span> <span class="mi">252</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">]]]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b c h w -&gt; b c h w'</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([[[[</span><span class="mi">255</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span>   <span class="mi">1</span><span class="p">,</span>   <span class="mi">2</span><span class="p">],</span>
+         <span class="p">[</span><span class="mi">200</span><span class="p">,</span>  <span class="mi">40</span><span class="p">,</span> <span class="mi">130</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span>   <span class="mi">3</span><span class="p">,</span>   <span class="mi">4</span><span class="p">],</span>
+         <span class="p">[</span><span class="mi">255</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">253</span><span class="p">,</span> <span class="mi">252</span><span class="p">,</span>   <span class="mi">5</span><span class="p">,</span>   <span class="mi">6</span><span class="p">],</span>
+         <span class="p">[</span> <span class="mi">10</span><span class="p">,</span>  <span class="mi">20</span><span class="p">,</span>  <span class="mi">30</span><span class="p">,</span>  <span class="mi">40</span><span class="p">,</span>   <span class="mi">7</span><span class="p">,</span>   <span class="mi">8</span><span class="p">]]]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b c (h h1) (w w1) -&gt; b (c h1 w1) h w'</span><span class="p">,</span> <span class="n">h1</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">w1</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="s1">'b c (h h1) (w w1) -&gt; b (c h1 w1) h w'</span><span class="p">,</span> <span class="n">h1</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">w1</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([[[[</span><span class="mi">255</span><span class="p">,</span> <span class="mi">150</span><span class="p">,</span>   <span class="mi">1</span><span class="p">],</span>
+         <span class="p">[</span><span class="mi">255</span><span class="p">,</span> <span class="mi">253</span><span class="p">,</span>   <span class="mi">5</span><span class="p">]],</span>
+
+        <span class="p">[[</span><span class="mi">200</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span>   <span class="mi">2</span><span class="p">],</span>
+         <span class="p">[</span><span class="mi">224</span><span class="p">,</span> <span class="mi">252</span><span class="p">,</span>   <span class="mi">6</span><span class="p">]],</span>
+
+        <span class="p">[[</span><span class="mi">200</span><span class="p">,</span> <span class="mi">130</span><span class="p">,</span>   <span class="mi">3</span><span class="p">],</span>
+         <span class="p">[</span> <span class="mi">10</span><span class="p">,</span>  <span class="mi">30</span><span class="p">,</span>   <span class="mi">7</span><span class="p">]],</span>
+
+        <span class="p">[[</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span>   <span class="mi">4</span><span class="p">],</span>
+         <span class="p">[</span> <span class="mi">20</span><span class="p">,</span>  <span class="mi">40</span><span class="p">,</span>   <span class="mi">8</span><span class="p">]]]])</span>
+</code></pre>
+<h3 id="repeat">repeat</h3>
+<pre><code class="md-fencescode">"""
+einops.repeat allows reordering elements and repeating them in arbitrary combinations.
+This operation includes functionality of repeat, tile, broadcast functions.
+
+Examples for repeat operation:
+</code></pre>
+<pre lang="python"><code class="language-python md-fencescode"><span class="c1"># a grayscale image (of shape height x width)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+
+<span class="c1"># change it to RGB format by repeating in each channel</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">repeat</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="s1">'h w -&gt; h w c'</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="c1"># repeat image 2 times along height (vertical axis)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">repeat</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="s1">'h w -&gt; (repeat h) w'</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+
+<span class="c1"># repeat image 2 time along height and 3 times along width</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">repeat</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="s1">'h w -&gt; (h2 h) (w3 w)'</span><span class="p">,</span> <span class="n">h2</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">w3</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="mi">120</span><span class="p">)</span>
+
+<span class="c1"># convert each pixel to a small square 2x2. Upsample image by 2x</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">repeat</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="s1">'h w -&gt; (h h2) (w w2)'</span><span class="p">,</span> <span class="n">h2</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">w2</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="mi">80</span><span class="p">)</span>
+
+<span class="c1"># pixelate image first by downsampling by 2x, then upsampling</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">downsampled</span> <span class="o">=</span> <span class="n">reduce</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="s1">'(h h2) (w w2) -&gt; h w'</span><span class="p">,</span> <span class="s1">'mean'</span><span class="p">,</span> <span class="n">h2</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">w2</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">repeat</span><span class="p">(</span><span class="n">downsampled</span><span class="p">,</span> <span class="s1">'h w -&gt; (h h2) (w w2)'</span><span class="p">,</span> <span class="n">h2</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">w2</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+</code></pre>
+<pre><code class="md-fencescode">When composing axes, C-order enumeration used (consecutive elements have different last axis)
+Find more examples in einops tutorial.
+
+Parameters:
+    tensor: tensor of any supported library (e.g. numpy.ndarray, tensorflow, pytorch).
+        list of tensors is also accepted, those should be of the same type and shape
+    pattern: string, rearrangement pattern
+    axes_lengths: any additional specifications for dimensions
+
+Returns:
+    Tensor of the same type as input. If possible, a view to the original tensor is returned.
+
+"""
+</code></pre>
+<ol>
+<li>repeat 就是重复，比如把灰度图通过简单的通道堆叠变成 RGB</li>
+</ol>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">repeat</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="s1">'h w -&gt; h w c'</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+</code></pre>
+<ol>
+<li>更复杂一点，可以实现金字塔算发里边的上采样操作（下采样去用reduce做）</li>
+</ol>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">10</span><span class="p">,</span><span class="mi">20</span><span class="p">],[</span><span class="mi">30</span><span class="p">,</span><span class="mi">40</span><span class="p">]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="s1">'h w -&gt; h w'</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">repeat</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="s1">'h w -&gt; (h h2) (w w2)'</span><span class="p">,</span> <span class="n">h2</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">w2</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">repeat</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="s1">'h w -&gt; (h h2) (w w2)'</span><span class="p">,</span> <span class="n">h2</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">w2</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">40</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">40</span><span class="p">]])</span>
+</code></pre>
+<h3 id="parse_shape">parse_shape</h3>
+<pre><code class="md-fencescode">"""
+Parse a tensor shape to dictionary mapping axes names to their lengths.
+</code></pre>
+<pre lang="python"><code class="language-python md-fencescode"><span class="c1"># Use underscore to skip the dimension in parsing.</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">parse_shape</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">'batch _ h w'</span><span class="p">)</span>
+<span class="p">{</span><span class="s1">'batch'</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">'h'</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">:</span> <span class="mi">7</span><span class="p">}</span>
+
+<span class="c1"># `parse_shape` output can be used to specify axes_lengths for other operations:</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">700</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">rearrange</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="s1">'(b c h w) -&gt; b c h w'</span><span class="p">,</span> <span class="o">**</span><span class="n">parse_shape</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">'b _ h w'</span><span class="p">))</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span>
+</code></pre>
+<pre><code class="md-fencescode">For symbolic frameworks may return symbols, not integers.
+
+Parameters:
+    x: tensor of any supported framework
+    pattern: str, space separated names for axes, underscore means skip axis
+
+Returns:
+    dict, maps axes names to their lengths
+"""
+</code></pre>
+<p>用来获取 tensor 形状</p>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">7</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">parse_shape</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">'batch _ h w'</span><span class="p">)</span>
+<span class="p">{</span><span class="s1">'batch'</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">'h'</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">:</span> <span class="mi">7</span><span class="p">}</span>
+</code></pre>
+<h3 id="asnumpy">asnumpy</h3>
+<pre><code class="md-fencescode">"""
+Convert a tensor of an imperative framework (i.e. numpy/cupy/torch/jax/etc.) to `numpy.ndarray`
+
+Parameters:
+    tensor: tensor of any known imperative framework
+
+Returns:
+    `numpy.ndarray`, converted to numpy
+"""
+</code></pre>
+<p>源码中就是<code>return get_backend(tensor).to_numpy(tensor)</code>，调用各个框架的 to_numpy</p>
+<h3 id="einsum">einsum</h3>
+<p>einops.einsum 提供了一种使用爱因斯坦求和约定来表示和执行张量操作的方法，但它专为处理深度学习框架中的张量（如 PyTorch、TensorFlow、JAX 等）而设计。</p>
+<pre><code class="md-fencescode">"""
+einops.einsum calls einsum operations with einops-style named
+axes indexing, computing tensor products with an arbitrary
+number of tensors. Unlike typical einsum syntax, here you must
+pass tensors first, and then the pattern.
+
+Also, note that rearrange operations such as `"(batch chan) out"`,
+or singleton axes `()`, are not currently supported.
+
+Examples:
+
+For a given pattern such as:
+</code></pre>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">output</span> <span class="o">=</span> <span class="n">einsum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="s2">"a b c, c b d, a g k -&gt; a b k"</span><span class="p">)</span>
+</code></pre>
+<pre><code class="md-fencescode">the following formula is computed:
+</code></pre>
+<pre lang="tex"><code class="language-tex md-fencescode">output[a, b, k] =
+    <span class="k">\sum_</span><span class="nb">{</span>c, d, g<span class="nb">}</span> x[a, b, c] * y[c, b, d] * z[a, g, k]
+</code></pre>
+<pre><code class="md-fencescode">where the summation over `c`, `d`, and `g` is performed
+because those axes names do not appear on the right-hand side.
+
+Let's see some additional examples:
+</code></pre>
+<pre lang="python"><code class="language-python md-fencescode"><span class="c1"># Filter a set of images:</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">batched_images</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">filters</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">result</span> <span class="o">=</span> <span class="n">einsum</span><span class="p">(</span><span class="n">batched_images</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span>
+<span class="o">...</span>                 <span class="s2">"batch h w, h w channel -&gt; batch channel"</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">result</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+
+<span class="c1"># Matrix multiplication, with an unknown input shape:</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">batch_shape</span> <span class="o">=</span> <span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="o">*</span><span class="n">batch_shape</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">weights</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">result</span> <span class="o">=</span> <span class="n">einsum</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span>
+<span class="o">...</span>                 <span class="s2">"out_dim in_dim, ... in_dim -&gt; ... out_dim"</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">result</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+
+<span class="c1"># Matrix trace on a single tensor:</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">result</span> <span class="o">=</span> <span class="n">einsum</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="s2">"i i -&gt;"</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">result</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">()</span>
+</code></pre>
+<pre><code class="md-fencescode">Parameters:
+    tensors_and_pattern:
+        tensors: tensors of any supported library (numpy, tensorflow, pytorch, jax).
+        pattern: string, einsum pattern, with commas
+            separating specifications for each tensor.
+            pattern should be provided after all tensors.
+
+Returns:
+    Tensor of the same type as input, after processing with einsum.
+
+"""
+</code></pre>
+<ol>
+<li>官网的案例：不同张量的合并</li>
+</ol>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span>
+<span class="n">array</span><span class="p">([[[</span> <span class="mf">0.16705873</span><span class="p">,</span>  <span class="mf">2.51210949</span><span class="p">,</span>  <span class="mf">0.52959118</span><span class="p">],</span>
+        <span class="p">[</span> <span class="mf">0.58353769</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.6779666</span> <span class="p">,</span> <span class="o">-</span><span class="mf">0.13415447</span><span class="p">]]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span>
+<span class="n">array</span><span class="p">([[[</span><span class="o">-</span><span class="mf">0.47765094</span><span class="p">,</span>  <span class="mf">0.00385458</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.14655275</span><span class="p">],</span>
+        <span class="p">[</span><span class="o">-</span><span class="mf">1.05469934</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.15484965</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.15026622</span><span class="p">]]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">z</span>
+<span class="n">array</span><span class="p">([[[</span><span class="o">-</span><span class="mf">0.47858963</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.12515551</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.18813591</span><span class="p">],</span>
+        <span class="p">[</span> <span class="mf">1.30117152</span><span class="p">,</span>  <span class="mf">0.02993121</span><span class="p">,</span>  <span class="mf">0.47870161</span><span class="p">]]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">output</span> <span class="o">=</span> <span class="n">einsum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="s2">"a b c, c b d, a g k -&gt; a b k"</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">output</span>
+<span class="n">array</span><span class="p">([[[</span><span class="o">-</span><span class="mf">1.63739124</span><span class="p">,</span>  <span class="mf">0.18954883</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.57838586</span><span class="p">],</span>
+        <span class="p">[</span> <span class="mf">0.25568409</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.02959868</span><span class="p">,</span>  <span class="mf">0.09031688</span><span class="p">]]])</span>
+</code></pre>
+<p>$$output[a, b, k] =
+        \sum_{c, d, g} x[a, b, c] * y[c, b, d] * z[a, g, k]$$
+2. 官网的案例并没有看懂，我们进行一个小实验<strong>（如果你知道 einsum 是什么就可以跳过这一部分）</strong>
+* 首先准备一些数据：</p>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">einops</span><span class="w"> </span><span class="kn">import</span> <span class="n">einsum</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">],[</span><span class="mi">6</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">8</span><span class="p">],[</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span>
+<span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span>
+<span class="n">array</span><span class="p">([[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+</code></pre>
+<ul>
+<li>einsum 是不是矩阵乘积呢？我们试一下</li>
+</ul>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="nd">@y</span>
+<span class="n">array</span><span class="p">([[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">einsum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="s1">'a b, c d -&gt; a d'</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">]])</span>
+</code></pre>
+<ul>
+<li>发现并不一样！所以 einsum 不是矩阵乘积。再观察，[12 13 14] 分别排列了三行，看起来很有规律。但我们一时想不出 12 13 14 这三个数是怎么来的。继续实验。如果不是'a d'而是'a b'它会输出 x 本身吗？</li>
+</ul>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">einsum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="s1">'a b, c d -&gt; a b'</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([[</span><span class="mi">39</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+       <span class="p">[</span> <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span> <span class="mi">39</span><span class="p">],</span>
+       <span class="p">[</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">39</span><span class="p">,</span>  <span class="mi">0</span><span class="p">]])</span>
+</code></pre>
+<ul>
+<li>并不会，但是这个 array 看起来也很有规律。三个 39 的位置表现了 x 的信息，那么 39 这个数字本身一定来自于第二个数组 y。</li>
+</ul>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">y</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="mi">39</span>
+</code></pre>
+<ul>
+<li>原来是把第二个数组 sum 了一下，乘到第一个数组上了。我们分别实验'a b'和'c d'可以发现同样的结论</li>
+</ul>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span>
+<span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">einsum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="s1">'a b, c d -&gt; a b'</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([[</span><span class="mi">39</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">],</span>
+       <span class="p">[</span> <span class="mi">0</span><span class="p">,</span>  <span class="mi">0</span><span class="p">,</span> <span class="mi">39</span><span class="p">],</span>
+       <span class="p">[</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">39</span><span class="p">,</span>  <span class="mi">0</span><span class="p">]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="mi">39</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span>
+<span class="n">array</span><span class="p">([[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">einsum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="s1">'a b, c d -&gt; c d'</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([[</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">15</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">18</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">24</span><span class="p">],</span>
+       <span class="p">[</span> <span class="mi">9</span><span class="p">,</span>  <span class="mi">6</span><span class="p">,</span>  <span class="mi">3</span><span class="p">]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+<span class="mi">3</span>
+</code></pre>
+<ul>
+<li>再推广一下，可能是我们输入了'a b c d'四个维度，然后把要输出的'a b'（或者'c d'）保留，剩下的'c d'（或者'a b'）进行求和。那么如果是'a d'或者'c d'呢。</li>
+</ul>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">einsum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="s1">'a b, c d -&gt; a d'</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([</span><span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">])</span>
+
+<span class="o">&gt;&gt;&gt;</span> <span class="n">einsum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="s1">'a b, c d -&gt; b c'</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span>  <span class="mi">6</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span>  <span class="mi">6</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span>  <span class="mi">6</span><span class="p">]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([</span><span class="mi">12</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span>  <span class="mi">6</span><span class="p">])</span>
+</code></pre>
+<ul>
+<li>这样就解开了上边 [12 13 14] 数字得出的谜团。因为 x 不管沿axis 0 还是 axis 1 求和都是 [1 1 1] 所以比较容易观察规律。就是<strong>把输出的维度保留，剩下的维度求和</strong>。</li>
+<li>再看一下顺序对输出的影响，可以发现会有一个转置的效果。</li>
+</ul>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">einsum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="s1">'a b, c d -&gt; a d'</span><span class="p">)</span>
+<span class="n">ab</span><span class="p">,</span><span class="n">cd</span><span class="o">-&gt;</span><span class="n">ad</span>
+<span class="n">array</span><span class="p">([[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">14</span><span class="p">]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">einsum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="s1">'a b, c d -&gt; d a'</span><span class="p">)</span>
+<span class="n">ab</span><span class="p">,</span><span class="n">cd</span><span class="o">-&gt;</span><span class="n">da</span>
+<span class="n">array</span><span class="p">([[</span><span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">13</span><span class="p">,</span> <span class="mi">13</span><span class="p">,</span> <span class="mi">13</span><span class="p">],</span>
+       <span class="p">[</span><span class="mi">14</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mi">14</span><span class="p">]])</span>
+</code></pre>
+<ul>
+<li>最后我们就可以解释下面的例子了</li>
+</ul>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x</span>
+<span class="n">array</span><span class="p">([[[</span> <span class="mf">0.51613364</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.64413418</span><span class="p">,</span>  <span class="mf">0.02056939</span><span class="p">],</span>
+        <span class="p">[</span><span class="o">-</span><span class="mf">0.38257828</span><span class="p">,</span>  <span class="mf">1.15543751</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.10533596</span><span class="p">]]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y</span>
+<span class="n">array</span><span class="p">([[[</span><span class="o">-</span><span class="mf">0.15940847</span><span class="p">,</span>  <span class="mf">0.00430798</span><span class="p">,</span>  <span class="mf">0.19768969</span><span class="p">],</span>
+        <span class="p">[</span><span class="o">-</span><span class="mf">0.2401132</span> <span class="p">,</span>  <span class="mf">1.64144003</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.79326939</span><span class="p">]]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">z</span>
+<span class="n">array</span><span class="p">([[[</span> <span class="mf">0.23757063</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.64599319</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.03294572</span><span class="p">],</span>
+        <span class="p">[</span><span class="o">-</span><span class="mf">0.21582711</span><span class="p">,</span>  <span class="mf">1.29888799</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.75626082</span><span class="p">]]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x_s</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span><span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y_s</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="p">),</span><span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">z_s</span> <span class="o">=</span> <span class="n">z</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span><span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x_s</span>
+<span class="n">array</span><span class="p">([[[</span><span class="o">-</span><span class="mf">0.43990787</span><span class="p">]]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">y_s</span>
+<span class="n">array</span><span class="p">([[[</span> <span class="mf">0.04258921</span><span class="p">],</span>
+        <span class="p">[</span><span class="o">-</span><span class="mf">0.39194256</span><span class="p">]]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">z_s</span>
+<span class="n">array</span><span class="p">([[[</span> <span class="mf">0.02174352</span><span class="p">,</span>  <span class="mf">0.65289481</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.78920655</span><span class="p">]]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">x_s</span> <span class="o">*</span> <span class="n">y_s</span> <span class="o">*</span> <span class="n">z_s</span>
+<span class="n">array</span><span class="p">([[[</span><span class="o">-</span><span class="mf">4.07371907e-04</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.22321979e-02</span><span class="p">,</span>  <span class="mf">5.22566975e-02</span><span class="p">],</span>
+        <span class="p">[</span> <span class="mf">3.74898712e-03</span><span class="p">,</span>  <span class="mf">1.12571219e-01</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.80911134e-01</span><span class="p">]]])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">einsum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="s2">"a b c, d e f, g h i -&gt; a e i"</span><span class="p">)</span>
+<span class="n">array</span><span class="p">([[[</span><span class="o">-</span><span class="mf">4.07371907e-04</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.22321979e-02</span><span class="p">,</span>  <span class="mf">5.22566975e-02</span><span class="p">],</span>
+        <span class="p">[</span> <span class="mf">3.74898712e-03</span><span class="p">,</span>  <span class="mf">1.12571219e-01</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.80911134e-01</span><span class="p">]]])</span>
+</code></pre>
+<ul>
+<li>这样的应用案例就是（也是官网的）</li>
+</ul>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">batched_images</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">filters</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">result</span> <span class="o">=</span> <span class="n">einsum</span><span class="p">(</span><span class="n">batched_images</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span>
+<span class="o">...</span>                 <span class="s2">"batch h w, h w channel -&gt; batch channel"</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">result</span><span class="o">.</span><span class="n">shape</span>
+<span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+</code></pre>
+<h3 id="pack">pack</h3>
+<pre><code class="md-fencescode">"""
+Packs several tensors into one.
+See einops tutorial for introduction into packing (and how it replaces stack and concatenation).
+
+Parameters:
+    tensors: tensors to be packed, can be of different dimensionality
+    pattern: pattern that is shared for all inputs and output, e.g. "i j * k" or "batch seq *"
+
+Returns:
+    (packed_tensor, packed_shapes aka PS)
+
+Example:
+</code></pre>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">zeros</span> <span class="k">as</span> <span class="n">Z</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">Z</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">]),</span> <span class="n">Z</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">]),</span> <span class="n">Z</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">5</span><span class="p">])]</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">packed</span><span class="p">,</span> <span class="n">ps</span> <span class="o">=</span> <span class="n">pack</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="s1">'i j * k'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">packed</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">ps</span>
+<span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">71</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="p">[(),</span> <span class="p">(</span><span class="mi">7</span><span class="p">,),</span> <span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">9</span><span class="p">)])</span>
+</code></pre>
+<pre><code class="md-fencescode">In this example, axes were matched to: i=2, j=3, k=5 based on order (first, second, and last).
+All other axes were 'packed' and concatenated.
+PS (packed shapes) contains information about axes that were matched to '*' in every input.
+Resulting tensor has as many elements as all inputs in total.
+
+Packing can be reversed with unpack, which additionally needs PS (packed shapes) to reconstruct order.
+</code></pre>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="n">inputs_unpacked</span> <span class="o">=</span> <span class="n">unpack</span><span class="p">(</span><span class="n">packed</span><span class="p">,</span> <span class="n">ps</span><span class="p">,</span> <span class="s1">'i j * k'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">inputs_unpacked</span><span class="p">]</span>
+<span class="p">[(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">5</span><span class="p">)]</span>
+</code></pre>
+<pre><code class="md-fencescode">Read the tutorial for introduction and application scenarios.
+"""
+</code></pre>
+<ol>
+<li>应用，channel 上的堆叠</li>
+</ol>
+<pre lang="python"><code class="language-python md-fencescode"><span class="kn">from</span><span class="w"> </span><span class="nn">einops</span><span class="w"> </span><span class="kn">import</span> <span class="n">pack</span><span class="p">,</span> <span class="n">unpack</span>
+
+<span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">200</span>
+<span class="c1"># image_rgb is 3-dimensional (h, w, 3) and depth is 2-dimensional (h, w)</span>
+<span class="n">image_rgb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+<span class="n">image_depth</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">])</span>
+<span class="c1"># but we can stack them</span>
+<span class="n">image_rgbd</span><span class="p">,</span> <span class="n">ps</span> <span class="o">=</span> <span class="n">pack</span><span class="p">([</span><span class="n">image_rgb</span><span class="p">,</span> <span class="n">image_depth</span><span class="p">],</span> <span class="s1">'h w *'</span><span class="p">)</span>
+</code></pre>
+<p>2.下面这个例子就是，[i, j , *, k]，对于第一个 Z([2,3,5])，[2,3,5]就是[i,j,k]。然后
+*代表其他的张量多的维度往这里边插。71 = 1 + 7 + 7*9</p>
+<pre lang="python"><code class="language-python md-fencescode"><span class="o">&gt;&gt;&gt;</span> <span class="kn">from</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">zeros</span> <span class="k">as</span> <span class="n">Z</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">Z</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">]),</span> <span class="n">Z</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">5</span><span class="p">]),</span> <span class="n">Z</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">5</span><span class="p">])]</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">packed</span><span class="p">,</span> <span class="n">ps</span> <span class="o">=</span> <span class="n">pack</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="s1">'i j * k'</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">packed</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">ps</span>
+<span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">71</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="p">[(),</span> <span class="p">(</span><span class="mi">7</span><span class="p">,),</span> <span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">9</span><span class="p">)])</span>
+   <span class="err">```</span>
+<span class="c1">### unpack</span>
+    <span class="s2">"""</span>
+<span class="s2">    Unpacks a single tensor into several by splitting over a selected axes.</span>
+<span class="s2">    See einops tutorial for introduction into packing (and how it replaces stack and concatenation).</span>
+
+<span class="s2">    Parameters:</span>
+<span class="s2">        tensor: tensor to be unpacked</span>
+<span class="s2">        packed_shapes: packed_shapes (aka PS) is a list of shapes that take place of '*' in each output.</span>
+<span class="s2">            output will contain a single tensor for every provided shape</span>
+<span class="s2">        pattern: pattern that is shared for input and all outputs, e.g. "i j * k" or "batch seq *",</span>
+<span class="s2">            where * designates an axis to be unpacked</span>
+
+<span class="s2">    Returns:</span>
+<span class="s2">        list of tensors</span>
+
+<span class="s2">    If framework supports views, results are views to the original tensor.</span>
+
+<span class="s2">    Example:</span>
+<span class="s2">    ```python</span>
+<span class="s2">    &gt;&gt;&gt; from numpy import zeros as Z</span>
+<span class="s2">    &gt;&gt;&gt; inputs = [Z([2, 3, 5]), Z([2, 3, 7, 5]), Z([2, 3, 7, 9, 5])]</span>
+<span class="s2">    &gt;&gt;&gt; packed, ps = pack(inputs, 'i j * k')</span>
+<span class="s2">    &gt;&gt;&gt; packed.shape, ps</span>
+<span class="s2">    ((2, 3, 71, 5), [(), (7,), (7, 9)])</span>
+<span class="s2">    ```</span>
+
+<span class="s2">    In this example, axes were matched to: i=2, j=3, k=5 based on order (first, second, and last).</span>
+<span class="s2">    All other axes were 'packed' and concatenated.</span>
+<span class="s2">    PS (packed shapes) contains information about axes that were matched to '*' in every input.</span>
+<span class="s2">    Resulting tensor has as many elements as all inputs in total.</span>
+
+<span class="s2">    Packing can be reversed with unpack, which additionally needs PS (packed shapes) to reconstruct order.</span>
+
+<span class="s2">```python</span>
+<span class="s2">&gt;&gt;&gt; inputs_unpacked = unpack(packed, ps, 'i j * k')</span>
+<span class="s2">&gt;&gt;&gt; [x.shape for x in inputs_unpacked]</span>
+<span class="s2">[(2, 3, 5), (2, 3, 7, 5), (2, 3, 7, 9, 5)]</span>
+</code></pre>
+<pre><code class="md-fencescode">Read the tutorial for introduction and application scenarios.
+"""
+</code></pre>
+<p>pack 是堆叠，unpack 就是分开。还是刚才的例子，我们把一个彩色图片和黑白图片堆叠在一起了。现在要分开。</p>
+<pre lang="python"><code class="language-python md-fencescode"><span class="kn">from</span><span class="w"> </span><span class="nn">einops</span><span class="w"> </span><span class="kn">import</span> <span class="n">pack</span><span class="p">,</span> <span class="n">unpack</span>
+
+<span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">200</span>
+<span class="c1"># image_rgb is 3-dimensional (h, w, 3) and depth is 2-dimensional (h, w)</span>
+<span class="n">image_rgb</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+<span class="n">image_depth</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">([</span><span class="n">h</span><span class="p">,</span> <span class="n">w</span><span class="p">])</span>
+<span class="c1"># but we can stack them</span>
+<span class="n">image_rgbd</span><span class="p">,</span> <span class="n">ps</span> <span class="o">=</span> <span class="n">pack</span><span class="p">([</span><span class="n">image_rgb</span><span class="p">,</span> <span class="n">image_depth</span><span class="p">],</span> <span class="s1">'h w *'</span><span class="p">)</span>
+<span class="c1"># then split</span>
+<span class="n">unpacked_rgb</span><span class="p">,</span> <span class="n">unpacked_depth</span> <span class="o">=</span> <span class="n">unpack</span><span class="p">(</span><span class="n">image_rgbd</span><span class="p">,</span> <span class="n">ps</span><span class="p">,</span> <span class="s1">'h w *'</span><span class="p">)</span>
+</code></pre>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
