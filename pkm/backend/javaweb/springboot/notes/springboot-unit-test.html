@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>springboot-unit-test</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="spring-boot">Spring Boot的单元测试</h1>
+<hr />
+<h2 id="service">不使用单元测试怎么调用service</h2>
+<h3 id="_1">创建模块</h3>
+<p>使用脚手架创建sb3-06-test模块，不添加任何启动器：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764858731937-5eeb3907-ce7b-4144-8ef0-ab6893b79e81.png" width="334.4" title="" crop="0,0,1,1" id="ufff0d565" class="ne-image"></p>
+<h3 id="service_1">编写service</h3>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764858745928-2be537af-fd1c-4ddd-8392-e49fd0579dd9.png" width="225.6" title="" crop="0,0,1,1" id="u13581b5e" class="ne-image"></p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.sb306test.service.impl</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.sb306test.service.UserService</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Service</span><span class="p">;</span>
+
+<span class="nd">@Service</span><span class="p">(</span><span class="s">"userService"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">UserServiceImpl</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">UserService</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">save</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"保存用户信息"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="service_2">直接在入口程序中调用service</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@SpringBootApplication</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Sb306TestApplication</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">ConfigurableApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SpringApplication</span><span class="p">.</span><span class="na">run</span><span class="p">(</span><span class="n">Sb306TestApplication</span><span class="p">.</span><span class="na">class</span><span class="p">,</span><span class="w"> </span><span class="n">args</span><span class="p">);</span>
+<span class="w">        </span><span class="n">UserService</span><span class="w"> </span><span class="n">userService</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"userService"</span><span class="p">,</span><span class="w"> </span><span class="n">UserService</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">        </span><span class="n">userService</span><span class="p">.</span><span class="na">save</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行结果：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729581624703-aa5dfd5f-1a61-48a9-bce3-9d3d615913e5.png" width="252" title="" crop="0,0,1,1" id="ubd3998a7" class="ne-image"></p>
+<p>这种方式就是手动获取Spring上下文对象<code>ConfigurableApplicationContext</code>，然后调用getBean方法从Spring容器中获取service对象，然后调用方法。</p>
+<hr />
+<h2 id="service_3">使用单元测试怎么调用service</h2>
+<h3 id="test-starter">test-starter引入以及测试类编写</h3>
+<p>使用单元测试应该如何调用service对象上的方法呢？</p>
+<p>在使用脚手架创建Spring Boot项目时，为我们生成了单元测试类，如下：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764858829335-de2fae33-630c-4d81-8a34-071382d88988.png" width="432" title="" crop="0,0,1,1" id="ue4d348db" class="ne-image"></p>
+<p>当然，如果要使用单元测试，需要引入单元测试启动器，如果使用脚手架创建SpringBoot项目，这个test启动器会自动引入：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;dependency&gt;</span>
+<span class="w">    </span><span class="nt">&lt;groupId&gt;</span>org.springframework.boot<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>spring-boot-starter-test<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;scope&gt;</span>test<span class="nt">&lt;/scope&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre>
+<h3 id="springboottest">@SpringBootTest注解</h3>
+<p><code>@SpringBootTest</code> 会创建一个完整的 Spring 应用程序上下文（Application Context），这个上下文包含了应用程序的所有组件和服务。以下是 <code>@SpringBootTest</code> 做的一些主要工作：</p>
+<ol>
+<li><strong>创建 ApplicationContext</strong>：<ul>
+<li><code>@SpringBootTest</code> 使用 <code>SpringApplication</code> 的 <code>run()</code> 方法来启动一个 Spring Boot 应用程序上下文。这意味着它会加载应用程序的主配置类和其他相关的配置类。</li>
+</ul>
+</li>
+<li><strong>加载配置文件</strong>：<ul>
+<li>它会查找并加载默认的配置文件，如 <code>application.properties</code></li>
+</ul>
+</li>
+<li><strong>自动配置</strong>：<ul>
+<li>如果应用程序依赖于 Spring Boot 的自动配置特性，<code>@SpringBootTest</code> 会确保这些自动配置生效。这意味着它会根据可用的类和bean来自动配置一些组件，如数据库连接、消息队列等。</li>
+</ul>
+</li>
+<li><strong>注入依赖</strong>：<ul>
+<li>使用 <code>@SpringBootTest</code> 创建的应用程序上下文允许你在测试类中使用 <code>@Autowired</code> 注入需要的 bean，就像在一个真实的 Spring Boot 应用程序中一样。</li>
+</ul>
+</li>
+</ol>
+<p>总的来说，<code>@SpringBootTest</code> 为你的测试提供了尽可能接近实际运行时环境的条件，这对于验证应用程序的行为非常有用。</p>
+<h3 id="service_4">注入service并调用</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@SpringBootTest</span>
+<span class="kd">class</span> <span class="nc">Sb306TestApplicationTests</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@Autowired</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">UserService</span><span class="w"> </span><span class="n">userService</span><span class="p">;</span>
+
+<span class="w">    </span><span class="nd">@Test</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">contextLoads</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">userService</span><span class="p">.</span><span class="na">save</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="p">}</span>
+</code></pre>
+<p>测试结果如下：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729582782987-88067365-fba6-4240-b704-b2f710a96647.png" width="274" title="" crop="0,0,1,1" id="u0febe674" class="ne-image"></p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

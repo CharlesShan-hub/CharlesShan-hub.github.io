@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gof-proxy-pattern</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="gof">GoF之代理模式</h1>
+<hr />
+<h2 id="_1">对代理模式的理解</h2>
+<p><strong>生活场景1</strong>：牛村的牛二看上了隔壁村小花，牛二不好意思直接找小花，于是牛二找来了媒婆王妈妈。这里面就有一个非常典型的代理模式。牛二不能和小花直接对接，只能找一个中间人。其中王妈妈是代理类，牛二是目标类。王妈妈代替牛二和小花先见个面。（现实生活中的婚介所）【在程序中，对象A和对象B无法直接交互时。】</p>
+<p><strong>生活场景2</strong>：你刚到北京，要租房子，可以自己找，也可以找链家帮你找。其中链家是代理类，你是目标类。你们两个都有共同的行为：找房子。不过链家除了满足你找房子，另外会收取一些费用的。(现实生活中的房产中介)【在程序中，功能需要增强时。】</p>
+<p><strong>西游记场景</strong>：八戒和高小姐的故事。八戒要强抢民女高翠兰。悟空得知此事之后怎么做的？悟空幻化成高小姐的模样。代替高小姐与八戒会面。其中八戒是客户端程序。悟空是代理类。高小姐是目标类。那天夜里，在八戒眼里，眼前的就是高小姐，对于八戒来说，他是不知道眼前的高小姐是悟空幻化的，在他内心里这就是高小姐。所以悟空代替高小姐和八戒亲了嘴儿。这是非常典型的代理模式实现的保护机制。<strong><em>*代理模式中有一个非常重要的特点：对于客户端程序来说，使用代理对象时就像在使用目标对象一样。</em></strong><strong>*【在程序中，目标需要被保护时】</strong></p>
+<p><strong>业务场景</strong>：系统中有A、B、C三个模块，使用这些模块的前提是需要用户登录，也就是说在A模块中要编写判断登录的代码，B模块中也要编写，C模块中还要编写，这些判断登录的代码反复出现，显然代码没有得到复用，可以为A、B、C三个模块提供一个代理，在代理当中写一次登录判断即可。代理的逻辑是：请求来了之后，判断用户是否登录了，如果已经登录了，则执行对应的目标，如果没有登录则跳转到登录页面。【在程序中，目标不但受到保护，并且代码也得到了复用。】</p>
+<p>代理模式是GoF23种设计模式之一。属于结构型设计模式。</p>
+<p>代理模式的作用是：为其他对象提供一种代理以控制对这个对象的访问。在某些情况下，一个客户不想或者不能直接引用一个对象，此时可以通过一个称之为“代理”的第三者来实现间接引用。代理对象可以在客户端和目标对象之间起到中介的作用，并且可以通过代理对象去掉客户不应该看到的内容和服务或者添加客户需要的额外服务。 通过引入一个新的对象来实现对真实对象的操作或者将新的对象作为真实对象的一个替身，这种实现机制即为代理模式，通过引入代理对象来间接访问一个对象，这就是代理模式的模式动机。</p>
+<p>代理模式中的角色：</p>
+<ul>
+<li>代理类（代理主题）</li>
+<li>目标类（真实主题）</li>
+<li>代理类和目标类的公共接口（抽象主题）：客户端在使用代理类时就像在使用目标类，不被客户端所察觉，所以代理类和目标类要有共同的行为，也就是实现共同的接口。</li>
+</ul>
+<p>代理模式的类图：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2022/png/21376908/1665651817094-af9ecbad-24ae-4c11-9fa2-efe46653df25.png" /></p>
+<p>代理模式在代码实现上，包括两种形式：</p>
+<ul>
+<li>静态代理</li>
+<li>动态代理</li>
+</ul>
+<hr />
+<h2 id="_2">静态代理</h2>
+<p>现在有这样一个接口和实现类：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service</span><span class="p">;</span>
+
+<span class="cm">/**</span>
+<span class="cm"> * 订单接口</span>
+<span class="cm"> */</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">OrderService</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * 生成订单</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">generate</span><span class="p">();</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * 查看订单详情</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">detail</span><span class="p">();</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * 修改订单</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">modify</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.impl</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.OrderService</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">OrderServiceImpl</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">OrderService</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">generate</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">1234</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"订单已生成"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">detail</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">2541</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"订单信息如下：******"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">modify</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">1010</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"订单已修改"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>其中Thread.sleep()方法的调用是为了模拟操作耗时。</p>
+<p>项目已上线，并且运行正常，只是客户反馈系统有一些地方运行较慢，要求项目组对系统进行优化。于是项目负责人就下达了这个需求。首先需要搞清楚是哪些业务方法耗时较长，于是让我们统计每个业务方法所耗费的时长。如果是你，你该怎么做呢？</p>
+<p>第一种方案：直接修改Java源代码，在每个业务方法中添加统计逻辑，如下：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.impl</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.OrderService</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">OrderServiceImpl</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">OrderService</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">generate</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">begin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">1234</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"订单已生成"</span><span class="p">);</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">end</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"耗费时长"</span><span class="o">+</span><span class="p">(</span><span class="n">end</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">begin</span><span class="p">)</span><span class="o">+</span><span class="s">"毫秒"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">detail</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">begin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">2541</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"订单信息如下：******"</span><span class="p">);</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">end</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"耗费时长"</span><span class="o">+</span><span class="p">(</span><span class="n">end</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">begin</span><span class="p">)</span><span class="o">+</span><span class="s">"毫秒"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">modify</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">begin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">1010</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"订单已修改"</span><span class="p">);</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">end</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"耗费时长"</span><span class="o">+</span><span class="p">(</span><span class="n">end</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">begin</span><span class="p">)</span><span class="o">+</span><span class="s">"毫秒"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>需求可以满足，但显然是违背了OCP开闭原则。这种方案不可取。</p>
+<p>第二种方案：编写一个子类继承OrderServiceImpl，在子类中重写每个方法，代码如下：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.impl</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">OrderServiceImplSub</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">OrderServiceImpl</span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">generate</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">begin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="kd">super</span><span class="p">.</span><span class="na">generate</span><span class="p">();</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">end</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"耗时"</span><span class="o">+</span><span class="p">(</span><span class="n">end</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">begin</span><span class="p">)</span><span class="o">+</span><span class="s">"毫秒"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">detail</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">begin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="kd">super</span><span class="p">.</span><span class="na">detail</span><span class="p">();</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">end</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"耗时"</span><span class="o">+</span><span class="p">(</span><span class="n">end</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">begin</span><span class="p">)</span><span class="o">+</span><span class="s">"毫秒"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">modify</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">begin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="kd">super</span><span class="p">.</span><span class="na">modify</span><span class="p">();</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">end</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"耗时"</span><span class="o">+</span><span class="p">(</span><span class="n">end</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">begin</span><span class="p">)</span><span class="o">+</span><span class="s">"毫秒"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>这种方式可以解决，但是存在两个问题：</p>
+<ul>
+<li>第一个问题：假设系统中有100个这样的业务类，需要提供100个子类，并且之前写好的创建Service对象的代码，都要修改为创建子类对象。</li>
+<li>第二个问题：由于采用了继承的方式，导致代码之间的耦合度较高。</li>
+</ul>
+<p>这种方案也不可取。</p>
+<p>第三种方案：使用代理模式（这里采用静态代理）</p>
+<p>可以为OrderService接口提供一个代理类。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">OrderServiceProxy</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">OrderService</span><span class="p">{</span><span class="w"> </span><span class="c1">// 代理对象</span>
+
+<span class="w">    </span><span class="c1">// 目标对象</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">OrderService</span><span class="w"> </span><span class="n">orderService</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// 通过构造方法将目标对象传递给代理对象</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">OrderServiceProxy</span><span class="p">(</span><span class="n">OrderService</span><span class="w"> </span><span class="n">orderService</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">orderService</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">orderService</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">generate</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">begin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">// 执行目标对象的目标方法</span>
+<span class="w">        </span><span class="n">orderService</span><span class="p">.</span><span class="na">generate</span><span class="p">();</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">end</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"耗时"</span><span class="o">+</span><span class="p">(</span><span class="n">end</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">begin</span><span class="p">)</span><span class="o">+</span><span class="s">"毫秒"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">detail</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">begin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">// 执行目标对象的目标方法</span>
+<span class="w">        </span><span class="n">orderService</span><span class="p">.</span><span class="na">detail</span><span class="p">();</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">end</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"耗时"</span><span class="o">+</span><span class="p">(</span><span class="n">end</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">begin</span><span class="p">)</span><span class="o">+</span><span class="s">"毫秒"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">modify</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">begin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">// 执行目标对象的目标方法</span>
+<span class="w">        </span><span class="n">orderService</span><span class="p">.</span><span class="na">modify</span><span class="p">();</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">end</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"耗时"</span><span class="o">+</span><span class="p">(</span><span class="n">end</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">begin</span><span class="p">)</span><span class="o">+</span><span class="s">"毫秒"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>这种方式的优点：符合OCP开闭原则，同时采用的是关联关系，所以程序的耦合度较低。所以这种方案是被推荐的。</p>
+<p>编写客户端程序：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mall</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.OrderService</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.OrderServiceProxy</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.impl.OrderServiceImpl</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Client</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 创建目标对象</span>
+<span class="w">        </span><span class="n">OrderService</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">OrderServiceImpl</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">// 创建代理对象</span>
+<span class="w">        </span><span class="n">OrderService</span><span class="w"> </span><span class="n">proxy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">OrderServiceProxy</span><span class="p">(</span><span class="n">target</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 调用代理对象的代理方法</span>
+<span class="w">        </span><span class="n">proxy</span><span class="p">.</span><span class="na">generate</span><span class="p">();</span>
+<span class="w">        </span><span class="n">proxy</span><span class="p">.</span><span class="na">modify</span><span class="p">();</span>
+<span class="w">        </span><span class="n">proxy</span><span class="p">.</span><span class="na">detail</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>运行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763899986560-1ffb9314-4127-4514-9e6e-b8427fc725b5.png" /></p>
+<p>以上就是代理模式中的静态代理，其中OrderService接口是代理类和目标类的共同接口。OrderServiceImpl是目标类。OrderServiceProxy是代理类。</p>
+<p>大家思考一下：如果系统中业务接口很多，一个接口对应一个代理类，显然也是不合理的，会导致类爆炸。怎么解决这个问题？动态代理可以解决。因为在动态代理中可以在内存中动态的为我们生成代理类的字节码。代理类不需要我们写了。类爆炸解决了，而且代码只需要写一次，代码也会得到复用。</p>
+<hr />
+<h2 id="_3">动态代理</h2>
+<p>在程序运行阶段，在内存中动态生成代理类，被称为动态代理，目的是为了减少代理类的数量。解决代码复用的问题。</p>
+<p>在内存当中动态生成类的技术常见的包括：</p>
+<ul>
+<li>JDK动态代理技术：只能代理接口。</li>
+<li>CGLIB动态代理技术：CGLIB(Code Generation Library)是一个开源项目。是一个强大的，高性能，高质量的Code生成类库，它可以在运行期扩展Java类与实现Java接口。它既可以代理接口，又可以代理类，<strong><em>*底层是通过继承的方式实现的</em></strong><em>。性能比JDK动态代理要好。</em><strong><em>（底层有一个小而快的字节码处理框架ASM。）</em></strong>*</li>
+<li>Javassist动态代理技术：Javassist是一个开源的分析、编辑和创建Java字节码的类库。是由东京工业大学的数学和计算机科学系的 Shigeru Chiba （千叶 滋）所创建的。它已加入了开放源代码JBoss 应用服务器项目，通过使用Javassist对字节码操作为JBoss实现动态"AOP"框架。</li>
+</ul>
+<h3 id="jdk">JDK动态代理</h3>
+<p>我们还是使用静态代理中的例子：一个接口和一个实现类。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">OrderService</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * 生成订单</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">generate</span><span class="p">();</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * 查看订单详情</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">detail</span><span class="p">();</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * 修改订单</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">modify</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.impl</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.OrderService</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">OrderServiceImpl</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">OrderService</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">generate</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">1234</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"订单已生成"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">detail</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">2541</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"订单信息如下：******"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">modify</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">1010</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">InterruptedException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"订单已修改"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>我们在静态代理的时候，除了以上一个接口和一个实现类之外，是不是要写一个代理类UserServiceProxy呀！在动态代理中UserServiceProxy代理类是可以动态生成的。这个类不需要写。我们直接写客户端程序即可：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mall</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.OrderService</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.impl.OrderServiceImpl</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.lang.reflect.Proxy</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Client</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 第一步：创建目标对象</span>
+<span class="w">        </span><span class="n">OrderService</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">OrderServiceImpl</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">// 第二步：创建代理对象</span>
+<span class="w">        </span><span class="n">OrderService</span><span class="w"> </span><span class="n">orderServiceProxy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Proxy</span><span class="p">.</span><span class="na">newProxyInstance</span><span class="p">(</span><span class="n">target</span><span class="p">.</span><span class="na">getClass</span><span class="p">().</span><span class="na">getClassLoader</span><span class="p">(),</span><span class="w"> </span><span class="n">target</span><span class="p">.</span><span class="na">getClass</span><span class="p">().</span><span class="na">getInterfaces</span><span class="p">(),</span><span class="w"> </span><span class="n">调用处理器对象</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 第三步：调用代理对象的代理方法</span>
+<span class="w">        </span><span class="n">orderServiceProxy</span><span class="p">.</span><span class="na">detail</span><span class="p">();</span>
+<span class="w">        </span><span class="n">orderServiceProxy</span><span class="p">.</span><span class="na">modify</span><span class="p">();</span>
+<span class="w">        </span><span class="n">orderServiceProxy</span><span class="p">.</span><span class="na">generate</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>以上第二步创建代理对象是需要大家理解的：</p>
+<p>OrderService orderServiceProxy = Proxy.newProxyInstance(target.getClass().getClassLoader(), target.getClass().getInterfaces(), 调用处理器对象);</p>
+<p>这行代码做了两件事：</p>
+<ul>
+<li>第一件事：在内存中生成了代理类的字节码</li>
+<li>第二件事：创建代理对象</li>
+</ul>
+<p>Proxy类全名：java.lang.reflect.Proxy。这是JDK提供的一个类（所以称为JDK动态代理）。主要是通过这个类在内存中生成代理类的字节码。</p>
+<p>其中newProxyInstance()方法有三个参数：</p>
+<ul>
+<li>第一个参数：类加载器。在内存中生成了字节码，要想执行这个字节码，也是需要先把这个字节码加载到内存当中的。所以要指定使用哪个类加载器加载。</li>
+<li>第二个参数：接口类型。代理类和目标类实现相同的接口，所以要通过这个参数告诉JDK动态代理生成的类要实现哪些接口。</li>
+<li>第三个参数：调用处理器。这是一个JDK动态代理规定的接口，接口全名：java.lang.reflect.InvocationHandler。显然这是一个回调接口，也就是说调用这个接口中方法的程序已经写好了，就差这个接口的实现类了。</li>
+</ul>
+<p>所以接下来我们要写一下java.lang.reflect.InvocationHandler接口的实现类，并且实现接口中的方法，代码如下：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.lang.reflect.InvocationHandler</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.lang.reflect.Method</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">TimerInvocationHandler</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">InvocationHandler</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Object</span><span class="w"> </span><span class="nf">invoke</span><span class="p">(</span><span class="n">Object</span><span class="w"> </span><span class="n">proxy</span><span class="p">,</span><span class="w"> </span><span class="n">Method</span><span class="w"> </span><span class="n">method</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Throwable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>InvocationHandler接口中有一个方法invoke，这个invoke方法上有三个参数：</p>
+<ul>
+<li>第一个参数：Object proxy。代理对象。设计这个参数只是为了后期的方便，如果想在invoke方法中使用代理对象的话，尽管通过这个参数来使用。</li>
+<li>第二个参数：Method method。目标方法。</li>
+<li>第三个参数：Object[] args。目标方法调用时要传的参数。</li>
+</ul>
+<p>我们将来肯定是要调用“目标方法”的，但要调用目标方法的话，需要“目标对象”的存在，“目标对象”从哪儿来呢？我们可以给TimerInvocationHandler提供一个构造方法，可以通过这个构造方法传过来“目标对象”，代码如下：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.lang.reflect.InvocationHandler</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.lang.reflect.Method</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">TimerInvocationHandler</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">InvocationHandler</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 目标对象</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Object</span><span class="w"> </span><span class="n">target</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// 通过构造方法来传目标对象</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">TimerInvocationHandler</span><span class="p">(</span><span class="n">Object</span><span class="w"> </span><span class="n">target</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">target</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Object</span><span class="w"> </span><span class="nf">invoke</span><span class="p">(</span><span class="n">Object</span><span class="w"> </span><span class="n">proxy</span><span class="p">,</span><span class="w"> </span><span class="n">Method</span><span class="w"> </span><span class="n">method</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Throwable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>有了目标对象我们就可以在invoke()方法中调用目标方法了。代码如下：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.lang.reflect.InvocationHandler</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.lang.reflect.Method</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">TimerInvocationHandler</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">InvocationHandler</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 目标对象</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Object</span><span class="w"> </span><span class="n">target</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// 通过构造方法来传目标对象</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">TimerInvocationHandler</span><span class="p">(</span><span class="n">Object</span><span class="w"> </span><span class="n">target</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">target</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Object</span><span class="w"> </span><span class="nf">invoke</span><span class="p">(</span><span class="n">Object</span><span class="w"> </span><span class="n">proxy</span><span class="p">,</span><span class="w"> </span><span class="n">Method</span><span class="w"> </span><span class="n">method</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Throwable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 目标执行之前增强。</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">begin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">// 调用目标对象的目标方法</span>
+<span class="w">        </span><span class="n">Object</span><span class="w"> </span><span class="n">retValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">method</span><span class="p">.</span><span class="na">invoke</span><span class="p">(</span><span class="n">target</span><span class="p">,</span><span class="w"> </span><span class="n">args</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 目标执行之后增强。</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">end</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"耗时"</span><span class="o">+</span><span class="p">(</span><span class="n">end</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">begin</span><span class="p">)</span><span class="o">+</span><span class="s">"毫秒"</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 一定要记得返回哦。</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">retValue</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>到此为止，调用处理器就完成了。接下来，应该继续完善Client程序：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mall</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.OrderService</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.TimerInvocationHandler</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.impl.OrderServiceImpl</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.lang.reflect.Proxy</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Client</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 创建目标对象</span>
+<span class="w">        </span><span class="n">OrderService</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">OrderServiceImpl</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">// 创建代理对象</span>
+<span class="w">        </span><span class="n">OrderService</span><span class="w"> </span><span class="n">orderServiceProxy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">OrderService</span><span class="p">)</span><span class="w"> </span><span class="n">Proxy</span><span class="p">.</span><span class="na">newProxyInstance</span><span class="p">(</span><span class="n">target</span><span class="p">.</span><span class="na">getClass</span><span class="p">().</span><span class="na">getClassLoader</span><span class="p">(),</span>
+<span class="w">                                                                                </span><span class="n">target</span><span class="p">.</span><span class="na">getClass</span><span class="p">().</span><span class="na">getInterfaces</span><span class="p">(),</span>
+<span class="w">                                                                                </span><span class="k">new</span><span class="w"> </span><span class="n">TimerInvocationHandler</span><span class="p">(</span><span class="n">target</span><span class="p">));</span>
+<span class="w">        </span><span class="c1">// 调用代理对象的代理方法</span>
+<span class="w">        </span><span class="n">orderServiceProxy</span><span class="p">.</span><span class="na">detail</span><span class="p">();</span>
+<span class="w">        </span><span class="n">orderServiceProxy</span><span class="p">.</span><span class="na">modify</span><span class="p">();</span>
+<span class="w">        </span><span class="n">orderServiceProxy</span><span class="p">.</span><span class="na">generate</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>大家可能会比较好奇：那个InvocationHandler接口中的invoke()方法没看见在哪里调用呀？</p>
+<p>注意：当你调用代理对象的代理方法的时候，注册在InvocationHandler接口中的invoke()方法会被调用。也就是上面代码第24 25 26行，这三行代码中任意一行代码执行，注册在InvocationHandler接口中的invoke()方法都会被调用。</p>
+<p>执行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763900041906-2f1f20aa-9f0a-4a22-8fb8-8c92a5cb4063.png" /></p>
+<p>学到这里可能会感觉有点懵，折腾半天，到最后这不是还得写一个接口的实现类吗？没省劲儿呀？</p>
+<p>你要这样想就错了!!!!</p>
+<p>我们可以看到，不管你有多少个Service接口，多少个业务类，这个TimerInvocationHandler接口是不是只需要写一次就行了，代码是不是得到复用了！！！！</p>
+<p>而且最重要的是，以后程序员只需要关注核心业务的编写了，像这种统计时间的代码根本不需要关注。因为这种统计时间的代码只需要在调用处理器中编写一次即可。</p>
+<p>到这里，JDK动态代理的原理就结束了。</p>
+<p>不过我们看以下这个代码确实有点繁琐，对于客户端来说，用起来不方便：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2022/png/21376908/1665716434406-4e092df4-b1a7-4d16-bbc1-1f134b8f51f7.png" /></p>
+<p>我们可以提供一个工具类：ProxyUtil，封装一个方法：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mall.util</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.TimerInvocationHandler</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.lang.reflect.Proxy</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">ProxyUtil</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">Object</span><span class="w"> </span><span class="nf">newProxyInstance</span><span class="p">(</span><span class="n">Object</span><span class="w"> </span><span class="n">target</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Proxy</span><span class="p">.</span><span class="na">newProxyInstance</span><span class="p">(</span><span class="n">target</span><span class="p">.</span><span class="na">getClass</span><span class="p">().</span><span class="na">getClassLoader</span><span class="p">(),</span><span class="w"> </span>
+<span class="w">                </span><span class="n">target</span><span class="p">.</span><span class="na">getClass</span><span class="p">().</span><span class="na">getInterfaces</span><span class="p">(),</span><span class="w"> </span>
+<span class="w">                </span><span class="k">new</span><span class="w"> </span><span class="n">TimerInvocationHandler</span><span class="p">(</span><span class="n">target</span><span class="p">));</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>这样客户端代码就不需要写那么繁琐了：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mall</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.OrderService</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.TimerInvocationHandler</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.impl.OrderServiceImpl</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.mall.util.ProxyUtil</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.lang.reflect.Proxy</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Client</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 创建目标对象</span>
+<span class="w">        </span><span class="n">OrderService</span><span class="w"> </span><span class="n">target</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">OrderServiceImpl</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">// 创建代理对象</span>
+<span class="w">        </span><span class="n">OrderService</span><span class="w"> </span><span class="n">orderServiceProxy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">OrderService</span><span class="p">)</span><span class="w"> </span><span class="n">ProxyUtil</span><span class="p">.</span><span class="na">newProxyInstance</span><span class="p">(</span><span class="n">target</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 调用代理对象的代理方法</span>
+<span class="w">        </span><span class="n">orderServiceProxy</span><span class="p">.</span><span class="na">detail</span><span class="p">();</span>
+<span class="w">        </span><span class="n">orderServiceProxy</span><span class="p">.</span><span class="na">modify</span><span class="p">();</span>
+<span class="w">        </span><span class="n">orderServiceProxy</span><span class="p">.</span><span class="na">generate</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763900073143-1738ce13-7f3d-4452-92bb-1d89797c4637.png" /></p>
+<h3 id="cglib">CGLIB动态代理</h3>
+<p>CGLIB既可以代理接口，又可以代理类。底层采用继承的方式实现。所以被代理的目标类不能使用final修饰。</p>
+<p>使用CGLIB，需要引入它的依赖：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;dependency&gt;</span>
+<span class="w">  </span><span class="nt">&lt;groupId&gt;</span>cglib<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;artifactId&gt;</span>cglib<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;version&gt;</span>3.3.0<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre>
+<p>我们准备一个没有实现接口的类，如下：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">UserService</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">login</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"用户正在登录系统...."</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">logout</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"用户正在退出系统...."</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>使用CGLIB在内存中为UserService类生成代理类，并创建对象：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mall</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.UserService</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">net.sf.cglib.proxy.Enhancer</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Client</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 创建字节码增强器</span>
+<span class="w">        </span><span class="n">Enhancer</span><span class="w"> </span><span class="n">enhancer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Enhancer</span><span class="p">();</span>
+
+<span class="w">        </span><span class="c1">// 告诉cglib要继承哪个类</span>
+<span class="w">        </span><span class="n">enhancer</span><span class="p">.</span><span class="na">setSuperclass</span><span class="p">(</span><span class="n">UserService</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 告诉cglib要代理哪个接口（如果要使用cglib进行接口的代码，这样写。）</span>
+<span class="w">        </span><span class="c1">//enhancer.setInterfaces(UserServiceImpl.class.getInterfaces());</span>
+
+<span class="w">        </span><span class="c1">// 设置回调接口</span>
+<span class="w">        </span><span class="n">enhancer</span><span class="p">.</span><span class="na">setCallback</span><span class="p">(</span><span class="n">方法拦截器对象</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 生成源码，编译class，加载到JVM，并创建代理对象</span>
+<span class="w">        </span><span class="n">UserService</span><span class="w"> </span><span class="n">userServiceProxy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">UserService</span><span class="p">)</span><span class="n">enhancer</span><span class="p">.</span><span class="na">create</span><span class="p">();</span>
+
+<span class="w">        </span><span class="n">userServiceProxy</span><span class="p">.</span><span class="na">login</span><span class="p">();</span>
+<span class="w">        </span><span class="n">userServiceProxy</span><span class="p">.</span><span class="na">logout</span><span class="p">();</span>
+
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>和JDK动态代理原理差不多，在CGLIB中需要提供的不是InvocationHandler，而是：net.sf.cglib.proxy.MethodInterceptor</p>
+<p>编写MethodInterceptor接口实现类：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">net.sf.cglib.proxy.MethodInterceptor</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">net.sf.cglib.proxy.MethodProxy</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.lang.reflect.Method</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">TimerMethodInterceptor</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">MethodInterceptor</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Object</span><span class="w"> </span><span class="nf">intercept</span><span class="p">(</span><span class="n">Object</span><span class="w"> </span><span class="n">proxy</span><span class="p">,</span><span class="w"> </span><span class="n">Method</span><span class="w"> </span><span class="n">method</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">[]</span><span class="w"> </span><span class="n">objects</span><span class="p">,</span><span class="w"> </span><span class="n">MethodProxy</span><span class="w"> </span><span class="n">methodProxy</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Throwable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>MethodInterceptor接口中有一个方法intercept()，该方法有4个参数：</p>
+<p><strong>第一个参数</strong>：代理对象</p>
+<p><strong>第二个参数</strong>：目标方法</p>
+<p><strong>第三个参数</strong>：目标方法调用时的实参</p>
+<p><strong>第四个参数</strong>：<strong>用于调用目标方法或其超类方法的代理工具，性能更优。（</strong><strong><em>*直接字节码调用，性能更高</em></strong><strong>*：避免了反射开销）</strong></p>
+<p>在MethodInterceptor的intercept()方法中调用目标以及添加增强：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">net.sf.cglib.proxy.MethodInterceptor</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">net.sf.cglib.proxy.MethodProxy</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.lang.reflect.Method</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">TimerMethodInterceptor</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">MethodInterceptor</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Object</span><span class="w"> </span><span class="nf">intercept</span><span class="p">(</span><span class="n">Object</span><span class="w"> </span><span class="n">proxy</span><span class="p">,</span><span class="w"> </span><span class="n">Method</span><span class="w"> </span><span class="n">method</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">[]</span><span class="w"> </span><span class="n">objects</span><span class="p">,</span><span class="w"> </span><span class="n">MethodProxy</span><span class="w"> </span><span class="n">methodProxy</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Throwable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 前增强</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">begin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+
+<span class="w">        </span><span class="c1">// 调用目标（更高效的调用方式）</span>
+<span class="w">        </span><span class="n">Object</span><span class="w"> </span><span class="n">retValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">methodProxy</span><span class="p">.</span><span class="na">invokeSuper</span><span class="p">(</span><span class="n">proxy</span><span class="p">,</span><span class="w"> </span><span class="n">objects</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 如果不使用以上的方式调用，使用原始的反射机制调用，代码需要这样写。</span>
+<span class="w">        </span><span class="c1">// Object retValue = method.invoke(从外部将目标对象传过来, objects);</span>
+
+<span class="w">        </span><span class="c1">// 后增强</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">end</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"耗时"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="n">end</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">begin</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">"毫秒"</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 一定要返回</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">retValue</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>回调已经写完了，可以修改客户端程序了：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mall</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.TimerMethodInterceptor</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.mall.service.UserService</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">net.sf.cglib.proxy.Enhancer</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Client</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 创建字节码增强器</span>
+<span class="w">        </span><span class="n">Enhancer</span><span class="w"> </span><span class="n">enhancer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Enhancer</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">// 告诉cglib要继承哪个类</span>
+<span class="w">        </span><span class="n">enhancer</span><span class="p">.</span><span class="na">setSuperclass</span><span class="p">(</span><span class="n">UserService</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 设置回调接口</span>
+<span class="w">        </span><span class="n">enhancer</span><span class="p">.</span><span class="na">setCallback</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">TimerMethodInterceptor</span><span class="p">());</span>
+<span class="w">        </span><span class="c1">// 生成源码，编译class，加载到JVM，并创建代理对象</span>
+<span class="w">        </span><span class="n">UserService</span><span class="w"> </span><span class="n">userServiceProxy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">UserService</span><span class="p">)</span><span class="n">enhancer</span><span class="p">.</span><span class="na">create</span><span class="p">();</span>
+
+<span class="w">        </span><span class="n">userServiceProxy</span><span class="p">.</span><span class="na">login</span><span class="p">();</span>
+<span class="w">        </span><span class="n">userServiceProxy</span><span class="p">.</span><span class="na">logout</span><span class="p">();</span>
+
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>对于高版本的JDK，如果使用CGLIB，需要在启动项中添加两个启动参数：<strong><em>*（下图第一个红色框需要点击 Modify options来 Add vm options才能显示）</em></strong>*</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764241276991-95dffe8b-56b2-49e6-85c3-4a0568d4016a.png" /></p>
+<ul>
+<li><code>--add-opens java.base/java.lang=ALL-UNNAMED</code></li>
+<li><code>--add-opens java.base/sun.net.util=ALL-UNNAMED</code></li>
+</ul>
+<p><strong>执行结果：</strong></p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763900217070-16caaae5-163f-49f4-97dc-74b9f02338cf.png" /></p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

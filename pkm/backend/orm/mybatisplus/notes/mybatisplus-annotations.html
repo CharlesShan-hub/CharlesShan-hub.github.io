@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>mybatisplus-annotations</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="mybatis-plus">MyBatis-Plus常用注解</h1>
+<hr />
+<h2 id="_1">实体类和表是如何对应的</h2>
+<p>在第一个<code>MyBatis-Plus</code>程序中可以看到，没有编写<code>Mapper xml</code>文件，仅仅只编写了<code>CarMapper</code>继承<code>BaseMapper</code>。那<code>MyBatis-Plus</code>底层是怎么让<code>实体类</code>和<code>表</code>对应起来的呢？原理如下：</p>
+<p><code>MyBatis-Plus</code>通过以下代码找到实体类<code>Car</code>：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744271336190-8eb901cc-9ca3-41ef-bd20-61086ffdb16d.png" width="556" title="" crop="0,0,1,1" id="ucd433b2d" class="ne-image" style="font-size: 16px"></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744271376349-0b925a4a-98d3-4dac-b8a4-a54b4c4f9675.png" width="347" title="" crop="0,0,1,1" id="u499e0ae2" class="ne-image" style="font-size: 16px"></p>
+<p><strong>然后通过反射机制获取</strong><code>**Car**</code><strong>类的类名以及字段名，遵循</strong><code>****约定大于配置****</code><strong>的方式完成了</strong><code>**实体类**</code><strong>与</strong><code>**表**</code><strong>的对应，约定如下：</strong></p>
+<ul>
+<li><strong>类名驼峰转下划线作为表名，例如：类名</strong><code>**UserInfo**</code><strong>，对应的表名</strong><code>**user_info**</code></li>
+<li><strong>自动将名字为</strong><code>**id**</code><strong>的字段作为主键</strong></li>
+<li><strong>属性名驼峰转下划线作为字段名，例如：属性名</strong><code>**carType**</code><strong>，对应的字段名</strong><code>**car_type**</code></li>
+</ul>
+<p><strong>如果不符合约定就需要自己通过注解的方式来指定表名和字段名。</strong></p>
+<hr />
+<h2 id="_2">常用注解</h2>
+<ul>
+<li>@TableName：指定表名的</li>
+<li>@TableId：指定主键字段信息</li>
+<li>@TableField：指定普通字段信息</li>
+</ul>
+<p>这几个注解是比较常用的，还有一些其他注解，如果需要可以查一下官方文档：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744275406202-6c783a7a-71fe-48fd-b645-0485781c7d93.png" width="1563" title="" crop="0,0,1,1" id="u077fef2a" class="ne-image" style="font-size: 16px"></p>
+<h3 id="tablename">@TableName</h3>
+<p>当<code>实体类名</code>和<code>表名</code>不符合mp的约定，此时就可以使用该注解来解决了，例如实体类名为<code>Car</code>，但是表名为<code>t_car</code>，则需要使用该注解：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744272072569-06b3b3c3-f08e-4244-962f-fd586c41d2d6.png" width="328" title="" crop="0,0,1,1" id="u1df7034b" class="ne-image" style="font-size: 16px"></p>
+<h3 id="tableid">@TableId</h3>
+<p><strong>用该注解的原因：</strong></p>
+<ul>
+<li><strong>默认约定</strong>：<strong>该注解用于标记实体类中的主键字段。如果你的主键字段名为 id，你可以省略这个注解。</strong><strong><em>*（数据库表的主键字段名是 id，实体类的属性名恰好也是 id，该注解可以省略）</em></strong>*</li>
+<li><strong>官方建议</strong>：只要你属性名不是 <code>id</code>，最好都使用上 <code>@TableId</code>注解（<strong>即使属性名和字段名能对应上，写上起码可读性强，而且还可以指定主键生成策略</strong>）。</li>
+</ul>
+<p><strong>使用方法：</strong></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744272770437-2b50b6b3-7f38-49dd-b0d0-b96dce60684e.png" width="446" title="" crop="0,0,1,1" id="u599fecde" class="ne-image" style="font-size: 16px"></p>
+<ul>
+<li>value 属性用来指定表的主键名</li>
+<li>type 属性用来指定主键的生成策略，如果数据库表中主键值是<code>auto_increment</code>，则采用<code>type = IdType.AUTO</code>。</li>
+</ul>
+<p><strong>主键生成策略：</strong></p>
+<ul>
+<li>IdType.AUTO：数据库自增（需数据库支持）。</li>
+<li>IdType.ASSIGN_ID：雪花算法生成分布式ID（默认策略），这是mp自己提供的，底层调用了<code>IdentifierGenerator</code>接口的<code>nextId()</code>方法，实现类是<code>DefaultIdentifierGenerator</code>，雪花算法实现的（<strong><em>*雪花算法是一种分布式ID生成算法，通过组合</em></strong><strong><em>*</em>时间戳、机器ID和序列号</strong><strong><em>*</em>*生成全局唯一、趋势递增的64位ID。占 8 个字节，</strong><strong><em>*</em>*时钟回拨</strong><strong><em>*</em>*或</strong><strong><em>*</em>*机器 ID 全局不唯一</strong><strong><em>*</em>*可能会导致 id 重复，但概率较低</strong>**）。</li>
+</ul>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744273213286-e4f3cf01-59ec-46e6-a9ab-2019f8e5e8ec.png" width="488" title="" crop="0,0,1,1" id="u94e15b31" class="ne-image" style="font-size: 16px"></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744273262895-d9e37364-59fe-4caf-b0cc-5a0262cbc1a8.png" width="736" title="" crop="0,0,1,1" id="u87fd527e" class="ne-image" style="font-size: 16px"></p>
+<ul>
+<li>IdType.INPUT：需要程序员手动赋值。</li>
+</ul>
+<p>以上是比较常用的主键生成策略。</p>
+<h3 id="tablefield">@TableField</h3>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">drop</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="k">exists</span><span class="w"> </span><span class="n">t_customer</span><span class="p">;</span>
+<span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">t_customer</span><span class="p">(</span>
+<span class="w">  </span><span class="n">id</span><span class="w"> </span><span class="nb">bigint</span><span class="w"> </span><span class="k">primary</span><span class="w"> </span><span class="k">key</span><span class="w"> </span><span class="n">auto_increment</span><span class="p">,</span>
+<span class="w">  </span><span class="n">username</span><span class="w"> </span><span class="nb">varchar</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span>
+<span class="w">  </span><span class="n">is_vip</span><span class="w"> </span><span class="nb">varchar</span><span class="p">(</span><span class="mi">255</span><span class="p">),</span>
+<span class="w">  </span><span class="o">`</span><span class="k">desc</span><span class="o">`</span><span class="w"> </span><span class="nb">varchar</span><span class="p">(</span><span class="mi">255</span><span class="p">)</span>
+<span class="p">);</span>
+</code></pre>
+<p><strong>什么情况下需要使用该注解：</strong></p>
+<ul>
+<li><code>属性名</code>和<code>字段名</code>不一致。</li>
+<li><code>属性名</code>以<code>is</code>开头，并且是布尔类型。（<strong><em>*&gt;=3.4.0版本的MyBatis-Plus已经对is开头的属性名进行了处理。无需添加这个注解。</em></strong>*）</li>
+<li><code>属性名</code>与数据库中的关键字冲突了。</li>
+<li><code>属性名</code>不是数据库表中的字段。</li>
+</ul>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744274649300-1aa69362-cc41-4b52-b173-bbd5dafd9fcb.png" width="596" title="" crop="0,0,1,1" id="u22f7c694" class="ne-image" style="font-size: 16px"></p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

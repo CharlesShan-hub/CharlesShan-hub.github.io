@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>transactions</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="_1">事物</h1>
+<hr />
+<h2 id="_2">事务概述</h2>
+<ol>
+<li><strong>事务是一个最小的工作单元。在数据库当中，事务表示一件完整的事儿。</strong></li>
+<li>一个业务的完成可能需要多条DML语句共同配合才能完成，例如转账业务，需要执行两条DML语句，先更新张三账户的余额，再更新李四账户的余额，为了保证转账业务不出现问题，就必须保证要么同时成功，要么同时失败，怎么保证同时成功或者同时失败呢？就需要使用事务机制。</li>
+<li>也就是说用了事务机制之后，在同一个事务当中，多条DML语句会同时成功，或者同时失败，不会出现一部分成功，一部分失败的现象。</li>
+<li>事务只针对DML语句有效：因为只有这三个语句是改变表中数据的。<ol>
+<li>insert</li>
+<li>delete</li>
+<li>update</li>
+</ol>
+</li>
+</ol>
+<hr />
+<h2 id="acid">事务四大特性：ACID</h2>
+<ol>
+<li><strong>原子性</strong>（Atomicity）：是指事务包含的所有操作要么全部成功，要么同时失败。</li>
+<li><strong>一致性</strong>（Consistency）：是指事务开始前，和事务完成后，数据应该是一致的。例如张三和李四的钱加起来是5000，中间不管进行过多少次的转账操作(update)，总量5000是不会变的。这就是事务的一致性。</li>
+<li><strong>隔离性</strong>（Isolation）：隔离性是当多个⽤户并发访问数据库时，⽐如操作同⼀张表时，数据库为每⼀个⽤户开启的事务，不能被其他事务的操作所⼲扰，多个并发事务之间要相互隔离。</li>
+<li><strong>持久性</strong>（Durability）：持久性是指⼀个事务⼀旦被提交了，那么对数据库中的数据的改变就是永久性的，即便是在数据库系统遇到故障的情况下也不会丢失提交事务的操作。</li>
+</ol>
+<hr />
+<h2 id="mysql">使用MySQL事务</h2>
+<ul>
+<li>在dos命令窗口中开启MySQL事务：start transaction; 或者：begin;</li>
+<li>回滚事务：rollback; </li>
+<li>提交事务：commit;
+只要执行以上的rollback或者commit，事务都会结束。
+MySQL默认情况下采用的事务机制是：<strong>自动提交</strong>。所谓自动提交就是只要执行一条DML语句则提交一次。</li>
+</ul>
+<hr />
+<h2 id="_3">事务隔离级别</h2>
+<h3 id="_4">介绍</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">隔离级别</th>
+<th style="text-align: center;">脏读</th>
+<th style="text-align: center;">不可重复读</th>
+<th style="text-align: center;">幻读</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">读未提交（read uncommitted）</td>
+<td style="text-align: center;"><strong>存在</strong></td>
+<td style="text-align: center;"><strong>存在</strong></td>
+<td style="text-align: center;"><strong>存在</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;">读提交（read committed）</td>
+<td style="text-align: center;">不存在</td>
+<td style="text-align: center;"><strong>存在</strong></td>
+<td style="text-align: center;"><strong>存在</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;">可重复读（repeatable read）</td>
+<td style="text-align: center;">不存在</td>
+<td style="text-align: center;">不存在</td>
+<td style="text-align: center;"><strong>存在</strong></td>
+</tr>
+<tr>
+<td style="text-align: center;">串行化（serializable）</td>
+<td style="text-align: center;">不存在</td>
+<td style="text-align: center;">不存在</td>
+<td style="text-align: center;">不存在</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>隔离级别从低到高排序：读未提交 &lt; 读提交 &lt; 可重复读 &lt; 串行化</li>
+<li>不同隔离级别会存在不同的现象，现象按照严重性从高到低排序：脏读 &gt; 不可重复读 &gt; 幻读</li>
+</ul>
+<h3 id="_5">查看与设置</h3>
+<p>查看隔离级别
+* mysql默认的隔离级别：可重复读（REPEATABLE READ）
+- 查看当前会话的隔离级别</p>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">select</span><span class="w"> </span><span class="o">@@</span><span class="n">transaction_isolation</span><span class="p">;</span>
+</code></pre>
+<ul>
+<li>查看全局的隔离级别</li>
+</ul>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">select</span><span class="w"> </span><span class="o">@@</span><span class="n">gobal</span><span class="p">.</span><span class="n">transaction_isolation</span><span class="p">;</span>
+</code></pre>
+<p>设置事务隔离级别
+- 会话级</p>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">set</span><span class="w"> </span><span class="k">session</span><span class="w"> </span><span class="k">transaction</span><span class="w"> </span><span class="k">isolation</span><span class="w"> </span><span class="k">level</span><span class="w"> </span><span class="k">read</span><span class="w"> </span><span class="k">committed</span><span class="p">;</span>
+<span class="o">````</span>
+<span class="o">-</span><span class="w"> </span><span class="err">全局级</span>
+<span class="o">```</span><span class="k">sql</span>
+<span class="k">set</span><span class="w"> </span><span class="k">global</span><span class="w"> </span><span class="k">transaction</span><span class="w"> </span><span class="k">isolation</span><span class="w"> </span><span class="k">level</span><span class="w"> </span><span class="k">read</span><span class="w"> </span><span class="k">committed</span><span class="p">;</span>
+</code></pre>
+<h3 id="_6">不同现象</h3>
+<ol>
+<li>脏读：指的是一个事务读取了另一个事务尚未提交的数据，即读取了另一个事务中的脏数据（Dirty Data）。在此情况下，如果另一个事务回滚了或者修改了这些数据，那么读取这些脏数据的事务所处理的数据就是不准确的。（<u>简单来讲：A事务读了B事务没有提交的数据。</u>）</li>
+<li>不可重复读：指在一个事务内，多次读取同一个数据行，得到的结果可能是不一样的。这是由于其他事务对数据行做出了修改操作，导致数据的不一致性。（<u>简单来讲：A事务查询记录张三，B事务执行update张三成为李四，并且commit，A事务再查询这个记录变成了李四。</u>）</li>
+<li>幻读：指在事务执行过程中，前后两次相同的查询条件得到的结果集不一致，可能会变多或变少。（<u>简单来讲：A事务执行<code>select...from...where 3~5</code>，得到n条数据。B事务执行insert到3-5中间，commit。A事务再执行查到了n+1条。</u>）</li>
+</ol>
+<h3 id="_7">隔离级别</h3>
+<ol>
+<li>读未提交（READ UNCOMMITTED）<ul>
+<li>A事务与B事务，A事务可以读取到B事务未提交的数据。这是最低的隔离级别。几乎两个事务之间没有隔离。这种隔离级别是一种理论层面的，在实际的数据库产品中，没有从这个级别起步的。</li>
+<li>当事务隔离级别是读未提交时，三种现象都存在：脏读，不可重复读，幻读。</li>
+<li>将全局事务隔离级别设置为：READ UNCOMMITTED</li>
+</ul>
+</li>
+</ol>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">set</span><span class="w"> </span><span class="k">global</span><span class="w"> </span><span class="k">transaction</span><span class="w"> </span><span class="k">isolation</span><span class="w"> </span><span class="k">level</span><span class="w"> </span><span class="k">read</span><span class="w"> </span><span class="k">uncommitted</span><span class="p">;</span>
+</code></pre>
+<pre><code class="md-fencescode">* 案例：[trans-01](../details/trans-01.md)
+</code></pre>
+<ol>
+<li>读提交（READ COMMITTED）<ul>
+<li>A事务与B事务，A事务可以读取到B事务提交之后的数据。</li>
+<li>Oracle数据库默认的就是这种隔离级别。</li>
+<li>将数据库的全局事务隔离级别设置为读提交：READ COMMITTED</li>
+</ul>
+</li>
+</ol>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">set</span><span class="w"> </span><span class="k">global</span><span class="w"> </span><span class="k">transaction</span><span class="w"> </span><span class="k">isolation</span><span class="w"> </span><span class="k">level</span><span class="w"> </span><span class="k">read</span><span class="w"> </span><span class="k">committed</span><span class="p">;</span>
+</code></pre>
+<pre><code class="md-fencescode">* 案例：[trans-02](../details/trans-02.md)
+</code></pre>
+<ol>
+<li>可重复读（REPEATABLE READ）<ul>
+<li>这个隔离级别是MySQL数据库默认的。</li>
+<li>A事务和B事务，A事务开启后，读取了某一条记录，然后B事务对这条记录进行修改并提交，A事务读取到的还是修改前的数据。这种隔离级别称为可重复读。</li>
+<li>将数据库全局隔离级别修改为可重复读：</li>
+</ul>
+</li>
+</ol>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">set</span><span class="w"> </span><span class="k">global</span><span class="w"> </span><span class="k">transaction</span><span class="w"> </span><span class="k">isolation</span><span class="w"> </span><span class="k">level</span><span class="w"> </span><span class="k">repeatable</span><span class="w"> </span><span class="k">read</span><span class="p">;</span>
+</code></pre>
+<pre><code class="md-fencescode">* 案例：[trans-03](../details/trans-03.md)
+</code></pre>
+<ol>
+<li>串行化（SERIALIZABLE）<ul>
+<li>这种隔离级别最高，避免了所有的问题，缺点是效率低，因为这种隔离级别会导致事务排队处理，不支持并发。</li>
+<li>设置数据库全局隔离级别为串行化：</li>
+</ul>
+</li>
+</ol>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">set</span><span class="w"> </span><span class="k">global</span><span class="w"> </span><span class="k">transaction</span><span class="w"> </span><span class="k">isolation</span><span class="w"> </span><span class="k">level</span><span class="w"> </span><span class="k">serializable</span><span class="p">;</span>
+</code></pre>
+<pre><code class="md-fencescode">* 案例：[trans-04](../details/trans-04.md)
+</code></pre>
+<h3 id="_8">可重复读的幻读问题</h3>
+<p>在上面讲解过程中提到，MySQL默认的隔离级别可重复读，在很大程度上避免了幻读问题（并不能完全解决），那么它是如何解决幻读问题的呢，解决方案包括两种。
+1. 针对<strong>快照读</strong>（普通 select 语句），是<strong>通过 MVCC 方式解决了幻读</strong>，因为可重复读隔离级别下，事务执行过程中看到的数据，一直跟这个事务启动时看到的数据是一致的，即使中途有其他事务插入了一条数据，是查询不出来这条数据的，所以就很好的避免了幻读问题。
+    - 什么是快照读？普通的select语句都是采用的快照读。顾名思义：在整个事务的处理过程中，执行相同的一个select语句时，每次都是读取的快照。（快照指的是固定的某个时刻的数据，就像现实世界中的拍照一样，把那个美好的时刻留下来）。也就是说，当事务隔离级别是可重复读，并且执行的select语句是一个普通的select语句时，都会采用快照读的方式读取数据。
+    * 底层实现原理是：底层由 MVCC（多版本并发控制）实现，实现的方式是开始事务后，在执行第一个查询语句后，会创建一个 Read View，后续的查询语句利用这个 Read View，通过这个 Read View 就可以在 undo log 版本链找到事务开始时的数据，所以事务过程中每次查询的数据都是一样的，即使中途有其他事务插入了新纪录，是查询不出来这条数据的，所以就很好的避免了幻读问题。
+    * 演示：<a href="../details/快照读.html">快照读</a>
+2. 针对<strong>当前读</strong>（select ... for update 等语句），是通过 <strong>next-key lock</strong> （<strong>记录锁</strong>+<strong>间隙锁</strong>） 方式解决了幻读，因为当执行 select ... for update 语句的时候，会加上 next-key lock，如果有其他事务在 next-key lock 锁范围内插入了一条记录，那么这个插入语句就会被阻塞，无法成功插入，所以就很好的避免了幻读问题。
+    * 当前读，顾名思义：每一次都读取最新的数据。当前读包括：update、delete、insert、select...for update。这个很好理解，因为增删改的时候都要基于最新的数据进行增删改。
+    * 而select...for update原理是：对查询范围内的数据进行加锁，不允许其它事务对这个范围内的数据进行增删改。也就是说这个select语句范围内的数据是不允许并发的，只能排队执行，从而避免幻读问题。
+    * select...for update加的锁叫做：<strong>next-key lock</strong>（面试要说）。<strong>我们可以称其为：间隙锁 + 记录锁。间隙锁用来保证在锁定的范围内不允许insert操作。记录锁用来保证在锁定的范围内不允许delete和update操作。</strong>
+    * 演示：<a href="../details/当前读.html">当前读</a></p>
+<h3 id="_9">出现幻读的两种情况</h3>
+<p>在同一个事务处理过程中，如果前后两次都采用快照读，或者都采用当前读，则不会出现幻读问题。如果第一次使用快照读，后面使用了当前读，则会出现幻读问题。</p>
+<h4 id="_10">第一种产生幻读的场景</h4>
+<p>A事务与B事务。在A事务中第一次查询使用快照读，B事务插入数据。然后在A事务中第二次查询使用当前读。则会产生幻读现象。
+演示：</p>
+<table>
+<thead>
+<tr>
+<th><strong>事务A</strong></th>
+<th><strong>事务B</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>mysql&gt; use powernode</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>mysql&gt; use powernode</td>
+</tr>
+<tr>
+<td>mysql&gt; start transaction;</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>mysql&gt; start transaction;</td>
+</tr>
+<tr>
+<td>mysql&gt; select * from a;</td>
+<td></td>
+</tr>
+<tr>
+<td><img alt="image.png" src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1709021313528-7b3b88fd-836a-4223-8b93-ef671edf6f2b.png#averageHue=%230f0e0d&amp;clientId=u0fbbe02e-04ac-4&amp;from=paste&amp;height=187&amp;id=u7e8f9872&amp;originHeight=187&amp;originWidth=301&amp;originalType=binary&amp;ratio=1&amp;rotation=0&amp;showTitle=false&amp;size=4297&amp;status=done&amp;style=shadow&amp;taskId=u49199bba-6760-4fad-9615-dc3c6eaf1ca&amp;title=&amp;width=301" /></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>mysql&gt; insert into a values(5);</td>
+</tr>
+<tr>
+<td></td>
+<td>mysql&gt; commit;</td>
+</tr>
+<tr>
+<td>mysql&gt; select * from a for update; // 产生了幻读</td>
+<td></td>
+</tr>
+<tr>
+<td><img alt="image.png" src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1709021386345-1b47e39d-98e6-42de-bf33-1652ed601c21.png#averageHue=%230f0e0d&amp;clientId=u0fbbe02e-04ac-4&amp;from=paste&amp;height=213&amp;id=uaadf86ec&amp;originHeight=213&amp;originWidth=303&amp;originalType=binary&amp;ratio=1&amp;rotation=0&amp;showTitle=false&amp;size=4605&amp;status=done&amp;style=shadow&amp;taskId=u18140f69-1a56-44c7-9d4f-83517e41e56&amp;title=&amp;width=303" /></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="_11">第二种产生幻读的场景</h4>
+<p>事务A与事务B，在事务A中第一次查询使用快照读，在事务B中插入一条数据，然后在事务A中更新事务B插入的那条记录，最后在事务A中再次使用快照读。则会发生幻读现象。</p>
+<table>
+<thead>
+<tr>
+<th><strong>事务A</strong></th>
+<th><strong>事务B</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>mysql&gt; use powernode</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>mysql&gt; use powernode</td>
+</tr>
+<tr>
+<td>mysql&gt; start transaction;</td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>mysql&gt; start transaction;</td>
+</tr>
+<tr>
+<td>mysql&gt; select * from a;</td>
+<td></td>
+</tr>
+<tr>
+<td><img alt="image.png" src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1709021721456-7e0dd695-29c8-4e2f-a88e-4a1fa2d1df90.png#averageHue=%230f0e0d&amp;clientId=u0fbbe02e-04ac-4&amp;from=paste&amp;height=214&amp;id=ufc5ef576&amp;originHeight=214&amp;originWidth=292&amp;originalType=binary&amp;ratio=1&amp;rotation=0&amp;showTitle=false&amp;size=4581&amp;status=done&amp;style=shadow&amp;taskId=u6f2cda2c-b92a-43bf-8471-dd0a074293e&amp;title=&amp;width=292" /></td>
+<td></td>
+</tr>
+<tr>
+<td></td>
+<td>mysql&gt; insert into a values(6);</td>
+</tr>
+<tr>
+<td></td>
+<td>mysql&gt; commit;</td>
+</tr>
+<tr>
+<td>mysql&gt; update a set id=100 where id=6; //主要是因为这个SQL语句的执行触发了当前读</td>
+<td></td>
+</tr>
+<tr>
+<td>mysql&gt; select * from a; // 产生了幻读</td>
+<td></td>
+</tr>
+<tr>
+<td><img alt="image.png" src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1709021824472-00989fbd-471a-4f5f-a44a-9781652cd3b3.png#averageHue=%230f0e0d&amp;clientId=u0fbbe02e-04ac-4&amp;from=paste&amp;height=243&amp;id=u11717d5c&amp;originHeight=243&amp;originWidth=293&amp;originalType=binary&amp;ratio=1&amp;rotation=0&amp;showTitle=false&amp;size=5106&amp;status=done&amp;style=shadow&amp;taskId=u336e9c35-982b-4abd-8342-88cea428ea0&amp;title=&amp;width=293" /></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="_12">总结可重复读的幻读问题</h4>
+<p>MySQL的可重复读隔离级别（默认隔离级），根据不同的查询方式，分别提出了避免幻读的方案：</p>
+<ul>
+<li>针对快照读（普通 select 语句），是通过 <strong>MVCC</strong> 方式解决了幻读。</li>
+<li>针对当前读（select ... for update 等语句），是通过 next-key lock（记录锁+间隙锁）方式解决了幻读。</li>
+</ul>
+<p>我举例了两个发生幻读场景的例子。</p>
+<ul>
+<li>第一个例子：对于快照读， MVCC 并不能完全避免幻读现象。因为当事务 A 更新了一条事务 B 插入的记录，那么事务 A 前后两次查询的记录条目就不一样了，所以就发生幻读。</li>
+<li>第二个例子：对于当前读，如果事务开启后，并没有执行当前读，而是先快照读，然后这期间如果其他事务插入了一条记录，那么事务后续使用当前读进行查询的时候，就会发现两次查询的记录条目就不一样了，所以就发生幻读。</li>
+</ul>
+<p>所以，MySQL 可重复读隔离级别并没有彻底解决幻读，只是很大程度上避免了幻读现象的发生。
+要避免这类特殊场景下发生幻读的现象的话，就是尽量在开启事务之后，马上执行 select ... for update 这类当前读的语句，因为它会对记录加 next-key lock，从而避免其他事务插入一条新记录。</p>
+<pre lang="python"><code class="language-python md-fencescode"><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">sys</span><span class="o">.</span><span class="n">stdin</span><span class="p">:</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+</code></pre>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

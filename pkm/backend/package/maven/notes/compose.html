@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>compose</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="maven">Maven的继承和聚合</h1>
+<h2 id="maven_1">什么是Maven的继承</h2>
+<p>Maven 的<strong>依赖传递机制</strong>可以一定程度上简化 POM 的配置，但这<strong>仅限于存在依赖关系的项目或模块</strong>中。</p>
+<p>当一个项目的多个模块都依赖于相同版本的 jar 包，且这些模块之间不存在依赖关系，这就导致同<strong>一个依赖需要在多个模块中重复声明</strong>，这显然是不可取的，大量的前人经验告诉我们，<strong>重复往往意味着更多的劳动和更高的潜在风险</strong>。</p>
+<p><img alt="" src="../assets/1748245949826-1e2de092-f7ab-4bac-b265-b5b74ef7c3cf.png" /></p>
+<p>在 Java 面向对象中，我们可以建立一种类的父子结构，然后在父类中声明一些字段和方法供子类继承，这样就可以一定程度上消除重复，做到 “一处声明，多处使用”。在 Maven 的世界中，也有类似的机制，它就是 POM 继承。</p>
+<p>Maven 在设计时，借鉴了 Java 面向对象中的继承思想，提出了 POM 继承思想。当一个项目包含多个模块时，可以在该项目中再创建一个<strong>父模块，并在其 POM 中声明依赖，其他模块的 POM 可通过继承父模块的 POM 来获得对相关依赖的声明</strong>。</p>
+<p>如图所示：</p>
+<p><img alt="" src="../assets/1748246469764-839383ae-8d09-4e61-8d34-6df147630114.png" /></p>
+<h2 id="packagingpom">packaging必须是pom</h2>
+<p><strong>父工程的 </strong><code>packaging</code><strong> 必须设为 </strong><code>pom</code><strong>，因为它本身不包含代码或需要构建产物（如 JAR/WAR），而是作为管理角色，用于统一配置（依赖、插件等）和聚合子模块（</strong><code>&lt;modules&gt;</code><strong>）。</strong>  </p>
+<p>简单来说：  </p>
+<ul>
+<li><strong>不打包代码</strong>：父工程只做管理，不编译、不生成 JAR/WAR。  </li>
+<li><strong>核心作用</strong>：通过 <code>&lt;modules&gt;</code> 管理子模块，通过 <code>&lt;dependencyManagement&gt;</code> 统一依赖版本。  </li>
+<li><strong>Maven 规范</strong>：<code>packaging=pom</code> 是 Maven 识别父工程的标志，确保配置正确继承。</li>
+</ul>
+<p>如果误设为 <code>jar</code>，Maven 会尝试编译父工程（通常无代码），导致构建失败或逻辑混乱。</p>
+<h2 id="_1">子工程继承父工程的什么</h2>
+<table>
+<thead>
+<tr>
+<th><strong>元素</strong></th>
+<th><strong>描述</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><font style="color:#DF2A3F;">groupId</font></td>
+<td><font style="color:#DF2A3F;">项目组 ID，项目坐标的核心元素</font></td>
+</tr>
+<tr>
+<td><font style="color:#DF2A3F;">version</font></td>
+<td><font style="color:#DF2A3F;">项目版本，项目坐标的核心元素</font></td>
+</tr>
+<tr>
+<td>description</td>
+<td>项目的描述信息</td>
+</tr>
+<tr>
+<td>organization</td>
+<td>项目的组织信息</td>
+</tr>
+<tr>
+<td>inceptionYear</td>
+<td>项目的创始年份</td>
+</tr>
+<tr>
+<td>url</td>
+<td>项目的 URL 地址</td>
+</tr>
+<tr>
+<td>developers</td>
+<td>项目的开发者信息</td>
+</tr>
+<tr>
+<td>contributors</td>
+<td>项目的贡献者信息</td>
+</tr>
+<tr>
+<td>distributionManagement</td>
+<td>项目的部署配置</td>
+</tr>
+<tr>
+<td>issueManagement</td>
+<td>项目的缺陷跟踪系统信息</td>
+</tr>
+<tr>
+<td>ciManagement</td>
+<td>项目的持续集成系统信息</td>
+</tr>
+<tr>
+<td>scm</td>
+<td>项目的版本控制系统信息</td>
+</tr>
+<tr>
+<td>mailingLists</td>
+<td>项目的邮件列表信息</td>
+</tr>
+<tr>
+<td><font style="color:#DF2A3F;">properties</font></td>
+<td><font style="color:#DF2A3F;">自定义的 Maven 属性</font></td>
+</tr>
+<tr>
+<td><font style="color:#DF2A3F;">dependencies</font></td>
+<td><font style="color:#DF2A3F;">项目的依赖配置</font></td>
+</tr>
+<tr>
+<td><font style="color:#DF2A3F;">dependencyManagement</font></td>
+<td><font style="color:#DF2A3F;">项目的依赖管理配置</font></td>
+</tr>
+<tr>
+<td>repositories</td>
+<td>项目的仓库配置</td>
+</tr>
+<tr>
+<td><font style="color:#DF2A3F;">build</font></td>
+<td><font style="color:#DF2A3F;">包括项目的源码目录配置、输出目录配置、插件配置、插件管理配置等</font></td>
+</tr>
+<tr>
+<td>reporting</td>
+<td>包括项目的报告输出目录配置、报告插件配置等</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_2">父工程示例</h2>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;project</span><span class="w"> </span><span class="na">xmlns=</span><span class="s">"http://maven.apache.org/POM/4.0.0"</span>
+<span class="w">         </span><span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+<span class="w">         </span><span class="na">xsi:schemaLocation=</span><span class="s">"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;modelVersion&gt;</span>4.0.0<span class="nt">&lt;/modelVersion&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;groupId&gt;</span>com.jkweilai<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>maven-parent<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;version&gt;</span>1.0-SNAPSHOT<span class="nt">&lt;/version&gt;</span>
+<span class="w">    </span><span class="cm">&lt;!--父工程的打包方式必须是pom--&gt;</span>
+<span class="w">    </span><span class="nt">&lt;packaging&gt;</span>pom<span class="nt">&lt;/packaging&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!--声明该父项目包含哪些 子模块（子项目）：聚合子项目--&gt;</span>
+<span class="w">    </span><span class="nt">&lt;modules&gt;</span>
+<span class="w">        </span><span class="nt">&lt;module&gt;</span>maven_web<span class="nt">&lt;/module&gt;</span>
+<span class="w">        </span><span class="nt">&lt;module&gt;</span>maven_son<span class="nt">&lt;/module&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/modules&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;properties&gt;</span>
+<span class="w">        </span><span class="cm">&lt;!--定义属性，集中管理版本号。便于维护。--&gt;</span>
+<span class="w">        </span><span class="nt">&lt;spring.version&gt;</span>6.2.7<span class="nt">&lt;/spring.version&gt;</span>
+<span class="w">        </span><span class="nt">&lt;servlet.version&gt;</span>6.0.0<span class="nt">&lt;/servlet.version&gt;</span>
+
+<span class="w">        </span><span class="nt">&lt;maven.compiler.source&gt;</span>21<span class="nt">&lt;/maven.compiler.source&gt;</span>
+<span class="w">        </span><span class="nt">&lt;maven.compiler.target&gt;</span>21<span class="nt">&lt;/maven.compiler.target&gt;</span>
+<span class="w">        </span><span class="nt">&lt;project.build.sourceEncoding&gt;</span>UTF-8<span class="nt">&lt;/project.build.sourceEncoding&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/properties&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!--只是定义，并没有真正的添加依赖，子工程根据需要有选择的添加依赖--&gt;</span>
+<span class="w">    </span><span class="nt">&lt;dependencyManagement&gt;</span>
+<span class="w">        </span><span class="nt">&lt;dependencies&gt;</span>
+<span class="w">            </span><span class="nt">&lt;dependency&gt;</span>
+<span class="w">                </span><span class="nt">&lt;groupId&gt;</span>org.springframework<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">                </span><span class="nt">&lt;artifactId&gt;</span>spring-context<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">                </span><span class="cm">&lt;!--使用定义好的属性--&gt;</span>
+<span class="w">                </span><span class="nt">&lt;version&gt;</span>${spring.version}<span class="nt">&lt;/version&gt;</span>
+<span class="w">            </span><span class="nt">&lt;/dependency&gt;</span>
+<span class="w">            </span><span class="nt">&lt;dependency&gt;</span>
+<span class="w">                </span><span class="nt">&lt;groupId&gt;</span>jakarta.servlet<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">                </span><span class="nt">&lt;artifactId&gt;</span>jakarta.servlet-api<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">                </span><span class="nt">&lt;version&gt;</span>${servlet.version}<span class="nt">&lt;/version&gt;</span>
+<span class="w">                </span><span class="nt">&lt;scope&gt;</span>provided<span class="nt">&lt;/scope&gt;</span>
+<span class="w">            </span><span class="nt">&lt;/dependency&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/dependencies&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/dependencyManagement&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;build&gt;</span>
+<span class="w">        </span><span class="cm">&lt;!--只用于声明插件配置，不会实际执行插件--&gt;</span>
+<span class="w">        </span><span class="nt">&lt;pluginManagement&gt;</span>
+<span class="w">            </span><span class="nt">&lt;plugins&gt;</span>
+<span class="w">                </span><span class="nt">&lt;plugin&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;groupId&gt;</span>org.eclipse.jetty<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;artifactId&gt;</span>jetty-maven-plugin<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;version&gt;</span>11.0.25<span class="nt">&lt;/version&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;configuration&gt;</span>
+<span class="w">                        </span><span class="nt">&lt;httpConnector&gt;</span>
+<span class="w">                            </span><span class="nt">&lt;port&gt;</span>8080<span class="nt">&lt;/port&gt;</span>
+<span class="w">                        </span><span class="nt">&lt;/httpConnector&gt;</span>
+<span class="w">                        </span><span class="nt">&lt;webApp&gt;</span>
+<span class="w">                            </span><span class="nt">&lt;contextPath&gt;</span>/<span class="nt">&lt;/contextPath&gt;</span>
+<span class="w">                        </span><span class="nt">&lt;/webApp&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;/configuration&gt;</span>
+<span class="w">                </span><span class="nt">&lt;/plugin&gt;</span>
+<span class="w">            </span><span class="nt">&lt;/plugins&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/pluginManagement&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/build&gt;</span>
+
+<span class="nt">&lt;/project&gt;</span>
+</code></pre>
+<h2 id="_3">子工程示例</h2>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;project</span><span class="w"> </span><span class="na">xmlns=</span><span class="s">"http://maven.apache.org/POM/4.0.0"</span>
+<span class="w">         </span><span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+<span class="w">         </span><span class="na">xsi:schemaLocation=</span><span class="s">"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;modelVersion&gt;</span>4.0.0<span class="nt">&lt;/modelVersion&gt;</span>
+<span class="w">    </span><span class="nt">&lt;parent&gt;</span>
+<span class="w">        </span><span class="nt">&lt;groupId&gt;</span>com.jkweilai<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">        </span><span class="nt">&lt;artifactId&gt;</span>maven-parent<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">        </span><span class="nt">&lt;version&gt;</span>1.0-SNAPSHOT<span class="nt">&lt;/version&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/parent&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!--可以省略groupId和version，与父工程保持一致--&gt;</span>
+<span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>maven_web<span class="nt">&lt;/artifactId&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;packaging&gt;</span>war<span class="nt">&lt;/packaging&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!--需要什么依赖添加什么依赖，可以省略版本号，版本由父工程统一管理--&gt;</span>
+<span class="w">    </span><span class="nt">&lt;dependencies&gt;</span>
+<span class="w">        </span><span class="nt">&lt;dependency&gt;</span>
+<span class="w">            </span><span class="nt">&lt;groupId&gt;</span>org.springframework<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">            </span><span class="nt">&lt;artifactId&gt;</span>spring-context<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/dependency&gt;</span>
+<span class="w">        </span><span class="nt">&lt;dependency&gt;</span>
+<span class="w">            </span><span class="nt">&lt;groupId&gt;</span>jakarta.servlet<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">            </span><span class="nt">&lt;artifactId&gt;</span>jakarta.servlet-api<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/dependency&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/dependencies&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!--使用jetty插件--&gt;</span>
+<span class="w">    </span><span class="nt">&lt;build&gt;</span>
+<span class="w">        </span><span class="nt">&lt;plugins&gt;</span>
+<span class="w">            </span><span class="nt">&lt;plugin&gt;</span>
+<span class="w">                </span><span class="nt">&lt;groupId&gt;</span>org.eclipse.jetty<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">                </span><span class="nt">&lt;artifactId&gt;</span>jetty-maven-plugin<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">                </span><span class="nt">&lt;version&gt;</span>11.0.25<span class="nt">&lt;/version&gt;</span>
+<span class="w">                </span><span class="nt">&lt;configuration&gt;</span>
+<span class="w">                    </span><span class="cm">&lt;!--子工程可以自定义端口号，不写就使用父工程的--&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;httpConnector&gt;</span>
+<span class="w">                        </span><span class="nt">&lt;port&gt;</span>8081<span class="nt">&lt;/port&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;/httpConnector&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;webApp&gt;</span>
+<span class="w">                        </span><span class="nt">&lt;contextPath&gt;</span>/<span class="nt">&lt;/contextPath&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;/webApp&gt;</span>
+<span class="w">                </span><span class="nt">&lt;/configuration&gt;</span>
+<span class="w">            </span><span class="nt">&lt;/plugin&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/plugins&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/build&gt;</span>
+
+<span class="nt">&lt;/project&gt;</span>
+</code></pre>
+<p><strong><font style="color:#DF2A3F;">总结：通过继承可以实现子工程沿用父工程的配置。大大减少重复设置。 </font></strong></p>
+<h2 id="maven_2">什么是Maven的聚合</h2>
+<p>使用 Maven 聚合功能对项目进行构建时，需要在该项目中额外创建一个的聚合模块，然后通过这个模块构建整个项目的所有模块。聚合模块仅仅是帮助聚合其他模块的工具，其本身并无任何实质内容，对于一个<code>**纯聚合模块**</code>中只有一个 POM 文件，不包含 src 等目录。聚合模块的打包方式<code>packaging</code>也是 <code>pom</code>，可以在其 POM 中通过 <code>modules</code> 下的 <code>module</code> 子元素来添加需要聚合的模块的目录路径，以下是一个<code>**纯聚合模块**</code>的<code>pom</code>：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;project</span><span class="w"> </span><span class="na">xmlns=</span><span class="s">"http://maven.apache.org/POM/4.0.0"</span>
+<span class="w">         </span><span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+<span class="w">         </span><span class="na">xsi:schemaLocation=</span><span class="s">"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;modelVersion&gt;</span>4.0.0<span class="nt">&lt;/modelVersion&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;groupId&gt;</span>com.jkweilai<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>maven_aggregation<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;version&gt;</span>1.0-SNAPSHOT<span class="nt">&lt;/version&gt;</span>
+<span class="w">    </span><span class="nt">&lt;packaging&gt;</span>pom<span class="nt">&lt;/packaging&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;modules&gt;</span>
+<span class="w">        </span><span class="nt">&lt;module&gt;</span>../maven-parent<span class="nt">&lt;/module&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/modules&gt;</span>
+
+<span class="nt">&lt;/project&gt;</span>
+</code></pre>
+<p>什么是<code>**纯聚合项目**</code>，什么是<code>**非纯聚合项目**</code>？</p>
+<ul>
+<li>纯聚合项目：项目中只有一个<code>pom.xml</code>，其他的都没有，并且在<code>pom.xml</code>文件中只编写了<code>&lt;modules&gt;&lt;/modules&gt;</code>标签，如下：</li>
+</ul>
+<p><img alt="" src="../assets/1748330794975-c699166a-ca4b-4335-90df-473964578231.png" /></p>
+<ul>
+<li>非纯聚合项目：一个项目中既有<code>**聚合部分**</code>，又有<code>**继承部分**</code>，聚合和继承混合，例如之前的<code>maven-parent</code>项目，它的<code>pom.xml</code>文件中既有聚合部分又有继承部分，如下：</li>
+</ul>
+<p><img alt="" src="../assets/1748330761069-89bdc6bb-b620-41a9-ba7f-1c8705ed08c3.png" /></p>
+<p>现代的开发方式一般都是<code>**纯聚合**</code>+<code>**非纯聚合**</code><strong>的混合开发方式。</strong></p>
+<h2 id="_4">聚合项目的作用</h2>
+<p>一键构建：通过聚合项目POM的<code>&lt;modules&gt;</code>配置，可以一次性构建所有子模块（不用挨个进目录执行命令）</p>
+<p>对于之前的这几个项目：<code>maven_aggregation</code>、<code>maven-parent</code>、<code>maven_son</code>、<code>maven_web</code>，其中：</p>
+<ul>
+<li><code>maven_aggregation</code>是一个纯聚合项目</li>
+<li><code>maven-parent</code>是一个既有聚合又有继承的项目</li>
+<li><code>maven_son</code>是<code>maven-parent</code>的子项目</li>
+<li><code>maven_web</code>是<code>maven-parent</code>的子项目</li>
+</ul>
+<p>在<code>maven_aggregation</code>中：</p>
+<p><img alt="" src="../assets/1748331527076-0de6820c-c227-4a4d-9d94-9c50d40ba861.png" /></p>
+<p>在<code>maven-parent</code>中：</p>
+<p><img alt="" src="../assets/1748331537250-d75cd995-74da-4130-b160-6ec75c6954f3.png" /></p>
+<p>这个时候执行<code>maven_aggregation</code>项目的<code>install</code>时：</p>
+<p><img alt="" src="../assets/1748331611250-1ed23635-7685-464f-b047-d32c73edebb0.png" /></p>
+<p>所有被管理的子项目会按照顺序执行各自的<code>install</code>：</p>
+<p><img alt="" src="../assets/1748331659176-7d024fe1-18d0-4ab4-82d0-b4ece7f31987.png" /></p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

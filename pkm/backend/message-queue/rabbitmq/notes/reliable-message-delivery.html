@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>reliable-message-delivery</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="_1">消息的可靠性投递</h1>
+<p>什么是可靠性投递：生产者发了一条消息，消费者就要消费一条消息。这才是正常的。但实际应用中可能会出现投递失败。</p>
+<h2 id="_2">故障及解决方案描述</h2>
+<h3 id="1">故障情况 1</h3>
+<p><strong>消息压根没有发到消息队列</strong>，解决方案包括两个：</p>
+<ol>
+<li><strong>在生产者端启用确认机制。当消息发送失败（如交换机或队列不存在）时，生产者立即感知并执行重发。</strong></li>
+<li><strong>为主交换机配置一个备份交换机。当消息无法路由到任何队列时，自动转发到备份交换机，保证消息不丢失。</strong></li>
+</ol>
+<h3 id="2">故障情况 2</h3>
+<p>消息发到消息服务器后，服务器宕机了，导致内存中消息丢失，解决方案是：<strong>将消息持久化到硬盘上。</strong></p>
+<h3 id="3">故障情况 3</h3>
+<p>消息发到消息服务器了，消息服务器也没有宕机，但是消费端在消费的时候出现异常了。导致消息没有成功消费，解决方案是：</p>
+<ol>
+<li><strong>成功则确认：处理成功时消费端返回确认(ACK)，消息服务器删除消息。</strong></li>
+<li><strong>失败则拒收：处理失败时消费端返回(NACK)，消息可以重新入队等待再次消费。（这属于消费端的重试机制）</strong></li>
+</ol>
+<h2 id="1_1"><strong>解决故障情况 1 的具体实践</strong></h2>
+<h3 id="1_2">方案 1：生产端确认机制</h3>
+<p><strong>第一步：</strong>创建生产端的 SpringBoot 项目 <strong>producer-confirm</strong>，引入依赖。操作和之前相同。</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;dependencies&gt;</span>
+<span class="w">    </span><span class="nt">&lt;dependency&gt;</span>
+<span class="w">        </span><span class="nt">&lt;groupId&gt;</span>org.springframework.boot<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">        </span><span class="nt">&lt;artifactId&gt;</span>spring-boot-starter-amqp<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/dependency&gt;</span>
+<span class="w">    </span><span class="nt">&lt;dependency&gt;</span>
+<span class="w">        </span><span class="nt">&lt;groupId&gt;</span>org.projectlombok<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">        </span><span class="nt">&lt;artifactId&gt;</span>lombok<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">        </span><span class="nt">&lt;optional&gt;</span>true<span class="nt">&lt;/optional&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/dependency&gt;</span>
+<span class="w">    </span><span class="nt">&lt;dependency&gt;</span>
+<span class="w">        </span><span class="nt">&lt;groupId&gt;</span>org.springframework.boot<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">        </span><span class="nt">&lt;artifactId&gt;</span>spring-boot-starter-test<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">        </span><span class="nt">&lt;scope&gt;</span>test<span class="nt">&lt;/scope&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/dependency&gt;</span>
+<span class="nt">&lt;/dependencies&gt;</span>
+</code></pre>
+<p><strong>第二步：</strong>在 <code>application.yml</code>中启用生产端确认机制。重点关注以下<strong>两个配置</strong>。</p>
+<pre lang="yaml"><code class="language-yaml md-fencescode"><span class="nt">spring</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">rabbitmq</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">localhost</span>
+<span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5672</span>
+<span class="w">    </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin</span>
+<span class="w">    </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">123456</span>
+<span class="w">    </span><span class="nt">virtual-host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/</span>
+<span class="w">    </span><span class="nt">publisher-confirm-type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">correlated</span><span class="w"> </span><span class="c1"># 启用交换机的确认</span>
+<span class="w">    </span><span class="nt">publisher-returns</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span><span class="w"> </span><span class="c1"># 启用队列的确认</span>
+</code></pre>
+<p><strong>第三步：</strong>编写配置类，配置类中编写交换机的回调和队列的回调。（<strong>对方收到还是没有收到，我们生产端是不知道的，只能编写回调，等着别人通知咱。</strong>）</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mq.config</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.amqp.core.ReturnedMessage</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.amqp.rabbit.connection.CorrelationData</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.amqp.rabbit.core.RabbitTemplate</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.annotation.Configuration</span><span class="p">;</span>
+
+<span class="nd">@Configuration</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">ProducerAckConfig</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">RabbitTemplate</span><span class="p">.</span><span class="na">ConfirmCallback</span><span class="p">,</span><span class="w"> </span><span class="n">RabbitTemplate</span><span class="p">.</span><span class="na">ReturnsCallback</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="c1">// 消息是否发送到交换机的回调。发送成功或失败，这个回调都会执行。</span>
+<span class="w">    </span><span class="c1">// correlationData：消息的"身份证"，用来匹配哪条消息被确认了（你在发送消息时没有设置关联数据时，它是null）</span>
+<span class="w">    </span><span class="c1">// ack：投递结果（true=成功，false=失败）</span>
+<span class="w">    </span><span class="c1">// cause: 失败原因（成功时为null）</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">confirm</span><span class="p">(</span><span class="n">CorrelationData</span><span class="w"> </span><span class="n">correlationData</span><span class="p">,</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="n">ack</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">cause</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"交换机 correlationData："</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">correlationData</span><span class="p">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"交换机 ack："</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ack</span><span class="p">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"交换机 cause："</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">cause</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// 消息是否发送到队列的回调。发送失败，这个回调才会执行。（发送成功，回调不执行。）</span>
+<span class="w">    </span><span class="c1">// ReturnedMessage returned - 消息投递失败的完整返回信息包</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">returnedMessage</span><span class="p">(</span><span class="n">ReturnedMessage</span><span class="w"> </span><span class="n">returned</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"队列 消息主题："</span><span class="w"> </span><span class="o">+</span><span class="w">  </span><span class="k">new</span><span class="w"> </span><span class="n">String</span><span class="p">(</span><span class="n">returned</span><span class="p">.</span><span class="na">getMessage</span><span class="p">().</span><span class="na">getBody</span><span class="p">()));</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"队列 应答码："</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">returned</span><span class="p">.</span><span class="na">getReplyCode</span><span class="p">());</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"队列 应答描述："</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">returned</span><span class="p">.</span><span class="na">getReplyText</span><span class="p">());</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"队列 对应的交换机："</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">returned</span><span class="p">.</span><span class="na">getExchange</span><span class="p">());</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"队列 对应的路由键："</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">returned</span><span class="p">.</span><span class="na">getRoutingKey</span><span class="p">());</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>第四步：</strong>将回调函数注册到 <code>RabbitTemplate</code>对象中。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mq.config</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.annotation.PostConstruct</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.amqp.core.ReturnedMessage</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.amqp.rabbit.connection.CorrelationData</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.amqp.rabbit.core.RabbitTemplate</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.beans.factory.annotation.Autowired</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.annotation.Configuration</span><span class="p">;</span>
+
+<span class="nd">@Configuration</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">ProducerAckConfig</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">RabbitTemplate</span><span class="p">.</span><span class="na">ConfirmCallback</span><span class="p">,</span><span class="w"> </span><span class="n">RabbitTemplate</span><span class="p">.</span><span class="na">ReturnsCallback</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="c1">// =====================这段代码是将回调注册到RabbitTemplate===============================</span>
+<span class="w">    </span><span class="nd">@Autowired</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">RabbitTemplate</span><span class="w"> </span><span class="n">rabbitTemplate</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// 这个注解的作用是：构造方法执行后立即执行该方法。JDK内置注解。</span>
+<span class="w">    </span><span class="nd">@PostConstruct</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">init</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">rabbitTemplate</span><span class="p">.</span><span class="na">setConfirmCallback</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+<span class="w">        </span><span class="n">rabbitTemplate</span><span class="p">.</span><span class="na">setReturnsCallback</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="c1">// =====================这段代码是将回调注册到RabbitTemplate===============================</span>
+
+
+
+
+<span class="w">    </span><span class="c1">// 消息是否发送到交换机的回调。发送成功或失败，这个回调都会执行。</span>
+<span class="w">    </span><span class="c1">// correlationData：消息的"身份证"，用来匹配哪条消息被确认了（你在发送消息时没有设置关联数据时，它是null）</span>
+<span class="w">    </span><span class="c1">// ack：投递结果（true=成功，false=失败）</span>
+<span class="w">    </span><span class="c1">// cause: 失败原因（成功时为null）</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">confirm</span><span class="p">(</span><span class="n">CorrelationData</span><span class="w"> </span><span class="n">correlationData</span><span class="p">,</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="n">ack</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">cause</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"交换机 correlationData："</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">correlationData</span><span class="p">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"交换机 ack："</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">ack</span><span class="p">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"交换机 cause："</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">cause</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// 消息是否发送到队列的回调。发送失败，这个回调才会执行。（发送成功，回调不执行。）</span>
+<span class="w">    </span><span class="c1">// ReturnedMessage returned - 消息投递失败的完整返回信息包</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">returnedMessage</span><span class="p">(</span><span class="n">ReturnedMessage</span><span class="w"> </span><span class="n">returned</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"队列 消息主题："</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">String</span><span class="p">(</span><span class="n">returned</span><span class="p">.</span><span class="na">getMessage</span><span class="p">().</span><span class="na">getBody</span><span class="p">()));</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"队列 应答码："</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">returned</span><span class="p">.</span><span class="na">getReplyCode</span><span class="p">());</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"队列 应答描述："</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">returned</span><span class="p">.</span><span class="na">getReplyText</span><span class="p">());</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"队列 对应的交换机："</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">returned</span><span class="p">.</span><span class="na">getExchange</span><span class="p">());</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"队列 对应的路由键："</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">returned</span><span class="p">.</span><span class="na">getRoutingKey</span><span class="p">());</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>第五步：</strong>编写测试程序，发送消息。分别演示三种情况：（1）一切正常的情况。（2）交换机名字写错的情况。（3）队列名字写错的情况。观察回调的执行情况。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mq</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.junit.jupiter.api.Test</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.amqp.rabbit.core.RabbitTemplate</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.beans.factory.annotation.Autowired</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.boot.test.context.SpringBootTest</span><span class="p">;</span>
+
+<span class="nd">@SpringBootTest</span>
+<span class="kd">class</span> <span class="nc">ProducerConfirmApplicationTests</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@Autowired</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">RabbitTemplate</span><span class="w"> </span><span class="n">rabbitTemplate</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// 交换机名称</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">EXCHANGE_NAME</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"exchange.direct.order"</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">// 路由键</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">ROUTING_KEY</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"order"</span><span class="p">;</span>
+
+<span class="w">    </span><span class="nd">@Test</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">test01</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 测试到交换机和队列都成功的情况</span>
+<span class="w">        </span><span class="c1">//rabbitTemplate.convertAndSend(EXCHANGE_NAME, ROUTING_KEY, "hello rabbit!");</span>
+<span class="w">        </span><span class="c1">// 测试发送到交换机失败</span>
+<span class="w">        </span><span class="c1">//rabbitTemplate.convertAndSend(EXCHANGE_NAME + "error", ROUTING_KEY, "hello rabbit!");</span>
+<span class="w">        </span><span class="c1">// 测试发送到队列失败</span>
+<span class="w">        </span><span class="n">rabbitTemplate</span><span class="p">.</span><span class="na">convertAndSend</span><span class="p">(</span><span class="n">EXCHANGE_NAME</span><span class="p">,</span><span class="w"> </span><span class="n">ROUTING_KEY</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">"error"</span><span class="p">,</span><span class="w"> </span><span class="s">"hello rabbit!"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>三种情况的测试结果：</p>
+<p>都成功：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763880929607-9a4951f8-2724-4ebe-b81a-fbb2fa4bcbc6.png" width="270.4" title="" crop="0,0,1,1" id="u6c89134f" class="ne-image"></p>
+<p>到达交换机失败：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763880972864-133eb971-577e-4717-9575-153c66e73e0a.png" width="860" title="" crop="0,0,1,1" id="u602bc35a" class="ne-image"></p>
+<p>到达队列失败：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763880998739-f9ceee06-4aa8-46af-938e-5bd637bcbb5d.png" width="348.8" title="" crop="0,0,1,1" id="u570f2f2d" class="ne-image"></p>
+<h3 id="2_1">方案 2：启用备用交换机（使用较少）</h3>
+<p><strong>注意：测试代码我们使用 SpringBoot 第一次集成 RabbitMQ 的案例。</strong></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763882982507-a8195421-f2d2-4760-aa67-6e903afc8505.png" width="844.8" title="" crop="0,0,1,1" id="u1c0d6e15" class="ne-image"></p>
+<p>启用备用交换机原理：消息到达目标交换机，目标交换机绑定队列时失败，启用备用交换机， 备用交换机会将消息绑定到其他队列，消费者端一般的消费方式为：<strong>记录日志/告警</strong>（通知运维人员/开发人员等）。</p>
+<p><strong>实现步骤如下：</strong></p>
+<p><strong>第一步：</strong>创建备用交换机。（注意：备用交换机的类型必须选择 <strong>Fanout</strong>，因为<strong>主交换机</strong>将消息发到<strong>备用交换机</strong>的时候<strong>没有带路由键</strong>，因此备用交换机只能以广播形式将消息发送到其他队列）</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763881859296-34de893a-8cce-471c-a1ce-bcf459f9982b.png" width="846.4" title="" crop="0,0,1,1" id="u1625aea7" class="ne-image"></p>
+<p><strong>第二步：</strong>创建和备用交换机绑定的<strong>队列</strong>。</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763881969089-81309191-dbf0-422e-8004-d0849ab609db.png" width="1000" title="" crop="0,0,1,1" id="uedc5b4dc" class="ne-image"></p>
+<p><strong>第三步：</strong>备用交换机绑定新建的队列（<strong>不需要指定路由键，因为该交换机类型是 Fanout</strong>）</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763882192756-28c0527d-5c8c-4bf4-a6a2-6b3eb51ca8ca.png" width="852" title="" crop="0,0,1,1" id="u9d80c34d" class="ne-image"></p>
+<p><strong>第四步：</strong>目标交换机绑定备用交换机</p>
+<p>没有提供修改功能，只能删除目标交换机，重新创建新的目标交换机，然后将目标交换机和备用交换机进行绑定。</p>
+<p><strong>删除目标交换机：</strong></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763883298691-5fcc36e2-d036-447c-8b07-9b86a34c0c34.png" width="424.8" title="" crop="0,0,1,1" id="u6160223d" class="ne-image"></p>
+<p><strong>新建目标交换机时绑定备用交换机：</strong></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763883450499-f5433ee4-74cd-4f53-9c2c-406c2de19d5b.png" width="789.6" title="" crop="0,0,1,1" id="u4d4f7dd4" class="ne-image"></p>
+<p><strong>第五步：</strong>目标队列 <code>queue.order</code> 重新绑定路由键</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763884014006-e9c321a9-c52a-4b22-891c-9568d72e2733.png" width="831.2" title="" crop="0,0,1,1" id="u8b15cbf4" class="ne-image"></p>
+<p><strong>第六步：</strong>测试</p>
+<ol>
+<li>运行我们 SpringBoot 集成 RabbitMQ 的第一个案例的消费端程序。再运行生产端的程序，看看正常情况下，消费端是否能够收到消息。</li>
+</ol>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763884414893-24467c3a-e672-4ee6-98cf-9506cb6b3f0b.png" width="256.8" title="" crop="0,0,1,1" id="uf57f4f62" class="ne-image"></p>
+<ol>
+<li>接下来将生产端发送消息的代码中路由键修改一下，让路由键不存在，看看备用交换机和备用队列是否能够正常起作用。</li>
+</ol>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763884449317-8f601b3a-9274-477e-81d4-889ff08e318b.png" width="899.2" title="" crop="0,0,1,1" id="u02f25e14" class="ne-image"></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763884522053-9e749943-987e-422e-a3be-3c30e88efba5.png" width="1048.8" title="" crop="0,0,1,1" id="ud0dc2de7" class="ne-image"></p>
+<h2 id="2_2">解决故障情况 2 的具体实践</h2>
+<p>当消息服务器宕机后，保存在内存当中的消息会丢失，可以将消息进行持久化，这样服务器宕机，消息就不会丢失了。</p>
+<p>好消息：对于 SpringBoot 项目集成 RabbitMQ，默认消息就是支持持久化的，比如我们编写这样一段生产者发送消息的代码：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@SpringBootTest</span>
+<span class="kd">class</span> <span class="nc">SpringbootRabbitmqProducerApplicationTests</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Resource</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">RabbitTemplate</span><span class="w"> </span><span class="n">rabbitTemplate</span><span class="p">;</span>
+<span class="w">    </span><span class="nd">@Test</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">test01</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">rabbitTemplate</span><span class="p">.</span><span class="na">convertAndSend</span><span class="p">(</span><span class="s">"exchange.direct.order"</span><span class="p">,</span><span class="w"> </span><span class="s">"order"</span><span class="p">,</span><span class="w"> </span><span class="s">"hello rabbit mq!!!"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行测试程序，完成消息的发送，接下来，我们从 web 管理界面上可以看到下图效果：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2026/png/21376908/1770631688431-6990d3c1-7bd4-4add-a80c-fd0769e0ae64.png" width="418.4" title="" crop="0,0,1,1" id="u899499b6" class="ne-image"></p>
+<h2 id="3_1">解决故障情况 3 的具体实践</h2>
+<p>消费端在消费的过程中如果<strong>出现了异常</strong>表示<strong>消费失败</strong>，如果<strong>没有出现异常</strong>表示<strong>消费成功</strong>。</p>
+<p>消费成功，返回 ACK，消息队列将消息删除。</p>
+<p>消费失败，返回 NACK，消费端可以选择：<strong>将消息重新放回队列再次消费 </strong>或 <strong>发出告警信息</strong>。</p>
+<p><strong>实现步骤如下：</strong></p>
+<p><strong>第一步：</strong>创建 SpringBoot 项目 <code>consumer-confirm</code>，引入依赖：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;dependencies&gt;</span>
+<span class="w">    </span><span class="nt">&lt;dependency&gt;</span>
+<span class="w">        </span><span class="nt">&lt;groupId&gt;</span>org.springframework.boot<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">        </span><span class="nt">&lt;artifactId&gt;</span>spring-boot-starter-amqp<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/dependency&gt;</span>
+<span class="w">    </span><span class="nt">&lt;dependency&gt;</span>
+<span class="w">        </span><span class="nt">&lt;groupId&gt;</span>org.springframework.boot<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">        </span><span class="nt">&lt;artifactId&gt;</span>spring-boot-starter-web<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/dependency&gt;</span>
+<span class="nt">&lt;/dependencies&gt;</span>
+</code></pre>
+<p><strong>第二步：</strong>编写 yml 配置文件（<strong>添加一项重要的配置</strong>）</p>
+<pre lang="yaml"><code class="language-yaml md-fencescode"><span class="nt">spring</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">rabbitmq</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">localhost</span>
+<span class="w">    </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5672</span>
+<span class="w">    </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin</span>
+<span class="w">    </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">123456</span>
+<span class="w">    </span><span class="nt">virtual-host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">/</span>
+<span class="w">    </span><span class="nt">listener</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">simple</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">acknowledge-mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">manual</span><span class="w"> </span><span class="c1"># 把消息确认默认修改为手动确认</span>
+</code></pre>
+<p><strong>不设置</strong> <strong>acknowledge-mode: manual</strong> <strong>的后果就是：</strong></p>
+<ul>
+<li><strong>Spring Boot 会自动管理消息确认</strong></li>
+<li><strong>方法正常完成 → </strong>自动ACK<strong>（消息被删除）</strong></li>
+<li><strong>方法抛出异常 → </strong>自动NACK<strong>（消息重新入队或进入死信）</strong></li>
+</ul>
+<p><strong>手动模式让你对消息确认有完全的控制权，适合需要精确控制重试逻辑的业务场景。</strong></p>
+<p><strong>第三步：</strong>编写消费端的监听程序（<strong>核心代码</strong>）</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.mq.listener</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.rabbitmq.client.Channel</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.amqp.core.Message</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.amqp.rabbit.annotation.RabbitListener</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.io.IOException</span><span class="p">;</span>
+
+<span class="nd">@Component</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MyMessageListener</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">QUEUE_NAME</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"queue.order"</span><span class="p">;</span>
+
+<span class="w">    </span><span class="nd">@RabbitListener</span><span class="p">(</span><span class="n">queues</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="n">QUEUE_NAME</span><span class="p">})</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">processMessage</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">dataString</span><span class="p">,</span><span class="w"> </span><span class="n">Message</span><span class="w"> </span><span class="n">message</span><span class="p">,</span><span class="w"> </span><span class="n">Channel</span><span class="w"> </span><span class="n">channel</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">IOException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// false：表示该消失是首次投递的消息。</span>
+<span class="w">        </span><span class="c1">// true：表示该消息不是首次投递的消息，已经重试过了。</span>
+<span class="w">        </span><span class="n">Boolean</span><span class="w"> </span><span class="n">redelivered</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">message</span><span class="p">.</span><span class="na">getMessageProperties</span><span class="p">().</span><span class="na">getRedelivered</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">// 通过 message 获取 deliveryTag（可以看做是消息的唯一标识：身份证号）</span>
+<span class="w">        </span><span class="c1">// 队列要用这个身份证号，队列根据身份证号获取该消息，进行后续操作（例如：删除消息）。</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">deliveryTag</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">message</span><span class="p">.</span><span class="na">getMessageProperties</span><span class="p">().</span><span class="na">getDeliveryTag</span><span class="p">();</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"消费端收到消息:"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">dataString</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">"，正在处理消息，处理核心业务....."</span><span class="p">);</span>
+<span class="w">            </span><span class="c1">// 返回ACK的操作</span>
+<span class="w">            </span><span class="c1">// 第一个参数是：消息的唯一标识。</span>
+<span class="w">            </span><span class="c1">// 第二个参数是multiple：true表示支持多项</span>
+</code></pre>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

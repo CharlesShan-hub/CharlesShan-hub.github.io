@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>springai-chatclient</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="chatclient-prompt">ChatClient 与 Prompt 工程</h1>
+<h2 id="chatclient-spring-ai">一、ChatClient — Spring AI 的心脏</h2>
+<p>ChatClient 是 Spring AI 的高层 Fluent API，封装了底层 ChatModel，提供链式调用的编程体验。</p>
+<h3 id="_1">类比理解</h3>
+<blockquote>
+<p>ChatClient 之于 AI = JdbcTemplate 之于数据库
+都封装了底层细节，提供了简洁的 Fluent API</p>
+</blockquote>
+<h3 id="_2">基本用法</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@RestController</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">ChatController</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">ChatClient</span><span class="w"> </span><span class="n">chatClient</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">ChatController</span><span class="p">(</span><span class="n">ChatClient</span><span class="p">.</span><span class="na">Builder</span><span class="w"> </span><span class="n">builder</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">chatClient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">builder</span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// 最简单的调用</span>
+<span class="w">    </span><span class="nd">@GetMapping</span><span class="p">(</span><span class="s">"/ai/simple"</span><span class="p">)</span>
+<span class="w">    </span><span class="n">String</span><span class="w"> </span><span class="nf">simpleChat</span><span class="p">(</span><span class="nd">@RequestParam</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">message</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">chatClient</span><span class="p">.</span><span class="na">prompt</span><span class="p">()</span>
+<span class="w">                </span><span class="p">.</span><span class="na">user</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+<span class="w">                </span><span class="p">.</span><span class="na">call</span><span class="p">()</span>
+<span class="w">                </span><span class="p">.</span><span class="na">content</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// 带 SystemMessage 的调用</span>
+<span class="w">    </span><span class="nd">@GetMapping</span><span class="p">(</span><span class="s">"/ai/expert"</span><span class="p">)</span>
+<span class="w">    </span><span class="n">String</span><span class="w"> </span><span class="nf">expertChat</span><span class="p">(</span><span class="nd">@RequestParam</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">question</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">chatClient</span><span class="p">.</span><span class="na">prompt</span><span class="p">()</span>
+<span class="w">                </span><span class="p">.</span><span class="na">system</span><span class="p">(</span><span class="s">"你是一个资深的 Java 架构师，回答要专业、简洁、有代码示例"</span><span class="p">)</span>
+<span class="w">                </span><span class="p">.</span><span class="na">user</span><span class="p">(</span><span class="n">question</span><span class="p">)</span>
+<span class="w">                </span><span class="p">.</span><span class="na">call</span><span class="p">()</span>
+<span class="w">                </span><span class="p">.</span><span class="na">content</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// 流式响应（打字机效果）</span>
+<span class="w">    </span><span class="nd">@GetMapping</span><span class="p">(</span><span class="s">"/ai/stream"</span><span class="p">)</span>
+<span class="w">    </span><span class="n">Flux</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">streamChat</span><span class="p">(</span><span class="nd">@RequestParam</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">message</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">chatClient</span><span class="p">.</span><span class="na">prompt</span><span class="p">()</span>
+<span class="w">                </span><span class="p">.</span><span class="na">user</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+<span class="w">                </span><span class="p">.</span><span class="na">stream</span><span class="p">()</span>
+<span class="w">                </span><span class="p">.</span><span class="na">content</span><span class="p">();</span><span class="w">  </span><span class="c1">// 返回 Flux&lt;String&gt;，前端 SSE 接收</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="chatclient">ChatClient 的完整调用链</h3>
+<pre><code class="md-fencescode">chatClient
+    .prompt()                    // 创建 Prompt 构建器
+    .system(&quot;...&quot;)               // 设置系统消息
+    .user(&quot;...&quot;)                 // 设置用户消息
+    .messages(list)              // 设置多轮对话历史
+    .options(callOptions)        // 设置模型参数（temperature 等）
+    .advisors(advisors)          // 添加 Advisors 链
+    .call()                      // 同步调用
+    .content();                  // 获取文本响应
+// 或
+    .stream()                    // 流式调用
+    .content();                  // 获取 Flux&lt;String&gt;
+// 或
+    .entity(MyClass.class);      // 获取结构化输出（模块 3 讲）
+</code></pre>
+<h2 id="prompt">二、Prompt 的三层消息结构</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">消息类型</th>
+<th style="text-align: left;">角色</th>
+<th style="text-align: left;">作用</th>
+<th style="text-align: left;">示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">SystemMessage</td>
+<td style="text-align: left;">系统</td>
+<td style="text-align: left;">设定 AI 的角色和行为规则</td>
+<td style="text-align: left;">"你是一个专业的 Java 技术顾问"</td>
+</tr>
+<tr>
+<td style="text-align: left;">UserMessage</td>
+<td style="text-align: left;">用户</td>
+<td style="text-align: left;">用户的输入/问题</td>
+<td style="text-align: left;">"Spring AI 和 LangChain 有什么区别？"</td>
+</tr>
+<tr>
+<td style="text-align: left;">AssistantMessage</td>
+<td style="text-align: left;">助手</td>
+<td style="text-align: left;">AI 的回复（多轮对话上下文）</td>
+<td style="text-align: left;">"Spring AI 是 Spring 官方..."</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_3">关键洞察</h3>
+<p><strong>SystemMessage 是最容易被忽视但最重要的！</strong> 好的 SystemMessage 能让 AI 输出质量提升 10 倍。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// ❌ 弱 SystemMessage</span>
+<span class="n">chatClient</span><span class="p">.</span><span class="na">prompt</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">system</span><span class="p">(</span><span class="s">"你是一个助手"</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">user</span><span class="p">(</span><span class="s">"请解释 Spring AI 的架构"</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">call</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">content</span><span class="p">();</span>
+
+<span class="c1">// ✅ 强 SystemMessage</span>
+<span class="n">chatClient</span><span class="p">.</span><span class="na">prompt</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">system</span><span class="p">(</span><span class="s">"""</span>
+<span class="s">        你是一个资深的 Java 企业级架构师，专精于 Spring 生态。</span>
+<span class="s">        回答要求：</span>
+<span class="s">        1. 先给出核心概念的一句话总结</span>
+<span class="s">        2. 然后用代码示例说明</span>
+<span class="s">        3. 最后指出常见误区</span>
+<span class="s">        4. 如果涉及版本差异，请说明</span>
+<span class="s">        """</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">user</span><span class="p">(</span><span class="s">"请解释 Spring AI 的架构"</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">call</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">content</span><span class="p">();</span>
+</code></pre>
+<h2 id="prompt-template-prompt">三、Prompt Template（模板化 Prompt）</h2>
+<h3 id="_4">为什么需要模板</h3>
+<ul>
+<li>避免字符串拼接导致的 Prompt Injection 风险</li>
+<li>提高可复用性</li>
+<li>易于维护和版本管理</li>
+</ul>
+<h3 id="_5">基本用法</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// 定义模板</span>
+<span class="n">String</span><span class="w"> </span><span class="n">template</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"""</span>
+<span class="s">    请用 {language} 回答以下问题：</span>
+<span class="s">    {question}</span>
+
+<span class="s">    要求：</span>
+<span class="s">    - 用 {style} 的风格回答</span>
+<span class="s">    - 控制在 {maxLength} 字以内</span>
+<span class="s">    """</span><span class="p">;</span>
+
+<span class="c1">// 创建模板并填充参数</span>
+<span class="n">PromptTemplate</span><span class="w"> </span><span class="n">promptTemplate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">PromptTemplate</span><span class="p">(</span><span class="n">template</span><span class="p">);</span>
+<span class="n">Message</span><span class="w"> </span><span class="n">message</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">promptTemplate</span><span class="p">.</span><span class="na">createMessage</span><span class="p">(</span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span>
+<span class="w">    </span><span class="s">"language"</span><span class="p">,</span><span class="w"> </span><span class="s">"中文"</span><span class="p">,</span>
+<span class="w">    </span><span class="s">"question"</span><span class="p">,</span><span class="w"> </span><span class="s">"什么是依赖注入？"</span><span class="p">,</span>
+<span class="w">    </span><span class="s">"style"</span><span class="p">,</span><span class="w"> </span><span class="s">"通俗易懂"</span><span class="p">,</span>
+<span class="w">    </span><span class="s">"maxLength"</span><span class="p">,</span><span class="w"> </span><span class="s">"200"</span>
+<span class="p">));</span>
+
+<span class="c1">// 使用</span>
+<span class="n">String</span><span class="w"> </span><span class="n">answer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">chatClient</span><span class="p">.</span><span class="na">prompt</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">user</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">call</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">content</span><span class="p">();</span>
+</code></pre>
+<h3 id="_6">进阶：从文件加载模板</h3>
+<pre lang="yaml"><code class="language-yaml md-fencescode"><span class="c1"># resources/prompts/tech-consultant.st</span>
+<span class="l l-Scalar l-Scalar-Plain">你是一个 {role} 专家。</span>
+<span class="l l-Scalar l-Scalar-Plain">请用 {language} 回答以下问题：</span>
+<span class="l l-Scalar l-Scalar-Plain">{question}</span>
+
+<span class="l l-Scalar l-Scalar-Plain">风格要求：{style}</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Value</span><span class="p">(</span><span class="s">"classpath:prompts/tech-consultant.st"</span><span class="p">)</span>
+<span class="kd">private</span><span class="w"> </span><span class="n">Resource</span><span class="w"> </span><span class="n">promptResource</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">consult</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">question</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">PromptTemplate</span><span class="w"> </span><span class="n">template</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">PromptTemplate</span><span class="p">(</span><span class="n">promptResource</span><span class="p">);</span>
+<span class="w">    </span><span class="n">Message</span><span class="w"> </span><span class="n">message</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">template</span><span class="p">.</span><span class="na">createMessage</span><span class="p">(</span><span class="n">Map</span><span class="p">.</span><span class="na">of</span><span class="p">(</span>
+<span class="w">        </span><span class="s">"role"</span><span class="p">,</span><span class="w"> </span><span class="s">"Java 架构师"</span><span class="p">,</span>
+<span class="w">        </span><span class="s">"language"</span><span class="p">,</span><span class="w"> </span><span class="s">"中文"</span><span class="p">,</span>
+<span class="w">        </span><span class="s">"question"</span><span class="p">,</span><span class="w"> </span><span class="n">question</span><span class="p">,</span>
+<span class="w">        </span><span class="s">"style"</span><span class="p">,</span><span class="w"> </span><span class="s">"专业简洁"</span>
+<span class="w">    </span><span class="p">));</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">chatClient</span><span class="p">.</span><span class="na">prompt</span><span class="p">().</span><span class="na">user</span><span class="p">(</span><span class="n">message</span><span class="p">).</span><span class="na">call</span><span class="p">().</span><span class="na">content</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre>
+<h2 id="streaming">四、流式响应（Streaming）</h2>
+<h3 id="vs">同步 vs 流式</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">对比</th>
+<th style="text-align: left;">同步 (call)</th>
+<th style="text-align: left;">流式 (stream)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">返回类型</td>
+<td style="text-align: left;">String</td>
+<td style="text-align: left;">Flux<String></td>
+</tr>
+<tr>
+<td style="text-align: left;">用户体验</td>
+<td style="text-align: left;">等待全部生成后一次性显示</td>
+<td style="text-align: left;">打字机效果，逐字显示</td>
+</tr>
+<tr>
+<td style="text-align: left;">适用场景</td>
+<td style="text-align: left;">简单问答、后台处理</td>
+<td style="text-align: left;">聊天界面、实时交互</td>
+</tr>
+<tr>
+<td style="text-align: left;">实现复杂度</td>
+<td style="text-align: left;">低</td>
+<td style="text-align: left;">中（前端需要 SSE 支持）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_7">流式代码示例</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@GetMapping</span><span class="p">(</span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"/ai/stream"</span><span class="p">,</span><span class="w"> </span><span class="n">produces</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MediaType</span><span class="p">.</span><span class="na">TEXT_EVENT_STREAM_VALUE</span><span class="p">)</span>
+<span class="n">Flux</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">stream</span><span class="p">(</span><span class="nd">@RequestParam</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">message</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">chatClient</span><span class="p">.</span><span class="na">prompt</span><span class="p">()</span>
+<span class="w">            </span><span class="p">.</span><span class="na">user</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+<span class="w">            </span><span class="p">.</span><span class="na">stream</span><span class="p">()</span>
+<span class="w">            </span><span class="p">.</span><span class="na">content</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre>
+<p>前端用 EventSource 或 fetch + ReadableStream 接收。</p>
+<h2 id="calloptions">五、模型参数控制（CallOptions）</h2>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">chatClient</span><span class="p">.</span><span class="na">prompt</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">user</span><span class="p">(</span><span class="s">"讲个笑话"</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">options</span><span class="p">(</span><span class="n">ChatOptionsBuilder</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="na">withTemperature</span><span class="p">(</span><span class="mf">0.8f</span><span class="p">)</span><span class="w">      </span><span class="c1">// 创造性：0=保守，1=创意</span>
+<span class="w">        </span><span class="p">.</span><span class="na">withMaxTokens</span><span class="p">(</span><span class="mi">500</span><span class="p">)</span><span class="w">          </span><span class="c1">// 最大输出长度</span>
+<span class="w">        </span><span class="p">.</span><span class="na">withTopP</span><span class="p">(</span><span class="mf">0.9f</span><span class="p">)</span><span class="w">              </span><span class="c1">// 核采样</span>
+<span class="w">        </span><span class="p">.</span><span class="na">build</span><span class="p">())</span>
+<span class="w">    </span><span class="p">.</span><span class="na">call</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">content</span><span class="p">();</span>
+</code></pre>
+<h3 id="_8">常用参数说明</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">参数</th>
+<th style="text-align: left;">作用</th>
+<th style="text-align: left;">建议值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">temperature</td>
+<td style="text-align: left;">控制输出的创造性/随机性</td>
+<td style="text-align: left;">0.3（事实类）/ 0.8（创意类）</td>
+</tr>
+<tr>
+<td style="text-align: left;">maxTokens</td>
+<td style="text-align: left;">限制输出最大 Token 数</td>
+<td style="text-align: left;">根据需求设定</td>
+</tr>
+<tr>
+<td style="text-align: left;">topP</td>
+<td style="text-align: left;">核采样，控制词汇选择的多样性</td>
+<td style="text-align: left;">0.9</td>
+</tr>
+<tr>
+<td style="text-align: left;">frequencyPenalty</td>
+<td style="text-align: left;">降低重复内容</td>
+<td style="text-align: left;">0.0-1.0</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_9">六、反模式</h2>
+<h3 id="1-chatclient">❌ 反模式 1：每次请求都创建新的 ChatClient</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// ❌ ChatClient 是重量级对象，应该复用</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">chat</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">msg</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">ChatClient</span><span class="w"> </span><span class="n">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ChatClient</span><span class="p">.</span><span class="na">builder</span><span class="p">(</span><span class="n">chatModel</span><span class="p">).</span><span class="na">build</span><span class="p">();</span><span class="w">  </span><span class="c1">// 每次 new！</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="na">prompt</span><span class="p">().</span><span class="na">user</span><span class="p">(</span><span class="n">msg</span><span class="p">).</span><span class="na">call</span><span class="p">().</span><span class="na">content</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// ✅ 注入单例</span>
+<span class="nd">@Service</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">ChatService</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">ChatClient</span><span class="w"> </span><span class="n">chatClient</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">ChatService</span><span class="p">(</span><span class="n">ChatClient</span><span class="p">.</span><span class="na">Builder</span><span class="w"> </span><span class="n">builder</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">chatClient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">builder</span><span class="p">.</span><span class="na">build</span><span class="p">();</span><span class="w">  </span><span class="c1">// 只创建一次</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="2-prompt">❌ 反模式 2：用字符串拼接构造 Prompt</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// ❌ 危险！容易受到 Prompt Injection</span>
+<span class="n">String</span><span class="w"> </span><span class="n">prompt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"请用"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">language</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">"回答："</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">userInput</span><span class="p">;</span>
+
+<span class="c1">// ✅ 使用 PromptTemplate</span>
+<span class="n">PromptTemplate</span><span class="w"> </span><span class="n">template</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">PromptTemplate</span><span class="p">(</span><span class="s">"请用 {language} 回答：{question}"</span><span class="p">);</span>
+</code></pre>
+<h3 id="3-systemmessage">❌ 反模式 3：忽略 SystemMessage</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// ❌ 没有 SystemMessage，AI 不知道自己的角色</span>
+<span class="n">chatClient</span><span class="p">.</span><span class="na">prompt</span><span class="p">().</span><span class="na">user</span><span class="p">(</span><span class="s">"..."</span><span class="p">).</span><span class="na">call</span><span class="p">().</span><span class="na">content</span><span class="p">();</span>
+
+<span class="c1">// ✅ 设置 SystemMessage 让 AI 行为可控</span>
+<span class="n">chatClient</span><span class="p">.</span><span class="na">prompt</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">system</span><span class="p">(</span><span class="s">"你是一个专业的 Java 技术顾问，回答要准确、简洁"</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">user</span><span class="p">(</span><span class="s">"..."</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">call</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">content</span><span class="p">();</span>
+</code></pre>
+<h2 id="_10">七、最佳实践总结</h2>
+<ol>
+<li><strong>ChatClient 作为单例注入</strong>，不要每次创建</li>
+<li><strong>总是设置 SystemMessage</strong>，明确 AI 的角色</li>
+<li><strong>用 PromptTemplate 代替字符串拼接</strong></li>
+<li><strong>交互式场景用 stream()</strong>，后台处理用 call()</li>
+<li><strong>根据任务类型调整 temperature</strong>：事实类用低值，创意类用高值</li>
+<li><strong>Prompt 模板从外部文件加载</strong>，方便管理和版本控制</li>
+</ol>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

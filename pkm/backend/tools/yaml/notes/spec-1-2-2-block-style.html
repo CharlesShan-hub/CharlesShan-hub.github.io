@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>spec-1-2-2-block-style</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="_1">块风格</h1>
+<blockquote>
+<p>本文按照YAML官方文档1.2.2版本翻译总结而成</p>
+<p>https://yaml.org/spec/1.2.2/#chapter-8-block-style-productions</p>
+</blockquote>
+<p>YAML’s <em>block styles</em> employ <a href="https://yaml.org/spec/1.2.2/#indentation-spaces">indentation</a> rather than <a href="https://yaml.org/spec/1.2.2/#indicator-characters">indicators</a> to denote structure. This results in a more human readable (though less compact) notation.</p>
+<h2 id="81-block-scalar-styles">8.1. Block Scalar Styles</h2>
+<p>YAML provides two <em>block scalar styles</em>, <a href="https://yaml.org/spec/1.2.2/#literal-style">literal</a> and <a href="https://yaml.org/spec/1.2.2/#line-folding">folded</a>. Each provides a different trade-off between readability and expressive power.</p>
+<h3 id="811-block-scalar-headers">8.1.1. Block Scalar Headers</h3>
+<p><a href="https://yaml.org/spec/1.2.2/#block-scalar-styles">Block scalars</a> are controlled by a few <a href="https://yaml.org/spec/1.2.2/#indicator-characters">indicators</a> given in a <em>header</em> preceding the <a href="https://yaml.org/spec/1.2.2/#nodes">content</a> itself. This header is followed by a non-content <a href="https://yaml.org/spec/1.2.2/#line-break-characters">line break</a> with an optional <a href="https://yaml.org/spec/1.2.2/#comments">comment</a>. This is the only case where a <a href="https://yaml.org/spec/1.2.2/#comments">comment</a> must not be followed by additional <a href="https://yaml.org/spec/1.2.2/#comments">comment</a> lines.</p>
+<blockquote>
+<p>Note: See <a href="https://yaml.org/spec/1.2.2/#production-parameters">Production Parameters</a> for the definition of the <code>t</code> variable.</p>
+</blockquote>
+<pre><code class="md-fencescode">[162] c-b-block-header(t) ::=
+  (
+      (
+        c-indentation-indicator
+        c-chomping-indicator(t)
+      )
+    | (
+        c-chomping-indicator(t)
+        c-indentation-indicator
+      )
+  )
+  s-b-comment
+</code></pre>
+<p><strong>Example 8.1 Block Scalar Header</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>- | # Empty header↓ literal - &gt;1 # Indentation indicator↓ ·folded - |+ # Chomping indicator↓ keep - &gt;1- # Both indicators↓ ·strip</code></th>
+<th><code>[ "literal\n",  " folded\n",  "keep\n\n",  " strip" ]</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<ul>
+<li><code>c-b-block-header(t)</code></li>
+</ul>
+<h4 id="8111-block-indentation-indicator">8.1.1.1. Block Indentation Indicator</h4>
+<p>Every block scalar has a <em>content indentation level</em>. The content of the block scalar excludes a number of leading <a href="https://yaml.org/spec/1.2.2/#white-space-characters">spaces</a> on each line up to the content indentation level.</p>
+<p>If a block scalar has an <em>indentation indicator</em>, then the content indentation level of the block scalar is equal to the indentation level of the block scalar plus the integer value of the indentation indicator character.</p>
+<p>If no indentation indicator is given, then the content indentation level is equal to the number of leading <a href="https://yaml.org/spec/1.2.2/#white-space-characters">spaces</a> on the first non-<a href="https://yaml.org/spec/1.2.2/#empty-lines">empty line</a> of the contents. If there is no non-<a href="https://yaml.org/spec/1.2.2/#empty-lines">empty line</a> then the content indentation level is equal to the number of spaces on the longest line.</p>
+<p>It is an error if any non-<a href="https://yaml.org/spec/1.2.2/#empty-lines">empty line</a> does not begin with a number of spaces greater than or equal to the content indentation level.</p>
+<p>It is an error for any of the leading <a href="https://yaml.org/spec/1.2.2/#empty-lines">empty lines</a> to contain more <a href="https://yaml.org/spec/1.2.2/#white-space-characters">spaces</a> than the first non-<a href="https://yaml.org/spec/1.2.2/#empty-lines">empty line</a>.</p>
+<p>A YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processor</a> should only emit an explicit indentation indicator for cases where detection will fail.</p>
+<pre><code class="md-fencescode">[163] c-indentation-indicator ::=
+  [x31-x39]    # 1-9
+</code></pre>
+<p><strong>Example 8.2 Block Indentation Indicator</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>- |° ·detected - &gt;° · ·· ··# detected - |1 ··explicit - &gt;° ·→ ·detected</code></th>
+<th><code>[ "detected\n",  "\n\n# detected\n",  " explicit\n",  "\t\ndetected\n" ]</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-c-indentation-indicator">- <code>c-indentation-indicator</code></h2>
+<ul>
+<li><code>s-indent(n)</code></li>
+</ul>
+<p><strong>Example 8.3 Invalid Block Scalar Indentation Indicators</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>- | ·· ·text - &gt; ··text ·text - |2 ·text</code></th>
+<th><code>ERROR: - A leading all-space line must  not have too many spaces. - A following text line must  not be less indented. - The text is less indented  than the indicated level.</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h4 id="8112-block-chomping-indicator">8.1.1.2. Block Chomping Indicator</h4>
+<p><em>Chomping</em> controls how final <a href="https://yaml.org/spec/1.2.2/#line-break-characters">line breaks</a> and trailing <a href="https://yaml.org/spec/1.2.2/#empty-lines">empty lines</a> are interpreted. YAML provides three chomping methods:</p>
+<ul>
+<li>Strip</li>
+</ul>
+<p><em>Stripping</em> is specified by the “<code>-</code>” chomping indicator. In this case, the final <a href="https://yaml.org/spec/1.2.2/#line-break-characters">line break</a> and any trailing <a href="https://yaml.org/spec/1.2.2/#empty-lines">empty lines</a> are excluded from the <a href="https://yaml.org/spec/1.2.2/#scalar">scalar’s content</a>.</p>
+<ul>
+<li>Clip</li>
+</ul>
+<p><em>Clipping</em> is the default behavior used if no explicit chomping indicator is specified. In this case, the final <a href="https://yaml.org/spec/1.2.2/#line-break-characters">line break</a> character is preserved in the <a href="https://yaml.org/spec/1.2.2/#scalar">scalar’s content</a>. However, any trailing <a href="https://yaml.org/spec/1.2.2/#empty-lines">empty lines</a> are excluded from the <a href="https://yaml.org/spec/1.2.2/#scalar">scalar’s content</a>.</p>
+<ul>
+<li>Keep</li>
+</ul>
+<p><em>Keeping</em> is specified by the “<code>+</code>” chomping indicator. In this case, the final <a href="https://yaml.org/spec/1.2.2/#line-break-characters">line break</a> and any trailing <a href="https://yaml.org/spec/1.2.2/#empty-lines">empty lines</a> are considered to be part of the <a href="https://yaml.org/spec/1.2.2/#scalar">scalar’s content</a>. These additional lines are not subject to <a href="https://yaml.org/spec/1.2.2/#line-folding">folding</a>.</p>
+<p>The chomping method used is a <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">presentation detail</a> and must not be used to convey <a href="https://yaml.org/spec/1.2.2/#nodes">content</a> information.</p>
+<pre><code class="md-fencescode">[164]
+c-chomping-indicator(STRIP) ::= '-'
+c-chomping-indicator(KEEP)  ::= '+'
+c-chomping-indicator(CLIP)  ::= &quot;&quot;
+</code></pre>
+<p>The interpretation of the final <a href="https://yaml.org/spec/1.2.2/#line-break-characters">line break</a> of a <a href="https://yaml.org/spec/1.2.2/#block-scalar-styles">block scalar</a> is controlled by the chomping indicator specified in the <a href="https://yaml.org/spec/1.2.2/#block-scalar-headers">block scalar header</a>.</p>
+<pre><code class="md-fencescode">[165]
+b-chomped-last(STRIP) ::= b-non-content  | &lt;end-of-input&gt;
+b-chomped-last(CLIP)  ::= b-as-line-feed | &lt;end-of-input&gt;
+b-chomped-last(KEEP)  ::= b-as-line-feed | &lt;end-of-input&gt;
+</code></pre>
+<p><strong>Example 8.4 Chomping Final Line Break</strong></p>
+<p>| <code>strip: | -  text↓ clip: | text↓ keep: | +  text↓</code> | <code>{ "strip": "text",  "clip": "text\n",  "keep": "text\n" }</code> |
+| ------- | -------------- | ----------- | ---------- | ------------------------------------------------------------ |
+|         |                |             |            |                                                              |</p>
+<p>Legend:</p>
+<h2 id="-b-non-content">- <code>b-non-content</code></h2>
+<ul>
+<li><code>b-as-line-feed</code></li>
+</ul>
+<p>The interpretation of the trailing <a href="https://yaml.org/spec/1.2.2/#empty-lines">empty lines</a> following a <a href="https://yaml.org/spec/1.2.2/#block-scalar-styles">block scalar</a> is also controlled by the chomping indicator specified in the <a href="https://yaml.org/spec/1.2.2/#block-scalar-headers">block scalar header</a>.</p>
+<pre><code class="md-fencescode">[166]
+l-chomped-empty(n,STRIP) ::= l-strip-empty(n)
+l-chomped-empty(n,CLIP)  ::= l-strip-empty(n)
+l-chomped-empty(n,KEEP)  ::= l-keep-empty(n)
+[167] l-strip-empty(n) ::=
+  (
+    s-indent-less-or-equal(n)
+    b-non-content
+  )*
+  l-trail-comments(n)?
+[168] l-keep-empty(n) ::=
+  l-empty(n,BLOCK-IN)*
+  l-trail-comments(n)?
+</code></pre>
+<p>Explicit <a href="https://yaml.org/spec/1.2.2/#comments">comment</a> lines may follow the trailing <a href="https://yaml.org/spec/1.2.2/#empty-lines">empty lines</a>. To prevent ambiguity, the first such <a href="https://yaml.org/spec/1.2.2/#comments">comment</a> line must be less <a href="https://yaml.org/spec/1.2.2/#indentation-spaces">indented</a> than the <a href="https://yaml.org/spec/1.2.2/#block-scalar-styles">block scalar content</a>. Additional <a href="https://yaml.org/spec/1.2.2/#comments">comment</a> lines, if any, are not so restricted. This is the only case where the <a href="https://yaml.org/spec/1.2.2/#indentation-spaces">indentation</a> of <a href="https://yaml.org/spec/1.2.2/#comments">comment</a> lines is constrained.</p>
+<pre><code class="md-fencescode">[169] l-trail-comments(n) ::=
+  s-indent-less-than(n)
+  c-nb-comment-text
+  b-comment
+  l-comment*
+</code></pre>
+<p><strong>Example 8.5 Chomping Trailing Lines</strong></p>
+<table>
+<thead>
+<tr>
+<th><code># Strip  # Comments: strip: |-  # text↓ ··⇓ ·# Clip ··# comments: ↓ clip: |  # text↓ ·↓ ·# Keep ··# comments: ↓ keep: |+  # text↓ ↓ ·# Trail ··# comments.</code></th>
+<th><code>{ "strip": "# text",  "clip": "# text\n",  "keep": "# text\n\n" }</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-l-strip-emptyn">- <code>l-strip-empty(n)</code></h2>
+<h2 id="-l-keep-emptyn">- <code>l-keep-empty(n)</code></h2>
+<ul>
+<li><code>l-trail-comments(n)</code></li>
+</ul>
+<p>If a <a href="https://yaml.org/spec/1.2.2/#block-scalar-styles">block scalar</a> consists only of <a href="https://yaml.org/spec/1.2.2/#empty-lines">empty lines</a>, then these lines are considered as trailing lines and hence are affected by chomping.</p>
+<p><strong>Example 8.6 Empty Scalar Chomping</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>strip: &gt;- ↓ clip: &gt; ↓ keep: |+ ↓</code></th>
+<th><code>{ "strip": "",  "clip": "",  "keep": "\n" }</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-l-strip-emptyn_1">- <code>l-strip-empty(n)</code></h2>
+<ul>
+<li><code>l-keep-empty(n)</code></li>
+</ul>
+<h3 id="812-literal-style">8.1.2. Literal Style</h3>
+<p>The <em>literal style</em> is denoted by the “<code>|</code>” indicator. It is the simplest, most restricted and most readable <a href="https://yaml.org/spec/1.2.2/#node-styles">scalar style</a>.</p>
+<pre><code class="md-fencescode">[170] c-l+literal(n) ::=
+  c-literal                # '|'
+  c-b-block-header(t)
+  l-literal-content(n+m,t)
+</code></pre>
+<p><strong>Example 8.7 Literal Scalar</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>|↓ ·literal↓ ·→text↓ ↓</code></th>
+<th><code>"literal\n\ttext\n"</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<ul>
+<li><code>c-l+literal(n)</code></li>
+</ul>
+<p>Inside literal scalars, all (<a href="https://yaml.org/spec/1.2.2/#indentation-spaces">indented</a>) characters are considered to be <a href="https://yaml.org/spec/1.2.2/#nodes">content</a>, including <a href="https://yaml.org/spec/1.2.2/#white-space-characters">white space</a> characters. Note that all <a href="https://yaml.org/spec/1.2.2/#line-break-characters">line break</a> characters are <a href="https://yaml.org/spec/1.2.2/#line-break-characters">normalized</a>. In addition, <a href="https://yaml.org/spec/1.2.2/#empty-lines">empty lines</a> are not <a href="https://yaml.org/spec/1.2.2/#line-folding">folded</a>, though final <a href="https://yaml.org/spec/1.2.2/#line-break-characters">line breaks</a> and trailing <a href="https://yaml.org/spec/1.2.2/#empty-lines">empty lines</a> are <a href="https://yaml.org/spec/1.2.2/#block-chomping-indicator">chomped</a>.</p>
+<p>There is no way to escape characters inside literal scalars. This restricts them to <a href="https://yaml.org/spec/1.2.2/#character-set">printable</a> characters. In addition, there is no way to break a long literal line.</p>
+<pre><code class="md-fencescode">[171] l-nb-literal-text(n) ::=
+  l-empty(n,BLOCK-IN)*
+  s-indent(n) nb-char+
+[172] b-nb-literal-next(n) ::=
+  b-as-line-feed
+  l-nb-literal-text(n)
+[173] l-literal-content(n,t) ::=
+  (
+    l-nb-literal-text(n)
+    b-nb-literal-next(n)*
+    b-chomped-last(t)
+  )?
+  l-chomped-empty(n,t)
+</code></pre>
+<p><strong>Example 8.8 Literal Content</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>| · ·· ··literal↓ ···↓ ·· ··text↓ ↓ ·# Comment</code></th>
+<th><code>"\n\nliteral\n·\n\ntext\n"</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-l-nb-literal-textn">- <code>l-nb-literal-text(n)</code></h2>
+<h2 id="-b-nb-literal-nextn">- <code>b-nb-literal-next(n)</code></h2>
+<h2 id="-b-chomped-lastt">- <code>b-chomped-last(t)</code></h2>
+<ul>
+<li><code>l-chomped-empty(n,t)</code></li>
+</ul>
+<h3 id="813-folded-style">8.1.3. Folded Style</h3>
+<p>The <em>folded style</em> is denoted by the “<code>&gt;</code>” indicator. It is similar to the <a href="https://yaml.org/spec/1.2.2/#literal-style">literal style</a>; however, folded scalars are subject to <a href="https://yaml.org/spec/1.2.2/#line-folding">line folding</a>.</p>
+<pre><code class="md-fencescode">[174] c-l+folded(n) ::=
+  c-folded                 # '&gt;'
+  c-b-block-header(t)
+  l-folded-content(n+m,t)
+</code></pre>
+<p><strong>Example 8.9 Folded Scalar</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>&gt;↓ ·folded↓ ·text↓ ↓</code></th>
+<th><code>"folded text\n"</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<ul>
+<li><code>c-l+folded(n)</code></li>
+</ul>
+<p><a href="https://yaml.org/spec/1.2.2/#line-folding">Folding</a> allows long lines to be broken anywhere a single <a href="https://yaml.org/spec/1.2.2/#white-space-characters">space</a> character separates two non-<a href="https://yaml.org/spec/1.2.2/#white-space-characters">space</a> characters.</p>
+<pre><code class="md-fencescode">[175] s-nb-folded-text(n) ::=
+  s-indent(n)
+  ns-char
+  nb-char*
+[176] l-nb-folded-lines(n) ::=
+  s-nb-folded-text(n)
+  (
+    b-l-folded(n,BLOCK-IN)
+    s-nb-folded-text(n)
+  )*
+</code></pre>
+<p><strong>Example 8.10 Folded Lines</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>&gt; ·folded↓ ·line↓ ↓ ·next ·line↓   * bullet    * list   * lines ·last↓ ·line↓ # Comment</code></th>
+<th><code>"\nfolded line\nnext line\n  \ * bullet\n \n  * list\n  \ * lines\n\nlast line\n"</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-l-nb-folded-linesn">- <code>l-nb-folded-lines(n)</code></h2>
+<ul>
+<li><code>s-nb-folded-text(n)</code></li>
+</ul>
+<p>(The following three examples duplicate this example, each highlighting different productions.)</p>
+<p>Lines starting with <a href="https://yaml.org/spec/1.2.2/#white-space-characters">white space</a> characters (<em>more-indented</em> lines) are not <a href="https://yaml.org/spec/1.2.2/#line-folding">folded</a>.</p>
+<pre><code class="md-fencescode">[177] s-nb-spaced-text(n) ::=
+  s-indent(n)
+  s-white
+  nb-char*
+[178] b-l-spaced(n) ::=
+  b-as-line-feed
+  l-empty(n,BLOCK-IN)*
+[179] l-nb-spaced-lines(n) ::=
+  s-nb-spaced-text(n)
+  (
+    b-l-spaced(n)
+    s-nb-spaced-text(n)
+  )*
+</code></pre>
+<p><strong>Example 8.11 More Indented Lines</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>&gt;  folded line  next line ···* bullet↓ ↓ ···* list↓ ···* lines↓  last line # Comment</code></th>
+<th><code>"\nfolded line\nnext line\n  \ * bullet\n \n  * list\n  \ * lines\n\nlast line\n"</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-l-nb-spaced-linesn">- <code>l-nb-spaced-lines(n)</code></h2>
+<ul>
+<li><code>s-nb-spaced-text(n)</code></li>
+</ul>
+<p><a href="https://yaml.org/spec/1.2.2/#line-break-characters">Line breaks</a> and <a href="https://yaml.org/spec/1.2.2/#empty-lines">empty lines</a> separating folded and more-indented lines are also not <a href="https://yaml.org/spec/1.2.2/#line-folding">folded</a>.</p>
+<pre><code class="md-fencescode">[180] l-nb-same-lines(n) ::=
+  l-empty(n,BLOCK-IN)*
+  (
+      l-nb-folded-lines(n)
+    | l-nb-spaced-lines(n)
+  )
+[181] l-nb-diff-lines(n) ::=
+  l-nb-same-lines(n)
+  (
+    b-as-line-feed
+    l-nb-same-lines(n)
+  )*
+</code></pre>
+<p><strong>Example 8.12 Empty Separation Lines</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>&gt; ↓ folded line↓ ↓ next line↓   * bullet    * list   * lines↓ ↓ last line # Comment</code></th>
+<th><code>"\nfolded line\nnext line\n  \ * bullet\n \n  * list\n  \ * lines\n\nlast line\n"</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-b-as-line-feed">- <code>b-as-line-feed</code></h2>
+<ul>
+<li><code>(separation) l-empty(n,c)</code></li>
+</ul>
+<p>The final <a href="https://yaml.org/spec/1.2.2/#line-break-characters">line break</a> and trailing <a href="https://yaml.org/spec/1.2.2/#empty-lines">empty lines</a> if any, are subject to <a href="https://yaml.org/spec/1.2.2/#block-chomping-indicator">chomping</a> and are never <a href="https://yaml.org/spec/1.2.2/#line-folding">folded</a>.</p>
+<pre><code class="md-fencescode">[182] l-folded-content(n,t) ::=
+  (
+    l-nb-diff-lines(n)
+    b-chomped-last(t)
+  )?
+  l-chomped-empty(n,t)
+</code></pre>
+<p><strong>Example 8.13 Final Empty Lines</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>&gt;  folded line  next line   * bullet    * list   * lines  last line↓ ↓ # Comment</code></th>
+<th><code>"\nfolded line\nnext line\n  \ * bullet\n \n  * list\n  \ * lines\n\nlast line\n"</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-b-chomped-lastt_1">- <code>b-chomped-last(t)</code></h2>
+<ul>
+<li><code>l-chomped-empty(n,t)</code></li>
+</ul>
+<h2 id="82-block-collection-styles">8.2. Block Collection Styles</h2>
+<p>For readability, <em>block collections styles</em> are not denoted by any <a href="https://yaml.org/spec/1.2.2/#indicator-characters">indicator</a>. Instead, YAML uses a lookahead method, where a block collection is distinguished from a <a href="https://yaml.org/spec/1.2.2/#plain-style">plain scalar</a> only when a <a href="https://yaml.org/spec/1.2.2/#mapping">key/value pair</a> or a <a href="https://yaml.org/spec/1.2.2/#block-sequences">sequence entry</a> is seen.</p>
+<h3 id="821-block-sequences">8.2.1. Block Sequences</h3>
+<p>A <em>block sequence</em> is simply a series of <a href="https://yaml.org/spec/1.2.2/#nodes">nodes</a>, each denoted by a leading “<code>-</code>” indicator. The “<code>-</code>” indicator must be <a href="https://yaml.org/spec/1.2.2/#separation-spaces">separated</a> from the <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> by <a href="https://yaml.org/spec/1.2.2/#white-space-characters">white space</a>. This allows “<code>-</code>” to be used as the first character in a <a href="https://yaml.org/spec/1.2.2/#plain-style">plain scalar</a> if followed by a non-space character (e.g. “<code>-42</code>”).</p>
+<pre><code class="md-fencescode">[183] l+block-sequence(n) ::=
+  (
+    s-indent(n+1+m)
+    c-l-block-seq-entry(n+1+m)
+  )+
+[184] c-l-block-seq-entry(n) ::=
+  c-sequence-entry    # '-'
+  [ lookahead ≠ ns-char ]
+  s-l+block-indented(n,BLOCK-IN)
+</code></pre>
+<p><strong>Example 8.14 Block Sequence</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>block sequence: ··- one↓  - two : three↓</code></th>
+<th><code>{ "block sequence": [    "one",    { "two": "three" } ] }</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-c-l-block-seq-entryn">- <code>c-l-block-seq-entry(n)</code></h2>
+<ul>
+<li><code>auto-detected s-indent(n)</code></li>
+</ul>
+<p>The entry <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> may be either <a href="https://yaml.org/spec/1.2.2/#example-empty-content">completely empty</a>, be a nested <a href="https://yaml.org/spec/1.2.2/#block-nodes">block node</a> or use a <em>compact in-line notation</em>. The compact notation may be used when the entry is itself a nested <a href="https://yaml.org/spec/1.2.2/#block-collection-styles">block collection</a>. In this case, both the “<code>-</code>” indicator and the following <a href="https://yaml.org/spec/1.2.2/#white-space-characters">spaces</a> are considered to be part of the <a href="https://yaml.org/spec/1.2.2/#indentation-spaces">indentation</a> of the nested <a href="https://yaml.org/spec/1.2.2/#collections">collection</a>. Note that it is not possible to specify <a href="https://yaml.org/spec/1.2.2/#node-properties">node properties</a> for such a <a href="https://yaml.org/spec/1.2.2/#collections">collection</a>.</p>
+<pre><code class="md-fencescode">[185] s-l+block-indented(n,c) ::=
+    (
+      s-indent(m)
+      (
+          ns-l-compact-sequence(n+1+m)
+        | ns-l-compact-mapping(n+1+m)
+      )
+    )
+  | s-l+block-node(n,c)
+  | (
+      e-node    # &quot;&quot;
+      s-l-comments
+    )
+[186] ns-l-compact-sequence(n) ::=
+  c-l-block-seq-entry(n)
+  (
+    s-indent(n)
+    c-l-block-seq-entry(n)
+  )*
+</code></pre>
+<p><strong>Example 8.15 Block Sequence Entry Types</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>-° # Empty - | block node -·- one # Compact ··- two # sequence - one: two # Compact mapping</code></th>
+<th><code>[ null,  "block node\n",  [ "one", "two" ],  { "one": "two" } ]</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-empty">- <code>Empty</code></h2>
+<h2 id="-s-lblock-nodenc">- <code>s-l+block-node(n,c)</code></h2>
+<h2 id="-ns-l-compact-sequencen">- <code>ns-l-compact-sequence(n)</code></h2>
+<ul>
+<li><code>ns-l-compact-mapping(n)</code></li>
+</ul>
+<h3 id="822-block-mappings">8.2.2. Block Mappings</h3>
+<p>A <em>Block mapping</em> is a series of entries, each <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">presenting</a> a <a href="https://yaml.org/spec/1.2.2/#mapping">key/value pair</a>.</p>
+<pre><code class="md-fencescode">[187] l+block-mapping(n) ::=
+  (
+    s-indent(n+1+m)
+    ns-l-block-map-entry(n+1+m)
+  )+
+</code></pre>
+<p><strong>Example 8.16 Block Mappings</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>block mapping: ·key: value↓</code></th>
+<th><code>{ "block mapping": {    "key": "value" } }</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-ns-l-block-map-entryn">- <code>ns-l-block-map-entry(n)</code></h2>
+<ul>
+<li><code>auto-detected s-indent(n)</code></li>
+</ul>
+<p>If the “<code>?</code>” indicator is specified, the optional value node must be specified on a separate line, denoted by the “<code>:</code>” indicator. Note that YAML allows here the same <a href="https://yaml.org/spec/1.2.2/#example-block-sequence">compact in-line notation</a> described above for <a href="https://yaml.org/spec/1.2.2/#block-sequences">block sequence</a> entries.</p>
+<pre><code class="md-fencescode">[188] ns-l-block-map-entry(n) ::=
+    c-l-block-map-explicit-entry(n)
+  | ns-l-block-map-implicit-entry(n)
+[189] c-l-block-map-explicit-entry(n) ::=
+  c-l-block-map-explicit-key(n)
+  (
+      l-block-map-explicit-value(n)
+    | e-node                        # &quot;&quot;
+  )
+[190] c-l-block-map-explicit-key(n) ::=
+  c-mapping-key                     # '?' (not followed by non-ws char)
+  s-l+block-indented(n,BLOCK-OUT)
+[191] l-block-map-explicit-value(n) ::=
+  s-indent(n)
+  c-mapping-value                   # ':' (not followed by non-ws char)
+  s-l+block-indented(n,BLOCK-OUT)
+</code></pre>
+<p><strong>Example 8.17 Explicit Block Mapping Entries</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>? explicit key # Empty value↓° ? |  block key↓ :·- one # Explicit compact ··- two # block value↓</code></th>
+<th><code>{ "explicit key": null,  "block key\n": [    "one",    "two" ] }</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-c-l-block-map-explicit-keyn">- <code>c-l-block-map-explicit-key(n)</code></h2>
+<h2 id="-l-block-map-explicit-valuen">- <code>l-block-map-explicit-value(n)</code></h2>
+<ul>
+<li><code>e-node</code></li>
+</ul>
+<p>If the “<code>?</code>” indicator is omitted, <a href="https://yaml.org/spec/1.2.2/#parsing-the-presentation-stream">parsing</a> needs to see past the <a href="https://yaml.org/spec/1.2.2/#example-single-pair-explicit-entry">implicit key</a>, in the same way as in the <a href="https://yaml.org/spec/1.2.2/#mapping">single key/value pair</a> <a href="https://yaml.org/spec/1.2.2/#flow-mappings">flow mapping</a>. Hence, such <a href="https://yaml.org/spec/1.2.2/#nodes">keys</a> are subject to the same restrictions; they are limited to a single line and must not span more than 1024 Unicode characters.</p>
+<pre><code class="md-fencescode">[192] ns-l-block-map-implicit-entry(n) ::=
+  (
+      ns-s-block-map-implicit-key
+    | e-node    # &quot;&quot;
+  )
+  c-l-block-map-implicit-value(n)
+[193] ns-s-block-map-implicit-key ::=
+    c-s-implicit-json-key(BLOCK-KEY)
+  | ns-s-implicit-yaml-key(BLOCK-KEY)
+</code></pre>
+<p>In this case, the <a href="https://yaml.org/spec/1.2.2/#nodes">value</a> may be specified on the same line as the <a href="https://yaml.org/spec/1.2.2/#example-single-pair-explicit-entry">implicit key</a>. Note however that in block mappings the <a href="https://yaml.org/spec/1.2.2/#nodes">value</a> must never be adjacent to the “<code>:</code>”, as this greatly reduces readability and is not required for <a href="https://yaml.org/spec/1.2.2/#yaml-directives">JSON compatibility</a> (unlike the case in <a href="https://yaml.org/spec/1.2.2/#flow-mappings">flow mappings</a>).</p>
+<p>There is no compact notation for in-line <a href="https://yaml.org/spec/1.2.2/#nodes">values</a>. Also, while both the <a href="https://yaml.org/spec/1.2.2/#example-single-pair-explicit-entry">implicit key</a> and the <a href="https://yaml.org/spec/1.2.2/#nodes">value</a> following it may be empty, the “<code>:</code>” indicator is mandatory. This prevents a potential ambiguity with multi-line <a href="https://yaml.org/spec/1.2.2/#plain-style">plain scalars</a>.</p>
+<pre><code class="md-fencescode">[194] c-l-block-map-implicit-value(n) ::=
+  c-mapping-value           # ':' (not followed by non-ws char)
+  (
+      s-l+block-node(n,BLOCK-OUT)
+    | (
+        e-node    # &quot;&quot;
+        s-l-comments
+      )
+  )
+</code></pre>
+<p><strong>Example 8.18 Implicit Block Mapping Entries</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>plain key: in-line value °:° # Both empty "quoted key": - entry</code></th>
+<th><code>{ "plain key": "in-line value",  null: null,  "quoted key": [ "entry" ] }</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-ns-s-block-map-implicit-key">- <code>ns-s-block-map-implicit-key</code></h2>
+<ul>
+<li><code>c-l-block-map-implicit-value(n)</code></li>
+</ul>
+<p>A <a href="https://yaml.org/spec/1.2.2/#example-block-sequence">compact in-line notation</a> is also available. This compact notation may be nested inside <a href="https://yaml.org/spec/1.2.2/#block-sequences">block sequences</a> and explicit block mapping entries. Note that it is not possible to specify <a href="https://yaml.org/spec/1.2.2/#node-properties">node properties</a> for such a nested mapping.</p>
+<pre><code class="md-fencescode">[195] ns-l-compact-mapping(n) ::=
+  ns-l-block-map-entry(n)
+  (
+    s-indent(n)
+    ns-l-block-map-entry(n)
+  )*
+</code></pre>
+<p><strong>Example 8.19 Compact Block Mappings</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>- sun: yellow↓ - ? earth: blue↓  : moon: white↓</code></th>
+<th><code>[ { "sun": "yellow" },  { { "earth": "blue" }:      { "moon": "white" } } ]</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<ul>
+<li><code>ns-l-compact-mapping(n)</code></li>
+</ul>
+<h3 id="823-block-nodes">8.2.3. Block Nodes</h3>
+<p>YAML allows <a href="https://yaml.org/spec/1.2.2/#flow-nodes">flow nodes</a> to be embedded inside <a href="https://yaml.org/spec/1.2.2/#block-collection-styles">block collections</a> (but not vice-versa). <a href="https://yaml.org/spec/1.2.2/#flow-nodes">Flow nodes</a> must be <a href="https://yaml.org/spec/1.2.2/#indentation-spaces">indented</a> by at least one more <a href="https://yaml.org/spec/1.2.2/#white-space-characters">space</a> than the parent <a href="https://yaml.org/spec/1.2.2/#block-collection-styles">block collection</a>. Note that <a href="https://yaml.org/spec/1.2.2/#flow-nodes">flow nodes</a> may begin on a following line.</p>
+<p>It is at this point that <a href="https://yaml.org/spec/1.2.2/#parsing-the-presentation-stream">parsing</a> needs to distinguish between a <a href="https://yaml.org/spec/1.2.2/#plain-style">plain scalar</a> and an <a href="https://yaml.org/spec/1.2.2/#example-single-pair-explicit-entry">implicit key</a> starting a nested <a href="https://yaml.org/spec/1.2.2/#block-mappings">block mapping</a>.</p>
+<pre><code class="md-fencescode">[196] s-l+block-node(n,c) ::=
+    s-l+block-in-block(n,c)
+  | s-l+flow-in-block(n)
+[197] s-l+flow-in-block(n) ::=
+  s-separate(n+1,FLOW-OUT)
+  ns-flow-node(n+1,FLOW-OUT)
+  s-l-comments
+</code></pre>
+<p><strong>Example 8.20 Block Node Types</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>-↓ ··"flow in block"↓ -·&gt; Block scalar↓ -·!!map # Block collection  foo : bar↓</code></th>
+<th><code>[ "flow in block",  "Block scalar\n",  { "foo": "bar" } ]</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-s-lflow-in-blockn">- <code>s-l+flow-in-block(n)</code></h2>
+<ul>
+<li><code>s-l+block-in-block(n,c)</code></li>
+</ul>
+<p>The block <a href="https://yaml.org/spec/1.2.2/#node-properties">node’s properties</a> may span across several lines. In this case, they must be <a href="https://yaml.org/spec/1.2.2/#indentation-spaces">indented</a> by at least one more <a href="https://yaml.org/spec/1.2.2/#white-space-characters">space</a> than the <a href="https://yaml.org/spec/1.2.2/#block-collection-styles">block collection</a>, regardless of the <a href="https://yaml.org/spec/1.2.2/#indentation-spaces">indentation</a> of the <a href="https://yaml.org/spec/1.2.2/#block-collection-styles">block collection</a> entries.</p>
+<pre><code class="md-fencescode">[198] s-l+block-in-block(n,c) ::=
+    s-l+block-scalar(n,c)
+  | s-l+block-collection(n,c)
+[199] s-l+block-scalar(n,c) ::=
+  s-separate(n+1,c)
+  (
+    c-ns-properties(n+1,c)
+    s-separate(n+1,c)
+  )?
+  (
+      c-l+literal(n)
+    | c-l+folded(n)
+  )
+</code></pre>
+<p><strong>Example 8.21 Block Scalar Nodes</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>literal: |2 ··value folded:↓ ···!foo ··&gt;1 ·value</code></th>
+<th><code>{ "literal": "value",  "folded": !&lt;!foo&gt; "value" }</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-c-lliteraln">- <code>c-l+literal(n)</code></h2>
+<ul>
+<li><code>c-l+folded(n)</code></li>
+</ul>
+<p>Since people perceive the “<code>-</code>” indicator as <a href="https://yaml.org/spec/1.2.2/#indentation-spaces">indentation</a>, nested <a href="https://yaml.org/spec/1.2.2/#block-sequences">block sequences</a> may be <a href="https://yaml.org/spec/1.2.2/#indentation-spaces">indented</a> by one less <a href="https://yaml.org/spec/1.2.2/#white-space-characters">space</a> to compensate, except, of course, if nested inside another <a href="https://yaml.org/spec/1.2.2/#block-sequences">block sequence</a> ([<code>BLOCK-OUT</code> context] versus [<code>BLOCK-IN</code> context]).</p>
+<pre><code class="md-fencescode">[200] s-l+block-collection(n,c) ::=
+  (
+    s-separate(n+1,c)
+    c-ns-properties(n+1,c)
+  )?
+  s-l-comments
+  (
+      seq-space(n,c)
+    | l+block-mapping(n)
+  )
+[201] seq-space(n,BLOCK-OUT) ::= l+block-sequence(n-1)
+    seq-space(n,BLOCK-IN)  ::= l+block-sequence(n)
+</code></pre>
+<p><strong>Example 8.22 Block Collection Nodes</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>sequence: !!seq - entry - !!seq - nested mapping: !!map foo: bar</code></th>
+<th><code>{ "sequence": [    "entry",    [ "nested" ] ],  "mapping": { "foo": "bar" } }</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-s-lblock-collectionnc">- <code>s-l+block-collection(n,c)</code></h2>
+<h2 id="-lblock-sequencen">- <code>l+block-sequence(n)</code></h2>
+<ul>
+<li><code>l+block-mapping(n)</code></li>
+</ul>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

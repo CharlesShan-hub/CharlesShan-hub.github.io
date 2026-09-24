@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>authorization-control-methods</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="_1">授权</h1>
+<h2 id="_2">两种常见的权限控制方式</h2>
+<p>在 Spring Security 中，授权管理非常灵活，可以帮我们实现两种常见的权限控制需求：</p>
+<p><strong>第一种：用户 → 权限 → 资源</strong><br />
+这种方式比较直接，每个用户都有哪些具体的操作权限。比如：</p>
+<ul>
+<li>张三拥有“添加用户”和“查看用户列表”的权限</li>
+<li>李四只有“查看用户列表”的权限</li>
+</ul>
+<p><strong>第二种：用户 → 角色 → 权限 → 资源</strong><br />
+这种方式更加常用，通过角色来管理权限分组。比如：</p>
+<ul>
+<li>张三的角色是“管理员”，拥有所有操作权限</li>
+<li>李四的角色是“普通用户”，只能查看信息，不能修改</li>
+</ul>
+<p>简单来说，第一种是直接给用户分配具体权限，第二种是先给角色分配权限，再把角色分配给用户，这样管理起来更加方便和规范。</p>
+<p>这里提到的<strong>资源</strong>是什么？资源就是权限控制所要保护的具体对象。它可以是：</p>
+<ul>
+<li>一个URL地址</li>
+<li>一个页面元素（如按钮、菜单）</li>
+<li>一条数据或一个数据字段</li>
+</ul>
+<h2 id="_3">授权策略</h2>
+<p><code>Spring Security</code>中提供了两种授权策略：</p>
+<ul>
+<li>基于 Request 的授权</li>
+<li>基于方法的授权</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th><strong>方面</strong></th>
+<th><strong>基于 Request 的授权</strong></th>
+<th><strong>基于方法的授权</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>控制层面</strong></td>
+<td><strong>全局层面</strong>（过滤器）</td>
+<td><strong>业务方法层面</strong>（AOP）</td>
+</tr>
+<tr>
+<td><strong>控制粒度</strong></td>
+<td><strong>粗粒度</strong>（按URL分组控制）</td>
+<td><strong>细粒度</strong>（按具体操作控制）</td>
+</tr>
+<tr>
+<td><strong>好比</strong></td>
+<td><strong>大楼保安</strong></td>
+<td><strong>部门经理</strong></td>
+</tr>
+<tr>
+<td><strong>常用场景</strong></td>
+<td>控制页面/菜单访问</td>
+<td>控制具体业务操作、数据权限</td>
+</tr>
+</tbody>
+</table>
+<p><strong>最佳实践</strong>：两者通常结合使用。</p>
+<ul>
+<li>先用<strong>基于Request的授权</strong>把守大门，阻止非法用户进入敏感区域。</li>
+<li>再用<strong>基于方法的授权</strong>在内部进行精细控制，确保用户只能执行被允许的具体操作。</li>
+</ul>
+<h2 id="request">基于 Request 授权的代码实现</h2>
+<h3 id="-">用户-权限-资源</h3>
+<p><strong>需求：</strong></p>
+<ul>
+<li>具有 <code>USER_LIST</code> 权限的用户可以访问 <code>/user/list</code> 接口</li>
+<li>具有 <code>USER_ADD</code> 权限的用户可以访问 <code>/user/add</code> 接口</li>
+</ul>
+<h4 id="_4">第一步：配置 哪个权限可以访问哪个资源</h4>
+<p>先在 <code>SecurityFilterChain</code>中配好规则：<strong><font style="color:#DF2A3F;">哪个权限</font></strong><strong>可以访问</strong><strong><font style="color:#DF2A3F;">哪个资源</font></strong></p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">http</span><span class="p">.</span><span class="na">authorizeHttpRequests</span><span class="p">(</span>
+<span class="w">        </span><span class="c1">// authorize 是 AuthorizeHttpRequestsConfigurer 对象，用于定义具体的授权规则</span>
+<span class="w">        </span><span class="n">authorize</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">authorize</span>
+<span class="w">                </span><span class="c1">// 有 USER_LIST 权限的用户可以访问 /user/list</span>
+<span class="w">                </span><span class="p">.</span><span class="na">requestMatchers</span><span class="p">(</span><span class="s">"/user/list"</span><span class="p">).</span><span class="na">hasAuthority</span><span class="p">(</span><span class="s">"USER_LIST"</span><span class="p">)</span>
+<span class="w">                </span><span class="c1">// 有 USER_ADD 权限的用户可以访问 /user/add</span>
+<span class="w">                </span><span class="p">.</span><span class="na">requestMatchers</span><span class="p">(</span><span class="s">"/user/add"</span><span class="p">).</span><span class="na">hasAuthority</span><span class="p">(</span><span class="s">"USER_ADD"</span><span class="p">)</span>
+<span class="w">                </span><span class="c1">// 匹配所有传入的 HTTP 请求</span>
+<span class="w">                </span><span class="p">.</span><span class="na">anyRequest</span><span class="p">()</span>
+<span class="w">                </span><span class="c1">// 要求所有请求都必须经过身份认证（用户必须已登录）</span>
+<span class="w">                </span><span class="p">.</span><span class="na">authenticated</span><span class="p">()</span>
+<span class="p">)</span>
+</code></pre>
+<p><strong><font style="color:#DF2A3F;">配置权限的代码必须放到 </font></strong><code>**&lt;font style="color:#DF2A3F;"&gt;anyRequest()&lt;/font&gt;**</code><strong><font style="color:#DF2A3F;">之前。（实际开发中应该从数据库中加载权限规则，不应该在程序中硬编码）</font></strong></p>
+<h4 id="_5">第二步：授予 哪个用户拥有哪些权限</h4>
+<p>第一步中我们只是配置好哪个权限可以访问哪个资源。还没有给<strong>具体的用户</strong>授予<strong>具体的权限</strong>。这一步我们来给具体的用户授予具体的权限。用户拥有哪一个权限，这个<strong>数据</strong>其实已经在数据库表中保存好了。我们只需要将数据库表中这个用户对应的权限列表查询出来，执行下面代码的 <code>add</code>方法来完成最终的授权。这段代码需要在登录阶段的 <code>loadUserByUsername</code>方法中进行，因为在这个方法中，它会根据用户名获取用户信息，而这个用户信息中包含了从数据库表中动态查询的权限列表。我们学习阶段就不再查询数据库了，直接写死了。</p>
+<p>在<code>DBUserDetailsManager</code> 中的 <code>loadUserByUsername()</code>方法上编写代码：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1759373495502-f61cb7ba-31bd-461a-aa8b-bd14c5d5d1be.png" width="676.4444444444445" title="" crop="0,0,1,1" id="u2b0dddf1" class="ne-image" style="font-size: 16px"></p>
+<p>具体代码如下：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">Collection</span><span class="o">&lt;</span><span class="n">GrantedAuthority</span><span class="o">&gt;</span><span class="w"> </span><span class="n">authorities</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ArrayList</span><span class="o">&lt;&gt;</span><span class="p">();</span>
+<span class="c1">// 匿名内部类方式可以</span>
+<span class="n">authorities</span><span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">GrantedAuthority</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getAuthority</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"USER_LIST"</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">});</span>
+<span class="c1">// lambda表达式也可以</span>
+<span class="n">authorities</span><span class="p">.</span><span class="na">add</span><span class="p">(()</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="s">"USER_ADD"</span><span class="p">);</span>
+</code></pre>
+<p><strong>测试如下：</strong></p>
+<p><strong>第一步：先登录系统</strong></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1759374877289-ddea0619-4b84-4b46-af97-b294e932d756.png" width="372.8888888888889" title="" crop="0,0,1,1" id="u1e839552" class="ne-image" style="font-size: 16px"></p>
+<p>通过结果看到用户确实有这两个权限。</p>
+<p><strong>第二步：看看用户是否可以正常访问 </strong><code>**/user/list**</code><strong>和 </strong><code>**/user/add**</code></p>
+<p><code>/user/list</code></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1759374129348-cb0ba34c-e7d4-47de-b8c2-4b766d535e6b.png" width="668.8888888888889" title="" crop="0,0,1,1" id="u93884b8d" class="ne-image" style="font-size: 16px"></p>
+<p><code>/user/add</code></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1759374268238-0f5c1e67-3746-42e9-8f47-5294a96ceaa4.png" width="757.7777777777778" title="" crop="0,0,1,1" id="uffa7edd5" class="ne-image" style="font-size: 16px"></p>
+<p>查看数据库表有没有添加成功：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1759374384613-cc0c0991-be61-4604-91d7-225b629e9963.png" width="675.1111111111111" title="" crop="0,0,1,1" id="u8ebaf6a3" class="ne-image" style="font-size: 16px"></p>
+<p><strong>第三步：收回一个 </strong><code>**/user/list**</code><strong>权限，看看结果是怎么样的</strong></p>
+<p>将 <code>/user/list</code>权限注释掉，如下：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1759374498099-b829eca6-1673-45d7-a74e-9a25f0939864.png" width="633.3333333333334" title="" crop="0,0,1,1" id="u5369d162" class="ne-image" style="font-size: 16px"></p>
+<p>再次测试 <code>/user/list</code>请求：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1759374575426-9293f060-b760-4b16-a554-c793a0d471cb.png" width="655.1111111111111" title="" crop="0,0,1,1" id="u3715f962" class="ne-image" style="font-size: 16px"></p>
+<p>当访问了一个没有授权的接口，应该给前端系统返回一个 JSON 。</p>
+<h4 id="json">第三步：请求未授权的接口返回 JSON</h4>
+<p><strong>第一步：编写权限不足的回调处理器：编写 </strong><code>**AccessDeniedHandler**</code><strong>接口的实现类</strong></p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.security.demo.config</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.alibaba.fastjson2.JSON</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.ServletException</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.http.HttpServletRequest</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.http.HttpServletResponse</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.security.access.AccessDeniedException</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.security.web.access.AccessDeniedHandler</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.io.IOException</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.HashMap</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.Map</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MyAccessDeniedHandler</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">AccessDeniedHandler</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">handle</span><span class="p">(</span><span class="n">HttpServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">HttpServletResponse</span><span class="w"> </span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">AccessDeniedException</span><span class="w"> </span><span class="n">accessDeniedException</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">IOException</span><span class="p">,</span><span class="w"> </span><span class="n">ServletException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 封装数据</span>
+<span class="w">        </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">map</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">HashMap</span><span class="o">&lt;&gt;</span><span class="p">();</span>
+<span class="w">        </span><span class="n">map</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"code"</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+<span class="w">        </span><span class="n">map</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"msg"</span><span class="p">,</span><span class="w"> </span><span class="s">"没有权限"</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 转换JSON</span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">json</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="p">.</span><span class="na">toJSONString</span><span class="p">(</span><span class="n">map</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 响应JSON</span>
+<span class="w">        </span><span class="n">response</span><span class="p">.</span><span class="na">setContentType</span><span class="p">(</span><span class="s">"application/json;charset=utf-8"</span><span class="p">);</span>
+<span class="w">        </span><span class="n">response</span><span class="p">.</span><span class="na">getWriter</span><span class="p">().</span><span class="na">write</span><span class="p">(</span><span class="n">json</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>第二步：在</strong><code>**SecurityFilterChain**</code><strong>中进行如下的配置：</strong></p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">http</span><span class="p">.</span><span class="na">exceptionHandling</span><span class="p">(</span><span class="n">exception</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">exception</span><span class="p">.</span><span class="na">authenticationEntryPoint</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">MyAuthenticationEntryPoint</span><span class="p">());</span><span class="w"> </span>
+<span class="w">    </span><span class="c1">// 这是新增的代码</span>
+<span class="w">    </span><span class="n">exception</span><span class="p">.</span><span class="na">accessDeniedHandler</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">MyAccessDeniedHandler</span><span class="p">());</span><span class="w"> </span><span class="c1">// 请求未授权的接口时</span>
+<span class="p">});</span>
+</code></pre>
+<p>测试如下：当用户没有 <code>USER_LIST</code>权限时，访问 <code>/user/list</code>请求，就会出现下面的效果</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1759375481575-9804bf7f-d4be-41b6-821d-7868f2d9df69.png" width="363.1111111111111" title="" crop="0,0,1,1" id="u116d2aaa" class="ne-image" style="font-size: 16px"></p>
+<p><strong>另外，这里需要说一下，以上两步代码，也可以合并成一步，采用 lambda 表达式来实现，代码如下：</strong></p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">http</span><span class="p">.</span><span class="na">exceptionHandling</span><span class="p">(</span><span class="n">exception</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">exception</span><span class="p">.</span><span class="na">authenticationEntryPoint</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">MyAuthenticationEntryPoint</span><span class="p">());</span><span class="w"> </span><span class="c1">// 请求未认证的接口时</span>
+<span class="w">    </span><span class="c1">// 新增的代码</span>
+<span class="w">    </span><span class="c1">// 请求未授权的接口时</span>
+<span class="w">    </span><span class="n">exception</span><span class="p">.</span><span class="na">accessDeniedHandler</span><span class="p">((</span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 封装数据</span>
+<span class="w">        </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">map</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">HashMap</span><span class="o">&lt;&gt;</span><span class="p">();</span>
+<span class="w">        </span><span class="n">map</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"code"</span><span class="p">,</span><span class="w"> </span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+<span class="w">        </span><span class="n">map</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"msg"</span><span class="p">,</span><span class="w"> </span><span class="s">"没有权限"</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 转换JSON</span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">json</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JSON</span><span class="p">.</span><span class="na">toJSONString</span><span class="p">(</span><span class="n">map</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 响应JSON</span>
+<span class="w">        </span><span class="n">response</span><span class="p">.</span><span class="na">setContentType</span><span class="p">(</span><span class="s">"application/json;charset=utf-8"</span><span class="p">);</span>
+<span class="w">        </span><span class="n">response</span><span class="p">.</span><span class="na">getWriter</span><span class="p">().</span><span class="na">write</span><span class="p">(</span><span class="n">json</span><span class="p">);</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="p">});</span>
+</code></pre>
+<p>实际上之前编写的所有回调，都可以采用 lambda 表达式来完成。</p>
+<h3 id="-_1">用户-角色-资源</h3>
+<p>需求：角色为 <code>ADMIN</code> 的用户才可以访问 <code>/user/**</code> 路径下的资源</p>
+<h4 id="_6">配置哪个角色可以访问哪些资源</h4>
+<p>在 <code>SecurityFilterChain</code>中进行配置，先将之前的权限配置注释掉，进行角色配置：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">http</span><span class="p">.</span><span class="na">authorizeHttpRequests</span><span class="p">(</span>
+<span class="w">        </span><span class="c1">// authorize 是 AuthorizeHttpRequestsConfigurer 对象，用于定义具体的授权规则</span>
+<span class="w">        </span><span class="n">authorize</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">authorize</span>
+<span class="w">                </span><span class="c1">// 有 USER_LIST 权限的用户可以访问 /user/list</span>
+<span class="w">                </span><span class="c1">//.requestMatchers("/user/list").hasAuthority("USER_LIST")</span>
+<span class="w">                </span><span class="c1">// 有 USER_ADD 权限的用户可以访问 /user/add</span>
+<span class="w">                </span><span class="c1">//.requestMatchers("/user/add").hasAuthority("USER_ADD")</span>
+<span class="w">                </span><span class="c1">// 角色ADMIN可以访问/user/**</span>
+<span class="w">                </span><span class="p">.</span><span class="na">requestMatchers</span><span class="p">(</span><span class="s">"/user/**"</span><span class="p">).</span><span class="na">hasRole</span><span class="p">(</span><span class="s">"ADMIN"</span><span class="p">)</span>
+<span class="w">                </span><span class="c1">// 匹配所有传入的 HTTP 请求</span>
+<span class="w">                </span><span class="p">.</span><span class="na">anyRequest</span><span class="p">()</span>
+<span class="w">                </span><span class="c1">// 要求所有请求都必须经过身份认证（用户必须已登录）</span>
+<span class="w">                </span><span class="p">.</span><span class="na">authenticated</span><span class="p">()</span>
+<span class="p">)</span>
+</code></pre>
+<h4 id="_7">授予 哪个用户拥有哪些角色</h4>
+<p>在实际开发中，用户对应的角色信息同样是存储到数据库表当中的，应该查询数据库，动态获取该用户拥有哪些角色。学习阶段就硬编码了。<strong><font style="color:#DF2A3F;">把之前授予权限的代码注释掉</font></strong>。编写以下代码来完成授予角色：</p>
+<p>在 <code>DBUserDetailsManager</code> 中的 <code>loadUserByUsername</code> 方法中编写代码：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// 不是 return new 了。</span>
+<span class="c1">// 是通过调用 User类的静态方法了。</span>
+<span class="k">return</span><span class="w"> </span><span class="n">org</span><span class="p">.</span><span class="na">springframework</span><span class="p">.</span><span class="na">security</span><span class="p">.</span><span class="na">core</span><span class="p">.</span><span class="na">userdetails</span><span class="p">.</span><span class="na">User</span>
+<span class="w">        </span><span class="p">.</span><span class="na">withUsername</span><span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="na">getUsername</span><span class="p">())</span>
+<span class="w">        </span><span class="p">.</span><span class="na">password</span><span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="na">getPassword</span><span class="p">())</span>
+<span class="w">        </span><span class="p">.</span><span class="na">accountLocked</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span><span class="w"> </span><span class="c1">// 用户未锁定</span>
+<span class="w">        </span><span class="p">.</span><span class="na">credentialsExpired</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span><span class="w"> </span><span class="c1">// 凭证未过期</span>
+<span class="w">        </span><span class="p">.</span><span class="na">disabled</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span><span class="w"> </span><span class="c1">// 账户启用</span>
+<span class="w">        </span><span class="p">.</span><span class="na">roles</span><span class="p">(</span><span class="s">"ADMIN"</span><span class="p">)</span><span class="w"> </span><span class="c1">// 授予角色（可以授予多个角色） .roles("ADMIN", "USER")</span>
+<span class="w">        </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+</code></pre>
+<p><strong>测试：</strong></p>
+<p><strong>第一步：先登录，看看用户的角色是不是：</strong><code>**ROLE_ADMIN**</code></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1759378487125-9bfdd381-33ad-4615-b213-ae1396744a49.png" width="361.3333333333333" title="" crop="0,0,1,1" id="u58a78699" class="ne-image" style="font-size: 16px"></p>
+<p><strong>第二步：看看用户是否可以访问 </strong><code>**/user/list**</code><strong>和 </strong><code>**/user/add**</code></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1759378521802-694d3dfc-037d-4263-b96f-d7c10569ced0.png" width="704" title="" crop="0,0,1,1" id="ud75204b5" class="ne-image" style="font-size: 16px"></p>
+<p><strong>第三步：将用户授予的角色修改为 </strong><code>**USER**</code></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1759378571794-912257af-3eae-4210-bfcb-84a77119a8cb.png" width="622.6666666666666" title="" crop="0,0,1,1" id="u3eb8a907" class="ne-image" style="font-size: 16px"></p>
+<p><strong>第四步：重启服务器，再看看用户是否可以访问 </strong><code>**/user/list**</code><strong>和 </strong><code>**/user/add**</code></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1759378659102-4e17c4f6-b803-4388-9e0e-a90254e57cbe.png" width="392" title="" crop="0,0,1,1" id="u0292b496" class="ne-image" style="font-size: 16px"></p>
+<h3 id="-_2">用户-角色-权限-资源</h3>
+<p>RBAC（Role-Based Access Control，基于角色的访问控制）是一种常用的数据库设计方案，它将用户的权限分配和管理与角色相关联。以下是一个基本的 <code>RBAC</code> 数据库设计方案的示例：</p>
+<ol>
+<li>用户表（User table）：包含用户的基本信息，例如用户名、密码和其他身份验证信息。</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>列名</th>
+<th>数据类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>user_id</td>
+<td>int</td>
+<td>用户ID</td>
+</tr>
+<tr>
+<td>username</td>
+<td>varchar</td>
+<td>用户名</td>
+</tr>
+<tr>
+<td>password</td>
+<td>varchar</td>
+<td>密码</td>
+</tr>
+<tr>
+<td>email</td>
+<td>varchar</td>
+<td>电子邮件地址</td>
+</tr>
+<tr>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+</tbody>
+</table>
+<ol>
+<li>角色表（Role table）：存储所有可能的角色及其描述。</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>列名</th>
+<th>数据类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>role_id</td>
+<td>int</td>
+<td>角色ID</td>
+</tr>
+<tr>
+<td>role_name</td>
+<td>varchar</td>
+<td>角色名称</td>
+</tr>
+<tr>
+<td>description</td>
+<td>varchar</td>
+<td>角色描述</td>
+</tr>
+<tr>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+</tbody>
+</table>
+<ol>
+<li>权限表（Permission table）：定义系统中所有可能的权限。</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>列名</th>
+<th>数据类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>permission_id</td>
+<td>int</td>
+<td>权限ID</td>
+</tr>
+<tr>
+<td>permission_name</td>
+<td>varchar</td>
+<td>权限名称</td>
+</tr>
+<tr>
+<td>description</td>
+<td>varchar</td>
+<td>权限描述</td>
+</tr>
+<tr>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+</tbody>
+</table>
+<ol>
+<li>用户角色关联表（User-Role table）：将用户与角色关联起来。</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>列名</th>
+<th>数据类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>user_role_id</td>
+<td>int</td>
+<td>用户角色关联ID</td>
+</tr>
+<tr>
+<td>user_id</td>
+<td>int</td>
+<td>用户ID</td>
+</tr>
+<tr>
+<td>role_id</td>
+<td>int</td>
+<td>角色ID</td>
+</tr>
+<tr>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+</tbody>
+</table>
+<ol>
+<li>角色权限关联表（Role-Permission table）：将角色与权限关联起来。</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th>列名</th>
+<th>数据类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>role_permission_id</td>
+<td>int</td>
+<td>角色权限关联ID</td>
+</tr>
+<tr>
+<td>role_id</td>
+<td>int</td>
+<td>角色ID</td>
+</tr>
+<tr>
+<td>permission_id</td>
+<td>int</td>
+<td>权限ID</td>
+</tr>
+<tr>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+</tr>
+</tbody>
+</table>
+<p>在这个设计方案中，用户可以被分配一个或多个角色，而每个角色又可以具有一个或多个权限。通过对用户角色关联和角色权限关联表进行操作，可以实现灵活的权限管理和访问控制。</p>
+<p>它的核心好处就是“批量管理”。不用给成百上千的用户一个个分配具体权限，只需要给几个角色分配好权限，然后把用户放进对应角色里即可，修改权限时也只需修改角色，所有属于该角色的用户权限会自动更新，非常高效。</p>
+<h2 id="_8">基于方法授权的代码实现</h2>
+<h3 id="_9">开启方法授权</h3>
+<p>如果要开启细粒度的方法授权，则需要在配置文件<code>WebSecurityConfig</code>上添加如下注解：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1759379375268-86d54cd1-72ed-43e3-84a7-2418bbad7ee6.png" width="444.8888888888889" title="" crop="0,0,1,1" id="u9fae198d" class="ne-image" style="font-size: 16px"></p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@EnableMethodSecurity</span>
+</code></pre>
+<p><strong><font style="color:#DF2A3F;">此时你需要把之前的授权代码注释掉：把红框中的也注释掉。在这个类中配置的都是基于 Request 的授权。</font></strong></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1759380832892-9713a7c4-0a98-42b7-b757-56ac12ed670c.png" width="709.7777777777778" title="" crop="0,0,1,1" id="u5bcf5b8c" class="ne-image" style="font-size: 16px"></p>
+<h3 id="_10">给用户授予角色</h3>
+<p>在 <code>DBUserDetailsManager</code>的 <code>loadUserByUsername</code>方法中授予角色：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="k">return</span><span class="w"> </span><span class="n">org</span><span class="p">.</span><span class="na">springframework</span><span class="p">.</span><span class="na">security</span><span class="p">.</span><span class="na">core</span><span class="p">.</span><span class="na">userdetails</span><span class="p">.</span><span class="na">User</span>
+<span class="w">        </span><span class="p">.</span><span class="na">withUsername</span><span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="na">getUsername</span><span class="p">())</span>
+<span class="w">        </span><span class="p">.</span><span class="na">password</span><span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="na">getPassword</span><span class="p">())</span>
+<span class="w">        </span><span class="p">.</span><span class="na">accountLocked</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span><span class="w"> </span><span class="c1">// 用户未锁定</span>
+<span class="w">        </span><span class="p">.</span><span class="na">credentialsExpired</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span><span class="w"> </span><span class="c1">// 凭证未过期</span>
+<span class="w">        </span><span class="p">.</span><span class="na">disabled</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span><span class="w"> </span><span class="c1">// 账户启用</span>
+<span class="w">        </span><span class="p">.</span><span class="na">roles</span><span class="p">(</span><span class="s">"ADMIN"</span><span class="p">)</span><span class="w"> </span><span class="c1">// 授予角色</span>
+<span class="w">        </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+</code></pre>
+<p>使用授权注解标注要控制的方法，找到你要精确控制的方法，例如 <code>UserController</code>类中的方法：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// 用户的角色是ADMIN，并且用户名是admin时，才能访问这个方法。</span>
+<span class="nd">@PreAuthorize</span><span class="p">(</span><span class="s">"hasRole('ADMIN') and authentication.name == 'admin'"</span><span class="p">)</span>
+<span class="nd">@GetMapping</span><span class="p">(</span><span class="s">"/list"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">List</span><span class="o">&lt;</span><span class="n">User</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">listUser</span><span class="p">(){</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">userService</span><span class="p">.</span><span class="na">list</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="c1">// 用户的角色是USER才可以访问这个方法</span>
+<span class="nd">@PreAuthorize</span><span class="p">(</span><span class="s">"hasRole('USER')"</span><span class="p">)</span>
+<span class="nd">@PostMapping</span><span class="p">(</span><span class="s">"/add"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="nd">@RequestBody</span><span class="w"> </span><span class="n">User</span><span class="w"> </span><span class="n">user</span><span class="p">){</span>
+<span class="w">    </span><span class="n">userService</span><span class="p">.</span><span class="na">saveUserDetails</span><span class="p">(</span><span class="n">user</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>测试：</strong></p>
+<p>第一步：使用 admin 用户登录，看看能不能访问 <code>/user/list</code>（预期是可以访问）</p>
+<p>第二步：使用 admin 用户登录，看看能不能访问 <code>/user/add</code>（预期是不能访问）</p>
+<h3 id="_11">给用户授予权限</h3>
+<p>在 <code>DBUserDetailsManager</code>的 <code>loadUserByUsername</code>方法中授予权限：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="k">return</span><span class="w"> </span><span class="n">org</span><span class="p">.</span><span class="na">springframework</span><span class="p">.</span><span class="na">security</span><span class="p">.</span><span class="na">core</span><span class="p">.</span><span class="na">userdetails</span><span class="p">.</span><span class="na">User</span>
+<span class="w">        </span><span class="p">.</span><span class="na">withUsername</span><span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="na">getUsername</span><span class="p">())</span>
+<span class="w">        </span><span class="p">.</span><span class="na">password</span><span class="p">(</span><span class="n">user</span><span class="p">.</span><span class="na">getPassword</span><span class="p">())</span>
+<span class="w">        </span><span class="p">.</span><span class="na">accountLocked</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span><span class="w"> </span><span class="c1">// 用户未锁定</span>
+<span class="w">        </span><span class="p">.</span><span class="na">credentialsExpired</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span><span class="w"> </span><span class="c1">// 凭证未过期</span>
+<span class="w">        </span><span class="p">.</span><span class="na">disabled</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span><span class="w"> </span><span class="c1">// 账户启用</span>
+<span class="w">        </span><span class="c1">//.roles("ADMIN") // 授予角色</span>
+<span class="w">        </span><span class="p">.</span><span class="na">authorities</span><span class="p">(</span><span class="s">"USER_ADD"</span><span class="p">,</span><span class="w"> </span><span class="s">"USER_EDIT"</span><span class="p">)</span><span class="w"> </span><span class="c1">// 授予权限（注意授予权限的代码和授予角色的代码不可共存）</span>
+<span class="w">        </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+</code></pre>
+<p>使用授权注解标注要控制的方法，找到你要精确控制的方法，例如 <code>UserController</code>类中的方法：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// 有 USER_LIST 权限的用户可以访问该方法</span>
+<span class="nd">@PreAuthorize</span><span class="p">(</span><span class="s">"hasAuthority('USER_LIST')"</span><span class="p">)</span>
+<span class="nd">@GetMapping</span><span class="p">(</span><span class="s">"/list"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">List</span><span class="o">&lt;</span><span class="n">User</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">listUser</span><span class="p">(){</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">userService</span><span class="p">.</span><span class="na">list</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="c1">// 有 USER_ADD 权限的用户可以访问该方法</span>
+<span class="nd">@PreAuthorize</span><span class="p">(</span><span class="s">"hasAuthority('USER_ADD')"</span><span class="p">)</span>
+<span class="nd">@PostMapping</span><span class="p">(</span><span class="s">"/add"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">add</span><span class="p">(</span><span class="nd">@RequestBody</span><span class="w"> </span><span class="n">User</span><span class="w"> </span><span class="n">user</span><span class="p">){</span>
+<span class="w">    </span><span class="n">userService</span><span class="p">.</span><span class="na">saveUserDetails</span><span class="p">(</span><span class="n">user</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>测试：</strong></p>
+<p>第一步：使用任意用户登录，看看能不能访问 <code>/user/list</code>（预期是不能访问）</p>
+<p>第二步：使用任意用户登录，看看能不能访问 <code>/user/add</code>（预期是能访问）</p>
+<h3 id="spel">方法上的 SpEL 表达式</h3>
+<p>针对方法进行授权时，这个<code>@PreAuthorize</code>注解中 <code>value</code>属性值是一个 <code>SpEL</code>表达式。<code>Security</code>中常用的表达式如下，可以自行参考：</p>
+<table>
+<thead>
+<tr>
+<th><strong><font style="color:rgb(15, 17, 21);">表达式</font></strong></th>
+<th><strong><font style="color:rgb(15, 17, 21);">说明</font></strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&lt;font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"&gt;hasRole('ROLE')&lt;/font&gt;</code></td>
+<td><font style="color:rgb(15, 17, 21);">是否有指定角色</font></td>
+</tr>
+<tr>
+<td><code>&lt;font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"&gt;hasAnyRole('ROLE1','ROLE2')&lt;/font&gt;</code></td>
+<td><font style="color:rgb(15, 17, 21);">是否有任一角色</font></td>
+</tr>
+<tr>
+<td><code>&lt;font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"&gt;hasAuthority('AUTH')&lt;/font&gt;</code></td>
+<td><font style="color:rgb(15, 17, 21);">是否有指定权限</font></td>
+</tr>
+<tr>
+<td><code>&lt;font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"&gt;hasAnyAuthority('AUTH1','AUTH2')&lt;/font&gt;</code></td>
+<td><font style="color:rgb(15, 17, 21);">是否有任一权限</font></td>
+</tr>
+<tr>
+<td><code>&lt;font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"&gt;authentication&lt;/font&gt;</code></td>
+<td><font style="color:rgb(15, 17, 21);">当前认证对象</font></td>
+</tr>
+<tr>
+<td><code>&lt;font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"&gt;principal&lt;/font&gt;</code></td>
+<td><font style="color:rgb(15, 17, 21);">当前用户主体</font></td>
+</tr>
+<tr>
+<td><code>&lt;font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"&gt;#argumentName&lt;/font&gt;</code></td>
+<td><font style="color:rgb(15, 17, 21);">方法参数</font></td>
+</tr>
+<tr>
+<td><code>&lt;font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"&gt;@beanName.method()&lt;/font&gt;</code></td>
+<td><font style="color:rgb(15, 17, 21);">调用Spring Bean方法</font></td>
+</tr>
+<tr>
+<td><code>&lt;font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"&gt;returnObject&lt;/font&gt;</code></td>
+<td><font style="color:rgb(15, 17, 21);">返回值（PostAuthorize）</font></td>
+</tr>
+<tr>
+<td><code>&lt;font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"&gt;permitAll()&lt;/font&gt;</code></td>
+<td><font style="color:rgb(15, 17, 21);">永远允许</font></td>
+</tr>
+<tr>
+<td><code>&lt;font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"&gt;denyAll()&lt;/font&gt;</code></td>
+<td><font style="color:rgb(15, 17, 21);">永远拒绝</font></td>
+</tr>
+<tr>
+<td><code>&lt;font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"&gt;isAnonymous()&lt;/font&gt;</code></td>
+<td><font style="color:rgb(15, 17, 21);">是否匿名用户</font></td>
+</tr>
+<tr>
+<td><code>&lt;font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"&gt;isAuthenticated()&lt;/font&gt;</code></td>
+<td><font style="color:rgb(15, 17, 21);">是否已认证</font></td>
+</tr>
+<tr>
+<td><code>&lt;font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"&gt;isRememberMe()&lt;/font&gt;</code></td>
+<td><font style="color:rgb(15, 17, 21);">是否记住我登录</font></td>
+</tr>
+<tr>
+<td><code>&lt;font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"&gt;isFullyAuthenticated()&lt;/font&gt;</code></td>
+<td><font style="color:rgb(15, 17, 21);">是否完整认证（非记住我）</font></td>
+</tr>
+</tbody>
+</table>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

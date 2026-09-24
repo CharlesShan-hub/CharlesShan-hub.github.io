@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>http-protocol</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="http">HTTP协议</h1>
+<hr />
+<h2 id="http_1">什么是HTTP协议</h2>
+<p><strong>HTTP（HyperText Transfer Protocol，超文本传输协议）</strong> 是一种用于分布式、协作式超媒体信息系统的应用层协议。它是万维网（WWW）数据通信的基础，基于<strong>客户端-服务器模型</strong>，通过请求-响应模式工作。  </p>
+<p><strong>核心特点</strong>：  </p>
+<ul>
+<li><strong>无状态</strong>：默认不保留之前的请求/响应信息（可通过Cookie/Session实现状态管理）。  </li>
+<li><strong>基于TCP/IP</strong>：默认端口80（HTTPS为443）。  </li>
+<li><strong>灵活可扩展</strong>：支持自定义头部、多种数据格式（JSON、XML等）。</li>
+</ul>
+<p><strong>HTTP 协议版本：</strong></p>
+<ul>
+<li>HTTP/1.0：短连接。<strong>每次浏览器向服务器发起一个请求，都会建立一个全新的 TCP 连接。</strong></li>
+<li>HTTP/1.1：持久连接。<strong>浏览器和服务器建立一次 TCP 连接后，可以在这个连接上连续进行多次请求和响应。</strong></li>
+</ul>
+<p><strong>HTTP1.1 连接是可复用的：</strong></p>
+<ul>
+<li>对同一域名的请求，可以复用同一个连接</li>
+<li>例如有这样一个网页：<strong>在 HTTP/1.1 时代，浏览器通常为每个域名开启 6 个左右的并行连接，以下页面在加载的时候就会有连接复用的情况。（底层弄了个 TCP 连接池，连接池最高支持 6 个 TCP 连接并发，下面这个 HTML 页面需要 9 个 TCP 连接，1 个加载 HTML，8 个加载图片。因此有连接复用的情况）</strong></li>
+</ul>
+<pre lang="html"><code class="language-html md-fencescode"><span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">img</span> <span class="na">src</span><span class="o">=</span><span class="s">"http://localhost:8080/app/1.jpg"</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">img</span> <span class="na">src</span><span class="o">=</span><span class="s">"http://localhost:8080/app/2.jpg"</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">img</span> <span class="na">src</span><span class="o">=</span><span class="s">"http://localhost:8080/app/3.jpg"</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">img</span> <span class="na">src</span><span class="o">=</span><span class="s">"http://localhost:8080/app/4.jpg"</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">img</span> <span class="na">src</span><span class="o">=</span><span class="s">"http://localhost:8080/app/5.jpg"</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">img</span> <span class="na">src</span><span class="o">=</span><span class="s">"http://localhost:8080/app/6.jpg"</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">img</span> <span class="na">src</span><span class="o">=</span><span class="s">"http://localhost:8080/app/7.jpg"</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">img</span> <span class="na">src</span><span class="o">=</span><span class="s">"http://localhost:8080/app/8.jpg"</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+</code></pre>
+<p><strong>HTTP/1.1 是有状态的吗？</strong></p>
+<ul>
+<li>无状态。尽管从 1.0 的短连接升级成了 1.1 的持久连接，但 HTTP 协议仍然是无状态的。无状态主要体现在：默认不保留之前的请求/响应信息。</li>
+</ul>
+<hr />
+<h2 id="http_2">HTTP请求报文详解</h2>
+<p>HTTP请求报文由以下部分组成：  </p>
+<pre lang="http"><code class="language-http md-fencescode"><span class="err">GET /index.html HTTP/1.1          # 请求行（方法 + URI + 协议版本）</span>
+<span class="err">Host: www.example.com             # 请求头部（键值对）</span>
+<span class="err">User-Agent: Mozilla/5.0          </span>
+<span class="err">Accept: text/html,application/xhtml+xml</span>
+<span class="err">Accept-Language: en-US           </span>
+<span class="err">Connection: keep-alive</span>
+<span class="err">Content-Type: application/x-www-form-urlencoded</span>
+<span class="err">Cookie: sessionId=abc123; userId=admin</span>
+<span class="err">                                  # 空行（分隔头部和体）</span>
+<span class="err">name=John&amp;age=30                  # 请求体（GET通常无体，POST/PUT等有）</span>
+</code></pre>
+<p><strong>关键字段说明</strong>：  </p>
+<ul>
+<li><strong>请求行</strong>：  <ul>
+<li><strong>方法</strong>：GET（获取资源）、POST（提交数据）、PUT（更新）、DELETE（删除）等。  </li>
+<li><strong>URI</strong>：请求的资源路径（如<code>/index.html</code>）。  </li>
+<li><strong>协议版本</strong>：HTTP/1.1 或 HTTP/2。</li>
+</ul>
+</li>
+<li><strong>请求头部</strong>：  <ul>
+<li><code>Host</code>：目标服务器域名（必填）。  </li>
+<li><code>User-Agent</code>：客户端标识（如浏览器类型）。  </li>
+<li><code>Content-Type</code>：请求体的数据类型（<code>application/x-www-form-urlencoded</code>表示普通表单提交，<code>application/json</code>表示以 JSON 格式提交数据）。  </li>
+<li><code>Cookie</code>：客户端携带的会话信息。</li>
+</ul>
+</li>
+<li><strong>请求体</strong>：仅POST/PUT等方法携带数据（如表单、JSON）。</li>
+</ul>
+<hr />
+<h2 id="http_3">HTTP响应报文详解</h2>
+<p>HTTP响应报文结构：  </p>
+<pre lang="http"><code class="language-http md-fencescode"><span class="kr">HTTP</span><span class="o">/</span><span class="m">1.1</span> <span class="m">200</span> <span class="ne">OK                  # 状态行（协议版本 + 状态码 + 描述）</span>
+<span class="na">Server</span><span class="o">:</span> <span class="l">nginx/1.18.0             # 响应头部</span>
+<span class="na">Date</span><span class="o">:</span> <span class="l">Mon, 01 Jun 2025 12:00:00 GMT</span>
+<span class="na">Content-Type</span><span class="o">:</span> <span class="l">text/html; charset=UTF-8          </span>
+<span class="na">Content-Length</span><span class="o">:</span> <span class="l">1234             </span>
+<span class="na">Connection</span><span class="o">:</span> <span class="l">keep-alive          </span>
+<span class="na">Set-Cookie</span><span class="o">:</span> <span class="l">session_id=abc123; HttpOnly; SameSite=Strict</span>
+                                 <span class="l"># 空行</span>
+<span class="err">&lt;!DOCTYPE</span> <span class="l">html&gt;                  # 响应体（实际数据）</span>
+<span class="err">&lt;html&gt;...&lt;/html&gt;</span>
+</code></pre>
+<p><strong>关键字段说明</strong>：  </p>
+<ul>
+<li><strong>状态行</strong>：  <ul>
+<li><strong>状态码</strong>：  <ul>
+<li><strong><code>200 OK</code></strong>：成功。</li>
+<li><strong><code>404 Not Found</code></strong>：资源不存在。</li>
+<li><strong><code>405</code></strong>：请求方式和服务器端的处理方式不一致。（例如：前端请求方式为 POST，服务器端处理方式是 GET，则发生 405 错误。）</li>
+<li><strong><code>500 Internal Server Error</code></strong>：服务器错误。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>响应头部</strong>：  <ul>
+<li><code>Content-Type</code>：响应体类型（如<code>text/html</code>、<code>application/json</code>）。  </li>
+<li><code>Content-Length</code>：响应体大小（字节）。  </li>
+<li><code>Set-Cookie</code>：服务器设置的会话标识。【HttpOnly设置在浏览器不能使用 document.cookie 读取，防止 XSS 攻击。 SameSite=Lax允许部分安全的跨站请求（如导航链接），SameSite=Strict最严格，完全禁止在跨站请求中发送Cookie】</li>
+</ul>
+</li>
+<li><strong>响应体</strong>：返回的实际数据（HTML、JSON等）。</li>
+</ul>
+<hr />
+<h2 id="getpost">GET与POST的区别及选择</h2>
+<h3 id="_1">区别</h3>
+<table>
+<thead>
+<tr>
+<th><strong>特性</strong></th>
+<th><strong>GET请求</strong></th>
+<th><strong>POST请求</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>数据位置</strong></td>
+<td>URL查询参数（如<code>?name=John</code>）</td>
+<td>请求体中（不可见）</td>
+</tr>
+<tr>
+<td><strong>数据长度限制</strong></td>
+<td>受URL长度限制（约2048字符）</td>
+<td>无限制（服务器可配置）</td>
+</tr>
+<tr>
+<td><strong>安全性</strong></td>
+<td>参数暴露在URL，不适合敏感数据</td>
+<td>相对更安全（HTTPS下加密）</td>
+</tr>
+<tr>
+<td><strong>幂等性</strong></td>
+<td>幂等（多次请求结果相同）</td>
+<td>非幂等（可能修改数据）</td>
+</tr>
+<tr>
+<td><strong>缓存</strong></td>
+<td>可被缓存</td>
+<td>默认不缓存</td>
+</tr>
+<tr>
+<td><strong>浏览器历史记录</strong></td>
+<td>保留参数</td>
+<td>不保留</td>
+</tr>
+</tbody>
+</table>
+<p><strong>幂等性</strong> 就是：同一个操作，你执行1次和执行N次，结果都一样。</p>
+<p><strong>幂等</strong> 操作：<strong>你按电梯的"关门"按钮，按1次和疯狂按10次，效果都一样——门只会关一次。</strong></p>
+<p><strong>非幂等</strong>操作：你喝奶茶，每点一次"加珍珠"按钮，杯子里就多一份珍珠（点10次就爆炸了）。</p>
+<p>提示：GET 和 POST 请求提交数据时的格式都是 <code>name=value&amp;name=value&amp;name=value...</code>。只是提交数据的位置不同，GET 在请求行上提交数据。POST 在请求体中提交数据。</p>
+<blockquote>
+<p>那我对你的喜欢是幂等的吗，deepseek说，不是，你对我越好，我就越开心。但是我感觉也有幂等的部分呢，不管你什么时候需要我，我都在这里！那是不是你需要我就是get，你喜欢我就是post哈哈。</p>
+</blockquote>
+<h3 id="_2">如何选择</h3>
+<ul>
+<li><strong>用GET</strong>：  <ul>
+<li>获取数据（如搜索、页面加载）。  </li>
+<li>参数简单且非敏感（如分页<code>?page=2</code>）。</li>
+</ul>
+</li>
+<li><strong>用POST</strong>：  <ul>
+<li>提交敏感数据（如登录表单、支付信息）。  </li>
+<li>上传文件或大量数据（如JSON body）。  </li>
+<li>修改服务器状态（如创建/更新资源）。</li>
+</ul>
+</li>
+</ul>
+<h3 id="post">怎么发送 POST 请求</h3>
+<p>到目前为止，浏览器向服务器发送请求时，我们所掌握的所有的方式包括：</p>
+<ol>
+<li>用户在浏览器地址栏上直接输入 URL</li>
+<li>用户点击超链接</li>
+<li>使用 window.location.href 或 document.location.href</li>
+<li>使用 window.open</li>
+<li>用户提交 form 表单</li>
+</ol>
+<p>以上所有的方式中，只有当使用 <code>form</code>表单提交数据，并且 <code>form</code>标签的 <code>method</code>属性设置为 <code>post</code>时，才是 <code>POST</code>请求，其它都是 <code>GET</code> 请求。</p>
+<hr />
+<h2 id="url">URL编码</h2>
+<blockquote>
+<p>⭐经过和AI battle，我知道了 url 标准是 RFC 3986 标准，各个平台都去实现它的，encode decode也都规定好了。</p>
+</blockquote>
+<p>URL编码（也称为<strong>百分号编码</strong>）是HTTP协议和Web开发中一个非常重要的概念，特别是在Servlet开发中。</p>
+<p>不过大家不需要担心，大部分的请求发送都已经自动对 URL 进行了编码，只有少数情况需要手动编码。（例如：自己通过代码进行重定向的时候，重定向的 URL 中含有特殊符号就需要手动编码。）</p>
+<h3 id="url_1">URL编码的作用</h3>
+<p>URL编码主要用于：</p>
+<ol>
+<li><strong>解决特殊字符问题</strong>：URL中某些字符有特殊含义（如?、&amp;、/等），当这些字符需要作为普通字符使用时必须编码</li>
+<li><strong>支持非ASCII字符</strong>：URL<strong>只能使用ASCII字符集</strong>！！非ASCII字符（如中文）必须编码</li>
+<li><strong>确保数据完整性</strong>：防止数据在传输过程中被错误解析</li>
+</ol>
+<h3 id="servlet">在Servlet中的主要应用场景</h3>
+<ol>
+<li><strong>查询字符串(Query String)</strong>：</li>
+</ol>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// 例如：name=张三&amp;age=20 需要编码为 name=%E5%BC%A0%E4%B8%89&amp;age=20</span>
+<span class="n">String</span><span class="w"> </span><span class="n">encodedName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">URLEncoder</span><span class="p">.</span><span class="na">encode</span><span class="p">(</span><span class="s">"张三"</span><span class="p">,</span><span class="w"> </span><span class="s">"UTF-8"</span><span class="p">);</span>
+</code></pre>
+<ol>
+<li><strong>表单提交</strong>：<ul>
+<li>GET方法：参数会自动进行URL编码</li>
+<li>POST方法：取决于enctype属性，application/x-www-form-urlencoded会进行编码</li>
+</ul>
+</li>
+<li><strong>重定向(Redirect)</strong>：</li>
+</ol>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">String</span><span class="w"> </span><span class="n">redirectUrl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"/search?q="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">URLEncoder</span><span class="p">.</span><span class="na">encode</span><span class="p">(</span><span class="n">userInput</span><span class="p">,</span><span class="w"> </span><span class="s">"UTF-8"</span><span class="p">);</span>
+<span class="n">response</span><span class="p">.</span><span class="na">sendRedirect</span><span class="p">(</span><span class="n">redirectUrl</span><span class="p">);</span>
+</code></pre>
+<ol>
+<li><strong>Cookie值</strong>：Cookie的值也需要进行URL编码（对 cookie 的 value 进行编码。cookie 由 name 和 value 组成。）</li>
+<li><strong>自定义响应头</strong>：也是不能有中文的，如果有中文也需要手动编码。</li>
+</ol>
+<h3 id="_3">重要性</h3>
+<p>URL编码<strong>非常重要</strong>，因为：</p>
+<ul>
+<li>不正确的编码会导致数据损坏或安全漏洞（如XSS攻击）</li>
+<li>是Web开发的基础知识，几乎所有涉及URL参数传递的场景都需要考虑</li>
+<li>现代框架虽然大多自动处理，但理解原理对调试和解决特殊问题很有帮助</li>
+</ul>
+<h3 id="javaapi">Java中的相关API</h3>
+<ul>
+<li><strong>编码</strong>：<code>java.net.URLEncoder.encode(String s, String enc)</code></li>
+<li><strong>解码</strong>：<code>java.net.URLDecoder.decode(String s, String enc)</code></li>
+<li>Servlet容器通常会自动解码请求参数</li>
+</ul>
+<h3 id="_4">示例</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">import</span><span class="w"> </span><span class="nn">java.net.URLEncoder</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.net.URLDncoder</span><span class="p">;</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// 编码示例</span>
+<span class="n">String</span><span class="w"> </span><span class="n">original</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"搜索 关键词&amp;特殊字符"</span><span class="p">;</span>
+<span class="n">String</span><span class="w"> </span><span class="n">encoded</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">URLEncoder</span><span class="p">.</span><span class="na">encode</span><span class="p">(</span><span class="n">original</span><span class="p">,</span><span class="w"> </span><span class="s">"UTF-8"</span><span class="p">);</span>
+<span class="c1">// 结果为 "搜索+关键词%26特殊字符"</span>
+
+<span class="c1">// 解码示例</span>
+<span class="n">String</span><span class="w"> </span><span class="n">decoded</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">URLDecoder</span><span class="p">.</span><span class="na">decode</span><span class="p">(</span><span class="n">encoded</span><span class="p">,</span><span class="w"> </span><span class="s">"UTF-8"</span><span class="p">);</span>
+</code></pre>
+<p>理解URL编码对于开发安全、健壮的Web应用至关重要，是Servlet开发的基础知识之一。</p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

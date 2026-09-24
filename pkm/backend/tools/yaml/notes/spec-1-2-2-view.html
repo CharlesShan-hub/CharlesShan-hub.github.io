@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>spec-1-2-2-view</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="_1">模型</h1>
+<blockquote>
+<p>本文按照YAML官方文档1.2.2版本翻译总结而成</p>
+<p>https://yaml.org/spec/1.2.2/#chapter-3-processes-and-models</p>
+</blockquote>
+<p>YAML is both a text format and a method for <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">presenting</a> any <a href="https://yaml.org/spec/1.2.2/#representing-native-data-structures">native data structure</a> in this format. Therefore, this specification defines two concepts: a class of data objects called YAML <a href="https://yaml.org/spec/1.2.2/#representation-graph">representations</a> and a syntax for <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">presenting</a> YAML <a href="https://yaml.org/spec/1.2.2/#representation-graph">representations</a> as a series of characters, called a YAML <a href="https://yaml.org/spec/1.2.2/#streams">stream</a>.</p>
+<p>YAML 既是一种文本格式，也是一种以这种格式呈现任何本机数据结构的方法。因此，本规范定义了两个概念
+* YAML 表示的数据对象。
+* YAML 流：将 YAML 表示呈现为一系列字符的语法。</p>
+<p>A YAML <em>processor</em> is a tool for converting information between these complementary views. It is assumed that a YAML processor does its work on behalf of another module, called an <em>application</em>. This chapter describes the information structures a YAML processor must provide to or obtain from the application.</p>
+<p>YAML 处理器是一种在这些互补视图之间转换信息的工具。假设 YAML 处理器代表另一个模块（称为应用程序）工作。本章介绍 YAML 处理器必须向应用程序提供或从应用程序获取的信息结构。</p>
+<p>YAML information is used in two ways: for machine processing and for human consumption. The challenge of reconciling these two perspectives is best done in three distinct translation stages: <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation</a>, <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serialization</a> and <a href="https://yaml.org/spec/1.2.2/#presentation-stream">presentation</a>. <a href="https://yaml.org/spec/1.2.2/#representation-graph">Representation</a> addresses how YAML views <a href="https://yaml.org/spec/1.2.2/#representing-native-data-structures">native data structures</a> to achieve portability between programming environments. <a href="https://yaml.org/spec/1.2.2/#serialization-tree">Serialization</a> concerns itself with turning a YAML <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation</a> into a serial form, that is, a form with sequential access constraints. <a href="https://yaml.org/spec/1.2.2/#presentation-stream">Presentation</a> deals with the formatting of a YAML <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serialization</a> as a series of characters in a human-friendly manner.</p>
+<p>YAML 信息有两种用途：用于机器处理和供人类使用。协调这两个观点的挑战最好在三个不同的转换阶段完成：表示、序列化和表示。
+* Representation：YAML 如何查看本机数据结构以实现编程环境之间的可移植性。
+* Serialization：涉及将 YAML 表示转换为串行形式，即具有顺序访问约束的形式。
+* Presentation：涉及以人性化的方式将 YAML 序列化格式化为一系列字符。</p>
+<h2 id="31-processes">3.1. Processes</h2>
+<p>Translating between <a href="https://yaml.org/spec/1.2.2/#representing-native-data-structures">native data structures</a> and a character <a href="https://yaml.org/spec/1.2.2/#streams">stream</a> is done in several logically distinct stages, each with a well defined input and output data model, as shown in the following diagram:</p>
+<p><a href="https://yaml.org/spec/1.2.2/#representing-native-data-structures">原生数据结构</a>和字符<a href="https://yaml.org/spec/1.2.2/#streams">流</a>之间的转换在几个逻辑上不同的阶段中完成，每个阶段都有定义明确的输入和输出数据模型</p>
+<p><strong>Figure 3.1. Processing Overview</strong></p>
+<p><img alt="Processing Overview" src="https://yaml.org/spec/1.2.2/img/overview2.svg" /></p>
+<p>A YAML processor need not expose the <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serialization</a> or <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation</a> stages. It may translate directly between <a href="https://yaml.org/spec/1.2.2/#representing-native-data-structures">native data structures</a> and a character <a href="https://yaml.org/spec/1.2.2/#streams">stream</a> (<a href="https://yaml.org/spec/1.2.2/#dump">dump</a> and <a href="https://yaml.org/spec/1.2.2/#load">load</a> in the diagram above). However, such a direct translation should take place so that the <a href="https://yaml.org/spec/1.2.2/#representing-native-data-structures">native data structures</a> are <a href="https://yaml.org/spec/1.2.2/#constructing-native-data-structures">constructed</a> only from information available in the <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation</a>. In particular, <a href="https://yaml.org/spec/1.2.2/#mapping">mapping key order</a>, <a href="https://yaml.org/spec/1.2.2/#comments">comments</a> and <a href="https://yaml.org/spec/1.2.2/#tag-handles">tag handles</a> should not be referenced during <a href="https://yaml.org/spec/1.2.2/#constructing-native-data-structures">construction</a>.</p>
+<p>YAML处理器无需展示序列化或表示阶段的过程。它可以直接在本地数据结构与字符流之间进行转换（如图中的dump和load过程）。这种转换应确保本地数据结构仅根据表示中提供的信息来构建。特别是，在构建过程中不应考虑映射键的顺序、注释以及标签处理程序等因素。</p>
+<h3 id="311-dump">3.1.1. Dump</h3>
+<p><em>Dumping</em> native data structures to a character <a href="https://yaml.org/spec/1.2.2/#streams">stream</a> is done using the following three stages:</p>
+<p>将本机数据结构转储到字符流使用以下三个阶段完成：</p>
+<ul>
+<li>Representing Native Data Structures</li>
+</ul>
+<p>YAML <em>represents</em> any <em>native data structure</em> using three <a href="https://yaml.org/spec/1.2.2/#nodes">node kinds</a>: <a href="https://yaml.org/spec/1.2.2/#sequence">sequence</a> - an ordered series of entries; <a href="https://yaml.org/spec/1.2.2/#mapping">mapping</a> - an unordered association of <a href="https://yaml.org/spec/1.2.2/#node-comparison">unique</a> <a href="https://yaml.org/spec/1.2.2/#nodes">keys</a> to <a href="https://yaml.org/spec/1.2.2/#nodes">values</a>; and <a href="https://yaml.org/spec/1.2.2/#scalar">scalar</a> - any datum with opaque structure presentable as a series of Unicode characters.</p>
+<p>YAML 使用三种<a href="https://yaml.org/spec/1.2.2/#nodes">节点类型</a>表示任何本机数据结构： 
+  * <a href="https://yaml.org/spec/1.2.2/#sequence">sequence</a> - 一系列有序的条目;
+ <code>yaml
+ product:
+- sku         : BL394D
+  quantity    : 4
+  description : Football
+  price       : 450.00
+- sku         : BL4438H
+  quantity    : 1
+  description : Super Hoop
+  price       : 2392.00</code>
+  * <a href="https://yaml.org/spec/1.2.2/#mapping">mapping</a> - <a href="https://yaml.org/spec/1.2.2/#node-comparison">唯一</a><a href="https://yaml.org/spec/1.2.2/#nodes">键</a>与<a href="https://yaml.org/spec/1.2.2/#nodes">值</a>的无序关联;</p>
+<pre lang="yaml"><code class="language-yaml md-fencescode"><span class="nt">batchLimit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1000</span>
+<span class="nt">threadCountLimit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="nt">key</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">value</span>
+<span class="nt">keyMapping</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">&lt;What goes here?&gt;</span>
+</code></pre>
+<ul>
+<li><a href="https://yaml.org/spec/1.2.2/#scalar">scalar</a> - 任何具有不透明结构的数据，可表示为一系列 Unicode 字符。</li>
+</ul>
+<p>Combined, these primitives generate directed graph structures. These primitives were chosen because they are both powerful and familiar: the <a href="https://yaml.org/spec/1.2.2/#sequence">sequence</a> corresponds to a Perl array and a Python list, the <a href="https://yaml.org/spec/1.2.2/#mapping">mapping</a> corresponds to a Perl hash table and a Python dictionary. The <a href="https://yaml.org/spec/1.2.2/#scalar">scalar</a> represents strings, integers, dates and other atomic data types.</p>
+<p>这些基元组合在一起，生成有向图形结构。 选择这些原语是因为它们既强大又熟悉： <a href="https://yaml.org/spec/1.2.2/#sequence">sequence</a> 对应一个 Perl 数组和一个 Python 列表，<a href="https://yaml.org/spec/1.2.2/#mapping">mapping</a> 对应一个 Perl 哈希表和一个 Python 字典。 <a href="https://yaml.org/spec/1.2.2/#scalar">scalar</a>表示字符串、整数、日期和其他原子数据类型。</p>
+<p><code>``yaml
+  # 这是一个使用全局标签的整数标量，它告诉 YAML 解析器</code>42` 是一个整数。
+  number: !!int 42</p>
+<p># <code>!invoice</code> 和 <code>!item</code> 是局部标签，它们用于定义一个特定于应用程序的数据结构。在这个例子中，<code>!invoice</code> 表示一个发票对象，而 <code>!item</code> 表示发票中的一个项目。
+  !invoice
+    id: 12345
+    date: 2023-04-01
+    items:
+      - !item
+        product: "Widget"
+        quantity: 1
+        price: !!float 19.99</p>
+<p>```</p>
+<pre><code class="md-fencescode">Each YAML [node](https://yaml.org/spec/1.2.2/#nodes) requires, in addition to its [kind](https://yaml.org/spec/1.2.2/#nodes) and [content](https://yaml.org/spec/1.2.2/#nodes), a [tag](https://yaml.org/spec/1.2.2/#tags) specifying its data type. Type specifiers are either [global](https://yaml.org/spec/1.2.2/#tags) URIs or are [local](https://yaml.org/spec/1.2.2/#tags) in scope to a single [application](https://yaml.org/spec/1.2.2/#processes-and-models). For example, an integer is represented in YAML with a [scalar](https://yaml.org/spec/1.2.2/#scalar) plus the [global tag](https://yaml.org/spec/1.2.2/#tags) “`tag:yaml.org,2002:int`”. Similarly, an invoice object, particular to a given organization, could be represented as a [mapping](https://yaml.org/spec/1.2.2/#mapping) together with the [local tag](https://yaml.org/spec/1.2.2/#tags) “`!invoice`”. This simple model can represent any data structure independent of programming language.
+
+每个YAML节点除了需要知道其类型和内容外，还需要一个标签来指明其数据类型。这些类型标签要么是全局统一资源标识符（URI），要么是仅限于特定应用程序的本地标签。例如，在YAML中，整数是通过一个标量值加上全局标签“tag:yaml.org,2002:int”来表示的。同样，特定于某个组织的发票对象可以表示为一个映射，并加上本地标签“!invoice”。这种简单的模型能够描述任何与编程语言无关的数据结构。
+</code></pre>
+<ul>
+<li>Serializing the Representation Graph</li>
+</ul>
+<p>For sequential access mediums, such as an event callback API, a YAML <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation</a> must be <em>serialized</em> to an ordered tree. Since in a YAML <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation</a>, <a href="https://yaml.org/spec/1.2.2/#nodes">mapping keys</a> are unordered and <a href="https://yaml.org/spec/1.2.2/#nodes">nodes</a> may be referenced more than once (have more than one incoming “arrow”), the serialization process is required to impose an <a href="https://yaml.org/spec/1.2.2/#mapping-key-order">ordering</a> on the <a href="https://yaml.org/spec/1.2.2/#nodes">mapping keys</a> and to replace the second and subsequent references to a given <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> with place holders called <a href="https://yaml.org/spec/1.2.2/#anchors-and-aliases">aliases</a>. YAML does not specify how these <em>serialization details</em> are chosen. It is up to the YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processor</a> to come up with human-friendly <a href="https://yaml.org/spec/1.2.2/#mapping-key-order">key order</a> and <a href="https://yaml.org/spec/1.2.2/#anchors-and-aliases">anchor</a> names, possibly with the help of the <a href="https://yaml.org/spec/1.2.2/#processes-and-models">application</a>. The result of this process, a YAML <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serialization tree</a>, can then be traversed to produce a series of event calls for one-pass processing of YAML data.</p>
+<p>在顺序访问的介质中，例如事件回调API，需要将YAML的数据表示转换为一个有序的树结构。由于在YAML的数据表示中，映射的键是无序的，且节点可能被多次引用，因此在序列化过程中需要确定映射键的顺序，并将对同一节点的多次引用转换为称为别名的占位符。YAML标准并没有规定如何选择这些序列化细节，这取决于YAML处理器来决定一个直观的键顺序和锚点名称，可能还需要应用程序的协助。这个过程的结果是一个YAML序列化树，它可以通过遍历产生一系列事件调用，从而实现一次性处理YAML数据。</p>
+<ul>
+<li>Presenting the Serialization Tree</li>
+</ul>
+<p>The final output process is <em>presenting</em> the YAML <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serializations</a> as a character <a href="https://yaml.org/spec/1.2.2/#streams">stream</a> in a human-friendly manner. To maximize human readability, YAML offers a rich set of stylistic options which go far beyond the minimal functional needs of simple data storage. Therefore the YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processor</a> is required to introduce various <em>presentation details</em> when creating the <a href="https://yaml.org/spec/1.2.2/#streams">stream</a>, such as the choice of <a href="https://yaml.org/spec/1.2.2/#node-styles">node styles</a>, how to <a href="https://yaml.org/spec/1.2.2/#scalar-formats">format scalar content</a>, the amount of <a href="https://yaml.org/spec/1.2.2/#indentation-spaces">indentation</a>, which <a href="https://yaml.org/spec/1.2.2/#tag-handles">tag handles</a> to use, the <a href="https://yaml.org/spec/1.2.2/#node-tags">node tags</a> to leave <a href="https://yaml.org/spec/1.2.2/#resolved-tags">unspecified</a>, the set of <a href="https://yaml.org/spec/1.2.2/#directives">directives</a> to provide and possibly even what <a href="https://yaml.org/spec/1.2.2/#comments">comments</a> to add. While some of this can be done with the help of the <a href="https://yaml.org/spec/1.2.2/#processes-and-models">application</a>, in general this process should be guided by the preferences of the user.</p>
+<p>YAML的最终输出过程是将YAML的序列化数据以人类友好的方式转换为字符流输出。为了提高可读性，YAML提供了多种样式选择，这些选择不仅满足了简单数据存储的基本功能，还提供了更多的灵活性。因此，在创建字符流时，YAML处理器需要考虑各种输出细节，如选择节点样式、标量内容的格式化方式、缩进大小、使用的标签句柄、保留未指定的节点标签、提供的指令，甚至包括添加的注释。虽然一些细节可以通过应用程序来辅助完成，但总体上，这个过程应该根据用户的需求和喜好来调整。</p>
+<h3 id="312-load">3.1.2. Load</h3>
+<p><em>Loading</em> <a href="https://yaml.org/spec/1.2.2/#representing-native-data-structures">native data structures</a> from a character <a href="https://yaml.org/spec/1.2.2/#streams">stream</a> is done using the following three stages:</p>
+<ul>
+<li>Parsing the Presentation Stream</li>
+</ul>
+<p><em>Parsing</em> is the inverse process of <a href="https://yaml.org/spec/1.2.2/#presentation-stream">presentation</a>, it takes a <a href="https://yaml.org/spec/1.2.2/#streams">stream</a> of characters and produces a <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serialization tree</a>. Parsing discards all the <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">details</a> introduced in the <a href="https://yaml.org/spec/1.2.2/#presentation-stream">presentation</a> process, reporting only the <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serialization tree</a>. Parsing can fail due to <a href="https://yaml.org/spec/1.2.2/#well-formed-streams-and-identified-aliases">ill-formed</a> input.</p>
+<p>解析是呈现过程的逆过程，它将字符流转换为序列化树。在解析过程中，会忽略呈现时添加的所有格式细节，只保留序列化树的结构。如果输入的字符流格式不正确，解析过程可能会失败。</p>
+<ul>
+<li>Composing the Representation Graph</li>
+</ul>
+<p><em>Composing</em> takes a <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serialization tree</a> and produces a <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation graph</a>. Composing discards all the <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">details</a> introduced in the <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serialization</a> process, producing only the <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation graph</a>. Composing can fail due to any of several reasons, detailed <a href="https://yaml.org/spec/1.2.2/#loading-failure-points">below</a>.</p>
+<p>组合过程是将序列化树转换成代表图。在这个过程中，会忽略序列化时添加的所有格式细节，只保留代表图的结构。组合可能会因为多种原因失败，具体原因将在下面详细讨论。</p>
+<ul>
+<li>Constructing Native Data Structures</li>
+</ul>
+<p>The final input process is <em>constructing</em> <a href="https://yaml.org/spec/1.2.2/#representing-native-data-structures">native data structures</a> from the YAML <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation</a>. Construction must be based only on the information available in the <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation</a> and not on additional <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serialization</a> or <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">presentation details</a> such as <a href="https://yaml.org/spec/1.2.2/#comments">comments</a>, <a href="https://yaml.org/spec/1.2.2/#directives">directives</a>, <a href="https://yaml.org/spec/1.2.2/#mapping">mapping key order</a>, <a href="https://yaml.org/spec/1.2.2/#node-styles">node styles</a>, <a href="https://yaml.org/spec/1.2.2/#scalar-formats">scalar content format</a>, <a href="https://yaml.org/spec/1.2.2/#indentation-spaces">indentation</a> levels etc. Construction can fail due to the <a href="https://yaml.org/spec/1.2.2/#available-tags">unavailability</a> of the required <a href="https://yaml.org/spec/1.2.2/#representing-native-data-structures">native data types</a>.</p>
+<p>最后的输入过程是从YAML的表示中创建本地数据结构。这一过程应仅依赖于表示中的信息，而不应考虑序列化或呈现时的额外信息，如注释、指令、映射键的排序、节点样式、标量内容的格式、缩进层次等。如果所需的本地数据类型不可用，构建过程可能会失败。</p>
+<h2 id="32-information-models">3.2. Information Models</h2>
+<p>This section specifies the formal details of the results of the above processes. To maximize data portability between programming languages and implementations, users of YAML should be mindful of the distinction between <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serialization</a> or <a href="https://yaml.org/spec/1.2.2/#presentation-stream">presentation</a> properties and those which are part of the YAML <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation</a>. Thus, while imposing a <a href="https://yaml.org/spec/1.2.2/#mapping-key-order">order</a> on <a href="https://yaml.org/spec/1.2.2/#nodes">mapping keys</a> is necessary for flattening YAML <a href="https://yaml.org/spec/1.2.2/#representation-graph">representations</a> to a sequential access medium, this <a href="https://yaml.org/spec/1.2.2/#serializing-the-representation-graph">serialization detail</a> must not be used to convey <a href="https://yaml.org/spec/1.2.2/#processes-and-models">application</a> level information. In a similar manner, while <a href="https://yaml.org/spec/1.2.2/#indentation-spaces">indentation</a> technique and a choice of a <a href="https://yaml.org/spec/1.2.2/#node-styles">node style</a> are needed for the human readability, these <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">presentation details</a> are neither part of the YAML <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serialization</a> nor the YAML <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation</a>. By carefully separating properties needed for <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serialization</a> and <a href="https://yaml.org/spec/1.2.2/#presentation-stream">presentation</a>, YAML <a href="https://yaml.org/spec/1.2.2/#representation-graph">representations</a> of <a href="https://yaml.org/spec/1.2.2/#processes-and-models">application</a> information will be consistent and portable between various programming environments.</p>
+<p>本节详细规定了上述流程的结果。为了提高YAML在不同编程语言和环境间的数据可移植性，用户应区分开序列化和展示属性与YAML表示本身的部分。例如，在将YAML表示转换为顺序访问格式时，虽然需要确定映射键的顺序，但这部分序列化细节不应用于传递应用级别的信息。同样，虽然为了易读性需要选择缩进方式和节点样式，但这些展示细节并不属于YAML的序列化或表示。通过清晰地区分序列化和展示所需的属性，YAML表示的应用信息能在不同的编程环境中保持一致和可移植。</p>
+<p>The following diagram summarizes the three <em>information models</em>. Full arrows denote composition, hollow arrows denote inheritance, “<code>1</code>” and “<code>*</code>” denote “one” and “many” relationships. A single “<code>+</code>” denotes <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serialization</a> details, a double “<code>++</code>” denotes <a href="https://yaml.org/spec/1.2.2/#presentation-stream">presentation</a> details.</p>
+<p>在下图中，三个信息模型被总结。实箭头表示组合关系，空心箭头表示继承关系，<code>1</code>和<code>*</code>分别代表“一个”和“多个”的关系。单个<code>+</code>表示序列化细节，而双<code>++</code>表示展示细节。</p>
+<p><strong>Figure 3.2. Information Models</strong></p>
+<p><img alt="Information Models" src="https://yaml.org/spec/1.2.2/img/model2.svg" /></p>
+<h3 id="321-representation-graph">3.2.1. Representation Graph</h3>
+<p>YAML’s <em>representation</em> of <a href="https://yaml.org/spec/1.2.2/#representing-native-data-structures">native data structure</a> is a rooted, connected, directed graph of <a href="https://yaml.org/spec/1.2.2/#tags">tagged</a> <a href="https://yaml.org/spec/1.2.2/#nodes">nodes</a>. By “directed graph” we mean a set of <a href="https://yaml.org/spec/1.2.2/#nodes">nodes</a> and directed edges (“arrows”), where each edge connects one <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> to another (see a formal directed graph definition<a href="https://yaml.org/spec/1.2.2/#fn:digraph">13</a>). All the <a href="https://yaml.org/spec/1.2.2/#nodes">nodes</a> must be reachable from the <em>root node</em> via such edges. Note that the YAML graph may include cycles and a <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> may have more than one incoming edge.</p>
+<p><a href="https://yaml.org/spec/1.2.2/#nodes">Nodes</a> that are defined in terms of other <a href="https://yaml.org/spec/1.2.2/#nodes">nodes</a> are <a href="https://yaml.org/spec/1.2.2/#collections">collections</a>; <a href="https://yaml.org/spec/1.2.2/#nodes">nodes</a> that are independent of any other <a href="https://yaml.org/spec/1.2.2/#nodes">nodes</a> are <a href="https://yaml.org/spec/1.2.2/#scalars">scalars</a>. YAML supports two <a href="https://yaml.org/spec/1.2.2/#nodes">kinds</a> of <a href="https://yaml.org/spec/1.2.2/#mapping">collection nodes</a>: <a href="https://yaml.org/spec/1.2.2/#sequence">sequences</a> and <a href="https://yaml.org/spec/1.2.2/#mapping">mappings</a>. <a href="https://yaml.org/spec/1.2.2/#mapping">Mapping nodes</a> are somewhat tricky because their <a href="https://yaml.org/spec/1.2.2/#nodes">keys</a> are unordered and must be <a href="https://yaml.org/spec/1.2.2/#node-comparison">unique</a>.</p>
+<p><strong>Figure 3.3. Representation Model</strong></p>
+<p><img alt="Representation Model" src="https://yaml.org/spec/1.2.2/img/represent2.svg" /></p>
+<h4 id="3211-nodes">3.2.1.1. Nodes</h4>
+<p>A YAML <em>node</em> <a href="https://yaml.org/spec/1.2.2/#representation-graph">represents</a> a single <a href="https://yaml.org/spec/1.2.2/#representing-native-data-structures">native data structure</a>. Such nodes have <em>content</em> of one of three <em>kinds</em>: scalar, sequence or mapping. In addition, each node has a <a href="https://yaml.org/spec/1.2.2/#tags">tag</a> which serves to restrict the set of possible values the content can have.</p>
+<ul>
+<li>Scalar</li>
+</ul>
+<p>The content of a <em>scalar</em> node is an opaque datum that can be <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">presented</a> as a series of zero or more Unicode characters.</p>
+<ul>
+<li>Sequence</li>
+</ul>
+<p>The content of a <em>sequence</em> node is an ordered series of zero or more nodes. In particular, a sequence may contain the same node more than once. It could even contain itself.</p>
+<ul>
+<li>Mapping</li>
+</ul>
+<p>The content of a <em>mapping</em> node is an unordered set of <em>key/value</em> node <em>pairs</em>, with the restriction that each of the keys is <a href="https://yaml.org/spec/1.2.2/#node-comparison">unique</a>. YAML places no further restrictions on the nodes. In particular, keys may be arbitrary nodes, the same node may be used as the value of several key/value pairs and a mapping could even contain itself as a key or a value.</p>
+<h4 id="3212-tags">3.2.1.2. Tags</h4>
+<p>YAML <a href="https://yaml.org/spec/1.2.2/#representation-graph">represents</a> type information of <a href="https://yaml.org/spec/1.2.2/#representing-native-data-structures">native data structures</a> with a simple identifier, called a <em>tag</em>. <em>Global tags</em> are URIs and hence globally unique across all <a href="https://yaml.org/spec/1.2.2/#processes-and-models">applications</a>. The “<code>tag:</code>” URI scheme<a href="https://yaml.org/spec/1.2.2/#fn:tag-uri">14</a> is recommended for all global YAML tags. In contrast, <em>local tags</em> are specific to a single <a href="https://yaml.org/spec/1.2.2/#processes-and-models">application</a>. Local tags start with “<code>!</code>”, are not URIs and are not expected to be globally unique. YAML provides a “<code>TAG</code>” directive to make tag notation less verbose; it also offers easy migration from local to global tags. To ensure this, local tags are restricted to the URI character set and use URI character <a href="https://yaml.org/spec/1.2.2/#escaped-characters">escaping</a>.</p>
+<p>YAML does not mandate any special relationship between different tags that begin with the same substring. Tags ending with URI fragments (containing “<code>#</code>”) are no exception; tags that share the same base URI but differ in their fragment part are considered to be different, independent tags. By convention, fragments are used to identify different “variants” of a tag, while “<code>/</code>” is used to define nested tag “namespace” hierarchies. However, this is merely a convention and each tag may employ its own rules. For example, Perl tags may use “<code>::</code>” to express namespace hierarchies, Java tags may use “<code>.</code>”, etc.</p>
+<p>YAML tags are used to associate meta information with each <a href="https://yaml.org/spec/1.2.2/#nodes">node</a>. In particular, each tag must specify the expected <a href="https://yaml.org/spec/1.2.2/#nodes">node kind</a> (<a href="https://yaml.org/spec/1.2.2/#scalar">scalar</a>, <a href="https://yaml.org/spec/1.2.2/#sequence">sequence</a> or <a href="https://yaml.org/spec/1.2.2/#mapping">mapping</a>). <a href="https://yaml.org/spec/1.2.2/#scalar">Scalar</a> tags must also provide a mechanism for converting <a href="https://yaml.org/spec/1.2.2/#scalar-formats">formatted content</a> to a <a href="https://yaml.org/spec/1.2.2/#canonical-form">canonical form</a> for supporting <a href="https://yaml.org/spec/1.2.2/#equality">equality</a> testing. Furthermore, a tag may provide additional information such as the set of allowed <a href="https://yaml.org/spec/1.2.2/#nodes">content</a> values for validation, a mechanism for <a href="https://yaml.org/spec/1.2.2/#tag-resolution">tag resolution</a> or any other data that is applicable to all of the tag’s <a href="https://yaml.org/spec/1.2.2/#nodes">nodes</a>.</p>
+<h4 id="3213-node-comparison">3.2.1.3. Node Comparison</h4>
+<p>Since YAML <a href="https://yaml.org/spec/1.2.2/#mapping">mappings</a> require <a href="https://yaml.org/spec/1.2.2/#nodes">key</a> uniqueness, <a href="https://yaml.org/spec/1.2.2/#representation-graph">representations</a> must include a mechanism for testing the equality of <a href="https://yaml.org/spec/1.2.2/#nodes">nodes</a>. This is non-trivial since YAML allows various ways to <a href="https://yaml.org/spec/1.2.2/#scalar-formats">format scalar content</a>. For example, the integer eleven can be written as “<code>0o13</code>” (octal) or “<code>0xB</code>” (hexadecimal). If both notations are used as <a href="https://yaml.org/spec/1.2.2/#nodes">keys</a> in the same <a href="https://yaml.org/spec/1.2.2/#mapping">mapping</a>, only a YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processor</a> which recognizes integer <a href="https://yaml.org/spec/1.2.2/#scalar-formats">formats</a> would correctly flag the duplicate <a href="https://yaml.org/spec/1.2.2/#nodes">key</a> as an error.</p>
+<ul>
+<li>Canonical Form</li>
+</ul>
+<p>YAML supports the need for <a href="https://yaml.org/spec/1.2.2/#scalar">scalar</a> equality by requiring that every <a href="https://yaml.org/spec/1.2.2/#scalar">scalar</a> <a href="https://yaml.org/spec/1.2.2/#tags">tag</a> must specify a mechanism for producing the <em>canonical form</em> of any <a href="https://yaml.org/spec/1.2.2/#scalar-formats">formatted content</a>. This form is a Unicode character string which also <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">presents</a> the same <a href="https://yaml.org/spec/1.2.2/#nodes">content</a> and can be used for equality testing.</p>
+<ul>
+<li>Equality</li>
+</ul>
+<p>Two <a href="https://yaml.org/spec/1.2.2/#nodes">nodes</a> must have the same <a href="https://yaml.org/spec/1.2.2/#tags">tag</a> and <a href="https://yaml.org/spec/1.2.2/#nodes">content</a> to be <em>equal</em>. Since each <a href="https://yaml.org/spec/1.2.2/#tags">tag</a> applies to exactly one <a href="https://yaml.org/spec/1.2.2/#nodes">kind</a>, this implies that the two <a href="https://yaml.org/spec/1.2.2/#nodes">nodes</a> must have the same <a href="https://yaml.org/spec/1.2.2/#nodes">kind</a> to be equal.</p>
+<p>Two <a href="https://yaml.org/spec/1.2.2/#scalars">scalars</a> are equal only when their <a href="https://yaml.org/spec/1.2.2/#tags">tags</a> and canonical forms are equal character-by-character. Equality of <a href="https://yaml.org/spec/1.2.2/#collections">collections</a> is defined recursively.</p>
+<p>Two <a href="https://yaml.org/spec/1.2.2/#sequence">sequences</a> are equal only when they have the same <a href="https://yaml.org/spec/1.2.2/#tags">tag</a> and length and each <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> in one <a href="https://yaml.org/spec/1.2.2/#sequence">sequence</a> is equal to the corresponding <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> in the other <a href="https://yaml.org/spec/1.2.2/#sequence">sequence</a>.</p>
+<p>Two <a href="https://yaml.org/spec/1.2.2/#mapping">mappings</a> are equal only when they have the same <a href="https://yaml.org/spec/1.2.2/#tags">tag</a> and an equal set of <a href="https://yaml.org/spec/1.2.2/#nodes">keys</a> and each <a href="https://yaml.org/spec/1.2.2/#nodes">key</a> in this set is associated with equal <a href="https://yaml.org/spec/1.2.2/#nodes">values</a> in both <a href="https://yaml.org/spec/1.2.2/#mapping">mappings</a>.</p>
+<p>Different URI schemes may define different rules for testing the equality of URIs. Since a YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processor</a> cannot be reasonably expected to be aware of them all, it must resort to a simple character-by-character comparison of <a href="https://yaml.org/spec/1.2.2/#tags">tags</a> to ensure consistency. This also happens to be the comparison method defined by the “<code>tag:</code>” URI scheme. <a href="https://yaml.org/spec/1.2.2/#tags">Tags</a> in a YAML stream must therefore be <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">presented</a> in a canonical way so that such comparison would yield the correct results.</p>
+<p>If a node has itself as a descendant (via an alias), then determining the equality of that node is implementation-defined.</p>
+<p>A YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processor</a> may treat equal <a href="https://yaml.org/spec/1.2.2/#scalars">scalars</a> as if they were identical.</p>
+<ul>
+<li>Uniqueness</li>
+</ul>
+<p>A <a href="https://yaml.org/spec/1.2.2/#mapping">mapping’s</a> <a href="https://yaml.org/spec/1.2.2/#nodes">keys</a> are <em>unique</em> if no two keys are equal to each other. Obviously, identical nodes are always considered equal.</p>
+<h3 id="322-serialization-tree">3.2.2. Serialization Tree</h3>
+<p>To express a YAML <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation</a> using a serial API, it is necessary to impose an <a href="https://yaml.org/spec/1.2.2/#mapping-key-order">order</a> on <a href="https://yaml.org/spec/1.2.2/#nodes">mapping keys</a> and employ <a href="https://yaml.org/spec/1.2.2/#alias-nodes">alias nodes</a> to indicate a subsequent occurrence of a previously encountered <a href="https://yaml.org/spec/1.2.2/#nodes">node</a>. The result of this process is a <em>serialization tree</em>, where each <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> has an ordered set of children. This tree can be traversed for a serial event-based API. <a href="https://yaml.org/spec/1.2.2/#constructing-native-data-structures">Construction</a> of <a href="https://yaml.org/spec/1.2.2/#representing-native-data-structures">native data structures</a> from the serial interface should not use <a href="https://yaml.org/spec/1.2.2/#mapping-key-order">key order</a> or <a href="https://yaml.org/spec/1.2.2/#anchors-and-aliases">anchor names</a> for the preservation of <a href="https://yaml.org/spec/1.2.2/#processes-and-models">application</a> data.</p>
+<p><strong>Figure 3.4. Serialization Model</strong></p>
+<p><img alt="Serialization Model" src="https://yaml.org/spec/1.2.2/img/serialize2.svg" /></p>
+<h4 id="3221-mapping-key-order">3.2.2.1. Mapping Key Order</h4>
+<p>In the <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation</a> model, <a href="https://yaml.org/spec/1.2.2/#nodes">mapping keys</a> do not have an order. To <a href="https://yaml.org/spec/1.2.2/#serializing-the-representation-graph">serialize</a> a <a href="https://yaml.org/spec/1.2.2/#mapping">mapping</a>, it is necessary to impose an <em>ordering</em> on its <a href="https://yaml.org/spec/1.2.2/#nodes">keys</a>. This order is a <a href="https://yaml.org/spec/1.2.2/#serializing-the-representation-graph">serialization detail</a> and should not be used when <a href="https://yaml.org/spec/1.2.2/#composing-the-representation-graph">composing</a> the <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation graph</a> (and hence for the preservation of <a href="https://yaml.org/spec/1.2.2/#processes-and-models">application</a> data). In every case where <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> order is significant, a <a href="https://yaml.org/spec/1.2.2/#sequence">sequence</a> must be used. For example, an ordered <a href="https://yaml.org/spec/1.2.2/#mapping">mapping</a> can be <a href="https://yaml.org/spec/1.2.2/#representation-graph">represented</a> as a <a href="https://yaml.org/spec/1.2.2/#sequence">sequence</a> of <a href="https://yaml.org/spec/1.2.2/#mapping">mappings</a>, where each <a href="https://yaml.org/spec/1.2.2/#mapping">mapping</a> is a single <a href="https://yaml.org/spec/1.2.2/#mapping">key/value pair</a>. YAML provides convenient <a href="https://yaml.org/spec/1.2.2/#example-flow-mapping-adjacent-values">compact notation</a> for this case.</p>
+<h4 id="3222-anchors-and-aliases">3.2.2.2. Anchors and Aliases</h4>
+<p>In the <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation graph</a>, a <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> may appear in more than one <a href="https://yaml.org/spec/1.2.2/#collections">collection</a>. When <a href="https://yaml.org/spec/1.2.2/#serializing-the-representation-graph">serializing</a> such data, the first occurrence of the <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> is <em>identified</em> by an <em>anchor</em>. Each subsequent occurrence is <a href="https://yaml.org/spec/1.2.2/#serializing-the-representation-graph">serialized</a> as an <a href="https://yaml.org/spec/1.2.2/#alias-nodes">alias node</a> which refers back to this anchor. Otherwise, anchor names are a <a href="https://yaml.org/spec/1.2.2/#serializing-the-representation-graph">serialization detail</a> and are discarded once <a href="https://yaml.org/spec/1.2.2/#composing-the-representation-graph">composing</a> is completed. When <a href="https://yaml.org/spec/1.2.2/#composing-the-representation-graph">composing</a> a <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation graph</a> from <a href="https://yaml.org/spec/1.2.2/#serializing-the-representation-graph">serialized</a> events, an alias event refers to the most recent event in the <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serialization</a> having the specified anchor. Therefore, anchors need not be unique within a <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serialization</a>. In addition, an anchor need not have an alias node referring to it.</p>
+<h3 id="323-presentation-stream">3.2.3. Presentation Stream</h3>
+<p>A YAML <em>presentation</em> is a <a href="https://yaml.org/spec/1.2.2/#streams">stream</a> of Unicode characters making use of <a href="https://yaml.org/spec/1.2.2/#node-styles">styles</a>, <a href="https://yaml.org/spec/1.2.2/#scalar-formats">scalar content formats</a>, <a href="https://yaml.org/spec/1.2.2/#comments">comments</a>, <a href="https://yaml.org/spec/1.2.2/#directives">directives</a> and other <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">presentation details</a> to <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">present</a> a YAML <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serialization</a> in a human readable way. YAML allows several <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serialization trees</a> to be contained in the same YAML presentation stream, as a series of <a href="https://yaml.org/spec/1.2.2/#documents">documents</a> separated by <a href="https://yaml.org/spec/1.2.2/#document-markers">markers</a>.</p>
+<p><strong>Figure 3.5. Presentation Model</strong></p>
+<p><img alt="Presentation Model" src="https://yaml.org/spec/1.2.2/img/present2.svg" /></p>
+<h4 id="3231-node-styles">3.2.3.1. Node Styles</h4>
+<p>Each <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> is presented in some <em>style</em>, depending on its <a href="https://yaml.org/spec/1.2.2/#nodes">kind</a>. The node style is a <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">presentation detail</a> and is not reflected in the <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serialization tree</a> or <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation graph</a>. There are two groups of styles. <a href="https://yaml.org/spec/1.2.2/#block-style-productions">Block styles</a> use <a href="https://yaml.org/spec/1.2.2/#indentation-spaces">indentation</a> to denote structure. In contrast, <a href="https://yaml.org/spec/1.2.2/#flow-style-productions">flow styles</a> rely on explicit <a href="https://yaml.org/spec/1.2.2/#indicator-characters">indicators</a>.</p>
+<p>YAML provides a rich set of <em>scalar styles</em>. <a href="https://yaml.org/spec/1.2.2/#block-scalar-styles">Block scalar</a> styles include the <a href="https://yaml.org/spec/1.2.2/#literal-style">literal style</a> and the <a href="https://yaml.org/spec/1.2.2/#folded-style">folded style</a>. <a href="https://yaml.org/spec/1.2.2/#flow-scalar-styles">Flow scalar</a> styles include the <a href="https://yaml.org/spec/1.2.2/#plain-style">plain style</a> and two quoted styles, the <a href="https://yaml.org/spec/1.2.2/#single-quoted-style">single-quoted style</a> and the <a href="https://yaml.org/spec/1.2.2/#double-quoted-style">double-quoted style</a>. These styles offer a range of trade-offs between expressive power and readability.</p>
+<p>Normally, <a href="https://yaml.org/spec/1.2.2/#block-sequences">block sequences</a> and <a href="https://yaml.org/spec/1.2.2/#mapping">mappings</a> begin on the next line. In some cases, YAML also allows nested <a href="https://yaml.org/spec/1.2.2/#scalars">block</a> <a href="https://yaml.org/spec/1.2.2/#collections">collections</a> to start in-line for a more <a href="https://yaml.org/spec/1.2.2/#example-flow-mapping-adjacent-values">compact notation</a>. In addition, YAML provides a <a href="https://yaml.org/spec/1.2.2/#example-flow-mapping-adjacent-values">compact notation</a> for <a href="https://yaml.org/spec/1.2.2/#flow-mappings">flow mappings</a> with a single <a href="https://yaml.org/spec/1.2.2/#mapping">key/value pair</a>, nested inside a <a href="https://yaml.org/spec/1.2.2/#flow-sequences">flow sequence</a>. These allow for a natural “ordered mapping” notation.</p>
+<p><strong>Figure 3.6. Kind/Style Combinations</strong></p>
+<p><img alt="Kind/Style Combinations" src="https://yaml.org/spec/1.2.2/img/styles2.svg" /></p>
+<h4 id="3232-scalar-formats">3.2.3.2. Scalar Formats</h4>
+<p>YAML allows <a href="https://yaml.org/spec/1.2.2/#scalars">scalars</a> to be <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">presented</a> in several <em>formats</em>. For example, the integer “<code>11</code>” might also be written as “<code>0xB</code>”. <a href="https://yaml.org/spec/1.2.2/#tags">Tags</a> must specify a mechanism for converting the formatted content to a <a href="https://yaml.org/spec/1.2.2/#canonical-form">canonical form</a> for use in <a href="https://yaml.org/spec/1.2.2/#equality">equality</a> testing. Like <a href="https://yaml.org/spec/1.2.2/#node-styles">node style</a>, the format is a <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">presentation detail</a> and is not reflected in the <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serialization tree</a> and <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation graph</a>.</p>
+<h4 id="3233-comments">3.2.3.3. Comments</h4>
+<p><a href="https://yaml.org/spec/1.2.2/#comments">Comments</a> are a <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">presentation detail</a> and must not have any effect on the <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serialization tree</a> or <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation graph</a>. In particular, comments are not associated with a particular <a href="https://yaml.org/spec/1.2.2/#nodes">node</a>. The usual purpose of a comment is to communicate between the human maintainers of a file. A typical example is comments in a configuration file. Comments must not appear inside <a href="https://yaml.org/spec/1.2.2/#scalars">scalars</a>, but may be interleaved with such <a href="https://yaml.org/spec/1.2.2/#scalars">scalars</a> inside <a href="https://yaml.org/spec/1.2.2/#collections">collections</a>.</p>
+<h4 id="3234-directives">3.2.3.4. Directives</h4>
+<p>Each <a href="https://yaml.org/spec/1.2.2/#documents">document</a> may be associated with a set of <a href="https://yaml.org/spec/1.2.2/#directives">directives</a>. A directive has a name and an optional sequence of parameters. Directives are instructions to the YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processor</a> and like all other <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">presentation details</a> are not reflected in the YAML <a href="https://yaml.org/spec/1.2.2/#serialization-tree">serialization tree</a> or <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation graph</a>. This version of YAML defines two directives, “<code>YAML</code>” and “<code>TAG</code>”. All other directives are <a href="https://yaml.org/spec/1.2.2/#directives">reserved</a> for future versions of YAML.</p>
+<h2 id="33-loading-failure-points">3.3. Loading Failure Points</h2>
+<p>The process of <a href="https://yaml.org/spec/1.2.2/#load">loading</a> <a href="https://yaml.org/spec/1.2.2/#representing-native-data-structures">native data structures</a> from a YAML <a href="https://yaml.org/spec/1.2.2/#streams">stream</a> has several potential <em>failure points</em>. The character <a href="https://yaml.org/spec/1.2.2/#streams">stream</a> may be <a href="https://yaml.org/spec/1.2.2/#well-formed-streams-and-identified-aliases">ill-formed</a>, <a href="https://yaml.org/spec/1.2.2/#anchors-and-aliases">aliases</a> may be <a href="https://yaml.org/spec/1.2.2/#well-formed-streams-and-identified-aliases">unidentified</a>, <a href="https://yaml.org/spec/1.2.2/#resolved-tags">unspecified tags</a> may be <a href="https://yaml.org/spec/1.2.2/#resolved-tags">unresolvable</a>, <a href="https://yaml.org/spec/1.2.2/#tags">tags</a> may be <a href="https://yaml.org/spec/1.2.2/#recognized-and-valid-tags">unrecognized</a>, the <a href="https://yaml.org/spec/1.2.2/#nodes">content</a> may be <a href="https://yaml.org/spec/1.2.2/#recognized-and-valid-tags">invalid</a>, <a href="https://yaml.org/spec/1.2.2/#mapping">mapping</a> <a href="https://yaml.org/spec/1.2.2/#nodes">keys</a> may not be <a href="https://yaml.org/spec/1.2.2/#node-comparison">unique</a> and a native type may be <a href="https://yaml.org/spec/1.2.2/#available-tags">unavailable</a>. Each of these failures results with an incomplete loading.</p>
+<p>A <em>partial representation</em> need not <a href="https://yaml.org/spec/1.2.2/#resolved-tags">resolve</a> the <a href="https://yaml.org/spec/1.2.2/#tags">tag</a> of each <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> and the <a href="https://yaml.org/spec/1.2.2/#canonical-form">canonical form</a> of <a href="https://yaml.org/spec/1.2.2/#scalar-formats">formatted scalar content</a> need not be available. This weaker representation is useful for cases of incomplete knowledge of the types used in the <a href="https://yaml.org/spec/1.2.2/#documents">document</a>.</p>
+<p>In contrast, a <em>complete representation</em> specifies the <a href="https://yaml.org/spec/1.2.2/#tags">tag</a> of each <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> and provides the <a href="https://yaml.org/spec/1.2.2/#canonical-form">canonical form</a> of <a href="https://yaml.org/spec/1.2.2/#scalar-formats">formatted scalar content</a>, allowing for <a href="https://yaml.org/spec/1.2.2/#equality">equality</a> testing. A complete representation is required in order to <a href="https://yaml.org/spec/1.2.2/#constructing-native-data-structures">construct</a> <a href="https://yaml.org/spec/1.2.2/#representing-native-data-structures">native data structures</a>.</p>
+<p><strong>Figure 3.7. Loading Failure Points</strong></p>
+<p><img alt="Loading Failure Points" src="https://yaml.org/spec/1.2.2/img/validity2.svg" /></p>
+<h3 id="331-well-formed-streams-and-identified-aliases">3.3.1. Well-Formed Streams and Identified Aliases</h3>
+<p>A <a href="https://yaml.org/spec/1.2.2/#example-stream">well-formed</a> character <a href="https://yaml.org/spec/1.2.2/#streams">stream</a> must match the BNF productions specified in the following chapters. Successful loading also requires that each <a href="https://yaml.org/spec/1.2.2/#anchors-and-aliases">alias</a> shall refer to a previous <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> <a href="https://yaml.org/spec/1.2.2/#anchors-and-aliases">identified</a> by the <a href="https://yaml.org/spec/1.2.2/#anchors-and-aliases">anchor</a>. A YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processor</a> should reject <em>ill-formed streams</em> and <em>unidentified aliases</em>. A YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processor</a> may recover from syntax errors, possibly by ignoring certain parts of the input, but it must provide a mechanism for reporting such errors.</p>
+<h3 id="332-resolved-tags">3.3.2. Resolved Tags</h3>
+<p>Typically, most <a href="https://yaml.org/spec/1.2.2/#tags">tags</a> are not explicitly specified in the character <a href="https://yaml.org/spec/1.2.2/#streams">stream</a>. During <a href="https://yaml.org/spec/1.2.2/#parsing-the-presentation-stream">parsing</a>, <a href="https://yaml.org/spec/1.2.2/#nodes">nodes</a> lacking an explicit <a href="https://yaml.org/spec/1.2.2/#tags">tag</a> are given a <em>non-specific tag</em>: “<code>!</code>” for non-<a href="https://yaml.org/spec/1.2.2/#plain-style">plain scalars</a> and “<code>?</code>” for all other <a href="https://yaml.org/spec/1.2.2/#nodes">nodes</a>. <a href="https://yaml.org/spec/1.2.2/#composing-the-representation-graph">Composing</a> a <a href="https://yaml.org/spec/1.2.2/#loading-failure-points">complete representation</a> requires each such non-specific tag to be <em>resolved</em> to a <em>specific tag</em>, be it a <a href="https://yaml.org/spec/1.2.2/#tags">global tag</a> or a <a href="https://yaml.org/spec/1.2.2/#tags">local tag</a>.</p>
+<p>Resolving the <a href="https://yaml.org/spec/1.2.2/#tags">tag</a> of a <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> must only depend on the following three parameters: (1) the non-specific tag of the <a href="https://yaml.org/spec/1.2.2/#nodes">node</a>, (2) the path leading from the <a href="https://yaml.org/spec/1.2.2/#representation-graph">root</a> to the <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> and (3) the <a href="https://yaml.org/spec/1.2.2/#nodes">content</a> (and hence the <a href="https://yaml.org/spec/1.2.2/#nodes">kind</a>) of the <a href="https://yaml.org/spec/1.2.2/#nodes">node</a>. When a <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> has more than one occurrence (using <a href="https://yaml.org/spec/1.2.2/#anchors-and-aliases">aliases</a>), tag resolution must depend only on the path to the first (<a href="https://yaml.org/spec/1.2.2/#anchors-and-aliases">anchored</a>) occurrence of the <a href="https://yaml.org/spec/1.2.2/#nodes">node</a>.</p>
+<p>Note that resolution must not consider <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">presentation details</a> such as <a href="https://yaml.org/spec/1.2.2/#comments">comments</a>, <a href="https://yaml.org/spec/1.2.2/#indentation-spaces">indentation</a> and <a href="https://yaml.org/spec/1.2.2/#node-styles">node style</a>. Also, resolution must not consider the <a href="https://yaml.org/spec/1.2.2/#nodes">content</a> of any other <a href="https://yaml.org/spec/1.2.2/#nodes">node</a>, except for the <a href="https://yaml.org/spec/1.2.2/#nodes">content</a> of the <a href="https://yaml.org/spec/1.2.2/#mapping">key nodes</a> directly along the path leading from the <a href="https://yaml.org/spec/1.2.2/#representation-graph">root</a> to the resolved <a href="https://yaml.org/spec/1.2.2/#nodes">node</a>. Finally, resolution must not consider the <a href="https://yaml.org/spec/1.2.2/#nodes">content</a> of a sibling <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> in a <a href="https://yaml.org/spec/1.2.2/#collections">collection</a> or the <a href="https://yaml.org/spec/1.2.2/#nodes">content</a> of the <a href="https://yaml.org/spec/1.2.2/#nodes">value node</a> associated with a <a href="https://yaml.org/spec/1.2.2/#mapping">key node</a> being resolved.</p>
+<p>These rules ensure that tag resolution can be performed as soon as a <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> is first encountered in the <a href="https://yaml.org/spec/1.2.2/#streams">stream</a>, typically before its <a href="https://yaml.org/spec/1.2.2/#nodes">content</a> is <a href="https://yaml.org/spec/1.2.2/#parsing-the-presentation-stream">parsed</a>. Also, tag resolution only requires referring to a relatively small number of previously parsed <a href="https://yaml.org/spec/1.2.2/#nodes">nodes</a>. Thus, in most cases, tag resolution in one-pass <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processors</a> is both possible and practical.</p>
+<p>YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processors</a> should resolve <a href="https://yaml.org/spec/1.2.2/#nodes">nodes</a> having the “<code>!</code>” non-specific tag as “<code>tag:yaml.org,2002:seq</code>”, “<code>tag:yaml.org,2002:map</code>” or “<code>tag:yaml.org,2002:str</code>” depending on their <a href="https://yaml.org/spec/1.2.2/#nodes">kind</a>. This <em>tag resolution convention</em> allows the author of a YAML character <a href="https://yaml.org/spec/1.2.2/#streams">stream</a> to effectively “disable” the tag resolution process. By explicitly specifying a “<code>!</code>” non-specific <a href="https://yaml.org/spec/1.2.2/#node-tags">tag property</a>, the <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> would then be resolved to a “vanilla” <a href="https://yaml.org/spec/1.2.2/#sequence">sequence</a>, <a href="https://yaml.org/spec/1.2.2/#mapping">mapping</a> or string, according to its <a href="https://yaml.org/spec/1.2.2/#nodes">kind</a>.</p>
+<p><a href="https://yaml.org/spec/1.2.2/#processes-and-models">Application</a> specific tag resolution rules should be restricted to resolving the “<code>?</code>” non-specific tag, most commonly to resolving <a href="https://yaml.org/spec/1.2.2/#plain-style">plain scalars</a>. These may be matched against a set of regular expressions to provide automatic resolution of integers, floats, timestamps and similar types. An <a href="https://yaml.org/spec/1.2.2/#processes-and-models">application</a> may also match the <a href="https://yaml.org/spec/1.2.2/#nodes">content</a> of <a href="https://yaml.org/spec/1.2.2/#mapping">mapping nodes</a> against sets of expected <a href="https://yaml.org/spec/1.2.2/#nodes">keys</a> to automatically resolve points, complex numbers and similar types. Resolved <a href="https://yaml.org/spec/1.2.2/#sequence">sequence node</a> types such as the “ordered mapping” are also possible.</p>
+<p>That said, tag resolution is specific to the <a href="https://yaml.org/spec/1.2.2/#processes-and-models">application</a>. YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processors</a> should therefore provide a mechanism allowing the <a href="https://yaml.org/spec/1.2.2/#processes-and-models">application</a> to override and expand these default tag resolution rules.</p>
+<p>If a <a href="https://yaml.org/spec/1.2.2/#documents">document</a> contains <em>unresolved tags</em>, the YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processor</a> is unable to <a href="https://yaml.org/spec/1.2.2/#composing-the-representation-graph">compose</a> a <a href="https://yaml.org/spec/1.2.2/#loading-failure-points">complete representation</a> graph. In such a case, the YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processor</a> may <a href="https://yaml.org/spec/1.2.2/#composing-the-representation-graph">compose</a> a <a href="https://yaml.org/spec/1.2.2/#loading-failure-points">partial representation</a>, based on each <a href="https://yaml.org/spec/1.2.2/#nodes">node’s kind</a> and allowing for non-specific tags.</p>
+<h3 id="333-recognized-and-valid-tags">3.3.3. Recognized and Valid Tags</h3>
+<p>To be <em>valid</em>, a <a href="https://yaml.org/spec/1.2.2/#nodes">node</a> must have a <a href="https://yaml.org/spec/1.2.2/#tags">tag</a> which is <em>recognized</em> by the YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processor</a> and its <a href="https://yaml.org/spec/1.2.2/#nodes">content</a> must satisfy the constraints imposed by this <a href="https://yaml.org/spec/1.2.2/#tags">tag</a>. If a <a href="https://yaml.org/spec/1.2.2/#documents">document</a> contains a <a href="https://yaml.org/spec/1.2.2/#nodes">scalar node</a> with an <em>unrecognized tag</em> or <em>invalid content</em>, only a <a href="https://yaml.org/spec/1.2.2/#loading-failure-points">partial representation</a> may be <a href="https://yaml.org/spec/1.2.2/#composing-the-representation-graph">composed</a>. In contrast, a YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processor</a> can always <a href="https://yaml.org/spec/1.2.2/#composing-the-representation-graph">compose</a> a <a href="https://yaml.org/spec/1.2.2/#loading-failure-points">complete representation</a> for an unrecognized or an invalid <a href="https://yaml.org/spec/1.2.2/#collections">collection</a>, since <a href="https://yaml.org/spec/1.2.2/#collections">collection</a> <a href="https://yaml.org/spec/1.2.2/#equality">equality</a> does not depend upon knowledge of the <a href="https://yaml.org/spec/1.2.2/#mapping">collection’s</a> data type. However, such a <a href="https://yaml.org/spec/1.2.2/#loading-failure-points">complete representation</a> cannot be used to <a href="https://yaml.org/spec/1.2.2/#constructing-native-data-structures">construct</a> a <a href="https://yaml.org/spec/1.2.2/#representing-native-data-structures">native data structure</a>.</p>
+<h3 id="334-available-tags">3.3.4. Available Tags</h3>
+<p>In a given processing environment, there need not be an <em>available</em> native type corresponding to a given <a href="https://yaml.org/spec/1.2.2/#tags">tag</a>. If a <a href="https://yaml.org/spec/1.2.2/#tags">node’s tag</a> is <em>unavailable</em>, a YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processor</a> will not be able to <a href="https://yaml.org/spec/1.2.2/#constructing-native-data-structures">construct</a> a <a href="https://yaml.org/spec/1.2.2/#representing-native-data-structures">native data structure</a> for it. In this case, a <a href="https://yaml.org/spec/1.2.2/#loading-failure-points">complete representation</a> may still be <a href="https://yaml.org/spec/1.2.2/#composing-the-representation-graph">composed</a> and an <a href="https://yaml.org/spec/1.2.2/#processes-and-models">application</a> may wish to use this <a href="https://yaml.org/spec/1.2.2/#representation-graph">representation</a> directly.</p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

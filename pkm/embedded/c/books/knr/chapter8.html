@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>chapter8</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h2 id="chapter-8-the-unix-system-interface">Chapter 8 - The UNIX System Interface</h2>
+<p>The UNIX operating system provides its services through a set of system calls, which are in effect functions within the operating system that may be called by user programs. This chapter describes how to use some of the most important system calls from C programs. If you use UNIX, this should be directly helpful, for it is sometimes necessary to employ system calls for maximum efficiency, or to access some facility that is not in the library. Even if you use C on a different operating system, however, you should be able to glean insight into C programming from studying these examples; although details vary, similar code will be found on any system. Since the ANSI C library is in many cases modeled on UNIX facilities, this code may help your understanding of the library as well. </p>
+<p>This chapter is divided into three major parts: input/output, file system, and storage allocation. The first two parts assume a modest familiarity with the external characteristics of UNIX systems. </p>
+<p>Chapter 7 was concerned with an input/output interface that is uniform across operating systems. On any particular system the routines of the standard library have to be written in terms of the facilities provided by the host system. In the next few sections we will describe the UNIX system calls for input and output, and show how parts of the standard library can be implemented with them. </p>
+<h2 id="81-file-descriptors">8.1 File Descriptors</h2>
+<p>In the UNIX operating system, all input and output is done by reading or writing files, because all peripheral devices, even keyboard and screen, are files in the file system. This means that a single homogeneous interface handles all communication between a program and peripheral devices. </p>
+<p>In the most general case, before you read and write a file, you must inform the system of your intent to do so, a process called opening the file. If you are going to write on a file it may also be necessary to create it or to discard its previous contents. The system checks your right to do so (Does the file exist? Do you have permission to access it?) and if all is well, returns to the program a small non-negative integer called a file descriptor. Whenever input or output is to be done on the file, the file descriptor is used instead of the name to identify the file. (A file descriptor is analogous to the file pointer used by the standard library, or to the file handle of MS-DOS.) All information about an open file is maintained by the system; the user program refers to the file only by the file descriptor. </p>
+<p>Since input and output involving keyboard and screen is so common, special arrangements exist to make this convenient. When the command interpreter (the ``shell'') runs a program, three files are open, with file descriptors 0, 1, and 2, called the standard input, the standard output, and the standard error. If a program reads 0 and writes 1 and 2, it can do input and output without worrying about opening files. </p>
+<p>The user of a program can redirect I/O to and from files with &lt; and &gt;: </p>
+<p>In this case, the shell changes the default assignments for the file descriptors 0 and 1 to the named files. Normally file descriptor 2 remains attached to the screen, so error messages can go there. Similar observations hold for input or output associated with a pipe. In all cases, the file assignments are changed by the shell, not by the program. The program does not know where its input comes from nor where its output goes, so long as it uses file 0 for input and 1 and 2 for output. </p>
+<h2 id="82-low-level-io-read-and-write">8.2 Low Level I/O - Read and Write</h2>
+<p>Input and output uses the read and write system calls, which are accessed from C programs through two functions called read and write. For both, the first argument is a file descriptor. The second argument is a character array in your program where the data is to go to or to come from. The third argument is the number is the number of bytes to be transferred. </p>
+<pre lang="txt"><code class="language-txt md-fencescode">int n_read = read(int fd, char *buf, int n);
+int n_written = write(int fd, char *buf, int n); 
+</code></pre>
+<p>Each call returns a count of the number of bytes transferred. On reading, the number of bytes returned may be less than the number requested. A return value of zero bytes implies end of file, and -1 indicates an error of some sort. For writing, the return value is the number of bytes written; an error has occurred if this isn't equal to the number requested. </p>
+<p>Any number of bytes can be read or written in one call. The most common values are 1, which means one character at a time (``unbuffered''), and a number like 1024 or 4096 that corresponds to a physical block size on a peripheral device. Larger sizes will be more efficient because fewer system calls will be made. </p>
+<p>Putting these facts together, we can write a simple program to copy its input to its output, the equivalent of the file copying program written for Chapter 1. This program will copy anything to anything, since the input and output can be redirected to any file or device. </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="cp">#include</span><span class="w"> </span><span class="cpf">"syscalls.h"</span>
+<span class="n">main</span><span class="p">()</span><span class="w"> </span><span class="cm">/* copy input to output */</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">buf</span><span class="p">[</span><span class="n">BUFSIZ</span><span class="p">];</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">((</span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="n">BUFSIZ</span><span class="p">))</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span>
+<span class="w">    </span><span class="n">write</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span><span class="w"> </span>
+</code></pre>
+<p>We have collected function prototypes for the system calls into a file called syscalls.h so we can include it in the programs of this chapter. This name is not standard, however. </p>
+<p>The parameter BUFSIZ is also defined in syscalls.h; its value is a good size for the local system. If the file size is not a multiple of BUFSIZ, some read will return a smaller number of bytes to be written by write; the next call to read after that will return zero. </p>
+<p>It is instructive to see how read and write can be used to construct higher-level routines like getchar, putchar, etc. For example, here is a version of getchar that does unbuffered input, by reading the standard input one character at a time. </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="cp">#include</span><span class="w"> </span><span class="cpf">"syscalls.h"</span>
+<span class="cm">/* getchar: unbuffered single character input */</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">getchar</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">c</span><span class="p">;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">c</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="p">)</span><span class="w"> </span><span class="n">c</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">EOF</span><span class="p">;</span>
+<span class="p">}</span><span class="w"> </span>
+</code></pre>
+<p>c must be a char, because read needs a character pointer. Casting c to unsigned char in the return statement eliminates any problem of sign extension. </p>
+<p>The second version of getchar does input in big chunks, and hands out the characters one at a time. </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="cp">#include</span><span class="w"> </span><span class="cpf">"syscalls.h"</span>
+
+<span class="cm">/* getchar: simple buffered version */</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">getchar</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">static</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">buf</span><span class="p">[</span><span class="n">BUFSIZ</span><span class="p">];</span>
+<span class="w">    </span><span class="k">static</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">bufp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">buf</span><span class="p">;</span>
+<span class="w">    </span><span class="k">static</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">n</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* buffer is empty */</span>
+<span class="w">    </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="w"> </span><span class="n">buf</span><span class="p">);</span>
+<span class="w">    </span><span class="n">bufp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">buf</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="o">--</span><span class="n">n</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="n">bufp</span><span class="o">++</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">EOF</span><span class="p">;</span><span class="w"> </span>
+</code></pre>
+<p>If these versions of getchar were to be compiled with <stdio.h> included, it would be necessary to #undef the name getchar in case it is implemented as a macro. </p>
+<h2 id="83-open-creat-close-unlink">8.3 Open, Creat, Close, Unlink</h2>
+<p>Other than the default standard input, output and error, you must explicitly open files in order to read or write them. There are two system calls for this, open and creat [sic]. </p>
+<p>open is rather like the fopen discussed in Chapter 7, except that instead of returning a file pointer, it returns a file descriptor, which is just an int. open returns -1 if any error occurs. </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;fcntl.h&gt;</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="n">fd</span><span class="p">;</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">open</span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">flags</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">perms</span><span class="p">);</span>
+
+<span class="n">fd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">open</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">flags</span><span class="p">,</span><span class="w"> </span><span class="n">perms</span><span class="p">);</span>
+<span class="n">As</span><span class="w"> </span><span class="n">with</span><span class="w"> </span><span class="n">fopen</span><span class="p">,</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="n">argument</span><span class="w"> </span><span class="n">is</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="n">character</span><span class="w"> </span><span class="n">string</span><span class="w"> </span><span class="n">containing</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">filename</span><span class="p">.</span><span class="w"> </span><span class="n">The</span><span class="w"> </span><span class="n">second</span><span class="w"> </span><span class="n">argument</span><span class="p">,</span><span class="w"> </span><span class="n">flags</span><span class="p">,</span><span class="w"> </span><span class="n">is</span><span class="w"> </span><span class="n">an</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">that</span><span class="w"> </span><span class="n">specifies</span><span class="w"> </span><span class="n">how</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">file</span><span class="w"> </span><span class="n">is</span><span class="w"> </span><span class="n">to</span><span class="w"> </span><span class="n">be</span><span class="w"> </span><span class="n">opened</span><span class="p">;</span><span class="w"> </span><span class="n">the</span><span class="w"> </span><span class="n">main</span><span class="w"> </span><span class="n">values</span><span class="w"> </span><span class="n">are</span>
+<span class="w">    </span><span class="n">O_RDONLY</span><span class="w"> </span><span class="n">open</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">reading</span><span class="w"> </span><span class="n">only</span>
+<span class="w">    </span><span class="n">O_WRONLY</span><span class="w"> </span><span class="n">open</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">writing</span><span class="w"> </span><span class="n">only</span>
+<span class="w">    </span><span class="n">O_RDWR</span><span class="w"> </span><span class="n">open</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">both</span><span class="w"> </span><span class="n">reading</span><span class="w"> </span><span class="n">and</span><span class="w"> </span><span class="n">writing</span><span class="w"> </span>
+</code></pre>
+<p>These constants are defined in <fcntl.h> on System V UNIX systems, and in <sys/file.h> on Berkeley (BSD) versions. </p>
+<p>To open an existing file for reading, </p>
+<p>fd = open(name, O_RDONLY,0); The perms argument is always zero for the uses of open that we will discuss. </p>
+<p>It is an error to try to open a file that does not exist. The system call creat is provided to create new files, or to re-write old ones. </p>
+<pre lang="txt"><code class="language-txt md-fencescode">int creat(char *name, int perms); 
+</code></pre>
+<pre lang="javascript"><code class="language-javascript md-fencescode"><span class="nx">fd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">creat</span><span class="p">(</span><span class="nx">name</span><span class="p">,</span><span class="w"> </span><span class="nx">perms</span><span class="p">);</span><span class="w"> </span>
+</code></pre>
+<p>returns a file descriptor if it was able to create the file, and -1 if not. If the file already exists, creat will truncate it to zero length, thereby discarding its previous contents; it is not an error to creat a file that already exists. </p>
+<p>If the file does not already exist, creat creates it with the permissions specified by the perms argument. In the UNIX file system, there are nine bits of permission information associated with a file that control read, write and execute access for the owner of the file, for the owner's group, and for all others. Thus a three-digit octal number is convenient for specifying the permissions. For example, 0775 specifies read, write and execute permission for the owner, and read and execute permission for the group and everyone else. </p>
+<p>To illustrate, here is a simplified version of the UNIX program cp, which copies one file to another. Our version copies only one file, it does not permit the second argument to be a directory, and it invents permissions instead of copying them. </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;fcntl.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">"syscalls.h"</span>
+<span class="cp">#define PERMS 0666    </span><span class="cm">/* RW for owner, group, others */</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="nf">error</span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="p">...);</span>
+
+<span class="cm">/* cp: copy f1 to f2 */</span>
+<span class="n">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">argv</span><span class="p">[])</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">f1</span><span class="p">,</span><span class="w"> </span><span class="n">f2</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">buf</span><span class="p">[</span><span class="n">BUFSIZ</span><span class="p">];</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">argc</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="mi">3</span><span class="p">)</span>
+<span class="w">    </span><span class="n">error</span><span class="p">(</span><span class="s">"Usage: cp from to"</span><span class="p">);</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">((</span><span class="n">f1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">open</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="w"> </span><span class="n">O_RDONLY</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">))</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span>
+<span class="w">    </span><span class="n">error</span><span class="p">(</span><span class="s">"cp: can't open %s"</span><span class="p">,</span><span class="w"> </span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">((</span><span class="n">f2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">creat</span><span class="p">(</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="w"> </span><span class="n">PERMS</span><span class="p">))</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span>
+<span class="w">    </span><span class="n">error</span><span class="p">(</span><span class="s">"cp: can't create %s, mode %03o"</span><span class="p">,</span><span class="w"> </span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="w"> </span><span class="n">PERMS</span><span class="p">);</span>
+<span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">((</span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read</span><span class="p">(</span><span class="n">f1</span><span class="p">,</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="n">BUFSIZ</span><span class="p">))</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">write</span><span class="p">(</span><span class="n">f2</span><span class="p">,</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">)</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">n</span><span class="p">)</span>
+<span class="w">    </span><span class="n">error</span><span class="p">(</span><span class="s">"cp: write error on file %s"</span><span class="p">,</span><span class="w"> </span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span><span class="w"> </span>
+</code></pre>
+<p>This program creates the output file with fixed permissions of 0666. With the stat system call, described in Section 8.6, we can determine the mode of an existing file and thus give the same mode to the copy. </p>
+<p>Notice that the function error is called with variable argument lists much like printf. The implementation of error illustrates how to use another member of the printf family. The standard library function vprintf is like printf except that the variable argument list is replaced by a single argument that has been initialized by calling the va_start macro. Similarly, vfprintf and vsprintf match fprintf and sprintf. </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdarg.h&gt;</span>
+
+<span class="cm">/* error: print an error message and die */</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">error</span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">fmt</span><span class="p">,</span><span class="w"> </span><span class="p">...)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">va_list</span><span class="w"> </span><span class="n">args</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">va_start</span><span class="p">(</span><span class="n">args</span><span class="p">,</span><span class="w"> </span><span class="n">fmt</span><span class="p">);</span>
+<span class="w">    </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">"error: "</span><span class="p">);</span>
+<span class="w">    </span><span class="n">vprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="n">fmt</span><span class="p">,</span><span class="w"> </span><span class="n">args</span><span class="p">);</span>
+<span class="w">    </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">"</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">va_end</span><span class="p">(</span><span class="n">args</span><span class="p">);</span>
+<span class="w">    </span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span><span class="w"> </span>
+</code></pre>
+<p>There is a limit (often about 20) on the number of files that a program may open simultaneously. Accordingly, any program that intends to process many files must be prepared to re-use file descriptors. The function close(int fd) breaks the connection between a file descriptor and an open file, and frees the file descriptor for use with some other file; it corresponds to fclose in the standard library except that there is no buffer to flush. Termination of a program via exit or return from the main program closes all open files. </p>
+<p>The function unlink(char *name) removes the file name from the file system. It corresponds to the standard library function remove. </p>
+<p>Exercise 8-1. Rewrite the program cat from Chapter 7 using read, write, open, and close instead of their standard library equivalents. Perform experiments to determine the relative speeds of the two versions. </p>
+<h2 id="84-random-access-lseek">8.4 Random Access - Lseek</h2>
+<p>Input and output are normally sequential: each read or write takes place at a position in the file right after the previous one. When necessary, however, a file can be read or written in any arbitrary order. The system call lseek provides a way to move around in a file without reading or writing any data: </p>
+<pre lang="txt"><code class="language-txt md-fencescode">long lseek(int fd, long offset, int origin); 
+</code></pre>
+<p>sets the current position in the file whose descriptor is fd to offset, which is taken relative to the location specified by origin. Subsequent reading or writing will begin at that position. origin can be 0, 1, or 2 to specify that offset is to be measured from the beginning, from the current position, or from the end of the file respectively. For example, to append to a file (the redirection &gt;&gt; in the UNIX shell, or "a" for fopen), seek to the end before writing: </p>
+<pre lang="txt"><code class="language-txt md-fencescode">lseek(fd, 0L, 2); 
+</code></pre>
+<p>To get back to the beginning (``rewind''), </p>
+<p>lseek(fd, 0L, 0); Notice the 0L argument; it could also be written as (long) 0 or just as 0 if lseek is properly declared. </p>
+<p>With lseek, it is possible to treat files more or less like arrays, at the price of slower access. For example, the following function reads any number of bytes from any arbitrary place in a file. It returns the number read, or -1 on error. </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="cp">#include</span><span class="w"> </span><span class="cpf">"syscalls.h"</span>
+<span class="cm">/*get: read n bytes from position pos */</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">get</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">fd</span><span class="p">,</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">pos</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">lseek</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span><span class="w"> </span><span class="n">pos</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="cm">/* get to pos */</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">read</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span><span class="w"> </span><span class="n">buf</span><span class="p">,</span><span class="w"> </span><span class="n">n</span><span class="p">);</span>
+<span class="w">    </span><span class="k">else</span><span class="w"> </span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">-1</span><span class="p">;</span>
+<span class="p">}</span><span class="w"> </span>
+</code></pre>
+<p>The return value from lseek is a long that gives the new position in the file, or -1 if an error occurs. The standard library function fseek is similar to lseek except that the first argument is a FILE * and the return is non-zero if an error occurred. </p>
+<h2 id="85-example-an-implementation-of-fopen-and-getc">8.5 Example - An implementation of Fopen and Getc</h2>
+<p>Let us illustrate how some of these pieces fit together by showing an implementation of the standard library routines fopen and getc. </p>
+<p>Recall that files in the standard library are described by file pointers rather than file descriptors. A file pointer is a pointer to a structure that contains several pieces of information about the file: a pointer to a buffer, so the file can be read in large chunks; a count of the number of characters left in the buffer; a pointer to the next character position in the buffer; the file descriptor; and flags describing read/write mode, error status, etc. </p>
+<p>The data structure that describes a file is contained in <stdio.h>, which must be included (by #include) in any source file that uses routines from the standard input/output library. It is also included by functions in that library. In the following excerpt from a typical <stdio.h>, names that are intended for use only by functions of the library begin with an underscore so they are less likely to collide with names in a user's program. This convention is used by all standard library routines. </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="cp">#define NULL 0</span>
+<span class="cp">#define EOF (-1)</span>
+<span class="cp">#define BUFSIZ 1024</span>
+<span class="cp">#define OPEN_MAX 20 </span><span class="cm">/* max #files open at once */</span>
+<span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">_iobuf</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">cnt</span><span class="p">;</span><span class="w">    </span><span class="cm">/* characters left */</span>
+<span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">ptr</span><span class="p">;</span><span class="w">    </span><span class="cm">/* next character position */</span>
+<span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">base</span><span class="p">;</span><span class="w">    </span><span class="cm">/* location of buffer */</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">flag</span><span class="p">;</span><span class="w">    </span><span class="cm">/* mode of file access */</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">fd</span><span class="p">;</span><span class="w">    </span><span class="cm">/* file descriptor */</span>
+<span class="p">}</span><span class="w"> </span><span class="kt">FILE</span><span class="p">;</span><span class="w"> </span>
+</code></pre>
+<pre lang="c"><code class="language-c md-fencescode"><span class="k">extern</span><span class="w"> </span><span class="kt">FILE</span><span class="w"> </span><span class="n">_iob</span><span class="p">[</span><span class="n">OPEN_MAX</span><span class="p">];</span>
+
+<span class="cp">#define stdin (&amp;_iob[0])</span>
+<span class="cp">#define stdout (&amp;_iob[1])</span>
+<span class="cp">#define stderr (&amp;_iob[2])</span>
+
+<span class="k">enum</span><span class="w"> </span><span class="n">_flags</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">_READ</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">01</span><span class="p">,</span><span class="w"> </span><span class="cm">/* file open for reading */</span>
+<span class="w">    </span><span class="n">_WRITE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">02</span><span class="p">,</span><span class="w"> </span><span class="cm">/* file open for writing */</span>
+<span class="w">    </span><span class="n">_UNBUF</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">04</span><span class="p">,</span><span class="w"> </span><span class="cm">/* file is unbuffered */</span>
+<span class="w">    </span><span class="n">_EOF</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">010</span><span class="p">,</span><span class="w"> </span><span class="cm">/* EOF has occurred on this file */</span>
+<span class="w">    </span><span class="n">_ERR</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mo">020</span><span class="w"> </span><span class="cm">/* error occurred on this file */</span>
+<span class="p">};</span>
+
+<span class="kt">int</span><span class="w"> </span><span class="nf">_fillbuf</span><span class="p">(</span><span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="p">);</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">_flushbuf</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span><span class="w"> </span><span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="p">);</span>
+
+<span class="cp">#define feof(p) ((p)-&gt;flag &amp; _EOF) != 0)</span>
+<span class="cp">#define ferror(p) ((p)-&gt;flag &amp; _ERR) != 0)</span>
+<span class="cp">#define fileno(p) ((p)-&gt;fd)</span>
+
+<span class="cp">#define getc(p) (--(p)-&gt;cnt &gt;= 0 \</span>
+<span class="cp">? (unsigned char) *(p)-&gt;ptr++ : _fillbuf(p))</span>
+<span class="cp">#define putc(x,p) (--(p)-&gt;cnt &gt;= 0 \</span>
+<span class="cp">? *(p)-&gt;ptr++ = (x) : _flushbuf((x),p))</span>
+
+<span class="cp">#define getchar()    getc(stdin)</span>
+<span class="cp">#define putchar(x)    putc((x), stdout) </span>
+</code></pre>
+<p>The getc macro normally decrements the count, advances the pointer, and returns the character. (Recall that a long #define is continued with a backslash.) If the count goes negative, however, getc calls the function _fillbuf to replenish the buffer, re-initialize the structure contents, and return a character. The characters are returned unsigned, which ensures that all characters will be positive. </p>
+<p>Although we will not discuss any details, we have included the definition of putc to show that it operates in much the same way as getc, calling a function _flushbuf when its buffer is full. We have also included macros for accessing the error and end-of-file status and the file descriptor. </p>
+<p>The function fopen can now be written. Most of fopen is concerned with getting the file opened and positioned at the right place, and setting the flag bits to indicate the proper state. fopen does not allocate any buffer space; this is done by _fillbuf when the file is first read. </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;fcntl.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">"syscalls.h"</span>
+<span class="cp">#define PERMS 0666    </span><span class="cm">/* RW for owner, group, others */</span>
+
+<span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="nf">fopen</span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">mode</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">fd</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="n">fp</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">mode</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="sc">'r'</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">*</span><span class="n">mode</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="sc">'w'</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">*</span><span class="n">mode</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="sc">'a'</span><span class="p">)</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">fp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">_iob</span><span class="p">;</span><span class="w"> </span><span class="n">fp</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">_iob</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">OPEN_MAX</span><span class="p">;</span><span class="w"> </span><span class="n">fp</span><span class="o">++</span><span class="p">)</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">((</span><span class="n">fp</span><span class="o">-&gt;</span><span class="n">flag</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="p">(</span><span class="n">_READ</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">_WRITE</span><span class="p">))</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span>
+<span class="w">    </span><span class="k">break</span><span class="p">;</span><span class="w">    </span><span class="cm">/* found free slot */</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">fp</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">_iob</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">OPEN_MAX</span><span class="p">)</span><span class="w">    </span><span class="cm">/* no free slots */</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span><span class="w"> </span>
+</code></pre>
+<pre lang="c"><code class="language-c md-fencescode"><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">mode</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="sc">'w'</span><span class="p">)</span>
+<span class="w">    </span><span class="n">fd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">creat</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">PERMS</span><span class="p">);</span>
+<span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">mode</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="sc">'a'</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">((</span><span class="n">fd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">open</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">O_WRONLY</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">))</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span>
+<span class="w">    </span><span class="n">fd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">creat</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">PERMS</span><span class="p">);</span>
+<span class="w">    </span><span class="n">lseek</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span><span class="w"> </span><span class="mf">0L</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">);</span>
+<span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span>
+<span class="w">    </span><span class="n">fd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">open</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">O_RDONLY</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">);</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">fd</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="cm">/* couldn't access name */</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
+<span class="n">fp</span><span class="o">-&gt;</span><span class="n">fd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fd</span><span class="p">;</span>
+<span class="n">fp</span><span class="o">-&gt;</span><span class="n">cnt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="n">fp</span><span class="o">-&gt;</span><span class="n">base</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
+<span class="n">fp</span><span class="o">-&gt;</span><span class="n">flag</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">mode</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="sc">'r'</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">_READ</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">_WRITE</span><span class="p">;</span>
+<span class="k">return</span><span class="w"> </span><span class="n">fp</span><span class="p">;</span><span class="w"> </span>
+</code></pre>
+<p>This version of fopen does not handle all of the access mode possibilities of the standard, though adding them would not take much code. In particular, our fopen does not recognize the <code>b'' that signals binary access, since that is meaningless on UNIX systems, nor the</code>+'' that permits both reading and writing. </p>
+<p>The first call to getc for a particular file finds a count of zero, which forces a call of fillbuf. If _fillbuf finds that the file is not open for reading, it returns EOF immediately. Otherwise, it tries to allocate a buffer (if reading is to be buffered). </p>
+<p>Once the buffer is established, _fillbuf calls read to fill it, sets the count and pointers, and returns the character at the beginning of the buffer. Subsequent calls to _fillbuf will find a buffer allocated. </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="cp">#include</span><span class="w"> </span><span class="cpf">"syscalls.h"</span>
+
+<span class="cm">/* _fillbuf: allocate and fill input buffer */</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">_fillbuf</span><span class="p">(</span><span class="kt">FILE</span><span class="w"> </span><span class="o">*</span><span class="n">fp</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">bufsize</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">((</span><span class="n">fp</span><span class="o">-&gt;</span><span class="n">flag</span><span class="o">&amp;</span><span class="p">(</span><span class="n">_READ</span><span class="o">|</span><span class="n">_EOF_ERR</span><span class="p">))</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">_READ</span><span class="p">)</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">EOF</span><span class="p">;</span>
+<span class="w">    </span><span class="n">bufsize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">fp</span><span class="o">-&gt;</span><span class="n">flag</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">_UNBUF</span><span class="p">)</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="n">BUFSIZ</span><span class="p">;</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">fp</span><span class="o">-&gt;</span><span class="n">base</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nb">NULL</span><span class="p">)</span><span class="w"> </span><span class="cm">/* no buffer yet */</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">((</span><span class="n">fp</span><span class="o">-&gt;</span><span class="n">base</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="n">malloc</span><span class="p">(</span><span class="n">bufsize</span><span class="p">))</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nb">NULL</span><span class="p">)</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">EOF</span><span class="p">;</span><span class="w"> </span><span class="cm">/* can't get buffer */</span>
+<span class="w">    </span><span class="n">fp</span><span class="o">-&gt;</span><span class="n">ptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">fp</span><span class="o">-&gt;</span><span class="n">base</span><span class="p">;</span>
+<span class="w">    </span><span class="n">fp</span><span class="o">-&gt;</span><span class="n">cnt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">read</span><span class="p">(</span><span class="n">fp</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">,</span><span class="w"> </span><span class="n">fp</span><span class="o">-&gt;</span><span class="n">ptr</span><span class="p">,</span><span class="w"> </span><span class="n">bufsize</span><span class="p">);</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">--</span><span class="n">fp</span><span class="o">-&gt;</span><span class="n">cnt</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">fp</span><span class="o">-&gt;</span><span class="n">cnt</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span>
+<span class="w">    </span><span class="n">fp</span><span class="o">-&gt;</span><span class="n">flag</span><span class="w"> </span><span class="o">|=</span><span class="w"> </span><span class="n">_EOF</span><span class="p">;</span>
+<span class="w">    </span><span class="k">else</span><span class="w"> </span>
+<span class="w">    </span><span class="n">fp</span><span class="o">-&gt;</span><span class="n">flag</span><span class="w"> </span><span class="o">|=</span><span class="w"> </span><span class="n">_ERR</span><span class="p">;</span>
+<span class="w">    </span><span class="n">fp</span><span class="o">-&gt;</span><span class="n">cnt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">EOF</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="kt">char</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="n">fp</span><span class="o">-&gt;</span><span class="n">ptr</span><span class="o">++</span><span class="p">;</span>
+<span class="p">}</span><span class="w"> </span>
+</code></pre>
+<p>The only remaining loose end is how everything gets started. The array _iob must be defined and initialized for stdin, stdout and stderr: </p>
+<pre lang="javascript"><code class="language-javascript md-fencescode"><span class="nx">FILE</span><span class="w"> </span><span class="nx">_iob</span><span class="p">[</span><span class="nx">OPEN_MAX</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* stdin, stdout, stderr */</span><span class="w"> </span>
+</code></pre>
+<pre lang="c"><code class="language-c md-fencescode"><span class="p">{</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">_READ</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">},</span>
+<span class="p">{</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">_WRITE</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="w"> </span><span class="p">},</span>
+<span class="p">{</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">_WRITE</span><span class="p">,</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">_UNBUF</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="p">}</span>
+<span class="p">};</span><span class="w"> </span>
+</code></pre>
+<p>The initialization of the flag part of the structure shows that stdin is to be read, stdout is to be written, and stderr is to be written unbuffered. </p>
+<p>Exercise 8-2. Rewrite fopen and _fillbuf with fields instead of explicit bit operations. Compare code size and execution speed. </p>
+<p>Exercise 8-3. Design and write _flushbuf, fflush, and fclose. </p>
+<p>Exercise 8-4. The standard library function </p>
+<p>int fseek(FILE *fp, long offset, int origin) is identical to lseek except that fp is a file pointer instead of a file descriptor and return value is an int status, not a position. Write fseek. Make sure that your fseek coordinates properly with the buffering done for the other functions of the library. </p>
+<h2 id="86-example-listing-directories">8.6 Example - Listing Directories</h2>
+<p>A different kind of file system interaction is sometimes called for - determining information about a file, not what it contains. A directory-listing program such as the UNIX command ls is an example - it prints the names of files in a directory, and, optionally, other information, such as sizes, permissions, and so on. The MS-DOS dir command is analogous. </p>
+<p>Since a UNIX directory is just a file, ls need only read it to retrieve the filenames. But is is necessary to use a system call to access other information about a file, such as its size. On other systems, a system call may be needed even to access filenames; this is the case on MS-DOS for instance. What we want is provide access to the information in a relatively systemindependent way, even though the implementation may be highly system-dependent. </p>
+<p>We will illustrate some of this by writing a program called fsize. fsize is a special form of ls that prints the sizes of all files named in its commandline argument list. If one of the files is a directory, fsize applies itself recursively to that directory. If there are no arguments at all, it processes the current directory. </p>
+<p>Let us begin with a short review of UNIX file system structure. A directory is a file that contains a list of filenames and some indication of where they are located. The <code>location'' is an index into another table called the</code>inode list.'' The inode for a file is where all information about the file except its name is kept. A directory entry generally consists of only two items, the filename and an inode number. </p>
+<p>Regrettably, the format and precise contents of a directory are not the same on all versions of the system. So we will divide the task into two pieces to try to isolate the non-portable parts. The outer level defines a structure called a Dirent and three routines opendir, readdir, and closedir to provide system-independent access to the name and inode number in a directory entry. We will write fsize with this interface. Then we will show how to implement these on systems that use the same directory structure as Version 7 and System V UNIX; variants are left as exercises. </p>
+<p>The Dirent structure contains the inode number and the name. The maximum length of a filename component is NAME_MAX, which is a system-dependent value. opendir returns a pointer to a structure called DIR, analogous to FILE, which is used by readdir and closedir. This information is collected into a file called dirent.h. </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="cp">#define NAME_MAX 14 </span><span class="cm">/* longest filename component; */</span>
+<span class="w">    </span><span class="cm">/* system-dependent */</span>
+
+<span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="p">{</span><span class="w">    </span><span class="cm">/* portable directory entry */</span>
+<span class="w">    </span><span class="kt">long</span><span class="w"> </span><span class="n">ino</span><span class="p">;</span><span class="w">    </span><span class="cm">/* inode number */</span>
+<span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">name</span><span class="p">[</span><span class="n">NAME_MAX</span><span class="o">+</span><span class="mi">1</span><span class="p">];</span><span class="w">    </span><span class="cm">/* name + '\0' terminator */</span>
+<span class="p">}</span><span class="w"> </span><span class="n">Dirent</span><span class="p">;</span>
+
+<span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="p">{</span><span class="w">    </span><span class="cm">/* minimal DIR: no buffering, etc. */</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">fd</span><span class="p">;</span><span class="w">    </span><span class="cm">/* file descriptor for the directory */</span>
+<span class="w">    </span><span class="n">Dirent</span><span class="w"> </span><span class="n">d</span><span class="p">;</span><span class="w">    </span><span class="cm">/* the directory entry */</span>
+<span class="p">}</span><span class="w"> </span><span class="kt">DIR</span><span class="p">;</span>
+
+<span class="kt">DIR</span><span class="w"> </span><span class="o">*</span><span class="nf">opendir</span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">dirname</span><span class="p">);</span>
+<span class="n">Dirent</span><span class="w"> </span><span class="o">*</span><span class="nf">readdir</span><span class="p">(</span><span class="kt">DIR</span><span class="w"> </span><span class="o">*</span><span class="n">dfd</span><span class="p">);</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">closedir</span><span class="p">(</span><span class="kt">DIR</span><span class="w"> </span><span class="o">*</span><span class="n">dfd</span><span class="p">);</span><span class="w"> </span>
+</code></pre>
+<p>The system call stat takes a filename and returns all of the information in the inode for that file, or -1 if there is an error. That is, </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">name</span><span class="p">;</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">stat</span><span class="w"> </span><span class="n">stbuf</span><span class="p">;</span>
+<span class="kt">int</span><span class="w"> </span><span class="nf">stat</span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">stat</span><span class="w"> </span><span class="o">*</span><span class="p">);</span>
+<span class="n">stat</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">stbuf</span><span class="p">);</span><span class="w"> </span>
+</code></pre>
+<p>fills the structure stbuf with the inode information for the file name. The structure describing the value returned by stat is in <sys/stat.h>, and typically looks like this: </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="k">struct</span><span class="w"> </span><span class="nc">stat</span><span class="w">    </span><span class="cm">/* inode information returned by stat */</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">dev_t</span><span class="w">    </span><span class="n">st_dev</span><span class="p">;</span><span class="w">    </span><span class="cm">/* device of inode */</span>
+<span class="w">    </span><span class="kt">ino_t</span><span class="w">    </span><span class="n">st_ino</span><span class="p">;</span><span class="w">    </span><span class="cm">/* inode number */</span>
+<span class="w">    </span><span class="kt">short</span><span class="w">    </span><span class="n">st_mode</span><span class="p">;</span><span class="w">    </span><span class="cm">/* mode bits */</span>
+<span class="w">    </span><span class="kt">short</span><span class="w">    </span><span class="n">st_nlink</span><span class="p">;</span><span class="w">    </span><span class="cm">/* number of links to file */</span>
+<span class="w">    </span><span class="kt">short</span><span class="w">    </span><span class="n">st_uid</span><span class="p">;</span><span class="w">    </span><span class="cm">/* owners user id */</span>
+<span class="w">    </span><span class="kt">short</span><span class="w">    </span><span class="n">st_gid</span><span class="p">;</span><span class="w">    </span><span class="cm">/* owners group id */</span>
+<span class="w">    </span><span class="kt">dev_t</span><span class="w">    </span><span class="n">st_rdev</span><span class="p">;</span><span class="w">    </span><span class="cm">/* for special files */</span>
+<span class="w">    </span><span class="kt">off_t</span><span class="w">    </span><span class="n">st_size</span><span class="p">;</span><span class="w">    </span><span class="cm">/* file size in characters */</span>
+<span class="w">    </span><span class="kt">time_t</span><span class="w">    </span><span class="n">st_atime</span><span class="p">;</span><span class="w">    </span><span class="cm">/* time last accessed */</span>
+<span class="w">    </span><span class="kt">time_t</span><span class="w">    </span><span class="n">st_mtime</span><span class="p">;</span><span class="w">    </span><span class="cm">/* time last modified */</span>
+<span class="w">    </span><span class="kt">time_t</span><span class="w">    </span><span class="n">st_ctime</span><span class="p">;</span><span class="w">    </span><span class="cm">/* time originally created */</span>
+<span class="p">};</span><span class="w"> </span>
+</code></pre>
+<p>Most of these values are explained by the comment fields. The types like dev_t and ino_t are defined in <sys/types.h>, which must be included too. </p>
+<p>The st_mode entry contains a set of flags describing the file. The flag definitions are also included in <sys/types.h>; we need only the part that deals with file type: </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="cp">#define S_IFMT 0160000 </span><span class="cm">/* type of file: */</span>
+<span class="cp">#define S_IFDIR 0040000 </span><span class="cm">/* directory */</span>
+<span class="cp">#define S_IFCHR 0020000 </span><span class="cm">/* character special */</span>
+<span class="cp">#define S_IFBLK 0060000 </span><span class="cm">/* block special */</span>
+<span class="cp">#define S_IFREG 0010000 </span><span class="cm">/* regular */</span>
+<span class="cm">/* ... */</span><span class="w"> </span>
+</code></pre>
+<p>Now we are ready to write the program fsize. If the mode obtained from stat indicates that a file is not a directory, then the size is at hand and can be printed directly. If the name is a directory, however, then we have to process that directory one file at a time; it may in turn contain sub-directories, so the process is recursive. </p>
+<p>The main routine deals with command-line arguments; it hands each argument to the function fsize. </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;stdio.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;string.h&gt;</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">"syscalls.h"</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;fcntl.h&gt;</span><span class="w">    </span><span class="cm">/* flags for read and write */</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;sys/types.h&gt;</span><span class="w">    </span><span class="cm">/* typedefs */</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;sys/stat.h&gt;</span><span class="w">    </span><span class="cm">/* structure returned by stat */</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">"dirent.h"</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="nf">fsize</span><span class="p">(</span><span class="kt">char</span><span class="p">)</span>
+
+<span class="cm">/* print file name */</span>
+<span class="n">main</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">argc</span><span class="p">,</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">**</span><span class="n">argv</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">argc</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w">    </span><span class="cm">/* default: current directory */</span>
+<span class="w">    </span><span class="n">fsize</span><span class="p">(</span><span class="s">"."</span><span class="p">);</span>
+<span class="w">    </span><span class="k">else</span>
+<span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="o">--</span><span class="n">argc</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span>
+<span class="w">    </span><span class="n">fsize</span><span class="p">(</span><span class="o">*++</span><span class="n">argv</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span><span class="w"> </span>
+</code></pre>
+<p>The function fsize prints the size of the file. If the file is a directory, however, fsize first calls dirwalk to handle all the files in it. Note how the flag names S_IFMT and S_IFDIR are used to decide if the file is a directory. Parenthesization matters, because the precedence of &amp; is lower than that of ==. </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="kt">int</span><span class="w"> </span><span class="nf">stat</span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">stat</span><span class="w"> </span><span class="o">*</span><span class="p">);</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">dirwalk</span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">,</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">fcn</span><span class="p">)(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">));</span>
+
+<span class="cm">/* fsize: print the name of file "name" */</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">fsize</span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">name</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">stat</span><span class="w"> </span><span class="n">stbuf</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">stat</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">stbuf</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">"fsize: can't access %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">((</span><span class="n">stbuf</span><span class="p">.</span><span class="n">st_mode</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">S_IFMT</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">S_IFDIR</span><span class="p">)</span>
+<span class="w">    </span><span class="n">dirwalk</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">fsize</span><span class="p">);</span>
+<span class="w">    </span><span class="n">printf</span><span class="p">(</span><span class="s">"%8ld %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span><span class="w"> </span><span class="n">stbuf</span><span class="p">.</span><span class="n">st_size</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">);</span>
+<span class="p">}</span><span class="w"> </span>
+</code></pre>
+<p>The function dirwalk is a general routine that applies a function to each file in a directory. It opens the directory, loops through the files in it, calling the function on each, then closes the directory and returns. Since fsize calls dirwalk on each directory, the two functions call each other recursively. </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="cp">#define MAX_PATH 1024</span>
+<span class="cm">/* dirwalk: apply fcn to all files in dir */</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">dirwalk</span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">dir</span><span class="p">,</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">fcn</span><span class="p">)(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w"> </span>
+</code></pre>
+<pre lang="c"><code class="language-c md-fencescode"><span class="kt">char</span><span class="w"> </span><span class="n">name</span><span class="p">[</span><span class="n">MAX_PATH</span><span class="p">];</span>
+<span class="n">Dirent</span><span class="w"> </span><span class="o">*</span><span class="n">dp</span><span class="p">;</span>
+<span class="kt">DIR</span><span class="w"> </span><span class="o">*</span><span class="n">dfd</span><span class="p">;</span>
+
+<span class="k">if</span><span class="w"> </span><span class="p">((</span><span class="n">dfd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">opendir</span><span class="p">(</span><span class="n">dir</span><span class="p">))</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nb">NULL</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">"dirwalk: can't open %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span><span class="w"> </span><span class="n">dir</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">while</span><span class="w"> </span><span class="p">((</span><span class="n">dp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">readdirdfd</span><span class="p">))</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">strcmp</span><span class="p">(</span><span class="n">dp</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="s">"."</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span>
+<span class="w">    </span><span class="o">||</span><span class="w"> </span><span class="n">strcmp</span><span class="p">(</span><span class="n">dp</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="s">".."</span><span class="p">))</span>
+<span class="w">    </span><span class="k">continue</span><span class="p">;</span><span class="w"> </span><span class="cm">/* skip self and parent */</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">strlen</span><span class="p">(</span><span class="n">dir</span><span class="p">)</span><span class="o">+</span><span class="n">strlen</span><span class="p">(</span><span class="n">dp</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">)</span><span class="o">+</span><span class="mi">2</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+<span class="w">    </span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span><span class="w"> </span><span class="s">"dirwalk: name %s %s too long</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span><span class="w"> </span><span class="n">dir</span><span class="p">,</span><span class="w"> </span><span class="n">dp</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">);</span>
+<span class="w">    </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">sprintf</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="s">"%s/%s"</span><span class="p">,</span><span class="w"> </span><span class="n">dir</span><span class="p">,</span><span class="w"> </span><span class="n">dp</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">);</span>
+<span class="w">    </span><span class="p">(</span><span class="o">*</span><span class="n">fcn</span><span class="p">)(</span><span class="n">name</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">closedirdfd</span><span class="p">);</span><span class="w"> </span>
+</code></pre>
+<p>Each call to readdir returns a pointer to information for the next file, or NULL when there are no files left. Each directory always contains entries for itself, called ".", and its parent, ".."; these must be skipped, or the program will loop forever. </p>
+<p>Down to this last level, the code is independent of how directories are formatted. The next step is to present minimal versions of opendir, readdir, and closedir for a specific system. The following routines are for Version 7 and System V UNIX systems; they use the directory information in the header <sys/dir.h>, which looks like this: </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="cp">#ifndef DIRSIZ</span>
+<span class="cp">#define DIRSIZ 14</span>
+<span class="cp">#endif</span>
+<span class="k">struct</span><span class="w"> </span><span class="nc">direct</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* directory entry */</span>
+<span class="w">    </span><span class="kt">ino_t</span><span class="w"> </span><span class="n">d_ino</span><span class="p">;</span><span class="w">    </span><span class="cm">/* inode number */</span>
+<span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="n">d_name</span><span class="p">[</span><span class="n">DIRSIZ</span><span class="p">];</span><span class="w"> </span><span class="cm">/* long name does not have '\0' */</span>
+<span class="p">};</span><span class="w"> </span>
+</code></pre>
+<p>Some versions of the system permit much longer names and have a more complicated directory structure. </p>
+<p>The type ino_t is a typedef that describes the index into the inode list. It happens to be unsigned short on the systems we use regularly, but this is not the sort of information to embed in a program; it might be different on a different system, so the typedef is better. A complete set of ``system'' types is found in <sys/types.h>. </p>
+<p>opendir opens the directory, verifies that the file is a directory (this time by the system call fstat, which is like stat except that it applies to a file descriptor), allocates a directory structure, and records the information: </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="kt">int</span><span class="w"> </span><span class="nf">fstat</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">fd</span><span class="p">,</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">stat</span><span class="w"> </span><span class="o">*</span><span class="p">);</span>
+<span class="cm">/* opendir: open a directory for readdir calls */</span>
+<span class="kt">DIR</span><span class="w"> </span><span class="o">*</span><span class="nf">opendir</span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">dirname</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">fd</span><span class="p">;</span>
+<span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">stat</span><span class="w"> </span><span class="n">stbuf</span><span class="p">;</span><span class="w"> </span>
+</code></pre>
+<pre lang="txt"><code class="language-txt md-fencescode">DIR *dp;
+if ((fd = open(dirname, O_RDONLY, 0)) == -1
+    || fstat(fd, &amp;stbuf) == -1
+    || (stbuf.st_mode &amp; S_IFMT) != S_IFDIR
+    || (dp = (DIR *) malloc(sizeof(DIR))) == NULL)
+    return NULL;
+dp-&gt;fd = fd;
+return dp; 
+</code></pre>
+<p>closedir closes the directory file and frees the space: </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="cm">/* closedir: close directory opened by opendir */</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">closedir</span><span class="p">(</span><span class="kt">DIR</span><span class="w"> </span><span class="o">*</span><span class="n">dp</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">dp</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">close</span><span class="p">(</span><span class="n">dp</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">);</span>
+<span class="w">    </span><span class="n">free</span><span class="p">(</span><span class="n">dp</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span><span class="w"> </span>
+</code></pre>
+<p>Finally, readdir uses read to read each directory entry. If a directory slot is not currently in use (because a file has been removed), the inode number is zero, and this position is skipped. Otherwise, the inode number and name are placed in a static structure and a pointer to that is returned to the user. Each call overwrites the information from the previous one. </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="cp">#include</span><span class="w"> </span><span class="cpf">&lt;sys/dir.h&gt;</span><span class="w">    </span><span class="cm">/* local directory structure */</span>
+
+<span class="cm">/* readdir:  read directory entries in sequence */</span>
+<span class="n">Dirent</span><span class="w"> </span><span class="o">*</span><span class="nf">readdir</span><span class="p">(</span><span class="kt">DIR</span><span class="w"> </span><span class="o">*</span><span class="n">dp</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">struct</span><span class="w"> </span><span class="nc">direct</span><span class="w"> </span><span class="n">dirbuf</span><span class="p">;</span><span class="w">    </span><span class="cm">/* local directory structure */</span>
+<span class="w">    </span><span class="k">static</span><span class="w"> </span><span class="n">Dirent</span><span class="w"> </span><span class="n">d</span><span class="p">;</span><span class="w">    </span><span class="cm">/* return: portable structure */</span>
+
+<span class="w">    </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="n">read</span><span class="p">(</span><span class="n">dp</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;</span><span class="n">dirbuf</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">dirbuf</span><span class="p">))</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">dirbuf</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">dirbuf</span><span class="p">.</span><span class="n">d_ino</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="cm">/* slot not in use */</span>
+<span class="w">    </span><span class="k">continue</span><span class="p">;</span>
+<span class="w">    </span><span class="n">d</span><span class="p">.</span><span class="n">ino</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dirbuf</span><span class="p">.</span><span class="n">d_ino</span><span class="p">;</span>
+<span class="w">    </span><span class="n">strncpy</span><span class="p">(</span><span class="n">d</span><span class="p">.</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">dirbuf</span><span class="p">.</span><span class="n">d_name</span><span class="p">,</span><span class="w"> </span><span class="n">DIRSIZ</span><span class="p">);</span>
+<span class="w">    </span><span class="n">d</span><span class="p">.</span><span class="n">name</span><span class="p">[</span><span class="n">DIRSIZ</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sc">'\0'</span><span class="p">;</span><span class="w">    </span><span class="cm">/* ensure termination */</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="o">&amp;</span><span class="n">d</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
+<span class="p">}</span><span class="w"> </span>
+</code></pre>
+<p>Although the fsize program is rather specialized, it does illustrate a couple of important ideas. First, many programs are not ``system programs''; they merely use information that is maintained by the operating system. For such programs, it is crucial that the representation of the information appear only in standard headers, and that programs include those headers instead of embedding the declarations in themselves. The second observation is that with care it is possible to create an interface to system-dependent objects that is itself relatively systemindependent. The functions of the standard library are good examples. </p>
+<p>Exercise 8-5. Modify the fsize program to print the other information contained in the inode entry. </p>
+<h2 id="87-example-a-storage-allocator">8.7 Example - A Storage Allocator</h2>
+<p>In Chapter 5, we presented a vary limited stack-oriented storage allocator. The version that we will now write is unrestricted. Calls to malloc and free may occur in any order; malloc calls upon the operating system to obtain more memory as necessary. These routines illustrate some of the considerations involved in writing machine-dependent code in a relatively machine-independent way, and also show a real-life application of structures, unions and typedef. </p>
+<p>Rather than allocating from a compiled-in fixed-size array, malloc will request space from the operating system as needed. Since other activities in the program may also request space without calling this allocator, the space that malloc manages may not be contiguous. Thus its free storage is kept as a list of free blocks. Each block contains a size, a pointer to the next block, and the space itself. The blocks are kept in order of increasing storage address, and the last block (highest address) points to the first. </p>
+<p><img alt="114f106c42bfcdc3499e9a1c53b1a1e107c16d3456ddd751384e9a1a3cb309f1.jpg" src="assets/114f106c42bfcdc3499e9a1c53b1a1e107c16d3456ddd751384e9a1a3cb309f1.jpg" /></p>
+<p>When a request is made, the free list is scanned until a big-enough block is found. This algorithm is called <code>first fit,'' by contrast with</code>best fit,'' which looks for the smallest block that will satisfy the request. If the block is exactly the size requested it is unlinked from the list and returned to the user. If the block is too big, it is split, and the proper amount is returned to the user while the residue remains on the free list. If no big-enough block is found, another large chunk is obtained by the operating system and linked into the free list. </p>
+<p>Freeing also causes a search of the free list, to find the proper place to insert the block being freed. If the block being freed is adjacent to a free block on either side, it is coalesced with it into a single bigger block, so storage does not become too fragmented. Determining the adjacency is easy because the free list is maintained in order of decreasing address. </p>
+<p>One problem, which we alluded to in Chapter 5, is to ensure that the storage returned by malloc is aligned properly for the objects that will be stored in it. Although machines vary, for each machine there is a most restrictive type: if the most restrictive type can be stored at a particular address, all other types may be also. On some machines, the most restrictive type is a double; on others, int or long suffices. </p>
+<p>A free block contains a pointer to the next block in the chain, a record of the size of the block, and then the free space itself; the control information at the beginning is called the ``header.'' To simplify alignment, all blocks are multiples of the header size, and the header is aligned properly. This is achieved by a union that contains the desired header structure and an instance of the most restrictive alignment type, which we have arbitrarily made a long: </p>
+<pre lang="txt"><code class="language-txt md-fencescode">struct {
+    union header *ptr; /* next block if on free list */
+    unsigned size;    /* size of this block */
+} s;
+Align x;    /* force alignment of blocks */
+}; 
+</code></pre>
+<p>The Align field is never used; it just forces each header to be aligned on a worst-case boundary. </p>
+<p>In malloc, the requested size in characters is rounded up to the proper number of header-sized units; the block that will be allocated contains one more unit, for the header itself, and this is the value recorded in the size field of the header. The pointer returned by malloc points at the free space, not at the header itself. The user can do anything with the space requested, but if anything is written outside of the allocated space the list is likely to be scrambled. </p>
+<p><img alt="2c5195decf766bb9587b1eb7d8e2795f5f78d004a3b7c1acd446ce127c354457.jpg" src="assets/2c5195decf766bb9587b1eb7d8e2795f5f78d004a3b7c1acd446ce127c354457.jpg" /></p>
+<p>The size field is necessary because the blocks controlled by malloc need not be contiguous - it is not possible to compute sizes by pointer arithmetic. </p>
+<p>The variable base is used to get started. If freep is NULL, as it is at the first call of malloc, then a degenerate free list is created; it contains one block of size zero, and points to itself. In any case, the free list is then searched. The search for a free block of adequate size begins at the point (freep) where the last block was found; this strategy helps keep the list homogeneous. If a too-big block is found, the tail end is returned to the user; in this way the header of the original needs only to have its size adjusted. In all cases, the pointer returned to the user points to the free space within the block, which begins one unit beyond the header. </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="k">static</span><span class="w"> </span><span class="n">Header</span><span class="w"> </span><span class="n">base</span><span class="p">;</span><span class="w">    </span><span class="cm">/* empty list to get started */</span>
+<span class="k">static</span><span class="w"> </span><span class="n">Header</span><span class="w"> </span><span class="o">*</span><span class="n">freep</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span><span class="w">    </span><span class="cm">/* start of free list */</span>
+
+<span class="cm">/* malloc: general-purpose storage allocator */</span>
+<span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="nf">malloc</span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="n">nbytes</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">Header</span><span class="w"> </span><span class="o">*</span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="n">prevp</span><span class="p">;</span>
+<span class="w">    </span><span class="n">Header</span><span class="w"> </span><span class="o">*</span><span class="n">moreroce</span><span class="p">(</span><span class="kt">unsigned</span><span class="p">);</span>
+<span class="w">    </span><span class="kt">unsigned</span><span class="w"> </span><span class="n">nunits</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">nunits</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">nbytes</span><span class="o">+</span><span class="k">sizeof</span><span class="p">(</span><span class="n">Header</span><span class="p">)</span><span class="mi">-1</span><span class="p">)</span><span class="o">/</span><span class="k">sizeof</span><span class="p">(</span><span class="n">header</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">((</span><span class="n">prevp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">freep</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nb">NULL</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">    </span><span class="cm">/* no free list yet */</span>
+<span class="w">    </span><span class="n">base</span><span class="p">.</span><span class="n">s</span><span class="p">.</span><span class="n">ptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">freeptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">prevptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="o">&amp;</span><span class="n">base</span><span class="p">;</span>
+<span class="w">    </span><span class="n">base</span><span class="p">.</span><span class="n">s</span><span class="p">.</span><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span><span class="w"> </span>
+</code></pre>
+<pre lang="c"><code class="language-c md-fencescode"><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">prevp</span><span class="o">-&gt;</span><span class="n">s</span><span class="p">.</span><span class="n">ptr</span><span class="p">;</span><span class="w"> </span><span class="p">;</span><span class="w"> </span><span class="n">prevp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="p">,</span><span class="w"> </span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="o">-&gt;</span><span class="n">s</span><span class="p">.</span><span class="n">ptr</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">s</span><span class="p">.</span><span class="n">size</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">nunits</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* big enough */</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">p</span><span class="o">-&gt;</span><span class="n">s</span><span class="p">.</span><span class="n">size</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">nunits</span><span class="p">)</span><span class="w"> </span><span class="cm">/* exactly */</span>
+<span class="w">    </span><span class="n">prevp</span><span class="o">-&gt;</span><span class="n">s</span><span class="p">.</span><span class="n">ptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">p</span><span class="o">-&gt;</span><span class="n">s</span><span class="p">.</span><span class="n">ptr</span><span class="p">;</span>
+<span class="w">    </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* allocate tail end */</span>
+<span class="w">    </span><span class="n">p</span><span class="o">-&gt;</span><span class="n">s</span><span class="p">.</span><span class="n">size</span><span class="w"> </span><span class="o">-=</span><span class="w"> </span><span class="n">nunits</span><span class="p">;</span>
+<span class="w">    </span><span class="n">p</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">p</span><span class="o">-&gt;</span><span class="n">s</span><span class="p">.</span><span class="n">size</span><span class="p">;</span>
+<span class="w">    </span><span class="n">p</span><span class="o">-&gt;</span><span class="n">s</span><span class="p">.</span><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nunits</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="n">freep</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">prevp</span><span class="p">;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="n">p</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">p</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">freep</span><span class="p">)</span><span class="w"> </span><span class="cm">/* wrapped around free list */</span>
+<span class="k">if</span><span class="w"> </span><span class="p">((</span><span class="n">p</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">morecore</span><span class="p">(</span><span class="n">nunits</span><span class="p">))</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nb">NULL</span><span class="p">)</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span><span class="w"> </span><span class="cm">/* none left */</span>
+<span class="p">}</span><span class="w"> </span>
+</code></pre>
+<p>The function morecore obtains storage from the operating system. The details of how it does this vary from system to system. Since asking the system for memory is a comparatively expensive operation. we don't want to do that on every call to malloc, so morecore requests al least NALLOC units; this larger block will be chopped up as needed. After setting the size field, morecore inserts the additional memory into the arena by calling free. </p>
+<p>The UNIX system call sbrk(n) returns a pointer to n more bytes of storage. sbrk returns -1 if there was no space, even though NULL could have been a better design. The -1 must be cast to char * so it can be compared with the return value. Again, casts make the function relatively immune to the details of pointer representation on different machines. There is still one assumption, however, that pointers to different blocks returned by sbrk can be meaningfully compared. This is not guaranteed by the standard, which permits pointer comparisons only within an array. Thus this version of malloc is portable only among machines for which general pointer comparison is meaningful. </p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="cp">#define NALLOC 1024    </span><span class="cm">/* minimum #units to request */</span>
+<span class="cm">/* morecore: ask system for more memory */</span>
+<span class="k">static</span><span class="w"> </span><span class="n">Header</span><span class="w"> </span><span class="o">*</span><span class="nf">morecore</span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="n">nu</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="n">cp</span><span class="p">,</span><span class="w"> </span><span class="o">*</span><span class="n">sbrk</span><span class="p">(</span><span class="kt">int</span><span class="p">);</span>
+<span class="w">    </span><span class="n">Header</span><span class="w"> </span><span class="o">*</span><span class="n">up</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">nu</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">NALLOC</span><span class="p">)</span>
+<span class="w">    </span><span class="n">nu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NALLOC</span><span class="p">;</span>
+<span class="w">    </span><span class="n">cp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sbrk</span><span class="p">(</span><span class="n">nu</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">Header</span><span class="p">));</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">cp</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="p">(</span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="mi">-1</span><span class="p">)</span><span class="w">    </span><span class="cm">/* no space at all */</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">NULL</span><span class="p">;</span>
+<span class="w">    </span><span class="n">up</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">Header</span><span class="w"> </span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="n">cp</span><span class="p">;</span>
+<span class="w">    </span><span class="n">up</span><span class="o">-&gt;</span><span class="n">s</span><span class="p">.</span><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nu</span><span class="p">;</span>
+<span class="w">    </span><span class="n">free</span><span class="p">((</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="p">)(</span><span class="n">up</span><span class="o">+</span><span class="mi">1</span><span class="p">));</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">freep</span><span class="p">;</span>
+<span class="p">}</span><span class="w"> </span>
+</code></pre>
+<p>free itself is the last thing. It scans the free list, starting at freep, looking for the place to insert the free block. This is either between two existing blocks or at the end of the list. In any case, if the block being freed is adjacent to either neighbor, the adjacent blocks are combined. The only troubles are keeping the pointers pointing to the right things and the sizes correct. </p>
+<pre lang="txt"><code class="language-txt md-fencescode">/* free: put block ap in free list */
+void free(void *ap)
+{ 
+</code></pre>
+<pre lang="txt"><code class="language-txt md-fencescode">Header *bp, *p;
+
+bp = (Header *)ap - 1;    /* point to block header */
+for (p = freep; !(bp &gt; p &amp;&amp; bp &lt; p-&gt;s.ptr); p = p-&gt;s.ptr)
+    if (p &gt;= p-&gt;s.ptr &amp;&amp; (bp &gt; p || bp &lt; p-&gt;s.ptr))
+    break;    /* freed block at start or end of arena */
+
+if (bp + bp-&gt;size == p-&gt;s.ptr) {    /* join to upper nbr */
+    bp-&gt;s.size += p-&gt;s.ptr-&gt;s.size;
+    bp-&gt;s.ptr = p-&gt;s.ptr-&gt;s.ptr;
+} else
+    bp-&gt;s.ptr = p-&gt;s.ptr;
+if (p + p-&gt;size == bp) {    /* join to lower nbr */
+    p-&gt;s.size += bp-&gt;s.size;
+    p-&gt;s.ptr = bp-&gt;s.ptr;
+} else
+    p-&gt;s.ptr = bp;
+freep = p; 
+</code></pre>
+<p>Although storage allocation is intrinsically machine-dependent, the code above illustrates how the machine dependencies can be controlled and confined to a very small part of the program. The use of typedef and union handles alignment (given that sbrk supplies an appropriate pointer). Casts arrange that pointer conversions are made explicit, and even cope with a badly-designed system interface. Even though the details here are related to storage allocation, the general approach is applicable to other situations as well. </p>
+<p>Exercise 8-6. The standard library function calloc(n,size) returns a pointer to n objects of size size, with the storage initialized to zero. Write calloc, by calling malloc or by modifying it. </p>
+<p>Exercise 8-7. malloc accepts a size request without checking its plausibility; free believes that the block it is asked to free contains a valid size field. Improve these routines so they make more pains with error checking. </p>
+<p>Exercise 8-8. Write a routine bfree(p,n) that will free any arbitrary block p of n characters into the free list maintained by malloc and free. By using bfree, a user can add a static or external array to the free list at any time. </p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

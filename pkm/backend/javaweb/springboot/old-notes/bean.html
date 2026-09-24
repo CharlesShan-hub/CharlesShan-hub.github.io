@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bean</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="springboot-bean">springboot bean 管理</h1>
+<h2 id="_1">资源</h2>
+<ul>
+<li>bean扫描: https://www.bilibili.com/video/BV14z4y1N7pg/?p=8</li>
+<li>bean注册: https://www.bilibili.com/video/BV14z4y1N7pg/?p=9</li>
+<li>注册条件: https://www.bilibili.com/video/BV14z4y1N7pg/?p=10</li>
+<li>自动配置: https://www.bilibili.com/video/BV14z4y1N7pg/?p=11</li>
+</ul>
+<hr />
+<h2 id="springbootapplication">@SpringBootApplication</h2>
+<h3 id="_2">源码分析</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@SpringBootApplication</span><span class="w">  </span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">SpringbootApplication</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">       </span><span class="n">SpringApplication</span><span class="p">.</span><span class="na">run</span><span class="p">(</span><span class="n">SpringbootApplication</span><span class="p">.</span><span class="na">class</span><span class="p">,</span><span class="w"> </span><span class="n">args</span><span class="p">);</span><span class="w">  </span>
+<span class="w">    </span><span class="p">}</span><span class="w">  </span>
+<span class="p">}</span>
+</code></pre>
+<p>其对应的源码是</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="w">    </span><span class="nd">@Target</span><span class="p">({</span><span class="n">ElementType</span><span class="p">.</span><span class="na">TYPE</span><span class="p">})</span><span class="w">  </span>
+<span class="w">    </span><span class="nd">@Retention</span><span class="p">(</span><span class="n">RetentionPolicy</span><span class="p">.</span><span class="na">RUNTIME</span><span class="p">)</span><span class="w">  </span>
+<span class="nd">@Documented</span><span class="w">  </span>
+<span class="nd">@Inherited</span><span class="w">  </span>
+<span class="nd">@SpringBootConfiguration</span><span class="w">  </span>
+<span class="nd">@EnableAutoConfiguration</span><span class="w">  </span>
+<span class="nd">@ComponentScan</span><span class="p">(</span><span class="w">  </span>
+<span class="w">        </span><span class="n">excludeFilters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="nd">@Filter</span><span class="p">(</span><span class="w">  </span>
+<span class="w">        </span><span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FilterType</span><span class="p">.</span><span class="na">CUSTOM</span><span class="p">,</span><span class="w">  </span>
+<span class="w">        </span><span class="n">classes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="n">TypeExcludeFilter</span><span class="p">.</span><span class="na">class</span><span class="p">}</span><span class="w">  </span>
+<span class="w">    </span><span class="p">),</span><span class="w"> </span><span class="nd">@Filter</span><span class="p">(</span><span class="w">  </span>
+<span class="w">        </span><span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FilterType</span><span class="p">.</span><span class="na">CUSTOM</span><span class="p">,</span><span class="w">  </span>
+<span class="w">        </span><span class="n">classes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="n">AutoConfigurationExcludeFilter</span><span class="p">.</span><span class="na">class</span><span class="p">}</span><span class="w">  </span>
+<span class="w">    </span><span class="p">)}</span><span class="w">  </span>
+<span class="p">)</span><span class="w">  </span>
+<span class="kd">public</span><span class="w"> </span><span class="nd">@interface</span><span class="w"> </span><span class="n">SpringBootApplication</span><span class="w"> </span><span class="p">{</span>
+<span class="w">     </span><span class="c1">// ....</span>
+<span class="p">}</span>
+</code></pre>
+<p>可以看到，其中有三个重要功能：
+* <code>@SpringBootConfiguration</code>
+    * 被@Configuration标注，是一个配置类
+    * 只有@SpringBootConfiguration 的里边的@Bean标注方法，才能进行IOC 容器管理
+    * SpringbootApplication.class又被称为源，Springboot 就是从这里开始加载整个容器的 bean 的
+* <code>@EnableAutoConfiguration</code>
+    * 启用自动配置（默认启用）
+    * Spring Boot 的自动配置机制是其核心特性之一，它通过智能地检测类路径和配置文件，自动完成组件的初始化和管理。具体来说，当 Spring Boot 应用启动时，它会扫描类路径下存在的类以及 <code>application.properties</code>（或 <code>application.yml</code>）中的配置项。例如，如果检测到类路径中有 <code>SqlSessionFactory</code>类，或者配置文件中设置了数据源相关信息，Spring Boot 就会认为当前项目使用了 MyBatis 框架，并自动初始化 MyBatis 相关的 Bean（如 <code>SqlSessionFactoryBean</code>、<code>MapperScannerConfigurer</code>等），然后将这些 Bean 注册到 IoC 容器中进行统一管理。这种机制极大地减少了开发人员手动编写 XML 或 Java 配置的工作，真正实现了“约定优于配置”的开发理念，让开发者更专注于业务逻辑而非环境搭建。
+    * 通过SpringApplication.run可以返回上下文对象：<code>ConfigurableBootstrapContext context = (ConfigurableBootstrapContext) SpringApplication.run(SpringbootApplication.class, args);</code>
+* <code>@ComponentScan</code></p>
+<h3 id="_3">主要参数</h3>
+<p><code>@ComponentScan</code> 有几个重要的参数可以配置：</p>
+<ol>
+<li>​<strong>​basePackages / value​</strong>​: 指定要扫描的基础包</li>
+</ol>
+<pre><code class="md-fencescode">@ComponentScan(basePackages = &quot;com.example&quot;)
+@ComponentScan({&quot;com.example&quot;, &quot;com.other&quot;}) // value 的简写
+</code></pre>
+<ol>
+<li>​<strong>​basePackageClasses​</strong>​: 通过类来指定扫描的基础包</li>
+</ol>
+<pre><code class="md-fencescode">@ComponentScan(basePackageClasses = {SomeClass.class, AnotherClass.class})
+</code></pre>
+<ol>
+<li>​<strong>​includeFilters​</strong>​: 包含特定的组件类型</li>
+</ol>
+<pre><code class="md-fencescode">@ComponentScan(includeFilters = @Filter(type = FilterType.ANNOTATION, classes = CustomAnnotation.class))
+</code></pre>
+<ol>
+<li>​<strong>​excludeFilters​</strong>​: 排除特定的组件类型</li>
+</ol>
+<pre><code class="md-fencescode">@ComponentScan(excludeFilters = @Filter(type = FilterType.ANNOTATION, classes = Controller.class))
+</code></pre>
+<ol>
+<li>​<strong>​useDefaultFilters​</strong>​: 是否使用默认过滤器（默认为 true）</li>
+</ol>
+<pre><code class="md-fencescode">@ComponentScan(useDefaultFilters = false)
+</code></pre>
+<h3 id="_4">使用场景示例</h3>
+<ol>
+<li>扫描多个包</li>
+</ol>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@SpringBootApplication</span>
+<span class="nd">@ComponentScan</span><span class="p">(</span><span class="n">basePackages</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="s">"com.example.main"</span><span class="p">,</span><span class="w"> </span><span class="s">"com.example.utils"</span><span class="p">})</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MyApplication</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre>
+<ol>
+<li>排除特定组件</li>
+</ol>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@SpringBootApplication</span>
+<span class="nd">@ComponentScan</span><span class="p">(</span><span class="n">excludeFilters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nd">@Filter</span><span class="p">(</span><span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FilterType</span><span class="p">.</span><span class="na">ANNOTATION</span><span class="p">,</span><span class="w"> </span><span class="n">classes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="n">Service</span><span class="p">.</span><span class="na">class</span><span class="p">}))</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MyApplication</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre>
+<ol>
+<li>自定义过滤器</li>
+</ol>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@SpringBootApplication</span>
+<span class="nd">@ComponentScan</span><span class="p">(</span>
+<span class="w">    </span><span class="n">includeFilters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nd">@Filter</span><span class="p">(</span><span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FilterType</span><span class="p">.</span><span class="na">CUSTOM</span><span class="p">,</span><span class="w"> </span><span class="n">classes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">MyTypeFilter</span><span class="p">.</span><span class="na">class</span><span class="p">),</span>
+<span class="w">    </span><span class="n">useDefaultFilters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+<span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MyApplication</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre>
+<hr />
+<h2 id="bean">Bean注册</h2>
+<h3 id="_5">自己的类</h3>
+<p>对于我们自己写的类，可以使用下边的注解注入到程序中。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">注解</th>
+<th style="text-align: center;">说明</th>
+<th style="text-align: center;">位置</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">@Component</td>
+<td style="text-align: center;">声明bean的基础注解</td>
+<td style="text-align: center;">不属于以下三类时，用此注解</td>
+</tr>
+<tr>
+<td style="text-align: center;">@Controller</td>
+<td style="text-align: center;">@Component的衍生注解</td>
+<td style="text-align: center;">标注在控制器类上</td>
+</tr>
+<tr>
+<td style="text-align: center;">@Service</td>
+<td style="text-align: center;">@Component的衍生注解</td>
+<td style="text-align: center;">标注在业务类上</td>
+</tr>
+<tr>
+<td style="text-align: center;">@Repository</td>
+<td style="text-align: center;">@Component的衍生注解</td>
+<td style="text-align: center;">标注在数据访问类上（由于与mybatis整合，用的少）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="bean_1">第三方的类：<code>@Bean</code></h3>
+<p>对于第三方的类，代码是只读的，我们不能对其进行修改，对此我们可以使用@Bean和@Import进行注入</p>
+<p>首先我们新建一个工程 demoBean，里边仅包含一个文件 Movie.java</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.charles</span><span class="p">;</span><span class="w">  </span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Movie</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="n">String</span><span class="w"> </span><span class="n">title</span><span class="p">;</span><span class="w">  </span>
+<span class="w">    </span><span class="n">String</span><span class="w"> </span><span class="n">year</span><span class="p">;</span><span class="w">  </span>
+<span class="p">}</span>
+</code></pre>
+<p>使用maven打包成demoBean-1.0-SNAPSHOT.jar</p>
+<p>再新建一个springboot工程，在其终端中，安装该包</p>
+<pre lang="bash"><code class="language-bash md-fencescode">charles@Charless-MacBook-Pro<span class="w"> </span>~/w/p/p/j/s/bean<span class="w"> </span><span class="o">(</span>master<span class="o">)</span>&gt;<span class="w"> </span>mvn<span class="w"> </span>install:install-file<span class="w"> </span>-Dfile<span class="o">=</span>/Users/charles/workspace/project/playground/java/springboot/demoBean/target/demoBean-1.0-SNAPSHOT.jar<span class="w"> </span>-DgroupId<span class="o">=</span>org.charles<span class="w"> </span>-DartifactId<span class="o">=</span>common-pojo<span class="w"> </span>-Dversion<span class="o">=</span><span class="m">1</span>.0<span class="w"> </span>-Dpackaging<span class="o">=</span>jar
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>Scanning<span class="w"> </span><span class="k">for</span><span class="w"> </span>projects...
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>--------------------------&lt;<span class="w"> </span>com.charles:bean<span class="w"> </span>&gt;--------------------------
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>Building<span class="w"> </span>bean<span class="w"> </span><span class="m">0</span>.0.1-SNAPSHOT
+<span class="o">[</span>INFO<span class="o">]</span><span class="w">   </span>from<span class="w"> </span>pom.xml
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>--------------------------------<span class="o">[</span><span class="w"> </span>jar<span class="w"> </span><span class="o">]</span>---------------------------------
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>---<span class="w"> </span>install:3.1.4:install-file<span class="w"> </span><span class="o">(</span>default-cli<span class="o">)</span><span class="w"> </span>@<span class="w"> </span>bean<span class="w"> </span>---
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>Installing<span class="w"> </span>/Users/charles/workspace/project/playground/java/springboot/demoBean/target/demoBean-1.0-SNAPSHOT.jar<span class="w"> </span>to<span class="w"> </span>/Users/charles/.m2/repository/org/charles/common-pojo/1.0/common-pojo-1.0.jar
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>Installing<span class="w"> </span>/var/folders/n7/t8br89y558n8dkpg4gkw10g00000gn/T/demoBean-1.0-SNAPSHOT9326471047283854776.pom<span class="w"> </span>to<span class="w"> </span>/Users/charles/.m2/repository/org/charles/common-pojo/1.0/common-pojo-1.0.pom
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>------------------------------------------------------------------------
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>BUILD<span class="w"> </span>SUCCESS
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>------------------------------------------------------------------------
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>Total<span class="w"> </span>time:<span class="w">  </span><span class="m">0</span>.194<span class="w"> </span>s
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>Finished<span class="w"> </span>at:<span class="w"> </span><span class="m">2025</span>-12-25T13:58:47+08:00
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>------------------------------------------------------------------------
+charles@Charless-MacBook-Pro<span class="w"> </span>~/w/p/p/j/s/bean<span class="w"> </span><span class="o">(</span>master<span class="o">)</span>&gt;<span class="w"> </span>
+</code></pre>
+<p>这时候我们可以去springboot工程里边使用引入坐标了</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;dependency&gt;</span><span class="w">  </span>
+<span class="w">    </span><span class="nt">&lt;groupId&gt;</span>org.charles<span class="nt">&lt;/groupId&gt;</span><span class="w">  </span>
+<span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>common-pojo<span class="nt">&lt;/artifactId&gt;</span><span class="w">  </span>
+<span class="w">    </span><span class="nt">&lt;version&gt;</span>1.0<span class="nt">&lt;/version&gt;</span><span class="w">  </span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre>
+<p>修改主程序类，使用@Bean就可以注入这个对象了。SpringApplication.run会返回一个ApplicationContext对象，我们使用getBean可以获取到这个注入的Movie。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@SpringBootApplication</span><span class="w">  </span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">BeanApplication</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+
+<span class="w">        </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">context</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SpringApplication</span><span class="p">.</span><span class="na">run</span><span class="p">(</span><span class="n">BeanApplication</span><span class="p">.</span><span class="na">class</span><span class="p">,</span><span class="w"> </span><span class="n">args</span><span class="p">);</span><span class="w">  </span>
+
+<span class="w">        </span><span class="n">Movie</span><span class="w"> </span><span class="n">movie</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">context</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="n">Movie</span><span class="p">.</span><span class="na">class</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">movie</span><span class="p">);</span><span class="w">  </span><span class="c1">// com.charles.Movie@250b236d</span>
+<span class="w">    </span><span class="p">}</span><span class="w">  </span>
+<span class="w">    </span><span class="nd">@Bean</span><span class="w">  </span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Movie</span><span class="w"> </span><span class="nf">Movie</span><span class="p">(){</span><span class="w">  </span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Movie</span><span class="p">();</span><span class="w">  </span>
+<span class="w">    </span><span class="p">}}</span>
+</code></pre>
+<h3 id="bean-config">第三方的类：<code>@Bean</code> + config包</h3>
+<p>因为启动程序最好还是自用来启动，不要加入引入包的功能，所以更推荐第二种方案：在controller同级创建config包，里边创建配置类比如<code>config/CommonConfig.java</code></p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.charles.bean.config</span><span class="p">;</span><span class="w">  </span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.charles.Movie</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.annotation.Bean</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.annotation.Configuration</span><span class="p">;</span><span class="w">  </span>
+
+<span class="nd">@Configuration</span><span class="w">  </span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">CommonConfig</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="nd">@Bean</span><span class="w">  </span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Movie</span><span class="w"> </span><span class="nf">CharlesMovie</span><span class="p">(){</span><span class="w">  </span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Movie</span><span class="p">();</span><span class="w">  </span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>在使用的时候可以去获取类，也可以使用方法名（本案例中就是CharlesMovie）</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@SpringBootApplication</span><span class="w">  </span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">BeanApplication</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+
+<span class="w">        </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">context</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SpringApplication</span><span class="p">.</span><span class="na">run</span><span class="p">(</span><span class="n">BeanApplication</span><span class="p">.</span><span class="na">class</span><span class="p">,</span><span class="w"> </span><span class="n">args</span><span class="p">);</span><span class="w">  </span>
+
+<span class="w">        </span><span class="n">Movie</span><span class="w"> </span><span class="n">movie1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">context</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="n">Movie</span><span class="p">.</span><span class="na">class</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">movie1</span><span class="p">);</span><span class="w"> </span><span class="c1">//com.charles.Movie@61f3fbb8  </span>
+
+<span class="w">        </span><span class="n">Movie</span><span class="w"> </span><span class="n">movie2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">Movie</span><span class="p">)</span><span class="w"> </span><span class="n">context</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"CharlesMovie"</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">movie2</span><span class="p">);</span><span class="w"> </span><span class="c1">//com.charles.Movie@61f3fbb8  </span>
+<span class="w">    </span><span class="p">}</span><span class="w">  </span>
+<span class="p">}</span>
+</code></pre>
+<p>我们也可以修改默认的类名</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Configuration</span><span class="w">  </span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">CommonConfig</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="nd">@Bean</span><span class="p">(</span><span class="s">"GoodMovie"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Movie</span><span class="w"> </span><span class="nf">CharlesMovie</span><span class="p">(){</span><span class="w">  </span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Movie</span><span class="p">();</span><span class="w">  </span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="import">第三方的类：<code>@Import</code></h3>
+<p>如果我们的config并不在controller统计目录，比如可能在上一级目录，这样的话springboot自动扫码就加载不到这个CommonConfig类。比如(工程名字叫做bean)：</p>
+<pre lang="bash"><code class="language-bash md-fencescode">charles@Charless-MacBook-Pro<span class="w"> </span>~/w/p/p/j/s/b/src<span class="w"> </span><span class="o">(</span>master<span class="o">)</span>&gt;<span class="w"> </span>tree
+.
+├──<span class="w"> </span>main
+│<span class="w">   </span>├──<span class="w"> </span>java
+│<span class="w">   </span>│<span class="w">   </span>└──<span class="w"> </span>com
+│<span class="w">   </span>│<span class="w">       </span>└──<span class="w"> </span>charles
+│<span class="w">   </span>│<span class="w">           </span>├──<span class="w"> </span>bean
+│<span class="w">   </span>│<span class="w">           </span>│<span class="w">   </span>└──<span class="w"> </span>BeanApplication.java
+│<span class="w">   </span>│<span class="w">           </span>└──<span class="w"> </span>config
+│<span class="w">   </span>│<span class="w">               </span>└──<span class="w"> </span>CommonConfig.java
+│<span class="w">   </span>└──<span class="w"> </span>resources
+│<span class="w">       </span>└──<span class="w"> </span>application.properties
+└──<span class="w"> </span><span class="nb">test</span>
+<span class="w">    </span>└──<span class="w"> </span>java
+<span class="w">        </span>└──<span class="w"> </span>com
+<span class="w">            </span>└──<span class="w"> </span>charles
+<span class="w">                </span>└──<span class="w"> </span>bean
+<span class="w">                    </span>└──<span class="w"> </span>BeanApplicationTests.java
+
+<span class="m">13</span><span class="w"> </span>directories,<span class="w"> </span><span class="m">4</span><span class="w"> </span>files
+</code></pre>
+<p>我们就需要手动的添加<code>@Import</code></p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@SpringBootApplication</span><span class="w">  </span>
+<span class="nd">@Import</span><span class="p">(</span><span class="n">CommonConfig</span><span class="p">.</span><span class="na">class</span><span class="p">)</span><span class="w">  </span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">BeanApplication</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+
+<span class="w">        </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">context</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SpringApplication</span><span class="p">.</span><span class="na">run</span><span class="p">(</span><span class="n">BeanApplication</span><span class="p">.</span><span class="na">class</span><span class="p">,</span><span class="w"> </span><span class="n">args</span><span class="p">);</span><span class="w">  </span>
+
+<span class="w">        </span><span class="n">Movie</span><span class="w"> </span><span class="n">movie1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">context</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="n">Movie</span><span class="p">.</span><span class="na">class</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">movie1</span><span class="p">);</span><span class="w"> </span><span class="c1">//com.charles.Movie@61f3fbb8  </span>
+
+<span class="w">        </span><span class="n">Movie</span><span class="w"> </span><span class="n">movie2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">Movie</span><span class="p">)</span><span class="w"> </span><span class="n">context</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"CharlesMovie"</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">movie2</span><span class="p">);</span><span class="w"> </span><span class="c1">//com.charles.Movie@61f3fbb8  </span>
+<span class="w">    </span><span class="p">}</span><span class="w">  </span>
+<span class="p">}</span>
+</code></pre>
+<ul>
+<li>添加一个-直接写类名：<code>@Import(CommonConfig.class)</code></li>
+<li>添加多个-传入数组：<code>@Import({A.class, B.class, C.class})</code></li>
+</ul>
+<h3 id="import-importselector">第三方的类：<code>@Import</code> + <code>ImportSelector</code></h3>
+<p>如果只有一个要引入的类，那还好办，如果我们有很多很多的配置类，数组的长度就会很长，代码不优雅。我们可以导入<code>ImportSelector</code>实现类，比如创建<code>config/CommonImportSelector.java</code></p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.charles.config</span><span class="p">;</span><span class="w">  </span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.annotation.ImportSelector</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.core.type.AnnotationMetadata</span><span class="p">;</span><span class="w">  </span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">CommonImportSelector</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">ImportSelector</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="nd">@Override</span><span class="w">  </span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="nf">selectImports</span><span class="p">(</span><span class="n">AnnotationMetadata</span><span class="w"> </span><span class="n">importingClassMetadata</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">String</span><span class="o">[]</span><span class="p">{</span><span class="s">"com.charles.Movie"</span><span class="p">};</span><span class="w">  </span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>对应的只要把刚才的<code>@Import(CommonConfig.class)</code>修改成<code>@Import(CommonImportSelector.class)</code>就好了</p>
+<h3 id="import-importselector_1">第三方的类：<code>@Import</code> + <code>ImportSelector</code> + 配置文件</h3>
+<p>最后只需要优化一点了，可以把写死的类名，提取到配置文件中，比如在resources文件夹中，创建<code>common.imports</code></p>
+<p>common.imports</p>
+<pre lang="txt"><code class="language-txt md-fencescode">com.charles.Movie
+</code></pre>
+<p>CommonImportSelector.java</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.charles.config</span><span class="p">;</span><span class="w">  </span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.annotation.ImportSelector</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.core.type.AnnotationMetadata</span><span class="p">;</span><span class="w">  </span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.io.BufferedReader</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.io.InputStream</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.io.InputStreamReader</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.ArrayList</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.List</span><span class="p">;</span><span class="w">  </span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">CommonImportSelector</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">ImportSelector</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="nd">@Override</span><span class="w">  </span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="nf">selectImports</span><span class="p">(</span><span class="n">AnnotationMetadata</span><span class="w"> </span><span class="n">importingClassMetadata</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">        </span><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">imports</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ArrayList</span><span class="o">&lt;&gt;</span><span class="p">();</span><span class="w">  </span>
+<span class="w">        </span><span class="n">InputStream</span><span class="w"> </span><span class="n">is</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CommonImportSelector</span><span class="p">.</span><span class="na">class</span><span class="p">.</span><span class="na">getClassLoader</span><span class="p">().</span><span class="na">getResourceAsStream</span><span class="p">(</span><span class="s">"common.imports"</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="n">BufferedReader</span><span class="w"> </span><span class="n">br</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">BufferedReader</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">InputStreamReader</span><span class="p">(</span><span class="n">is</span><span class="p">));</span><span class="w">  </span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">line</span><span class="p">;</span><span class="w">  </span>
+<span class="w">        </span><span class="k">try</span><span class="p">{</span><span class="w">  </span>
+<span class="w">            </span><span class="k">while</span><span class="p">((</span><span class="n">line</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">br</span><span class="p">.</span><span class="na">readLine</span><span class="p">())</span><span class="o">!=</span><span class="kc">null</span><span class="p">){</span><span class="w">  </span>
+<span class="w">                </span><span class="n">imports</span><span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="n">line</span><span class="p">);</span><span class="w">  </span>
+<span class="w">            </span><span class="p">}</span><span class="w">        </span>
+<span class="w">        </span><span class="p">}</span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">Exception</span><span class="w"> </span><span class="n">e</span><span class="p">){</span><span class="w">  </span>
+<span class="w">            </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">RuntimeException</span><span class="p">(</span><span class="n">e</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="p">}</span><span class="k">finally</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">            </span><span class="k">try</span><span class="p">{</span><span class="w">  </span>
+<span class="w">                </span><span class="k">if</span><span class="p">(</span><span class="n">br</span><span class="o">!=</span><span class="kc">null</span><span class="p">){</span><span class="w">  </span>
+<span class="w">                    </span><span class="n">br</span><span class="p">.</span><span class="na">close</span><span class="p">();</span><span class="w">  </span>
+<span class="w">                </span><span class="p">}</span><span class="w">            </span>
+<span class="w">            </span><span class="p">}</span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">Exception</span><span class="w"> </span><span class="n">e</span><span class="p">){</span><span class="w">  </span>
+<span class="w">                </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">RuntimeException</span><span class="p">(</span><span class="n">e</span><span class="p">);</span><span class="w">  </span>
+<span class="w">            </span><span class="p">}</span><span class="w">        </span>
+<span class="w">        </span><span class="p">}</span><span class="w">        </span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">imports</span><span class="p">.</span><span class="na">toArray</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">String</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span><span class="p">);</span><span class="w">  </span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>最后我们用流继续简化一下代码：CommonImportSelector.java</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.charles.config</span><span class="p">;</span><span class="w">  </span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.annotation.ImportSelector</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.core.type.AnnotationMetadata</span><span class="p">;</span><span class="w">  </span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.io.BufferedReader</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.io.IOException</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.io.InputStream</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.io.InputStreamReader</span><span class="p">;</span><span class="w">  </span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">CommonImportSelector</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">ImportSelector</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="nd">@Override</span><span class="w">  </span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="nf">selectImports</span><span class="p">(</span><span class="n">AnnotationMetadata</span><span class="w"> </span><span class="n">importingClassMetadata</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">(</span>
+<span class="w">            </span><span class="n">InputStream</span><span class="w"> </span><span class="n">is</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CommonImportSelector</span><span class="p">.</span><span class="na">class</span><span class="p">.</span><span class="na">getClassLoader</span><span class="p">().</span><span class="na">getResourceAsStream</span><span class="p">(</span><span class="s">"common.imports"</span><span class="p">);</span>
+<span class="w">            </span><span class="n">BufferedReader</span><span class="w"> </span><span class="n">br</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">BufferedReader</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">InputStreamReader</span><span class="p">(</span><span class="n">is</span><span class="p">))</span><span class="w">  </span>
+<span class="w">        </span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">br</span><span class="p">.</span><span class="na">lines</span><span class="p">()</span>
+<span class="w">                </span><span class="p">.</span><span class="na">map</span><span class="p">(</span><span class="n">String</span><span class="p">::</span><span class="n">trim</span><span class="p">)</span>
+<span class="w">                </span><span class="p">.</span><span class="na">filter</span><span class="p">(</span><span class="n">line</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="o">!</span><span class="n">line</span><span class="p">.</span><span class="na">isEmpty</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">!</span><span class="n">line</span><span class="p">.</span><span class="na">startsWith</span><span class="p">(</span><span class="s">"#"</span><span class="p">))</span>
+<span class="w">                </span><span class="p">.</span><span class="na">toArray</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="p">::</span><span class="k">new</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">IOException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">            </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">RuntimeException</span><span class="p">(</span><span class="s">"Failed to read common.imports"</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="_6">组合注解</h3>
+<p>最后的最后，可以添加自己的组合注解，让调用看起来更简洁，很多java的工具都是这么做的。</p>
+<p>anno/EnableCommonConfig.java</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.charles.anno</span><span class="p">;</span><span class="w">  </span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.charles.config.CommonImportSelector</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.annotation.Import</span><span class="p">;</span><span class="w">  </span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.lang.annotation.ElementType</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.lang.annotation.Retention</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.lang.annotation.RetentionPolicy</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.lang.annotation.Target</span><span class="p">;</span><span class="w">  </span>
+
+<span class="nd">@Target</span><span class="p">({</span><span class="n">ElementType</span><span class="p">.</span><span class="na">TYPE</span><span class="p">})</span><span class="w">  </span>
+<span class="nd">@Retention</span><span class="p">(</span><span class="n">RetentionPolicy</span><span class="p">.</span><span class="na">RUNTIME</span><span class="p">)</span><span class="w">  </span>
+<span class="nd">@Import</span><span class="p">(</span><span class="n">CommonImportSelector</span><span class="p">.</span><span class="na">class</span><span class="p">)</span><span class="w">  </span>
+<span class="kd">public</span><span class="w"> </span><span class="nd">@interface</span><span class="w"> </span><span class="n">EnableCommonConfig</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="p">}</span>
+</code></pre>
+<p>调用的位置就可以很精简啦</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@SpringBootApplication</span><span class="w">  </span>
+<span class="nd">@EnableCommonConfig</span><span class="w">  </span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">BeanApplication</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+
+<span class="w">        </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">context</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SpringApplication</span><span class="p">.</span><span class="na">run</span><span class="p">(</span><span class="n">BeanApplication</span><span class="p">.</span><span class="na">class</span><span class="p">,</span><span class="w"> </span><span class="n">args</span><span class="p">);</span><span class="w">  </span>
+
+<span class="w">        </span><span class="n">Movie</span><span class="w"> </span><span class="n">movie</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">context</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="n">Movie</span><span class="p">.</span><span class="na">class</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">movie</span><span class="p">);</span><span class="w"> </span><span class="c1">//com.charles.Movie@61f3fbb8  </span>
+<span class="w">    </span><span class="p">}</span><span class="w">  </span>
+<span class="p">}</span>
+</code></pre>
+<p>看一下目录结构</p>
+<pre lang="bash"><code class="language-bash md-fencescode">charles@Charless-MacBook-Pro<span class="w"> </span>~/w/p/p/j/s/b/src<span class="w"> </span><span class="o">(</span>master<span class="o">)</span>&gt;<span class="w"> </span>tree
+.
+├──<span class="w"> </span>main
+│<span class="w">   </span>├──<span class="w"> </span>java
+│<span class="w">   </span>│<span class="w">   </span>└──<span class="w"> </span>com
+│<span class="w">   </span>│<span class="w">       </span>└──<span class="w"> </span>charles
+│<span class="w">   </span>│<span class="w">           </span>├──<span class="w"> </span>anno
+│<span class="w">   </span>│<span class="w">           </span>│<span class="w">   </span>└──<span class="w"> </span>EnableCommonConfig.java
+│<span class="w">   </span>│<span class="w">           </span>├──<span class="w"> </span>bean
+│<span class="w">   </span>│<span class="w">           </span>│<span class="w">   </span>└──<span class="w"> </span>BeanApplication.java
+│<span class="w">   </span>│<span class="w">           </span>└──<span class="w"> </span>config
+│<span class="w">   </span>│<span class="w">               </span>├──<span class="w"> </span>CommonConfig.java
+│<span class="w">   </span>│<span class="w">               </span>└──<span class="w"> </span>CommonImportSelector.java
+│<span class="w">   </span>└──<span class="w"> </span>resources
+│<span class="w">       </span>├──<span class="w"> </span>application.properties
+│<span class="w">       </span>└──<span class="w"> </span>common.imports
+└──<span class="w"> </span><span class="nb">test</span>
+<span class="w">    </span>└──<span class="w"> </span>java
+<span class="w">        </span>└──<span class="w"> </span>com
+<span class="w">            </span>└──<span class="w"> </span>charles
+<span class="w">                </span>└──<span class="w"> </span>bean
+<span class="w">                    </span>└──<span class="w"> </span>BeanApplicationTests.java
+
+<span class="m">14</span><span class="w"> </span>directories,<span class="w"> </span><span class="m">7</span><span class="w"> </span>files
+</code></pre>
+<hr />
+<h2 id="_7">注册条件</h2>
+<p>我们上边的注册都是没有参数传入的，但如果我们有一些默认的值，下边是通过@Value从配置文件读取参数的方法</p>
+<p>首先修改一下我们的包</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.charles</span><span class="p">;</span><span class="w">  </span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Movie</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">title</span><span class="p">;</span><span class="w">  </span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">year</span><span class="p">;</span><span class="w">  </span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">Movie</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">title</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">year</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">title</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">title</span><span class="p">;</span><span class="w">  </span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">year</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">year</span><span class="p">;</span><span class="w">  </span>
+<span class="w">    </span><span class="p">}</span><span class="w">  </span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">Movie</span><span class="p">(){}</span><span class="w">  </span>
+<span class="p">}</span>
+</code></pre>
+<p>重新安装后，这样我们的CommonConfig里边就可以用@Value传入参数并调用Movie的有参构造器了</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Configuration</span><span class="w">  </span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">CommonConfig</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+
+<span class="w">    </span><span class="c1">//@Bean  </span>
+<span class="w">    </span><span class="c1">//public Movie Movie(){  </span>
+<span class="w">    </span><span class="c1">//    return new Movie();  </span>
+<span class="w">    </span><span class="c1">//}  </span>
+<span class="w">    </span><span class="nd">@Bean</span><span class="w">  </span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Movie</span><span class="w"> </span><span class="nf">Movie</span><span class="p">(</span><span class="w">  </span>
+<span class="w">            </span><span class="nd">@Value</span><span class="p">(</span><span class="s">"$system.title"</span><span class="p">)</span><span class="n">String</span><span class="w"> </span><span class="n">title</span><span class="p">,</span><span class="w">  </span>
+<span class="w">            </span><span class="nd">@Value</span><span class="p">(</span><span class="s">"$system.title"</span><span class="p">)</span><span class="n">String</span><span class="w"> </span><span class="n">year</span><span class="w">  </span>
+<span class="w">    </span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Movie</span><span class="p">(</span><span class="n">title</span><span class="p">,</span><span class="w"> </span><span class="n">year</span><span class="p">);</span><span class="w">  </span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>我们有三个对应的注解</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">注解</th>
+<th style="text-align: center;">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">@ConditionalOnProperty</td>
+<td style="text-align: center;">配置文件中存在对应的属性，才声明该Bean</td>
+</tr>
+<tr>
+<td style="text-align: center;">@ConditionalOnMissingBean</td>
+<td style="text-align: center;">不存在当前类型的Bean时，才声明该Bean</td>
+</tr>
+<tr>
+<td style="text-align: center;">@ConditionalOnClass</td>
+<td style="text-align: center;">当前环境存在指定的这个类时，才声明该Bean</td>
+</tr>
+</tbody>
+</table>
+<p>现在我们可以在CommonConfig.java里边判断是否有配置</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Configuration</span><span class="w">  </span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">CommonConfig</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+
+<span class="w">    </span><span class="nd">@Bean</span><span class="w">  </span>
+<span class="w">    </span><span class="nd">@ConditionalOnProperty</span><span class="p">(</span><span class="n">prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"system"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="s">"title"</span><span class="p">,</span><span class="w"> </span><span class="s">"year"</span><span class="p">})</span><span class="w">  </span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Movie</span><span class="w"> </span><span class="nf">configuredMovie</span><span class="p">(</span><span class="w">  </span>
+<span class="w">            </span><span class="nd">@Value</span><span class="p">(</span><span class="s">"${system.title}"</span><span class="p">)</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">title</span><span class="p">,</span><span class="w">  </span>
+<span class="w">            </span><span class="nd">@Value</span><span class="p">(</span><span class="s">"${system.year}"</span><span class="p">)</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">year</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Movie</span><span class="p">(</span><span class="n">title</span><span class="p">,</span><span class="w"> </span><span class="n">year</span><span class="p">);</span><span class="w">  </span>
+<span class="w">    </span><span class="p">}</span><span class="w">  </span>
+<span class="w">    </span><span class="nd">@Bean</span><span class="w">  </span>
+<span class="w">    </span><span class="nd">@ConditionalOnMissingBean</span><span class="p">(</span><span class="n">Movie</span><span class="p">.</span><span class="na">class</span><span class="p">)</span><span class="w">  </span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Movie</span><span class="w"> </span><span class="nf">defaultMovie</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Movie</span><span class="p">();</span><span class="w">  </span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>要注意现在的开始文件需要是<code>@Import(CommonConfig.class)</code></p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@SpringBootApplication</span><span class="w">  </span>
+<span class="nd">@Import</span><span class="p">(</span><span class="n">CommonConfig</span><span class="p">.</span><span class="na">class</span><span class="p">)</span><span class="w">  </span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">BeanApplication</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">        </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">context</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SpringApplication</span><span class="p">.</span><span class="na">run</span><span class="p">(</span><span class="n">BeanApplication</span><span class="p">.</span><span class="na">class</span><span class="p">,</span><span class="w"> </span><span class="n">args</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="n">Movie</span><span class="w"> </span><span class="n">movie</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">context</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="n">Movie</span><span class="p">.</span><span class="na">class</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">movie</span><span class="p">.</span><span class="na">title</span><span class="p">);</span><span class="w">  </span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h2 id="_8">自动配置</h2>
+<p>为什么我的引入mybatis不需要手动的写这么多@Bean呢，因为这些包用了自动配置。下边我们分析一下springboot如何进行自动配置的。</p>
+<h3 id="_9">源码解析</h3>
+<p>首先我们进入<code>@SpringBootApplication</code>，可以看到其中组合了<code>@EnableAutoConfiguration</code>，再点进去可以看到熟悉的<code>@Import</code>，<code>@Import({AutoConfigurationImportSelector.class})</code>。</p>
+<p><code>AutoConfigurationImportSelector.class</code>可以看到是实现了<code>DeferredImportSelector</code>，<code>DeferredImportSelector</code>又继承了<code>ImportSelector</code>，所以<code>AutoConfigurationImportSelector</code>也是一个配置了。</p>
+<p>在<code>AutoConfigurationImportSelector</code>中有一个方法，虽然不会执行，但是开发者写了这个方法帮助我们了解自动配置原理。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="nf">selectImports</span><span class="p">(</span><span class="n">AnnotationMetadata</span><span class="w"> </span><span class="n">annotationMetadata</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="k">this</span><span class="p">.</span><span class="na">isEnabled</span><span class="p">(</span><span class="n">annotationMetadata</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">NO_IMPORTS</span><span class="p">;</span><span class="w">  </span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">        </span><span class="n">AutoConfigurationEntry</span><span class="w"> </span><span class="n">autoConfigurationEntry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="na">getAutoConfigurationEntry</span><span class="p">(</span><span class="n">annotationMetadata</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">StringUtils</span><span class="p">.</span><span class="na">toStringArray</span><span class="p">(</span><span class="n">autoConfigurationEntry</span><span class="p">.</span><span class="na">getConfigurations</span><span class="p">());</span><span class="w">  </span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p><code>autoConfigurationEntry</code>是通过<code>getAutoConfigurationEntry()</code>得到的，我们进入它。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">protected</span><span class="w"> </span><span class="n">AutoConfigurationEntry</span><span class="w"> </span><span class="nf">getAutoConfigurationEntry</span><span class="p">(</span><span class="n">AnnotationMetadata</span><span class="w"> </span><span class="n">annotationMetadata</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="k">this</span><span class="p">.</span><span class="na">isEnabled</span><span class="p">(</span><span class="n">annotationMetadata</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">EMPTY_ENTRY</span><span class="p">;</span><span class="w">  </span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">        </span><span class="n">AnnotationAttributes</span><span class="w"> </span><span class="n">attributes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="na">getAttributes</span><span class="p">(</span><span class="n">annotationMetadata</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">configurations</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="na">getCandidateConfigurations</span><span class="p">(</span><span class="n">annotationMetadata</span><span class="p">,</span><span class="w"> </span><span class="n">attributes</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="n">configurations</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="n">removeDuplicates</span><span class="p">(</span><span class="n">configurations</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="n">Set</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">exclusions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="na">getExclusions</span><span class="p">(</span><span class="n">annotationMetadata</span><span class="p">,</span><span class="w"> </span><span class="n">attributes</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">checkExcludedClasses</span><span class="p">(</span><span class="n">configurations</span><span class="p">,</span><span class="w"> </span><span class="n">exclusions</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="n">configurations</span><span class="p">.</span><span class="na">removeAll</span><span class="p">(</span><span class="n">exclusions</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="n">configurations</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="na">getConfigurationClassFilter</span><span class="p">().</span><span class="na">filter</span><span class="p">(</span><span class="n">configurations</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">fireAutoConfigurationImportEvents</span><span class="p">(</span><span class="n">configurations</span><span class="p">,</span><span class="w"> </span><span class="n">exclusions</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">AutoConfigurationEntry</span><span class="p">(</span><span class="n">configurations</span><span class="p">,</span><span class="w"> </span><span class="n">exclusions</span><span class="p">);</span><span class="w">  </span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>显然配置是<code>configurations</code>，它是通过<code>getCandidateConfigurations()</code>得到的。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">protected</span><span class="w"> </span><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">getCandidateConfigurations</span><span class="p">(</span><span class="n">AnnotationMetadata</span><span class="w"> </span><span class="n">metadata</span><span class="p">,</span><span class="w"> </span><span class="nd">@Nullable</span><span class="w"> </span><span class="n">AnnotationAttributes</span><span class="w"> </span><span class="n">attributes</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="n">ImportCandidates</span><span class="w"> </span><span class="n">importCandidates</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ImportCandidates</span><span class="p">.</span><span class="na">load</span><span class="p">(</span>
+<span class="w">            </span><span class="k">this</span><span class="p">.</span><span class="na">autoConfigurationAnnotation</span><span class="p">,</span><span class="w"> </span>
+<span class="w">            </span><span class="k">this</span><span class="p">.</span><span class="na">getBeanClassLoader</span><span class="p">()</span>
+<span class="w">        </span><span class="p">);</span><span class="w">  </span>
+<span class="w">    </span><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">configurations</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">importCandidates</span><span class="p">.</span><span class="na">getCandidates</span><span class="p">();</span><span class="w">  </span>
+<span class="w">    </span><span class="n">Assert</span><span class="p">.</span><span class="na">state</span><span class="p">(</span><span class="o">!</span><span class="n">CollectionUtils</span><span class="p">.</span><span class="na">isEmpty</span><span class="p">(</span><span class="n">configurations</span><span class="p">),</span><span class="w"> </span><span class="err">\</span>
+<span class="w">        </span><span class="s">"No auto configuration classes found in META-INF/spring/"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">autoConfigurationAnnotation</span><span class="p">.</span><span class="na">getName</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span>
+<span class="w">        </span><span class="s">".imports. If you are using a custom packaging, make sure that file is correct."</span><span class="p">);</span><span class="w">  </span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">configurations</span><span class="p">;</span><span class="w">  </span>
+<span class="p">}</span>
+</code></pre>
+<p>然后中间那个名字是这样得到的，理论上就是<code>org.springframework.boot.autoconfigure.AutoConfiguration.class</code>。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">Class</span><span class="o">&lt;?&gt;</span><span class="w"> </span><span class="n">autoConfigurationAnnotation</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="nf">AutoConfigurationImportSelector</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="k">this</span><span class="p">((</span><span class="n">Class</span><span class="p">)</span><span class="kc">null</span><span class="p">);</span><span class="w">  </span>
+<span class="p">}</span><span class="w">  </span>
+
+<span class="n">AutoConfigurationImportSelector</span><span class="p">(</span><span class="nd">@Nullable</span><span class="w"> </span><span class="n">Class</span><span class="o">&lt;?&gt;</span><span class="w"> </span><span class="n">autoConfigurationAnnotation</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="na">autoConfigurationAnnotation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">autoConfigurationAnnotation</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="n">autoConfigurationAnnotation</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">AutoConfiguration</span><span class="p">.</span><span class="na">class</span><span class="p">;</span><span class="w">  </span>
+<span class="p">}</span>
+</code></pre>
+<p>所以上边的字符串拼接后应该是：<code>META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports</code>，我们maven的蹭库里边找到spring-boot-autoconfigure，在<code>META-INF</code>文件夹下就可以找到这个文件。里边保存了很多很多的配置类。下边是前五行。</p>
+<pre lang="txt"><code class="language-txt md-fencescode">org.springframework.boot.autoconfigure.admin.SpringApplicationAdminJmxAutoConfiguration  
+org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration  
+org.springframework.boot.autoconfigure.aop.AopAutoConfiguration  
+org.springframework.boot.autoconfigure.availability.ApplicationAvailabilityAutoConfiguration  
+org.springframework.boot.autoconfigure.batch.BatchAutoConfiguration
+....
+</code></pre>
+<p>随便找一个比如DispatcherServletAutoConfiguration，点击进入，可以看到我们熟悉的手动配置的内容注解了。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@AutoConfigureOrder</span><span class="p">(</span><span class="n">Ordered</span><span class="p">.</span><span class="na">HIGHEST_PRECEDENCE</span><span class="p">)</span><span class="w">  </span>
+<span class="nd">@AutoConfiguration</span><span class="p">(</span><span class="n">after</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ServletWebServerFactoryAutoConfiguration</span><span class="p">.</span><span class="na">class</span><span class="p">)</span><span class="w">  </span>
+<span class="nd">@ConditionalOnWebApplication</span><span class="p">(</span><span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Type</span><span class="p">.</span><span class="na">SERVLET</span><span class="p">)</span><span class="w">  </span>
+<span class="nd">@ConditionalOnClass</span><span class="p">(</span><span class="n">DispatcherServlet</span><span class="p">.</span><span class="na">class</span><span class="p">)</span><span class="w">  </span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">DispatcherServletAutoConfiguration</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+
+<span class="w">    </span><span class="cm">/**  </span>
+<span class="cm">     * The bean name for a DispatcherServlet that will be mapped to the root URL "/".     </span>
+<span class="cm">     */</span><span class="w">    </span>
+<span class="w">     </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">DEFAULT_DISPATCHER_SERVLET_BEAN_NAME</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"dispatcherServlet"</span><span class="p">;</span><span class="w">  </span>
+
+<span class="w">    </span><span class="cm">/**  </span>
+<span class="cm">     * The bean name for a ServletRegistrationBean for the DispatcherServlet "/".     </span>
+<span class="cm">     */</span><span class="w">    </span>
+<span class="w">     </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">DEFAULT_DISPATCHER_SERVLET_REGISTRATION_BEAN_NAME</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"dispatcherServletRegistration"</span><span class="p">;</span><span class="w">  </span>
+
+<span class="w">    </span><span class="nd">@Configuration</span><span class="p">(</span><span class="n">proxyBeanMethods</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">)</span><span class="w">  </span>
+<span class="w">    </span><span class="nd">@Conditional</span><span class="p">(</span><span class="n">DefaultDispatcherServletCondition</span><span class="p">.</span><span class="na">class</span><span class="p">)</span><span class="w">  </span>
+<span class="w">    </span><span class="nd">@ConditionalOnClass</span><span class="p">(</span><span class="n">ServletRegistration</span><span class="p">.</span><span class="na">class</span><span class="p">)</span><span class="w">  </span>
+<span class="w">    </span><span class="nd">@EnableConfigurationProperties</span><span class="p">(</span><span class="n">WebMvcProperties</span><span class="p">.</span><span class="na">class</span><span class="p">)</span><span class="w">  </span>
+<span class="w">    </span><span class="kd">protected</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">class</span> <span class="nc">DispatcherServletConfiguration</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+
+<span class="w">       </span><span class="nd">@Bean</span><span class="p">(</span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DEFAULT_DISPATCHER_SERVLET_BEAN_NAME</span><span class="p">)</span><span class="w">  </span>
+<span class="w">       </span><span class="kd">public</span><span class="w"> </span><span class="n">DispatcherServlet</span><span class="w"> </span><span class="nf">dispatcherServlet</span><span class="p">(</span><span class="n">WebMvcProperties</span><span class="w"> </span><span class="n">webMvcProperties</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">          </span><span class="n">DispatcherServlet</span><span class="w"> </span><span class="n">dispatcherServlet</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">DispatcherServlet</span><span class="p">();</span><span class="w">  </span>
+<span class="w">          </span><span class="n">dispatcherServlet</span><span class="p">.</span><span class="na">setDispatchOptionsRequest</span><span class="p">(</span><span class="n">webMvcProperties</span><span class="p">.</span><span class="na">isDispatchOptionsRequest</span><span class="p">());</span><span class="w">  </span>
+<span class="w">          </span><span class="n">dispatcherServlet</span><span class="p">.</span><span class="na">setDispatchTraceRequest</span><span class="p">(</span><span class="n">webMvcProperties</span><span class="p">.</span><span class="na">isDispatchTraceRequest</span><span class="p">());</span><span class="w">  </span>
+<span class="w">          </span><span class="n">dispatcherServlet</span><span class="p">.</span><span class="na">setPublishEvents</span><span class="p">(</span><span class="n">webMvcProperties</span><span class="p">.</span><span class="na">isPublishRequestHandledEvents</span><span class="p">());</span><span class="w">  </span>
+<span class="w">          </span><span class="n">dispatcherServlet</span><span class="p">.</span><span class="na">setEnableLoggingRequestDetails</span><span class="p">(</span><span class="n">webMvcProperties</span><span class="p">.</span><span class="na">isLogRequestDetails</span><span class="p">());</span><span class="w">  </span>
+<span class="w">          </span><span class="k">return</span><span class="w"> </span><span class="n">dispatcherServlet</span><span class="p">;</span><span class="w">  </span>
+<span class="w">       </span><span class="p">}</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="_10">手动实践</h3>
+<p>最后我们模仿springboot自动配置的样子，把刚才的包也改造一下</p>
+<pre lang="bash"><code class="language-bash md-fencescode">charles@Charless-MacBook-Pro<span class="w"> </span>~/w/p/p/j/s/d/src<span class="w"> </span><span class="o">(</span>master<span class="o">)</span>&gt;<span class="w"> </span>tree
+.
+├──<span class="w"> </span>main
+│<span class="w">   </span>├──<span class="w"> </span>java
+│<span class="w">   </span>│<span class="w">   </span>└──<span class="w"> </span>org
+│<span class="w">   </span>│<span class="w">       </span>└──<span class="w"> </span>charles
+│<span class="w">   </span>│<span class="w">           </span>├──<span class="w"> </span>CommonAutoConfig.java
+│<span class="w">   </span>│<span class="w">           </span>├──<span class="w"> </span>CommonConfig.java
+│<span class="w">   </span>│<span class="w">           </span>└──<span class="w"> </span>Movie.java
+│<span class="w">   </span>└──<span class="w"> </span>resources
+│<span class="w">       </span>└──<span class="w"> </span>META-INF
+│<span class="w">           </span>└──<span class="w"> </span>spring
+│<span class="w">               </span>└──<span class="w"> </span>org.springframework.boot.autoconfigure.AutoConfiguration.imports
+└──<span class="w"> </span><span class="nb">test</span>
+<span class="w">    </span>└──<span class="w"> </span>java
+
+<span class="m">11</span><span class="w"> </span>directories,<span class="w"> </span><span class="m">4</span><span class="w"> </span>files
+</code></pre>
+<p>CommonAutoConfig.java</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">org.charles</span><span class="p">;</span><span class="w">  </span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.boot.autoconfigure.AutoConfiguration</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.annotation.Import</span><span class="p">;</span><span class="w">  </span>
+
+<span class="nd">@AutoConfiguration</span><span class="w">  </span>
+<span class="nd">@Import</span><span class="p">(</span><span class="n">CommonConfig</span><span class="p">.</span><span class="na">class</span><span class="p">)</span><span class="w">  </span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">CommonAutoConfig</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="p">}</span>
+</code></pre>
+<p>CommonConfig.java</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">org.charles</span><span class="p">;</span><span class="w">  </span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.beans.factory.annotation.Value</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.boot.autoconfigure.condition.ConditionalOnProperty</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.annotation.Bean</span><span class="p">;</span><span class="w">  </span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">CommonConfig</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="nd">@Bean</span><span class="w">  </span>
+<span class="w">    </span><span class="nd">@ConditionalOnProperty</span><span class="p">(</span><span class="n">prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"system"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="s">"title"</span><span class="p">,</span><span class="w"> </span><span class="s">"year"</span><span class="p">})</span><span class="w">  </span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Movie</span><span class="w"> </span><span class="nf">configuredMovie</span><span class="p">(</span><span class="w">  </span>
+<span class="w">            </span><span class="nd">@Value</span><span class="p">(</span><span class="s">"${system.title}"</span><span class="p">)</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">title</span><span class="p">,</span><span class="w">  </span>
+<span class="w">            </span><span class="nd">@Value</span><span class="p">(</span><span class="s">"${system.year}"</span><span class="p">)</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">year</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Movie</span><span class="p">(</span><span class="n">title</span><span class="p">,</span><span class="w"> </span><span class="n">year</span><span class="p">);</span><span class="w">  </span>
+<span class="w">    </span><span class="p">}</span><span class="w">  </span>
+<span class="w">    </span><span class="nd">@Bean</span><span class="w">  </span>
+<span class="w">    </span><span class="nd">@ConditionalOnMissingBean</span><span class="p">(</span><span class="n">Movie</span><span class="p">.</span><span class="na">class</span><span class="p">)</span><span class="w">  </span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Movie</span><span class="w"> </span><span class="nf">defaultMovie</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Movie</span><span class="p">();</span><span class="w">  </span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>org.springframework.boot.autoconfigure.AutoConfiguration.imports</p>
+<pre lang="txt"><code class="language-txt md-fencescode">org.charles.CommonConfig
+</code></pre>
+<h3 id="_11">面试题：自动配置原理</h3>
+<ol>
+<li>在主启动类上添加了<code>StringBootApplication</code>注解，这个注解组合了<code>EnableAutoConfiguration</code>注解。</li>
+<li><code>EnableAutoConfiguration</code>注解又组合了<code>Import</code>注解，导入了<code>AutoConfigurationImportSelector</code>类。</li>
+<li>这个类是<code>ImportSelector</code>接口的实现类，实现了<code>selectImports</code>方法，这个方法经过层层调用，最终会读取<code>EMTA-INF</code>目录下边的<code>.imports</code>文件。在<code>springboot 2.7</code>以前是<code>spring.factories</code>文件</li>
+<li>这个文件里边是所有的配置类的全类名，读到全类名后会解析注册条件也就是<code>@Conditional</code>及其衍生注解，把班组条件的<code>Bean</code>对象自动注入到<code>IOC</code>容器里。</li>
+</ol>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>spec-1-2-2-character</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="_1">字符</h1>
+<blockquote>
+<p>本文按照YAML官方文档1.2.2版本翻译总结而成</p>
+<p>https://yaml.org/spec/1.2.2/#chapter-5-character-productions</p>
+</blockquote>
+<h2 id="51-character-set">5.1. Character Set</h2>
+<p>To ensure readability, YAML <a href="https://yaml.org/spec/1.2.2/#streams">streams</a> use only the <em>printable</em> subset of the Unicode character set. The allowed character range explicitly excludes the C0 control block<a href="https://yaml.org/spec/1.2.2/#fn:c0-block">15</a> <code>x00-x1F</code> (except for TAB <code>x09</code>, LF <code>x0A</code> and CR <code>x0D</code> which are allowed), DEL <code>x7F</code>, the C1 control block <code>x80-x9F</code> (except for NEL <code>x85</code> which is allowed), the surrogate block<a href="https://yaml.org/spec/1.2.2/#fn:surrogates">16</a> <code>xD800-xDFFF</code>, <code>xFFFE</code> and <code>xFFFF</code>.</p>
+<p>On input, a YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processor</a> must accept all characters in this printable subset.</p>
+<p>On output, a YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processor</a> must only produce only characters in this printable subset. Characters outside this set must be <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">presented</a> using <a href="https://yaml.org/spec/1.2.2/#escaped-characters">escape</a> sequences. In addition, any allowed characters known to be non-printable should also be <a href="https://yaml.org/spec/1.2.2/#escaped-characters">escaped</a>.</p>
+<blockquote>
+<p>Note: This isn’t mandatory since a full implementation would require extensive character property tables.</p>
+</blockquote>
+<pre><code class="md-fencescode">[1] c-printable ::=
+                         # 8 bit
+    x09                  # Tab (\t)
+  | x0A                  # Line feed (LF \n)
+  | x0D                  # Carriage Return (CR \r)
+  | [x20-x7E]            # Printable ASCII
+                         # 16 bit
+  | x85                  # Next Line (NEL)
+  | [xA0-xD7FF]          # Basic Multilingual Plane (BMP)
+  | [xE000-xFFFD]        # Additional Unicode Areas
+  | [x010000-x10FFFF]    # 32 bit
+</code></pre>
+<p>To ensure <a href="https://yaml.org/spec/1.2.2/#yaml-directives">JSON compatibility</a>, YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processors</a> must allow all non-C0 characters inside <a href="https://yaml.org/spec/1.2.2/#double-quoted-style">quoted scalars</a>. To ensure readability, non-printable characters should be <a href="https://yaml.org/spec/1.2.2/#escaped-characters">escaped</a> on output, even inside such <a href="https://yaml.org/spec/1.2.2/#scalars">scalars</a>.</p>
+<blockquote>
+<p>Note: JSON <a href="https://yaml.org/spec/1.2.2/#double-quoted-style">quoted scalars</a> cannot span multiple lines or contain <a href="https://yaml.org/spec/1.2.2/#white-space-characters">tabs</a>, but YAML <a href="https://yaml.org/spec/1.2.2/#double-quoted-style">quoted scalars</a> can.</p>
+</blockquote>
+<pre><code class="md-fencescode">[2] nb-json ::=
+    x09              # Tab character
+  | [x20-x10FFFF]    # Non-C0-control characters
+</code></pre>
+<blockquote>
+<p>Note: The production name <code>nb-json</code> means “non-break JSON compatible” here.</p>
+</blockquote>
+<h2 id="52-character-encodings">5.2. Character Encodings</h2>
+<p>All characters mentioned in this specification are Unicode code points. Each such code point is written as one or more bytes depending on the <em>character encoding</em> used. Note that in UTF-16, characters above <code>xFFFF</code> are written as four bytes, using a surrogate pair.</p>
+<p>The character encoding is a <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">presentation detail</a> and must not be used to convey <a href="https://yaml.org/spec/1.2.2/#nodes">content</a> information.</p>
+<p>On input, a YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processor</a> must support the UTF-8 and UTF-16 character encodings. For <a href="https://yaml.org/spec/1.2.2/#yaml-directives">JSON compatibility</a>, the UTF-32 encodings must also be supported.</p>
+<p>If a character <a href="https://yaml.org/spec/1.2.2/#streams">stream</a> begins with a <em>byte order mark</em>, the character encoding will be taken to be as indicated by the byte order mark. Otherwise, the <a href="https://yaml.org/spec/1.2.2/#streams">stream</a> must begin with an ASCII character. This allows the encoding to be deduced by the pattern of null (<code>x00</code>) characters.</p>
+<p>Byte order marks may appear at the start of any <a href="https://yaml.org/spec/1.2.2/#documents">document</a>, however all <a href="https://yaml.org/spec/1.2.2/#documents">documents</a> in the same <a href="https://yaml.org/spec/1.2.2/#streams">stream</a> must use the same character encoding.</p>
+<p>To allow for <a href="https://yaml.org/spec/1.2.2/#yaml-directives">JSON compatibility</a>, byte order marks are also allowed inside <a href="https://yaml.org/spec/1.2.2/#double-quoted-style">quoted scalars</a>. For readability, such <a href="https://yaml.org/spec/1.2.2/#nodes">content</a> byte order marks should be <a href="https://yaml.org/spec/1.2.2/#escaped-characters">escaped</a> on output.</p>
+<p>The encoding can therefore be deduced by matching the first few bytes of the <a href="https://yaml.org/spec/1.2.2/#streams">stream</a> with the following table rows (in order):</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Byte0</th>
+<th>Byte1</th>
+<th>Byte2</th>
+<th>Byte3</th>
+<th>Encoding</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Explicit BOM</td>
+<td>x00</td>
+<td>x00</td>
+<td>xFE</td>
+<td>xFF</td>
+<td>UTF-32BE</td>
+</tr>
+<tr>
+<td>ASCII first character</td>
+<td>x00</td>
+<td>x00</td>
+<td>x00</td>
+<td>any</td>
+<td>UTF-32BE</td>
+</tr>
+<tr>
+<td>Explicit BOM</td>
+<td>xFF</td>
+<td>xFE</td>
+<td>x00</td>
+<td>x00</td>
+<td>UTF-32LE</td>
+</tr>
+<tr>
+<td>ASCII first character</td>
+<td>any</td>
+<td>x00</td>
+<td>x00</td>
+<td>x00</td>
+<td>UTF-32LE</td>
+</tr>
+<tr>
+<td>Explicit BOM</td>
+<td>xFE</td>
+<td>xFF</td>
+<td></td>
+<td></td>
+<td>UTF-16BE</td>
+</tr>
+<tr>
+<td>ASCII first character</td>
+<td>x00</td>
+<td>any</td>
+<td></td>
+<td></td>
+<td>UTF-16BE</td>
+</tr>
+<tr>
+<td>Explicit BOM</td>
+<td>xFF</td>
+<td>xFE</td>
+<td></td>
+<td></td>
+<td>UTF-16LE</td>
+</tr>
+<tr>
+<td>ASCII first character</td>
+<td>any</td>
+<td>x00</td>
+<td></td>
+<td></td>
+<td>UTF-16LE</td>
+</tr>
+<tr>
+<td>Explicit BOM</td>
+<td>xEF</td>
+<td>xBB</td>
+<td>xBF</td>
+<td></td>
+<td>UTF-8</td>
+</tr>
+<tr>
+<td>Default</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+<td>UTF-8</td>
+</tr>
+</tbody>
+</table>
+<p>The recommended output encoding is UTF-8. If another encoding is used, it is recommended that an explicit byte order mark be used, even if the first <a href="https://yaml.org/spec/1.2.2/#streams">stream</a> character is ASCII.</p>
+<p>For more information about the byte order mark and the Unicode character encoding schemes see the Unicode FAQ<a href="https://yaml.org/spec/1.2.2/#fn:uni-faq">17</a>.</p>
+<pre><code class="md-fencescode">[3] c-byte-order-mark ::= xFEFF
+</code></pre>
+<p>In the examples, byte order mark characters are displayed as “<code>⇔</code>”.</p>
+<p><strong>Example 5.1 Byte Order Mark</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>⇔# Comment only.</code></th>
+<th><code># This stream contains no # documents, only comments.</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<ul>
+<li><code>c-byte-order-mark</code></li>
+</ul>
+<p><strong>Example 5.2 Invalid Byte Order Mark</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>- Invalid use of BOM ⇔ - Inside a document.</code></th>
+<th><code>ERROR: A BOM must not appear inside a document.</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h2 id="53-indicator-characters">5.3. Indicator Characters</h2>
+<p><em>Indicators</em> are characters that have special semantics.</p>
+<p>”<code>-</code>” (<code>x2D</code>, hyphen) denotes a <a href="https://yaml.org/spec/1.2.2/#block-sequences">block sequence</a> entry.</p>
+<pre><code class="md-fencescode">[4] c-sequence-entry ::= '-'
+</code></pre>
+<p>”<code>?</code>” (<code>x3F</code>, question mark) denotes a <a href="https://yaml.org/spec/1.2.2/#nodes">mapping key</a>.</p>
+<pre><code class="md-fencescode">[5] c-mapping-key ::= '?'
+</code></pre>
+<p>”<code>:</code>” (<code>x3A</code>, colon) denotes a <a href="https://yaml.org/spec/1.2.2/#mapping">mapping value</a>.</p>
+<pre><code class="md-fencescode">[6] c-mapping-value ::= ':'
+</code></pre>
+<p><strong>Example 5.3 Block Structure Indicators</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>sequence: - one - two mapping:  ? sky  : blue  sea : green</code></th>
+<th><code>{ "sequence": [    "one",    "two" ],  "mapping": {    "sky": "blue",    "sea": "green" } }</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-c-sequence-entry">- <code>c-sequence-entry</code></h2>
+<h2 id="-c-mapping-key">- <code>c-mapping-key</code></h2>
+<ul>
+<li><code>c-mapping-value</code></li>
+</ul>
+<p>”<code>,</code>” (<code>x2C</code>, comma) ends a <a href="https://yaml.org/spec/1.2.2/#flow-collection-styles">flow collection</a> entry.</p>
+<pre><code class="md-fencescode">[7] c-collect-entry ::= ','
+</code></pre>
+<p>”<code>[</code>” (<code>x5B</code>, left bracket) starts a <a href="https://yaml.org/spec/1.2.2/#flow-sequences">flow sequence</a>.</p>
+<pre><code class="md-fencescode">[8] c-sequence-start ::= '['
+</code></pre>
+<p>”<code>]</code>” (<code>x5D</code>, right bracket) ends a <a href="https://yaml.org/spec/1.2.2/#flow-sequences">flow sequence</a>.</p>
+<pre><code class="md-fencescode">[9] c-sequence-end ::= ']'
+</code></pre>
+<p>”<code>{</code>” (<code>x7B</code>, left brace) starts a <a href="https://yaml.org/spec/1.2.2/#flow-mappings">flow mapping</a>.</p>
+<pre><code class="md-fencescode">[10] c-mapping-start ::= '{'
+</code></pre>
+<p>”<code>}</code>” (<code>x7D</code>, right brace) ends a <a href="https://yaml.org/spec/1.2.2/#flow-mappings">flow mapping</a>.</p>
+<pre><code class="md-fencescode">[11] c-mapping-end ::= '}'
+</code></pre>
+<p><strong>Example 5.4 Flow Collection Indicators</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>sequence: [ one, two, ] mapping: { sky: blue, sea: green }</code></th>
+<th><code>{ "sequence": [ "one", "two" ],  "mapping":    { "sky": "blue", "sea": "green" } }</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-c-sequence-start-c-sequence-end">- <code>c-sequence-start c-sequence-end</code></h2>
+<h2 id="-c-mapping-start-c-mapping-end">- <code>c-mapping-start c-mapping-end</code></h2>
+<ul>
+<li><code>c-collect-entry</code></li>
+</ul>
+<p>”<code>#</code>” (<code>x23</code>, octothorpe, hash, sharp, pound, number sign) denotes a <a href="https://yaml.org/spec/1.2.2/#comments">comment</a>.</p>
+<pre><code class="md-fencescode">[12] c-comment ::= '#'
+</code></pre>
+<p><strong>Example 5.5 Comment Indicator</strong></p>
+<table>
+<thead>
+<tr>
+<th><code># Comment only.</code></th>
+<th><code># This stream contains no # documents, only comments.</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<ul>
+<li><code>c-comment</code></li>
+</ul>
+<p>”<code>&amp;</code>” (<code>x26</code>, ampersand) denotes a <a href="https://yaml.org/spec/1.2.2/#anchors-and-aliases">node’s anchor property</a>.</p>
+<pre><code class="md-fencescode">[13] c-anchor ::= '&amp;'
+</code></pre>
+<p>”<code>*</code>” (<code>x2A</code>, asterisk) denotes an <a href="https://yaml.org/spec/1.2.2/#alias-nodes">alias node</a>.</p>
+<pre><code class="md-fencescode">[14] c-alias ::= '*'
+</code></pre>
+<p>The “<code>!</code>” (<code>x21</code>, exclamation) is used for specifying <a href="https://yaml.org/spec/1.2.2/#node-tags">node tags</a>. It is used to denote <a href="https://yaml.org/spec/1.2.2/#tag-handles">tag handles</a> used in <a href="https://yaml.org/spec/1.2.2/#tag-directives">tag directives</a> and <a href="https://yaml.org/spec/1.2.2/#node-tags">tag properties</a>; to denote <a href="https://yaml.org/spec/1.2.2/#tags">local tags</a>; and as the <a href="https://yaml.org/spec/1.2.2/#resolved-tags">non-specific tag</a> for non-<a href="https://yaml.org/spec/1.2.2/#plain-style">plain scalars</a>.</p>
+<pre><code class="md-fencescode">[15] c-tag ::= '!'
+</code></pre>
+<p><strong>Example 5.6 Node Property Indicators</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>anchored: !local &amp;anchor value alias: *anchor</code></th>
+<th><code>{ "anchored": !local &amp;A1 "value",  "alias": *A1 }</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-c-tag">- <code>c-tag</code></h2>
+<h2 id="-c-anchor">- <code>c-anchor</code></h2>
+<ul>
+<li><code>c-alias</code></li>
+</ul>
+<p>”<code>|</code>” (<code>7C</code>, vertical bar) denotes a <a href="https://yaml.org/spec/1.2.2/#literal-style">literal block scalar</a>.</p>
+<pre><code class="md-fencescode">[16] c-literal ::= '|'
+</code></pre>
+<p>”<code>&gt;</code>” (<code>x3E</code>, greater than) denotes a <a href="https://yaml.org/spec/1.2.2/#block-folding">folded block scalar</a>.</p>
+<pre><code class="md-fencescode">[17] c-folded ::= '&gt;'
+</code></pre>
+<p><strong>Example 5.7 Block Scalar Indicators</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>literal: |  some  text folded: &gt;  some  text</code></th>
+<th><code>{ "literal": "some\ntext\n",  "folded": "some text\n" }</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-c-literal">- <code>c-literal</code></h2>
+<ul>
+<li><code>c-folded</code></li>
+</ul>
+<p>”<code>'</code>” (<code>x27</code>, apostrophe, single quote) surrounds a <a href="https://yaml.org/spec/1.2.2/#single-quoted-style">single-quoted flow scalar</a>.</p>
+<pre><code class="md-fencescode">[18] c-single-quote ::= &quot;'&quot;
+</code></pre>
+<p>”<code>"</code>” (<code>x22</code>, double quote) surrounds a <a href="https://yaml.org/spec/1.2.2/#double-quoted-style">double-quoted flow scalar</a>.</p>
+<pre><code class="md-fencescode">[19] c-double-quote ::= '&quot;'
+</code></pre>
+<p><strong>Example 5.8 Quoted Scalar Indicators</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>single: 'text' double: "text"</code></th>
+<th><code>{ "single": "text",  "double": "text" }</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-c-single-quote">- <code>c-single-quote</code></h2>
+<ul>
+<li><code>c-double-quote</code></li>
+</ul>
+<p>”<code>%</code>” (<code>x25</code>, percent) denotes a <a href="https://yaml.org/spec/1.2.2/#directives">directive</a> line.</p>
+<pre><code class="md-fencescode">[20] c-directive ::= '%'
+</code></pre>
+<p><strong>Example 5.9 Directive Indicator</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>%YAML 1.2 --- text</code></th>
+<th><code>"text"</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<ul>
+<li><code>c-directive</code></li>
+</ul>
+<p>The “<code>@</code>” (<code>x40</code>, at) and “<code>``” (</code>x60`, grave accent) are <em>reserved</em> for future use.</p>
+<pre><code class="md-fencescode">[21] c-reserved ::=
+    '@' | '`'
+</code></pre>
+<p><strong>Example 5.10 Invalid use of Reserved Indicators</strong></p>
+<p>| <code>commercial-at: @text grave-accent:</code>text <code>|</code>ERROR: Reserved indicators can't start a plain scalar. ` |
+| ------------------------------------------- | --------------------------------------------------------- |
+|                                             |                                                           |</p>
+<p>Any indicator character:</p>
+<pre><code class="md-fencescode">[22] c-indicator ::=
+    c-sequence-entry    # '-'
+  | c-mapping-key       # '?'
+  | c-mapping-value     # ':'
+  | c-collect-entry     # ','
+  | c-sequence-start    # '['
+  | c-sequence-end      # ']'
+  | c-mapping-start     # '{'
+  | c-mapping-end       # '}'
+  | c-comment           # '#'
+  | c-anchor            # '&amp;'
+  | c-alias             # '*'
+  | c-tag               # '!'
+  | c-literal           # '|'
+  | c-folded            # '&gt;'
+  | c-single-quote      # &quot;'&quot;
+  | c-double-quote      # '&quot;'
+  | c-directive         # '%'
+  | c-reserved          # '@' '`'
+</code></pre>
+<p>The “<code>[</code>”, “<code>]</code>”, “<code>{</code>”, “<code>}</code>” and “<code>,</code>” indicators denote structure in <a href="https://yaml.org/spec/1.2.2/#flow-collection-styles">flow collections</a>. They are therefore forbidden in some cases, to avoid ambiguity in several constructs. This is handled on a case-by-case basis by the relevant productions.</p>
+<pre><code class="md-fencescode">[23] c-flow-indicator ::=
+    c-collect-entry     # ','
+  | c-sequence-start    # '['
+  | c-sequence-end      # ']'
+  | c-mapping-start     # '{'
+  | c-mapping-end       # '}'
+</code></pre>
+<h2 id="54-line-break-characters">5.4. Line Break Characters</h2>
+<p>YAML recognizes the following ASCII <em>line break</em> characters.</p>
+<pre><code class="md-fencescode">[24] b-line-feed ::= x0A
+[25] b-carriage-return ::= x0D
+[26] b-char ::=
+    b-line-feed          # x0A
+  | b-carriage-return    # X0D
+</code></pre>
+<p>All other characters, including the form feed (<code>x0C</code>), are considered to be non-break characters. Note that these include the <em>non-ASCII line breaks</em>: next line (<code>x85</code>), line separator (<code>x2028</code>) and paragraph separator (<code>x2029</code>).</p>
+<p><a href="https://yaml.org/spec/1.2.2/#yaml-directives">YAML version 1.1</a> did support the above non-ASCII line break characters; however, JSON does not. Hence, to ensure <a href="https://yaml.org/spec/1.2.2/#yaml-directives">JSON compatibility</a>, YAML treats them as non-break characters as of version 1.2. YAML 1.2 <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processors</a> <a href="https://yaml.org/spec/1.2.2/#parsing-the-presentation-stream">parsing</a> a <a href="https://yaml.org/spec/1.2.2/#yaml-directives">version 1.1</a> <a href="https://yaml.org/spec/1.2.2/#documents">document</a> should therefore treat these line breaks as non-break characters, with an appropriate warning.</p>
+<pre><code class="md-fencescode">[27] nb-char ::=
+  c-printable - b-char - c-byte-order-mark
+</code></pre>
+<p>Line breaks are interpreted differently by different systems and have multiple widely used formats.</p>
+<pre><code class="md-fencescode">[28] b-break ::=
+    (
+      b-carriage-return  # x0A
+      b-line-feed
+    )                    # x0D
+  | b-carriage-return
+  | b-line-feed
+</code></pre>
+<p>Line breaks inside <a href="https://yaml.org/spec/1.2.2/#scalar">scalar content</a> must be <em>normalized</em> by the YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processor</a>. Each such line break must be <a href="https://yaml.org/spec/1.2.2/#parsing-the-presentation-stream">parsed</a> into a single line feed character. The original line break format is a <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">presentation detail</a> and must not be used to convey <a href="https://yaml.org/spec/1.2.2/#nodes">content</a> information.</p>
+<pre><code class="md-fencescode">[29] b-as-line-feed ::=
+  b-break
+</code></pre>
+<p>Outside <a href="https://yaml.org/spec/1.2.2/#scalar">scalar content</a>, YAML allows any line break to be used to terminate lines.</p>
+<pre><code class="md-fencescode">[30] b-non-content ::=
+  b-break
+</code></pre>
+<p>On output, a YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processor</a> is free to emit line breaks using whatever convention is most appropriate.</p>
+<p>In the examples, line breaks are sometimes displayed using the “<code>↓</code>” glyph for clarity.</p>
+<p><strong>Example 5.11 Line Break Characters</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>|  Line break (no glyph)  Line break (glyphed)↓</code></th>
+<th><code>"Line break (no glyph)\nLine break (glyphed)\n"</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<ul>
+<li><code>b-break</code></li>
+</ul>
+<h2 id="55-white-space-characters">5.5. White Space Characters</h2>
+<p>YAML recognizes two <em>white space</em> characters: <em>space</em> and <em>tab</em>.</p>
+<pre><code class="md-fencescode">[31] s-space ::= x20
+[32] s-tab ::= x09
+[33] s-white ::=
+  s-space | s-tab
+</code></pre>
+<p>The rest of the (<a href="https://yaml.org/spec/1.2.2/#character-set">printable</a>) non-<a href="https://yaml.org/spec/1.2.2/#line-break-characters">break</a> characters are considered to be non-space characters.</p>
+<pre><code class="md-fencescode">[34] ns-char ::=
+  nb-char - s-white
+</code></pre>
+<p>In the examples, tab characters are displayed as the glyph “<code>→</code>”. Space characters are sometimes displayed as the glyph “<code>·</code>” for clarity.</p>
+<p><strong>Example 5.12 Tabs and Spaces</strong></p>
+<table>
+<thead>
+<tr>
+<th><code># Tabs and spaces quoted:·"Quoted →" block:→| ··void main() { ··→printf("Hello, world!\n"); ··}</code></th>
+<th><code>{ "quoted": "Quoted \t",  "block": "void main()    {\n\tprintf(\"Hello, world!\\n\");\n}\n" }</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<h2 id="-s-space">- <code>s-space</code></h2>
+<ul>
+<li><code>s-tab</code></li>
+</ul>
+<h2 id="56-miscellaneous-characters">5.6. Miscellaneous Characters</h2>
+<p>The YAML syntax productions make use of the following additional character classes:</p>
+<p>A decimal digit for numbers:</p>
+<pre><code class="md-fencescode">[35] ns-dec-digit ::=
+  [x30-x39]             # 0-9
+</code></pre>
+<p>A hexadecimal digit for <a href="https://yaml.org/spec/1.2.2/#escaped-characters">escape sequences</a>:</p>
+<pre><code class="md-fencescode">[36] ns-hex-digit ::=
+    ns-dec-digit        # 0-9
+  | [x41-x46]           # A-F
+  | [x61-x66]           # a-f
+</code></pre>
+<p>ASCII letter (alphabetic) characters:</p>
+<pre><code class="md-fencescode">[37] ns-ascii-letter ::=
+    [x41-x5A]           # A-Z
+  | [x61-x7A]           # a-z
+</code></pre>
+<p>Word (alphanumeric) characters for identifiers:</p>
+<pre><code class="md-fencescode">[38] ns-word-char ::=
+    ns-dec-digit        # 0-9
+  | ns-ascii-letter     # A-Z a-z
+  | '-'                 # '-'
+</code></pre>
+<p>URI characters for <a href="https://yaml.org/spec/1.2.2/#tags">tags</a>, as defined in the URI specification<a href="https://yaml.org/spec/1.2.2/#fn:uri">18</a>.</p>
+<p>By convention, any URI characters other than the allowed printable ASCII characters are first <em>encoded</em> in UTF-8 and then each byte is <em>escaped</em> using the “<code>%</code>” character. The YAML <a href="https://yaml.org/spec/1.2.2/#processes-and-models">processor</a> must not expand such escaped characters. <a href="https://yaml.org/spec/1.2.2/#tags">Tag</a> characters must be preserved and compared exactly as <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">presented</a> in the YAML <a href="https://yaml.org/spec/1.2.2/#streams">stream</a>, without any processing.</p>
+<pre><code class="md-fencescode">[39] ns-uri-char ::=
+    (
+      '%'
+      ns-hex-digit{2}
+    )
+  | ns-word-char
+  | '#'
+  | ';'
+  | '/'
+  | '?'
+  | ':'
+  | '@'
+  | '&amp;'
+  | '='
+  | '+'
+  | '$'
+  | ','
+  | '_'
+  | '.'
+  | '!'
+  | '~'
+  | '*'
+  | &quot;'&quot;
+  | '('
+  | ')'
+  | '['
+  | ']'
+</code></pre>
+<p>The “<code>!</code>” character is used to indicate the end of a <a href="https://yaml.org/spec/1.2.2/#tag-handles">named tag handle</a>; hence its use in <a href="https://yaml.org/spec/1.2.2/#tag-shorthands">tag shorthands</a> is restricted. In addition, such <a href="https://yaml.org/spec/1.2.2/#tag-shorthands">shorthands</a> must not contain the “<code>[</code>”, “<code>]</code>”, “<code>{</code>”, “<code>}</code>” and “<code>,</code>” characters. These characters would cause ambiguity with <a href="https://yaml.org/spec/1.2.2/#flow-collection-styles">flow collection</a> structures.</p>
+<pre><code class="md-fencescode">[40] ns-tag-char ::=
+    ns-uri-char
+  - c-tag               # '!'
+  - c-flow-indicator
+</code></pre>
+<h2 id="57-escaped-characters">5.7. Escaped Characters</h2>
+<p>All non-<a href="https://yaml.org/spec/1.2.2/#character-set">printable</a> characters must be <em>escaped</em>. YAML escape sequences use the “<code>\</code>” notation common to most modern computer languages. Each escape sequence must be <a href="https://yaml.org/spec/1.2.2/#parsing-the-presentation-stream">parsed</a> into the appropriate Unicode character. The original escape sequence is a <a href="https://yaml.org/spec/1.2.2/#presenting-the-serialization-tree">presentation detail</a> and must not be used to convey <a href="https://yaml.org/spec/1.2.2/#nodes">content</a> information.</p>
+<p>Note that escape sequences are only interpreted in <a href="https://yaml.org/spec/1.2.2/#double-quoted-style">double-quoted scalars</a>. In all other <a href="https://yaml.org/spec/1.2.2/#node-styles">scalar styles</a>, the “<code>\</code>” character has no special meaning and non-<a href="https://yaml.org/spec/1.2.2/#character-set">printable</a> characters are not available.</p>
+<pre><code class="md-fencescode">[41] c-escape ::= '\'
+</code></pre>
+<p>YAML escape sequences are a superset of C’s escape sequences:</p>
+<p>Escaped ASCII null (<code>x00</code>) character.</p>
+<pre><code class="md-fencescode">[42] ns-esc-null ::= '0'
+</code></pre>
+<p>Escaped ASCII bell (<code>x07</code>) character.</p>
+<pre><code class="md-fencescode">[43] ns-esc-bell ::= 'a'
+</code></pre>
+<p>Escaped ASCII backspace (<code>x08</code>) character.</p>
+<pre><code class="md-fencescode">[44] ns-esc-backspace ::= 'b'
+</code></pre>
+<p>Escaped ASCII horizontal tab (<code>x09</code>) character. This is useful at the start or the end of a line to force a leading or trailing tab to become part of the <a href="https://yaml.org/spec/1.2.2/#nodes">content</a>.</p>
+<pre><code class="md-fencescode">[45] ns-esc-horizontal-tab ::=
+  't' | x09
+</code></pre>
+<p>Escaped ASCII line feed (<code>x0A</code>) character.</p>
+<pre><code class="md-fencescode">[46] ns-esc-line-feed ::= 'n'
+</code></pre>
+<p>Escaped ASCII vertical tab (<code>x0B</code>) character.</p>
+<pre><code class="md-fencescode">[47] ns-esc-vertical-tab ::= 'v'
+</code></pre>
+<p>Escaped ASCII form feed (<code>x0C</code>) character.</p>
+<pre><code class="md-fencescode">[48] ns-esc-form-feed ::= 'f'
+</code></pre>
+<p>Escaped ASCII carriage return (<code>x0D</code>) character.</p>
+<pre><code class="md-fencescode">[49] ns-esc-carriage-return ::= 'r'
+</code></pre>
+<p>Escaped ASCII escape (<code>x1B</code>) character.</p>
+<pre><code class="md-fencescode">[50] ns-esc-escape ::= 'e'
+</code></pre>
+<p>Escaped ASCII space (<code>x20</code>) character. This is useful at the start or the end of a line to force a leading or trailing space to become part of the <a href="https://yaml.org/spec/1.2.2/#nodes">content</a>.</p>
+<pre><code class="md-fencescode">[51] ns-esc-space ::= x20
+</code></pre>
+<p>Escaped ASCII double quote (<code>x22</code>).</p>
+<pre><code class="md-fencescode">[52] ns-esc-double-quote ::= '&quot;'
+</code></pre>
+<p>Escaped ASCII slash (<code>x2F</code>), for <a href="https://yaml.org/spec/1.2.2/#yaml-directives">JSON compatibility</a>.</p>
+<pre><code class="md-fencescode">[53] ns-esc-slash ::= '/'
+</code></pre>
+<p>Escaped ASCII back slash (<code>x5C</code>).</p>
+<pre><code class="md-fencescode">[54] ns-esc-backslash ::= '\'
+</code></pre>
+<p>Escaped Unicode next line (<code>x85</code>) character.</p>
+<pre><code class="md-fencescode">[55] ns-esc-next-line ::= 'N'
+</code></pre>
+<p>Escaped Unicode non-breaking space (<code>xA0</code>) character.</p>
+<pre><code class="md-fencescode">[56] ns-esc-non-breaking-space ::= '_'
+</code></pre>
+<p>Escaped Unicode line separator (<code>x2028</code>) character.</p>
+<pre><code class="md-fencescode">[57] ns-esc-line-separator ::= 'L'
+</code></pre>
+<p>Escaped Unicode paragraph separator (<code>x2029</code>) character.</p>
+<pre><code class="md-fencescode">[58] ns-esc-paragraph-separator ::= 'P'
+</code></pre>
+<p>Escaped 8-bit Unicode character.</p>
+<pre><code class="md-fencescode">[59] ns-esc-8-bit ::=
+  'x'
+  ns-hex-digit{2}
+</code></pre>
+<p>Escaped 16-bit Unicode character.</p>
+<pre><code class="md-fencescode">[60] ns-esc-16-bit ::=
+  'u'
+  ns-hex-digit{4}
+</code></pre>
+<p>Escaped 32-bit Unicode character.</p>
+<pre><code class="md-fencescode">[61] ns-esc-32-bit ::=
+  'U'
+  ns-hex-digit{8}
+</code></pre>
+<p>Any escaped character:</p>
+<pre><code class="md-fencescode">[62] c-ns-esc-char ::=
+  c-escape         # '\'
+  (
+      ns-esc-null
+    | ns-esc-bell
+    | ns-esc-backspace
+    | ns-esc-horizontal-tab
+    | ns-esc-line-feed
+    | ns-esc-vertical-tab
+    | ns-esc-form-feed
+    | ns-esc-carriage-return
+    | ns-esc-escape
+    | ns-esc-space
+    | ns-esc-double-quote
+    | ns-esc-slash
+    | ns-esc-backslash
+    | ns-esc-next-line
+    | ns-esc-non-breaking-space
+    | ns-esc-line-separator
+    | ns-esc-paragraph-separator
+    | ns-esc-8-bit
+    | ns-esc-16-bit
+    | ns-esc-32-bit
+  )
+</code></pre>
+<p><strong>Example 5.13 Escaped Characters</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>- "Fun with \\" - "\" \a \b \e \f" - "\n \r \t \v \0" - "\  \_ \N \L \P \  \x41 \u0041 \U00000041"</code></th>
+<th><code>[ "Fun with \\",  "\" \u0007 \b \u001b \f",  "\n \r \t \u000b \u0000",  "\u0020 \u00a0 \u0085 \u2028 \u2029 A A A" ]</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Legend:</p>
+<ul>
+<li><code>c-ns-esc-char</code></li>
+</ul>
+<p><strong>Example 5.14 Invalid Escaped Characters</strong></p>
+<table>
+<thead>
+<tr>
+<th><code>Bad escapes:  "\c  \xq-"</code></th>
+<th><code>ERROR: - c is an invalid escaped character. - q and - are invalid hex digits.</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

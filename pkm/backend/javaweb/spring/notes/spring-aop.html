@@ -1,0 +1,1391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>spring-aop</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="aop">面向切面编程AOP</h1>
+<p>IoC使软件组件松耦合。AOP让你能够捕捉系统中经常使用的功能，把它转化成组件。</p>
+<p>AOP（Aspect Oriented Programming）：面向切面编程，面向方面编程。（AOP是一种编程技术）</p>
+<p>AOP是对OOP的补充延伸。</p>
+<p>AOP底层使用的就是动态代理来实现的。</p>
+<p>Spring的AOP使用的动态代理是：JDK动态代理 + CGLIB动态代理技术。Spring在这两种动态代理中灵活切换，如果是代理接口，会默认使用JDK动态代理，如果要代理某个类，这个类没有实现接口，就会切换使用CGLIB。当然，你也可以强制通过一些配置让Spring只使用CGLIB。</p>
+<hr />
+<h2 id="aop_1">AOP介绍</h2>
+<p>一般一个系统当中都会有一些系统服务，例如：日志、事务管理、安全等。这些系统服务被称为：<strong><em>*交叉业务</em></strong>*</p>
+<p>这些<strong><em>*交叉业务</em></strong>*几乎是通用的，不管你是做银行账户转账，还是删除用户数据。日志、事务管理、安全，这些都是需要做的。</p>
+<p>如果在每一个业务处理过程当中，都掺杂这些交叉业务代码进去的话，存在两方面问题：</p>
+<ul>
+<li>第一：交叉业务代码在多个业务流程中反复出现，显然这个交叉业务代码没有得到复用。并且修改这些交叉业务代码的话，需要修改多处。</li>
+<li>第二：程序员无法专注核心业务代码的编写，在编写核心业务代码的同时还需要处理这些交叉业务。</li>
+</ul>
+<p>使用AOP可以很轻松的解决以上问题。</p>
+<p>请看下图，可以帮助你快速理解AOP的思想：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2022/png/21376908/1665732609757-d8ae52ba-915e-49cf-9ef4-c7bcada0d601.png" /></p>
+<p><strong><em>*用一句话总结AOP：将与核心业务无关的代码独立的抽取出来，形成一个独立的组件，然后以横向交叉的方式应用到业务流程当中的过程被称为AOP。</em></strong>*</p>
+<p><strong><em>*AOP的优点：</em></strong>*</p>
+<ul>
+<li><strong><em>*第一：代码复用性增强。</em></strong>*</li>
+<li><strong><em>*第二：代码易维护。</em></strong>*</li>
+<li><strong><em>*第三：使开发者更关注业务逻辑。</em></strong>*</li>
+</ul>
+<hr />
+<hr />
+<h2 id="aop_2">AOP的七大术语</h2>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">UserService</span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">do1</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"do 1"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">do2</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"do 2"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">do3</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"do 3"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">do4</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"do 4"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">do5</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"do 5"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="c1">// 核心业务方法</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">service</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">do1</span><span class="p">();</span>
+<span class="w">        </span><span class="n">do2</span><span class="p">();</span>
+<span class="w">        </span><span class="n">do3</span><span class="p">();</span>
+<span class="w">        </span><span class="n">do5</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<ul>
+<li><strong><em>*连接点 Joinpoint</em></strong><strong>*：程序执行过程中可以插入切面的具体位置（如方法执行前、方法正常返回后、方法抛出异常时、方法最终结束时等）</strong></li>
+<li><strong><em>*切点 Pointcut</em></strong><strong><em>：</em></strong><strong><em>切点本质上就是一个"位置表达式"</em></strong><strong>*，用来精确指定在哪些连接点织入切面</strong></li>
+<li><strong><em>*通知 Advice</em></strong><strong>*：在切点处执行的增强逻辑代码</strong></li>
+<li><strong><em>*切面 Aspect</em></strong><strong>*：切点 + 通知</strong></li>
+<li><strong><em>*织入 Weaving</em></strong><strong>*：将切面应用到目标对象的过程</strong></li>
+<li><strong><em>*代理对象 Proxy</em></strong><strong>*：被增强后产生的对象</strong></li>
+<li><strong><em>*目标对象 Target</em></strong><strong>*：原始的需要被增强的对象</strong></li>
+</ul>
+<hr />
+<h2 id="_1">切点表达式</h2>
+<p>切点表达式用来定义通知（Advice）往哪些方法上切入。</p>
+<p>切入点表达式语法格式：</p>
+<pre lang="plain"><code class="language-plain md-fencescode">execution([访问控制权限修饰符] 返回值类型 [全限定类名]方法名(形式参数列表) [异常])
+</code></pre>
+<p><strong>访问控制权限修饰符：</strong></p>
+<ul>
+<li>可选项。</li>
+<li><strong>没写时会匹配</strong><strong><em>*所有访问权限</em></strong><strong>*的方法</strong>。</li>
+<li>写public就表示只包括公开的方法。</li>
+</ul>
+<p><strong>返回值类型：</strong></p>
+<ul>
+<li>必填项。</li>
+<li><code>*</code> 表示返回值类型任意。</li>
+</ul>
+<p><strong>全限定类名：</strong></p>
+<ul>
+<li>可选项。</li>
+<li><strong>在类路径中，</strong><code>**..**</code><strong>表示</strong><strong><em>*当前包及其所有子包</em></strong>*</li>
+<li>省略时表示所有的类。</li>
+</ul>
+<p><strong>方法名：</strong></p>
+<ul>
+<li>必填项。</li>
+<li><code>*</code> 表示所有方法。</li>
+<li><code>set*</code> 表示所有的set方法。</li>
+</ul>
+<p><strong>形式参数列表：</strong></p>
+<ul>
+<li>必填项</li>
+<li><code>**()**</code><strong>- 无参数方法</strong></li>
+<li><code>**(..)**</code><strong>- 任意参数（0个或多个）</strong></li>
+<li><code>**(*)**</code><strong>- 恰好一个参数，类型任意</strong></li>
+<li><code>**(String)**</code><strong>- 恰好一个String类型参数</strong></li>
+<li><code>**(String, *)**</code><strong>- 恰好两个参数，第一个是String，第二个任意</strong></li>
+<li><code>**(*, String)**</code><strong>- 恰好两个参数，第二个是String，第一个任意</strong></li>
+</ul>
+<p><strong>异常：</strong></p>
+<ul>
+<li>可选项。</li>
+<li>省略时表示任意异常类型。</li>
+</ul>
+<p><strong>理解以下的切点表达式：</strong></p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">execution</span><span class="p">(</span><span class="kd">public</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">com</span><span class="p">.</span><span class="na">jkweilai</span><span class="p">.</span><span class="na">mall</span><span class="p">.</span><span class="na">service</span><span class="p">.</span><span class="o">*</span><span class="p">.</span><span class="na">delete</span><span class="o">*</span><span class="p">(..))</span>
+</code></pre>
+<ul>
+<li><code>****public****</code><strong>：只匹配public方法</strong></li>
+<li><code>*********</code><strong>：返回值类型任意</strong></li>
+<li><code>****com.jkweilai.mall.service.*****</code><strong>：</strong><code>**com.jkweilai.mall.service**</code><strong>包下的</strong><strong><em>*直接子类</em></strong><strong>*（不包含子包）</strong></li>
+<li><code>****delete*****</code><strong>：方法名以</strong><code>**delete**</code><strong>开头</strong></li>
+<li><code>****(..)****</code><strong>：参数任意（0个或多个）</strong></li>
+</ul>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">execution</span><span class="p">(</span><span class="o">*</span><span class="w"> </span><span class="n">com</span><span class="p">.</span><span class="na">jkweilai</span><span class="p">.</span><span class="na">mall</span><span class="p">..</span><span class="o">*</span><span class="p">(..))</span>
+</code></pre>
+<ul>
+<li><code>*********</code><strong>：返回值类型任意</strong></li>
+<li><code>****com.jkweilai.mall..*****</code><strong>：</strong><code>**com.jkweilai.mall**</code><strong>包及其</strong><strong><em>*所有子包</em></strong><strong>*下的所有类</strong></li>
+<li><code>*********</code><strong>：所有方法</strong></li>
+<li><code>****(..)****</code><strong>：参数任意（0个或多个）</strong></li>
+</ul>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">execution</span><span class="p">(</span><span class="o">*</span><span class="w"> </span><span class="o">*</span><span class="p">(..))</span>
+</code></pre>
+<ul>
+<li><code>*********</code><strong>：返回值类型任意</strong></li>
+<li><code>****</code><strong>：所有类</strong></li>
+<li><code>*********</code><strong>：所有方法</strong></li>
+<li><code>****(..)****</code><strong>：参数任意（0个或多个）</strong></li>
+</ul>
+<hr />
+<h2 id="springaop">使用Spring的AOP</h2>
+<p>Spring对AOP的实现包括以下3种方式：</p>
+<ul>
+<li><strong><em>*第一种方式：Spring框架结合AspectJ框架实现的AOP，基于注解方式。（只需要掌握这种）</em></strong>*</li>
+<li>第二种方式：Spring框架结合AspectJ框架实现的AOP，基于XML方式。</li>
+<li>第三种方式：Spring框架自己实现的AOP，基于XML配置方式。</li>
+</ul>
+<p>实际开发中，都是Spring+AspectJ来实现AOP。所以我们重点学习第一种和第二种方式。</p>
+<p>什么是AspectJ？（Eclipse组织的一个支持AOP的框架。AspectJ框架是独立于Spring框架之外的一个框架，Spring框架用了AspectJ） </p>
+<p>AspectJ项目起源于帕洛阿尔托（Palo Alto）研究中心（缩写为PARC）。该中心由Xerox集团资助，Gregor Kiczales领导，从1997年开始致力于AspectJ的开发，1998年第一次发布给外部用户，2001年发布1.0 release。为了推动AspectJ技术和社团的发展，PARC在2003年3月正式将AspectJ项目移交给了Eclipse组织，因为AspectJ的发展和受关注程度大大超出了PARC的预期，他们已经无力继续维持它的发展。</p>
+<h3 id="_2">准备工作</h3>
+<p>使用Spring+AspectJ的AOP需要引入的依赖如下：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;dependency&gt;</span>
+<span class="w">    </span><span class="nt">&lt;groupId&gt;</span>org.springframework<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>spring-context<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;version&gt;</span>6.2.13<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+<span class="cm">&lt;!--spring aspects--&gt;</span>
+<span class="nt">&lt;dependency&gt;</span>
+<span class="w">    </span><span class="nt">&lt;groupId&gt;</span>org.springframework<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>spring-aspects<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;version&gt;</span>6.2.13<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre>
+<p>Spring配置文件中添加context命名空间和aop命名空间</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;beans</span><span class="w"> </span><span class="na">xmlns=</span><span class="s">"http://www.springframework.org/schema/beans"</span>
+<span class="w">       </span><span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+<span class="w">       </span><span class="na">xmlns:context=</span><span class="s">"http://www.springframework.org/schema/context"</span>
+<span class="w">       </span><span class="na">xmlns:aop=</span><span class="s">"http://www.springframework.org/schema/aop"</span>
+<span class="w">       </span><span class="na">xsi:schemaLocation=</span><span class="s">"http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd</span>
+<span class="s">                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd</span>
+<span class="s">                           http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd"</span><span class="nt">&gt;</span>
+
+<span class="nt">&lt;/beans&gt;</span>
+</code></pre>
+<h3 id="aspectjaop">基于AspectJ的AOP注解式开发</h3>
+<p><strong>第一步：</strong>定义目标类以及目标方法</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.service</span><span class="p">;</span>
+
+<span class="c1">// 目标类</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">OrderService</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 目标方法</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">generate</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"订单已生成！"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>第二步：</strong>定义切面类</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.service</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.aspectj.lang.annotation.Aspect</span><span class="p">;</span>
+
+<span class="c1">// 切面类</span>
+<span class="nd">@Aspect</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MyAspect</span><span class="w"> </span><span class="p">{</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>第三步：</strong>目标类和切面类都纳入spring bean管理</p>
+<p>在目标类OrderService上添加<strong><em>*@Component</em></strong>*注解。</p>
+<p>在切面类MyAspect类上添加<strong><em>*@Component</em></strong>*注解。</p>
+<p><strong>第四步：</strong>在spring配置文件中添加组建扫描</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;beans</span><span class="w"> </span><span class="na">xmlns=</span><span class="s">"http://www.springframework.org/schema/beans"</span>
+<span class="w">       </span><span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+<span class="w">       </span><span class="na">xmlns:context=</span><span class="s">"http://www.springframework.org/schema/context"</span>
+<span class="w">       </span><span class="na">xmlns:aop=</span><span class="s">"http://www.springframework.org/schema/aop"</span>
+<span class="w">       </span><span class="na">xsi:schemaLocation=</span><span class="s">"http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd</span>
+<span class="s">                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd</span>
+<span class="s">                           http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="cm">&lt;!--开启组件扫描--&gt;</span>
+<span class="w">    </span><span class="nt">&lt;context:component-scan</span><span class="w"> </span><span class="na">base-package=</span><span class="s">"com.jkweilai.spring.service"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/beans&gt;</span>
+</code></pre>
+<p><strong>第五步：</strong>在切面类中添加通知</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.service</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.aspectj.lang.annotation.Aspect</span><span class="p">;</span>
+
+<span class="c1">// 切面类</span>
+<span class="nd">@Aspect</span>
+<span class="nd">@Component</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MyAspect</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 这就是需要增强的代码（通知）</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">advice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"我是一个通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>第六步：</strong>在通知上添加切点表达式</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.service</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.aspectj.lang.annotation.Before</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.aspectj.lang.annotation.Aspect</span><span class="p">;</span>
+
+<span class="c1">// 切面类</span>
+<span class="nd">@Aspect</span>
+<span class="nd">@Component</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MyAspect</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="c1">// 切点表达式</span>
+<span class="w">    </span><span class="nd">@Before</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="c1">// 这就是需要增强的代码（通知）</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">advice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"我是一个通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong><em>*注解@Before表示前置通知。</em></strong>*</p>
+<p><strong>第七步：</strong>在spring配置文件中启用自动代理</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;beans</span><span class="w"> </span><span class="na">xmlns=</span><span class="s">"http://www.springframework.org/schema/beans"</span>
+<span class="w">       </span><span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+<span class="w">       </span><span class="na">xmlns:context=</span><span class="s">"http://www.springframework.org/schema/context"</span>
+<span class="w">       </span><span class="na">xmlns:aop=</span><span class="s">"http://www.springframework.org/schema/aop"</span>
+<span class="w">       </span><span class="na">xsi:schemaLocation=</span><span class="s">"http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd</span>
+<span class="s">                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd</span>
+<span class="s">                           http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="cm">&lt;!--开启组件扫描--&gt;</span>
+<span class="w">    </span><span class="nt">&lt;context:component-scan</span><span class="w"> </span><span class="na">base-package=</span><span class="s">"com.jkweilai.spring.service"</span><span class="nt">/&gt;</span>
+<span class="w">    </span><span class="cm">&lt;!--开启自动代理--&gt;</span>
+<span class="w">    </span><span class="nt">&lt;aop:aspectj-autoproxy</span><span class="w"> </span><span class="na">proxy-target-class=</span><span class="s">"true"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/beans&gt;</span>
+</code></pre>
+<p><code>****&lt;aop:aspectj-autoproxy proxy-target-class="true"/&gt;****</code><strong><em>*开启自动代理之后，凡事带有@Aspect注解的bean都会生成代理对象。</em></strong>*</p>
+<p><code>****proxy-target-class="true"****</code><strong><em>*表示采用cglib动态代理。</em></strong>*</p>
+<p><code>****proxy-target-class="false"****</code><strong><em>*表示采用jdk动态代理。默认值是false。即使写成false，当没有接口的时候，也会自动选择cglib生成代理类。</em></strong>*</p>
+<p>测试程序：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.test</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.spring.service.OrderService</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.junit.Test</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.ApplicationContext</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.support.ClassPathXmlApplicationContext</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">AOPTest</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Test</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testAOP</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ClassPathXmlApplicationContext</span><span class="p">(</span><span class="s">"spring-aspectj-aop-annotation.xml"</span><span class="p">);</span>
+<span class="w">        </span><span class="n">OrderService</span><span class="w"> </span><span class="n">orderService</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"orderService"</span><span class="p">,</span><span class="w"> </span><span class="n">OrderService</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">        </span><span class="n">orderService</span><span class="p">.</span><span class="na">generate</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>运行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2022/png/21376908/1665843923087-e1116f09-2470-46cb-b21a-1526f62cab50.png" /></p>
+<h3 id="aop_3">全注解式开发AOP</h3>
+<p>就是编写一个类，在这个类上面使用大量注解来代替spring的配置文件，spring配置文件消失了，如下：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.service</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.annotation.ComponentScan</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.annotation.Configuration</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.annotation.EnableAspectJAutoProxy</span><span class="p">;</span>
+
+<span class="nd">@Configuration</span>
+<span class="nd">@ComponentScan</span><span class="p">(</span><span class="s">"com.jkweilai.spring.service"</span><span class="p">)</span>
+<span class="nd">@EnableAspectJAutoProxy</span><span class="p">(</span><span class="n">proxyTargetClass</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">SpringConfiguration</span><span class="w"> </span><span class="p">{</span>
+<span class="p">}</span>
+</code></pre>
+<p>测试程序也变化了：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Test</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testAOPWithAllAnnotation</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">AnnotationConfigApplicationContext</span><span class="p">(</span><span class="n">SpringConfiguration</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">OrderService</span><span class="w"> </span><span class="n">orderService</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"orderService"</span><span class="p">,</span><span class="w"> </span><span class="n">OrderService</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">orderService</span><span class="p">.</span><span class="na">generate</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="_3">通知类型</h3>
+<p>通知类型包括：</p>
+<ul>
+<li><strong><em>*前置通知：@Before</em></strong><strong>*目标方法执行之前的通知</strong></li>
+<li><strong><em>*后置通知：@After</em></strong><strong>*目标方法不管是否成功结束，后置通知都会执行（即时有未捕获的异常）</strong></li>
+<li><strong><em>*返回通知：@AfterReturning</em></strong><strong>*目标方法成功执行返回后执行的通知（目标方法出现未捕获的异常时，不会执行）</strong></li>
+<li><strong><em>*异常通知：@AfterThrowing</em></strong><strong>*目标方法发生异常后执行的通知</strong></li>
+<li><strong><em>*环绕通知：@Around</em></strong><strong><em>目标方法执行之前和之后都可添加通知，</em></strong><strong><em>可以控制目标方法是否执行</em></strong>*</li>
+</ul>
+<p><strong>执行顺序：</strong></p>
+<ul>
+<li><strong><em>*正常执行：</em></strong><strong>*@Around前半 → @Before → 目标方法 → @AfterReturning → @After → @Around后半</strong></li>
+<li><strong><em>*异常执行：</em></strong><strong>*@Around前半 → @Before → 目标方法 → @AfterThrowing → @After → @Around后半</strong></li>
+<li><strong><em>*注意：</em></strong><strong>*目标方法出现异常，并且最终异常没有捕获的话，@Around后半  不会执行。</strong></li>
+</ul>
+<p>接下来，编写程序来测试这几个通知的执行顺序：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.service</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.aspectj.lang.ProceedingJoinPoint</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.aspectj.lang.annotation.*</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
+
+<span class="c1">// 切面类</span>
+<span class="nd">@Component</span>
+<span class="nd">@Aspect</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MyAspect</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@Around</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Object</span><span class="w"> </span><span class="nf">aroundAdvice</span><span class="p">(</span><span class="n">ProceedingJoinPoint</span><span class="w"> </span><span class="n">proceedingJoinPoint</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Throwable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"环绕通知开始"</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 执行目标方法。</span>
+<span class="w">        </span><span class="n">Object</span><span class="w"> </span><span class="n">retValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">proceedingJoinPoint</span><span class="p">.</span><span class="na">proceed</span><span class="p">();</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"环绕通知结束"</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">retValue</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Before</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">beforeAdvice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"前置通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@AfterReturning</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">afterReturningAdvice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"返回通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@AfterThrowing</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">afterThrowingAdvice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"异常通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@After</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">afterAdvice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"后置通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="p">}</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.service</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
+
+<span class="c1">// 目标类</span>
+<span class="nd">@Component</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">OrderService</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 目标方法</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">generate</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"订单已生成！"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.test</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.spring.service.OrderService</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.junit.Test</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.ApplicationContext</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.support.ClassPathXmlApplicationContext</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">AOPTest</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Test</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testAOP</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ClassPathXmlApplicationContext</span><span class="p">(</span><span class="s">"spring-aspectj-aop-annotation.xml"</span><span class="p">);</span>
+<span class="w">        </span><span class="n">OrderService</span><span class="w"> </span><span class="n">orderService</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"orderService"</span><span class="p">,</span><span class="w"> </span><span class="n">OrderService</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">        </span><span class="n">orderService</span><span class="p">.</span><span class="na">generate</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1727354763970-e62d8306-982e-4d23-881d-802a4213f2d3.png" /></p>
+<p>通过上面的执行结果就可以判断他们的执行顺序了，这里不再赘述。</p>
+<p>结果中没有异常通知，这是因为目标程序执行过程中没有发生异常。我们尝试让目标方法发生异常：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.service</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
+
+<span class="c1">// 目标类</span>
+<span class="nd">@Component</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">OrderService</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 目标方法</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">generate</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"订单已生成！"</span><span class="p">);</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">RuntimeException</span><span class="p">(</span><span class="s">"模拟异常发生"</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>再次执行测试程序，结果如下：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1727354892988-43f912b5-9d3d-4ae4-b5ee-640a69d7359c.png" /></p>
+<p>通过测试得知，当发生异常之后，后置通知也会执行。</p>
+<p>出现异常之后，如果<strong>未捕获该异常</strong>，<strong><em>*返回通知</em></strong><em>和</em><strong><em>环绕通知的结束部分</em></strong>*不会执行。</p>
+<p>出现异常之后，如果<strong>捕获了该异常</strong>，<strong><em>*返回通知</em></strong><em>不会执行，但</em><strong><em>环绕通知的结束部分</em></strong>*会执行。（可以自行测试一下）</p>
+<h3 id="_4">切面的先后顺序</h3>
+<p>我们知道，业务流程当中不一定只有一个切面，可能有的切面控制事务，有的记录日志，有的进行安全控制，如果多个切面的话，顺序如何控制：<strong><em>*可以使用@Order注解来标识切面类，为@Order注解的value指定一个整数型的数字，数字越小，优先级越高</em></strong>*。</p>
+<p>再定义一个切面类，如下：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.service</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.aspectj.lang.ProceedingJoinPoint</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.aspectj.lang.annotation.*</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.core.annotation.Order</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
+
+<span class="nd">@Aspect</span>
+<span class="nd">@Component</span>
+<span class="nd">@Order</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="c1">//设置优先级</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">YourAspect</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@Around</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Object</span><span class="w"> </span><span class="nf">aroundAdvice</span><span class="p">(</span><span class="n">ProceedingJoinPoint</span><span class="w"> </span><span class="n">proceedingJoinPoint</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Throwable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"YourAspect环绕通知开始"</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 执行目标方法。</span>
+<span class="w">        </span><span class="n">Object</span><span class="w"> </span><span class="n">retValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">proceedingJoinPoint</span><span class="p">.</span><span class="na">proceed</span><span class="p">();</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"YourAspect环绕通知结束"</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">retValue</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Before</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">beforeAdvice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"YourAspect前置通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@AfterReturning</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">afterReturningAdvice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"YourAspect返回通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@AfterThrowing</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">afterThrowingAdvice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"YourAspect异常通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@After</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">afterAdvice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"YourAspect后置通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.service</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.aspectj.lang.ProceedingJoinPoint</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.aspectj.lang.annotation.*</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.core.annotation.Order</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
+
+<span class="c1">// 切面类</span>
+<span class="nd">@Component</span>
+<span class="nd">@Aspect</span>
+<span class="nd">@Order</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="c1">//设置优先级</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MyAspect</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@Around</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Object</span><span class="w"> </span><span class="nf">aroundAdvice</span><span class="p">(</span><span class="n">ProceedingJoinPoint</span><span class="w"> </span><span class="n">proceedingJoinPoint</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Throwable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"环绕通知开始"</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 执行目标方法。</span>
+<span class="w">        </span><span class="n">Object</span><span class="w"> </span><span class="n">retValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">proceedingJoinPoint</span><span class="p">.</span><span class="na">proceed</span><span class="p">();</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"环绕通知结束"</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">retValue</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Before</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">beforeAdvice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"前置通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@AfterReturning</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">afterReturningAdvice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"返回通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@AfterThrowing</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">afterThrowingAdvice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"异常通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@After</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">afterAdvice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"后置通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="p">}</span>
+</code></pre>
+<p>执行测试程序：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1727355165649-0a4443b6-5ac5-4f38-a23f-756af6585dbc.png" /></p>
+<p>通过修改@Order注解的整数值来切换顺序，执行测试程序：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1727355225994-ecb4fbe1-2611-477b-a319-d64a5a897153.png" /></p>
+<h3 id="_5">优化使用切点表达式</h3>
+<p>观看以下代码中的切点表达式：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.service</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.aspectj.lang.ProceedingJoinPoint</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.aspectj.lang.annotation.*</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.core.annotation.Order</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
+
+<span class="c1">// 切面类</span>
+<span class="nd">@Component</span>
+<span class="nd">@Aspect</span>
+<span class="nd">@Order</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MyAspect</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@Around</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Object</span><span class="w"> </span><span class="nf">aroundAdvice</span><span class="p">(</span><span class="n">ProceedingJoinPoint</span><span class="w"> </span><span class="n">proceedingJoinPoint</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Throwable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"环绕通知开始"</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 执行目标方法。</span>
+<span class="w">        </span><span class="n">Object</span><span class="w"> </span><span class="n">retValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">proceedingJoinPoint</span><span class="p">.</span><span class="na">proceed</span><span class="p">();</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"环绕通知结束"</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">retValue</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Before</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">beforeAdvice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"前置通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@AfterReturning</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">afterReturningAdvice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"返回通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@AfterThrowing</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">afterThrowingAdvice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"异常通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@After</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">afterAdvice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"后置通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="p">}</span>
+</code></pre>
+<p>缺点是：</p>
+<ul>
+<li>第一：切点表达式重复写了多次，没有得到复用。</li>
+<li>第二：如果要修改切点表达式，需要修改多处，难维护。</li>
+</ul>
+<p>可以这样做：将切点表达式单独的定义出来，在需要的位置引入即可。如下：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.service</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.aspectj.lang.ProceedingJoinPoint</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.aspectj.lang.annotation.*</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.core.annotation.Order</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
+
+<span class="c1">// 切面类</span>
+<span class="nd">@Component</span>
+<span class="nd">@Aspect</span>
+<span class="nd">@Order</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MyAspect</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@Pointcut</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.service.OrderService.*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">pointcut</span><span class="p">(){}</span>
+
+<span class="w">    </span><span class="nd">@Around</span><span class="p">(</span><span class="s">"pointcut()"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Object</span><span class="w"> </span><span class="nf">aroundAdvice</span><span class="p">(</span><span class="n">ProceedingJoinPoint</span><span class="w"> </span><span class="n">proceedingJoinPoint</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Throwable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"环绕通知开始"</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 执行目标方法。</span>
+<span class="w">        </span><span class="n">Object</span><span class="w"> </span><span class="n">retValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">proceedingJoinPoint</span><span class="p">.</span><span class="na">proceed</span><span class="p">();</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"环绕通知结束"</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">retValue</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Before</span><span class="p">(</span><span class="s">"pointcut()"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">beforeAdvice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"前置通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@AfterReturning</span><span class="p">(</span><span class="s">"pointcut()"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">afterReturningAdvice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"返回通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@AfterThrowing</span><span class="p">(</span><span class="s">"pointcut()"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">afterThrowingAdvice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"异常通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@After</span><span class="p">(</span><span class="s">"pointcut()"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">afterAdvice</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"后置通知"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="p">}</span>
+</code></pre>
+<p>使用@Pointcut注解来定义独立的切点表达式。</p>
+<p>注意这个@Pointcut注解标注的方法随意，只是起到一个能够让@Pointcut注解编写的位置。</p>
+<hr />
+<h2 id="aop_4">AOP的实际案例：事务处理</h2>
+<p>项目中的事务控制是在所难免的。在一个业务流程当中，可能需要多条DML语句共同完成，为了保证数据的安全，这多条DML语句要么同时成功，要么同时失败。这就需要添加事务控制的代码。例如以下伪代码：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">class</span> <span class="nc">业务类1</span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">业务方法1</span><span class="p">(){</span>
+<span class="w">        </span><span class="k">try</span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// 开启事务</span>
+<span class="w">            </span><span class="n">startTransaction</span><span class="p">();</span>
+
+<span class="w">            </span><span class="c1">// 执行核心业务逻辑</span>
+<span class="w">            </span><span class="n">step1</span><span class="p">();</span>
+<span class="w">            </span><span class="n">step2</span><span class="p">();</span>
+<span class="w">            </span><span class="n">step3</span><span class="p">();</span>
+<span class="w">            </span><span class="p">....</span>
+
+<span class="w">            </span><span class="c1">// 提交事务</span>
+<span class="w">            </span><span class="n">commitTransaction</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span><span class="k">catch</span><span class="p">(</span><span class="n">Exception</span><span class="w"> </span><span class="n">e</span><span class="p">){</span>
+<span class="w">            </span><span class="c1">// 回滚事务</span>
+<span class="w">            </span><span class="n">rollbackTransaction</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">业务方法2</span><span class="p">(){</span>
+<span class="w">        </span><span class="k">try</span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// 开启事务</span>
+<span class="w">            </span><span class="n">startTransaction</span><span class="p">();</span>
+
+<span class="w">            </span><span class="c1">// 执行核心业务逻辑</span>
+<span class="w">            </span><span class="n">step1</span><span class="p">();</span>
+<span class="w">            </span><span class="n">step2</span><span class="p">();</span>
+<span class="w">            </span><span class="n">step3</span><span class="p">();</span>
+<span class="w">            </span><span class="p">....</span>
+
+<span class="w">            </span><span class="c1">// 提交事务</span>
+<span class="w">            </span><span class="n">commitTransaction</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span><span class="k">catch</span><span class="p">(</span><span class="n">Exception</span><span class="w"> </span><span class="n">e</span><span class="p">){</span>
+<span class="w">            </span><span class="c1">// 回滚事务</span>
+<span class="w">            </span><span class="n">rollbackTransaction</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">业务方法3</span><span class="p">(){</span>
+<span class="w">        </span><span class="k">try</span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// 开启事务</span>
+<span class="w">            </span><span class="n">startTransaction</span><span class="p">();</span>
+
+<span class="w">            </span><span class="c1">// 执行核心业务逻辑</span>
+<span class="w">            </span><span class="n">step1</span><span class="p">();</span>
+<span class="w">            </span><span class="n">step2</span><span class="p">();</span>
+<span class="w">            </span><span class="n">step3</span><span class="p">();</span>
+<span class="w">            </span><span class="p">....</span>
+
+<span class="w">            </span><span class="c1">// 提交事务</span>
+<span class="w">            </span><span class="n">commitTransaction</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span><span class="k">catch</span><span class="p">(</span><span class="n">Exception</span><span class="w"> </span><span class="n">e</span><span class="p">){</span>
+<span class="w">            </span><span class="c1">// 回滚事务</span>
+<span class="w">            </span><span class="n">rollbackTransaction</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">class</span> <span class="nc">业务类2</span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">业务方法1</span><span class="p">(){</span>
+<span class="w">        </span><span class="k">try</span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// 开启事务</span>
+<span class="w">            </span><span class="n">startTransaction</span><span class="p">();</span>
+
+<span class="w">            </span><span class="c1">// 执行核心业务逻辑</span>
+<span class="w">            </span><span class="n">step1</span><span class="p">();</span>
+<span class="w">            </span><span class="n">step2</span><span class="p">();</span>
+<span class="w">            </span><span class="n">step3</span><span class="p">();</span>
+<span class="w">            </span><span class="p">....</span>
+
+<span class="w">            </span><span class="c1">// 提交事务</span>
+<span class="w">            </span><span class="n">commitTransaction</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span><span class="k">catch</span><span class="p">(</span><span class="n">Exception</span><span class="w"> </span><span class="n">e</span><span class="p">){</span>
+<span class="w">            </span><span class="c1">// 回滚事务</span>
+<span class="w">            </span><span class="n">rollbackTransaction</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">业务方法2</span><span class="p">(){</span>
+<span class="w">        </span><span class="k">try</span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// 开启事务</span>
+<span class="w">            </span><span class="n">startTransaction</span><span class="p">();</span>
+
+<span class="w">            </span><span class="c1">// 执行核心业务逻辑</span>
+<span class="w">            </span><span class="n">step1</span><span class="p">();</span>
+<span class="w">            </span><span class="n">step2</span><span class="p">();</span>
+<span class="w">            </span><span class="n">step3</span><span class="p">();</span>
+<span class="w">            </span><span class="p">....</span>
+
+<span class="w">            </span><span class="c1">// 提交事务</span>
+<span class="w">            </span><span class="n">commitTransaction</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span><span class="k">catch</span><span class="p">(</span><span class="n">Exception</span><span class="w"> </span><span class="n">e</span><span class="p">){</span>
+<span class="w">            </span><span class="c1">// 回滚事务</span>
+<span class="w">            </span><span class="n">rollbackTransaction</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">业务方法3</span><span class="p">(){</span>
+<span class="w">        </span><span class="k">try</span><span class="p">{</span>
+<span class="w">            </span><span class="c1">// 开启事务</span>
+<span class="w">            </span><span class="n">startTransaction</span><span class="p">();</span>
+
+<span class="w">            </span><span class="c1">// 执行核心业务逻辑</span>
+<span class="w">            </span><span class="n">step1</span><span class="p">();</span>
+<span class="w">            </span><span class="n">step2</span><span class="p">();</span>
+<span class="w">            </span><span class="n">step3</span><span class="p">();</span>
+<span class="w">            </span><span class="p">....</span>
+
+<span class="w">            </span><span class="c1">// 提交事务</span>
+<span class="w">            </span><span class="n">commitTransaction</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span><span class="k">catch</span><span class="p">(</span><span class="n">Exception</span><span class="w"> </span><span class="n">e</span><span class="p">){</span>
+<span class="w">            </span><span class="c1">// 回滚事务</span>
+<span class="w">            </span><span class="n">rollbackTransaction</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+<span class="c1">//......</span>
+</code></pre>
+<p>可以看到，这些业务类中的每一个业务方法都是需要控制事务的，而控制事务的代码又是固定的格式，都是：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="k">try</span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 开启事务</span>
+<span class="w">    </span><span class="n">startTransaction</span><span class="p">();</span>
+
+<span class="w">    </span><span class="c1">// 执行核心业务逻辑</span>
+<span class="w">    </span><span class="c1">//......</span>
+
+<span class="w">    </span><span class="c1">// 提交事务</span>
+<span class="w">    </span><span class="n">commitTransaction</span><span class="p">();</span>
+<span class="p">}</span><span class="k">catch</span><span class="p">(</span><span class="n">Exception</span><span class="w"> </span><span class="n">e</span><span class="p">){</span>
+<span class="w">    </span><span class="c1">// 回滚事务</span>
+<span class="w">    </span><span class="n">rollbackTransaction</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre>
+<p>这个控制事务的代码就是和业务逻辑没有关系的“<strong><em>*交叉业务</em></strong>*”。以上伪代码当中可以看到这些交叉业务的代码没有得到复用，并且如果这些交叉业务代码需要修改，那必然需要修改多处，难维护，怎么解决？可以采用AOP思想解决。可以把以上控制事务的代码作为环绕通知，切入到目标类的方法当中。接下来我们做一下这件事，有两个业务类，如下：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.biz</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
+
+<span class="nd">@Component</span>
+<span class="c1">// 业务类</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">AccountService</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 转账业务方法</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">transfer</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"正在进行银行账户转账"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="c1">// 取款业务方法</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">withdraw</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"正在进行取款操作"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.biz</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
+
+<span class="nd">@Component</span>
+<span class="c1">// 业务类</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">OrderService</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 生成订单</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">generate</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"正在生成订单"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="c1">// 取消订单</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">cancel</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"正在取消订单"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>注意，以上两个业务类已经纳入spring bean的管理，因为都添加了@Component注解。</p>
+<p>接下来我们给以上两个业务类的4个方法添加事务控制代码，使用AOP来完成：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.biz</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.aspectj.lang.ProceedingJoinPoint</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.aspectj.lang.annotation.Around</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.aspectj.lang.annotation.Aspect</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
+
+<span class="nd">@Aspect</span>
+<span class="nd">@Component</span>
+<span class="c1">// 事务切面类</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">TransactionAspect</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@Around</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.biz..*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Object</span><span class="w"> </span><span class="nf">aroundAdvice</span><span class="p">(</span><span class="n">ProceedingJoinPoint</span><span class="w"> </span><span class="n">proceedingJoinPoint</span><span class="p">){</span>
+<span class="w">        </span><span class="n">Object</span><span class="w"> </span><span class="n">retValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"开启事务"</span><span class="p">);</span>
+<span class="w">            </span><span class="c1">// 执行目标</span>
+<span class="w">            </span><span class="n">retValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">proceedingJoinPoint</span><span class="p">.</span><span class="na">proceed</span><span class="p">();</span>
+<span class="w">            </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"提交事务"</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">Throwable</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"回滚事务"</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">retValue</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>你看，这个事务控制代码是不是只需要写一次就行了，并且修改起来也没有成本。编写测试程序：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.test</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.spring.biz.AccountService</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.spring.biz.OrderService</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.spring.service.SpringConfiguration</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.junit.Test</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.ApplicationContext</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.annotation.AnnotationConfigApplicationContext</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">AOPTest2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Test</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testTransaction</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">AnnotationConfigApplicationContext</span><span class="p">(</span><span class="n">SpringConfiguration</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">        </span><span class="n">OrderService</span><span class="w"> </span><span class="n">orderService</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"orderService"</span><span class="p">,</span><span class="w"> </span><span class="n">OrderService</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">        </span><span class="n">AccountService</span><span class="w"> </span><span class="n">accountService</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"accountService"</span><span class="p">,</span><span class="w"> </span><span class="n">AccountService</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 生成订单</span>
+<span class="w">        </span><span class="n">orderService</span><span class="p">.</span><span class="na">generate</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">// 取消订单</span>
+<span class="w">        </span><span class="n">orderService</span><span class="p">.</span><span class="na">cancel</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">// 转账</span>
+<span class="w">        </span><span class="n">accountService</span><span class="p">.</span><span class="na">transfer</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">// 取款</span>
+<span class="w">        </span><span class="n">accountService</span><span class="p">.</span><span class="na">withdraw</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763900978755-59d9c5ec-850c-40b3-8d90-98163a7d2429.png" /></p>
+<p>通过测试可以看到，所有的业务方法都添加了事务控制的代码。</p>
+<hr />
+<h2 id="aop_5">AOP的实际案例：安全日志</h2>
+<p>需求是这样的：项目开发结束了，已经上线了。运行正常。客户提出了新的需求：凡是在系统中进行修改操作的，删除操作的，新增操作的，都要把这个人记录下来。因为这几个操作是属于危险行为。例如有业务类和业务方法：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.biz</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
+
+<span class="nd">@Component</span>
+<span class="c1">//用户业务</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">UserService</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">getUser</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"获取用户信息"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">saveUser</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"保存用户"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">deleteUser</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"删除用户"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">modifyUser</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"修改用户"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.biz</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
+
+<span class="c1">// 商品业务类</span>
+<span class="nd">@Component</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">ProductService</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">getProduct</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"获取商品信息"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">saveProduct</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"保存商品"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">deleteProduct</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"删除商品"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">modifyProduct</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"修改商品"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>注意：已经添加了@Component注解。</p>
+<p>接下来我们使用aop来解决上面的需求：编写一个负责安全的切面类</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.biz</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.aspectj.lang.JoinPoint</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.aspectj.lang.annotation.Aspect</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.aspectj.lang.annotation.Before</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.aspectj.lang.annotation.Pointcut</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
+
+<span class="nd">@Component</span>
+<span class="nd">@Aspect</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">SecurityAspect</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@Pointcut</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.biz..save*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">savePointcut</span><span class="p">(){}</span>
+
+<span class="w">    </span><span class="nd">@Pointcut</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.biz..delete*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">deletePointcut</span><span class="p">(){}</span>
+
+<span class="w">    </span><span class="nd">@Pointcut</span><span class="p">(</span><span class="s">"execution(* com.jkweilai.spring.biz..modify*(..))"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">modifyPointcut</span><span class="p">(){}</span>
+
+<span class="w">    </span><span class="nd">@Before</span><span class="p">(</span><span class="s">"savePointcut() || deletePointcut() || modifyPointcut()"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">beforeAdivce</span><span class="p">(</span><span class="n">JoinPoint</span><span class="w"> </span><span class="n">joinpoint</span><span class="p">){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"XXX操作员正在操作"</span><span class="o">+</span><span class="n">joinpoint</span><span class="p">.</span><span class="na">getSignature</span><span class="p">().</span><span class="na">getName</span><span class="p">()</span><span class="o">+</span><span class="s">"方法"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Test</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testSecurity</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">AnnotationConfigApplicationContext</span><span class="p">(</span><span class="n">SpringConfiguration</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">UserService</span><span class="w"> </span><span class="n">userService</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"userService"</span><span class="p">,</span><span class="w"> </span><span class="n">UserService</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">ProductService</span><span class="w"> </span><span class="n">productService</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"productService"</span><span class="p">,</span><span class="w"> </span><span class="n">ProductService</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">userService</span><span class="p">.</span><span class="na">getUser</span><span class="p">();</span>
+<span class="w">    </span><span class="n">userService</span><span class="p">.</span><span class="na">saveUser</span><span class="p">();</span>
+<span class="w">    </span><span class="n">userService</span><span class="p">.</span><span class="na">deleteUser</span><span class="p">();</span>
+<span class="w">    </span><span class="n">userService</span><span class="p">.</span><span class="na">modifyUser</span><span class="p">();</span>
+<span class="w">    </span><span class="n">productService</span><span class="p">.</span><span class="na">getProduct</span><span class="p">();</span>
+<span class="w">    </span><span class="n">productService</span><span class="p">.</span><span class="na">saveProduct</span><span class="p">();</span>
+<span class="w">    </span><span class="n">productService</span><span class="p">.</span><span class="na">deleteProduct</span><span class="p">();</span>
+<span class="w">    </span><span class="n">productService</span><span class="p">.</span><span class="na">modifyProduct</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763901002972-6212a72e-2316-44ba-80a2-9c2817a277df.png" /></p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

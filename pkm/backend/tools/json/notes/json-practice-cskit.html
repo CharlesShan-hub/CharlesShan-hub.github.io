@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>json-practice-cskit</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="json-yshjson-cskit">JSON 实战：从 YshJson 到自研框架 cskit</h1>
+<blockquote>
+<p>对应 <a href="../README.html">README 学习计划</a> 第一阶段 + 第四阶段的<strong>超越版</strong>：
+不只是"读懂 YshJson"，而是基于对它的理解，<strong>造出了自己的 JSON 框架</strong>。</p>
+</blockquote>
+<h2 id="_1">🎯 一句话总结</h2>
+<p>用「用 → 看 → 懂 → 复现 → 超越」的学习法，把公司工具类 <code>YshJson</code> 吃透，
+然后设计并实现了个人框架 <strong>cskit</strong>（https://github.com/CharlesShan-hub/cskit）：
+统一门面 + 可插拔适配器（Gson / Fastjson2 / Jackson），支持自定义适配器扩展。</p>
+<hr />
+<h2 id="yshjson-264">一、读源码：YshJson 的精髓（264 行）</h2>
+<p>公司内部包 <code>ysh-java-kit</code> 里的 <code>com.ysh.common.json.YshJson</code>，基于 Gson 的薄封装：</p>
+<table>
+<thead>
+<tr>
+<th>设计点</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DEFAULT_GSON</code> 静态缓存</td>
+<td>Gson 线程安全、构建成本高 → 默认路径复用单例</td>
+</tr>
+<tr>
+<td><code>GsonInitOperation</code> 函数式接口</td>
+<td>需要定制时传 lambda 配 GsonBuilder，默认快、定制灵活</td>
+</tr>
+<tr>
+<td>非泛型/可泛型双轨重载</td>
+<td>泛型擦除 → List/Map 必须用 <code>TypeToken</code></td>
+</tr>
+<tr>
+<td><code>TypeToken.getParameterized</code></td>
+<td>内部动态拼泛型，免匿名内部类</td>
+</tr>
+</tbody>
+</table>
+<p><strong>本质</strong>：把"创建 Gson"收编成默认单例 + 静态便捷方法。少 new 是表象，<strong>统一入口 + 线程安全复用</strong>是本质。</p>
+<h3 id="javadoc">源码里暴露的坑（Javadoc 明示）</h3>
+<ol>
+<li>默认 Gson 日期格式是美式 <code>"Mar 10, 2024"</code>，没配 <code>setDateFormat</code></li>
+<li><code>fromJsonStringToMap</code> 值全是 Object：数值→Double、嵌套→LinkedTreeMap</li>
+<li><strong>大整数精度</strong>：<code>Map&lt;String,Object&gt;</code> 反序列化 long 会变 Double 丢精度（如雪花 ID！）</li>
+<li>定制路径每次 <code>new GsonBuilder().create()</code>，不缓存 → 高频调用性能坑</li>
+</ol>
+<hr />
+<h2 id="cskit">二、复现 + 超越：自研框架 cskit</h2>
+<h3 id="jdbc-slf4j">架构：接口 + 注册表（对标 JDBC / slf4j）</h3>
+<pre><code class="md-fencescode">业务代码 → JsonAdapter 接口（唯一依赖）
+              ↓
+  JsonAdapterRegistry 单例注册表（开放扩展）
+   ├── gson / fastjson / jackson（官方适配器）
+   └── company / 任何自研库（用户实现接口 + 注册一行即用）
+</code></pre>
+<h3 id="_2">关键设计决策</h3>
+<table>
+<thead>
+<tr>
+<th>决策</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>JsonAdapter</code> 接口 5 方法</td>
+<td>toJson / fromJson / fromJson(Type) / fromJsonList / fromJsonMap</td>
+</tr>
+<tr>
+<td>注册表用<strong>单例</strong></td>
+<td>注册中心全局唯一，避免多处 new 各注册各的</td>
+</tr>
+<tr>
+<td>注册表用 <code>ConcurrentHashMap</code></td>
+<td>全局共享必须线程安全（16 线程并发测试验证）</td>
+</tr>
+<tr>
+<td><code>json-core</code> 零第三方依赖</td>
+<td>依赖隔离：用谁引谁的适配器模块</td>
+</tr>
+<tr>
+<td>模块拆分（core/gson/fastjson/jackson）</td>
+<td>解决"只想用 gson 却要装全部"的问题</td>
+</tr>
+<tr>
+<td><code>@JsonField</code> 统一注解</td>
+<td>value/name 重命名 + serialize/deserialize 开关，各适配器翻译</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_3">各适配器的注解翻译层（扩展点不同）</h3>
+<ul>
+<li><strong>Gson</strong>：手写 <code>TypeAdapterFactory</code>（Gson 没有注解内省扩展）</li>
+<li><strong>Jackson</strong>：原生 <code>AnnotationIntrospector</code>（优雅得多！）</li>
+<li><strong>Fastjson2</strong>：未接注解层（README 标注为扩展点）</li>
+</ul>
+<h3 id="1000-2000-20000jdk-21">性能实测（1000 条记录，预热 2000 + 测量 20000，JDK 21）</h3>
+<table>
+<thead>
+<tr>
+<th>实现</th>
+<th>序列化</th>
+<th>反序列化</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gson</td>
+<td>~288 μs</td>
+<td>~106 μs</td>
+</tr>
+<tr>
+<td>Fastjson2</td>
+<td><strong>~21 μs</strong> 🏆</td>
+<td><strong>~28 μs</strong> 🏆</td>
+</tr>
+<tr>
+<td>Jackson</td>
+<td>~50 μs</td>
+<td>~99 μs</td>
+</tr>
+</tbody>
+</table>
+<p>正确性：三库 1000 条往返全部无丢失，业务代码完全一致。</p>
+<hr />
+<h2 id="_4">三、实战踩坑记录（最值钱的资产）</h2>
+<ol>
+<li><strong>fastjson 1.x 在 JDK 21 直接废</strong> → 序列化输出 <code>{}</code> → 换 fastjson2（官方接班人）</li>
+<li><strong>不同库对实体类要求不同</strong>：Gson 反射读字段、fastjson2 要 getter/setter → 适配器抹平差异</li>
+<li><strong>循环依赖</strong>：gson 测试依赖 jackson 做评测、jackson 又依赖 gson 对比 → Maven cycle
+   → 正确解法：评测套件放"能看见所有适配器"的模块（json-jackson）</li>
+<li><strong>IDEA 对 <code>file://${basedir}/repo</code> 本地仓库支持差</strong>：公司私有 jar 模块在 IDEA 里标红，命令行正常</li>
+<li><strong>Maven 镜像配置只能放 settings.xml</strong>：写在 pom.xml 是非法标签，会导致解析失败</li>
+</ol>
+<hr />
+<h2 id="_5">四、学习法沉淀：用 → 看 → 懂 → 复现 → 超越</h2>
+<pre><code class="md-fencescode">用    先跑起来，知道 API 怎么用（写了 YshJsonDemoTest 验证各种坑）
+看    读源码，理解设计意图（静态单例、双轨重载、TypeToken）
+懂    追问&quot;为什么这么设计&quot;（线程安全？泛型擦除？性能？）
+复现  自己实现一遍核心逻辑（命名注册表 HashMap 缓存）
+超越  设计出更好的方案（适配器模式 + 模块化 + 单例注册中心）
+</code></pre>
+<p><strong>关键心态</strong>：每次用别人的库，都问一句"如果我来设计，我会怎么做"。
+今天问出"为什么不用 HashMap 缓存定制"的那一刻，就是超越的开始。</p>
+<hr />
+<h2 id="_6">五、进阶特性（后续追加）</h2>
+<ol>
+<li><strong>三库注解翻译层全部完成</strong>：</li>
+<li>Gson → <code>JsonFieldAdapterFactory</code>（TypeAdapterFactory）</li>
+<li>Jackson → <code>JsonFieldAnnotationIntrospector</code>（AnnotationIntrospector）</li>
+<li>Fastjson → <code>JsonFieldFastJsonCodec</code>（JSONObject 中转 + 数字类型适配 BigDecimal 坑）</li>
+<li>
+<p>实测：同一套 <code>@JsonField</code>，三库行为完全一致 ✅</p>
+</li>
+<li>
+<p><strong>使用模式三态</strong>（对齐并超越 YshJson）：</p>
+</li>
+<li>长期复用：<code>register</code> + <code>get</code></li>
+<li>一次性：<code>useOnce</code>（取出即删）/ <code>use</code>（作用域封闭）</li>
+<li>
+<p>即用即弃：<code>JsonKit</code> 静态入口（直接传适配器 / Supplier 工厂）</p>
+</li>
+<li>
+<p><strong>JsonKit 统一方法名 + 四种重载</strong>（一个名字，四种用法，避免命名爆炸）：</p>
+</li>
+</ol>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">JsonKit</span><span class="p">.</span><span class="na">toJson</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span><span class="w">                                       </span><span class="c1">// ① 默认适配器</span>
+<span class="n">JsonKit</span><span class="p">.</span><span class="na">toJson</span><span class="p">(</span><span class="s">"gson"</span><span class="p">,</span><span class="w"> </span><span class="n">obj</span><span class="p">)</span><span class="w">                               </span><span class="c1">// ② 模板名（注册表）</span>
+<span class="n">JsonKit</span><span class="p">.</span><span class="na">toJson</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">GsonJsonAdapter</span><span class="p">(),</span><span class="w"> </span><span class="n">obj</span><span class="p">)</span><span class="w">                </span><span class="c1">// ③ 实例（一次性）</span>
+<span class="n">JsonKit</span><span class="p">.</span><span class="na">toJson</span><span class="p">(()</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">GsonJsonAdapter</span><span class="p">(</span><span class="n">b</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">...),</span><span class="w"> </span><span class="n">obj</span><span class="p">)</span><span class="w">  </span><span class="c1">// ④ 工厂（一次性+定制）</span>
+</code></pre>
+<ul>
+<li><code>configureDefault()</code> 可切换默认适配器（超越 YshJson 固定 DEFAULT_GSON）</li>
+<li>
+<p>fromJson 同样四种重载，完全对称</p>
+</li>
+<li>
+<p><strong>工程化打磨</strong>：</p>
+</li>
+<li><code>GsonJsonAdapter</code> 支持定制构造（Consumer&lt;GsonBuilder&gt;）</li>
+<li>共享测试实体模块 <code>json-testkit</code>（Animal/Employee/Tourist，DRY）</li>
+<li>测试 100% 吃自己的狗粮（移除手搓 GsonRegistry）</li>
+<li>跨库对比测试统一收拢 json-jackson 模块（打破循环依赖）</li>
+</ul>
+<h2 id="_7">六、我的设计哲学（提炼）</h2>
+<blockquote>
+<p><strong>底层交给最专业的人，上层我只做一件事——让使用变得简单。</strong></p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>理念</th>
+<th>落地</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>代码简洁</td>
+<td>重载代替命名（一个 toJson 四种用法）、共享实体 DRY、一套注解三库通用</td>
+</tr>
+<tr>
+<td>内存安全且轻量</td>
+<td>ConcurrentHashMap 线程安全、json-core 零第三方依赖、依赖隔离按需引入</td>
+</tr>
+<tr>
+<td>不重复造轮子，在上层封装</td>
+<td>适配器模式 + 门面模式（对标 JDBC / slf4j），底层用最强库、上层统一入口</td>
+</tr>
+</tbody>
+</table>
+<h2 id="todo">七、下一步 TODO</h2>
+<ul>
+<li>[x] cskit 接入 GitHub Actions CI（push 自动 mvn test）</li>
+<li>[x] fastjson 适配器补 <code>@JsonField</code> 注解翻译层</li>
+<li>[ ] 增加 yaml / xml 子框架</li>
+<li>[ ] cskit 发布到 Maven Central</li>
+<li>[ ] 项目代码实战：把 cskit 用到真实项目里验证</li>
+</ul>
+<h2 id="_8">参考</h2>
+<ul>
+<li><a href="https://github.com/CharlesShan-hub/cskit">cskit 仓库</a></li>
+<li><a href="gson-intro.html">Gson 入门笔记</a>（查尔斯动物园系列）</li>
+</ul>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

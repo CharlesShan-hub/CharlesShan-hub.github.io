@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rabbitmq-overview-introduction</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="rabbitmq">RabbitMQ 概述</h1>
+<h2 id="rabbitmq_1">RabbitMQ 简介</h2>
+<ol>
+<li>官网地址：<a href="https://www.rabbitmq.com/">https://www.rabbitmq.com/</a></li>
+<li>logo：</li>
+</ol>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763734245609-f8dcb23b-667a-456e-b58d-e4c54b1c153c.png" width="212.8" title="" crop="0,0,1,1" id="u6ebbde96" class="ne-image"></p>
+<ol>
+<li>RabbitMQ 是一款基于 AMQP、由 Erlang 语言开发的消息队列产品。2007 年由 Rabbit 技术公司发布了 1.0 版本。</li>
+</ol>
+<h2 id="rabbitmq_2">RabbitMQ 的内部体系结构</h2>
+<p><img src="https://cdn.nlark.com/yuque/0/2026/png/21376908/1770514323809-f3218018-7787-4c0b-9d01-998cff08e415.png" width="1462.4" title="" crop="0,0,1,1" id="ua4206fcc" class="ne-image"></p>
+<h3 id="producer-consumer">生产者 Producer 与消费者 Consumer</h3>
+<p>消息的发送端被称为<strong>生产者 Producer</strong></p>
+<p>消息的接收端被称为<strong>消费者 Consumer</strong></p>
+<p><strong>Producer</strong> 和 <strong>Consumer</strong> 都可以是 Spring Cloud 当中的一个<strong>微服务</strong></p>
+<h3 id="connection-channel">消息队列中的 Connection 与 Channel</h3>
+<p>当<strong>生产者发送消息</strong>的时候，或者<strong>消费者接收消息</strong>的时候，都必须与<strong>消息队列服务器</strong>建立连接，这个连接被称为 <strong>Connection</strong>。但是这个 Connection 是基于 TCP 协议的，如果每一次连接都进行三次握手，那效率就会很低，怎么能够提高效率呢？如果让 Connection 复用就可以提升效率了，因此在 Connection 中弄了很多 Channel。</p>
+<p><strong>Connection（连接）：重量级的TCP长连接</strong></p>
+<ul>
+<li>这是一个建立在TCP协议之上的网络连接。创建和销毁它需要三次握手和四次挥手，开销很大。</li>
+</ul>
+<p><strong>Channel（信道）：轻量级的逻辑连接</strong></p>
+<ul>
+<li>Channel是建立在<strong>一个Connection内部的虚拟连接</strong>。它是一个逻辑概念，不存在于TCP层。</li>
+<li>创建和销毁Channel的开销极低，因为它<strong>不需要进行网络握手</strong>。</li>
+<li>它的主要作用是<strong>实现多路复用</strong>，允许在单个Connection上同时进行多个不同的消息流操作。</li>
+</ul>
+<p><strong>现实生活中的例子：</strong></p>
+<ul>
+<li><strong>Connection</strong> 就像是在两个城市之间修建的一条<strong>高速公路</strong>。修路的成本很高（TCP握手），但一旦修好，就可以长期使用。</li>
+<li><strong>Channel</strong> 就像是这条高速公路上的一条条<strong>独立车道</strong>。你可以在一条高速路上轻松地划出多条车道（创建Channel），每条车道都可以同时跑不同的车（传输不同的消息），互不干扰。开辟新车道的成本很低，不需要重新修路。</li>
+</ul>
+<h3 id="broker">Broker</h3>
+<p>每个 RabbitMQ 的实例被称为 Broker。就是 RabbitMQ 主体服务器本身，负责接收和分发消息。在实际生产环境中，为了实现高可用和高性能，我们通常不会只使用一个 Broker。我们会将多个 Broker 实例组成一个<strong>集群</strong>。</p>
+<h3 id="virtual-host">Virtual Host</h3>
+<p>虚拟分组，在每个 Broker 实例中可以划分多个虚拟分组（<strong>Virtual Host 可以有很多个，但一般一个分布式系统对应一个 Virtual Host</strong>）。</p>
+<p>用户在自己的 Virtual Host 中使用 RabbitMQ。</p>
+<p>在实际开发中，通过 Virtual Host 区分不同项目。</p>
+<h3 id="exchange-queue">Exchange 与 Queue</h3>
+<p>翻译为交换机，是消息到达之后的第一站。也就是发送消息的时候，先把消息发送到交换机上。再通过交换机这个中转站把消息发到队列（Queue）上。</p>
+<p>注意：Exchange 不负责存储消息，只是消息的中转站。真正存储消息的是 Queue。如果被消费端取走的话，也是从队列 Queue 中删除。</p>
+<p>Exchange 可以有很多个。Queue 也可以有很多个。</p>
+<p>交换机是如何知道将消息发送到哪个队列呢？就看 Exchange 和 Queue 之间的绑定关系（<strong>路由键</strong>）。</p>
+<p>Exchange 可以绑定一个队列 Queue，也可以绑定多个队列 Queue。</p>
+<h3 id="_1">一条消息的发送与接收流程</h3>
+<p>想象一下，你是一个<strong>生产者（Producer）</strong>，比如一个订单微服务，需要发送一条“订单创建”的消息。你首先需要与远方的<strong>RabbitMQ Broker</strong>（消息中转局）建立一条<strong>Connection</strong>（好比在两个城市间修建了一条高速公路）。为了高效，你在这条公路上轻松地开辟了一条<strong>Channel</strong>（一条专用车道）。你沿着这条车道，把消息寄给了Broker里的一个<strong>Exchange</strong>（中央分拣中心）。Exchange根据你提供的地址（路由键）与 <strong>Queue</strong>（暂存仓库）的绑定关系，将消息精准地投递到“订单队列”仓库中。此时，作为<strong>消费者（Consumer）</strong> 的库存微服务，也建立了一条到Broker的高速公路和自己的车道，它一直在“订单队列”仓库边守候，消息一来便立刻取走处理。所有这些组件（订单微服务、库存微服务、订单队列）都隔离在同一个<strong>Virtual Host</strong>（例如“电商项目组”）内，与其它项目互不干扰。至此，消息成功完成了一次从发送到接收的旅程。</p>
+<p><strong>对于编程来说，如何实现呢？</strong></p>
+<ul>
+<li>对于生产者来说<ul>
+<li><strong>声明</strong>交换机（创建交换机：如果该交换机已存在，则直接使用，不需要重复创建）</li>
+<li><strong>声明</strong>队列（创建队列：如果该队列已存在，则直接使用，不需要重复创建）</li>
+<li>使用<strong>路由键</strong>将<strong>交换机</strong>和<strong>队列</strong>绑定在一起</li>
+<li>发送消息时只需要指定：<strong>交换机</strong> 和 <strong>路由键</strong></li>
+</ul>
+</li>
+<li>对于消费者来说<ul>
+<li>只需要指定<strong>哪个队列</strong>就行。</li>
+</ul>
+</li>
+</ul>
+<h2 id="rabbitmq_3">安装 RabbitMQ</h2>
+<p><strong>第一步：拉取镜像</strong></p>
+<pre lang="bash"><code class="language-bash md-fencescode">docker<span class="w"> </span>pull<span class="w"> </span>rabbitmq:3.13-management
+</code></pre>
+<p><strong>第二步：创建 RabbitMQ 容器（基于我们之前大健康项目的网络 IP 来创建）</strong></p>
+<pre lang="bash"><code class="language-bash md-fencescode">docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--name<span class="w"> </span>mq<span class="w"> </span><span class="se">\</span>
+--net<span class="w"> </span>dajiankang<span class="w"> </span>--ip<span class="w"> </span><span class="m">172</span>.16.0.13<span class="w"> </span><span class="se">\</span>
+-p<span class="w"> </span><span class="m">5672</span>:5672<span class="w"> </span><span class="se">\</span>
+-p<span class="w"> </span><span class="m">15672</span>:15672<span class="w"> </span><span class="se">\</span>
+-e<span class="w"> </span><span class="nv">RABBITMQ_DEFAULT_USER</span><span class="o">=</span>admin<span class="w"> </span><span class="se">\</span>
+-e<span class="w"> </span><span class="nv">RABBITMQ_DEFAULT_PASS</span><span class="o">=</span><span class="m">123456</span><span class="w"> </span><span class="se">\</span>
+-e<span class="w"> </span><span class="nv">TZ</span><span class="o">=</span>Asia/Shanghai<span class="w"> </span><span class="se">\</span>
+-m<span class="w"> </span>450m<span class="w"> </span><span class="se">\</span>
+--restart<span class="w"> </span>unless-stopped<span class="w"> </span><span class="se">\</span>
+rabbitmq:3.13-management
+</code></pre>
+<p>5672 端口是和客户端程序交互使用的。(将来生产者端和消费者端都是通过 5672 访问 RabbitMQ)</p>
+<p>15672 是 web 管理的端口。</p>
+<p><strong>第三步：端口转发</strong></p>
+<p>在 <code>Oracle VirtualBox</code>软件中配置端口转发。这样在 windows 系统上就可以使用 <code>localhost</code>方式访问了。</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764038935571-39e6268a-509d-4c42-945e-fae5f6012397.png" width="914.4" title="" crop="0,0,1,1" id="ua05afef8" class="ne-image"></p>
+<table>
+<thead>
+<tr>
+<th><strong>windows 端口</strong></th>
+<th><strong>虚拟机端口</strong></th>
+<th><strong>docker 端口</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>5672</td>
+<td>5672</td>
+<td>5672</td>
+</tr>
+<tr>
+<td>15672</td>
+<td>15672</td>
+<td>15672</td>
+</tr>
+</tbody>
+</table>
+<p><strong>第四步：打开 Web 管理界面：</strong><a href="http://localhost:15672/"><strong>http://localhost:15672/</strong></a></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764038774581-d900af0d-21dd-4929-9599-a1d96f9c5359.png" width="287.2" title="" crop="0,0,1,1" id="u77a69977" class="ne-image"></p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

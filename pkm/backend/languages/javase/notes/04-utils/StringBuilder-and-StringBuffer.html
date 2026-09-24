@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StringBuilder-and-StringBuffer</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="stringbuffer-stringbuilder">StringBuffer &amp; StringBuilder</h1>
+<p><img alt="StringBuilder-StringBuffer-drawing.excalidraw|1000" src="../../assets/StringBuilder-StringBuffer-drawing.excalidraw.md" />
+字符串专题阅读顺序：<a href="../04-utils/String.html">String</a>  👉 本文</p>
+<hr />
+<h2 id="string">String的缺点</h2>
+<ul>
+<li>String 类的对象是<strong>不可变</strong>的。也就是说，⼀旦⼀个 String 对象被创建，它所包含的字符串内容是不可改变的。</li>
+<li>每次对 String 对象进⾏修改<strong>操作</strong>（如拼接、替换等，尤其是使用<code>+</code>号操作符）实际上都会<strong>⽣成⼀个新的 String 对象</strong>，⽽不是修改原有对象。这可能会导致内存和<strong>性能开销</strong>，尤其是在⼤量字符串操作的情况下。</li>
+</ul>
+<h2 id="stringbuffer">🍭 StringBuffer 基本概念</h2>
+<p>为了对珍贵的内存造成不必要的压力，Java 设计了一个专门用来解决此问题的 <code>StringBuffer</code> 类。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kd">class</span> <span class="nc">StringBuffer</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">AbstractStringBuilder</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Serializable</span><span class="p">,</span><span class="w"> </span><span class="n">CharSequence</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">StringBuffer</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">super</span><span class="p">(</span><span class="mi">16</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">synchronized</span><span class="w"> </span><span class="n">StringBuffer</span><span class="w"> </span><span class="nf">append</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">str</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">super</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">synchronized</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">String</span><span class="p">(</span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// 其他方法</span>
+<span class="p">}</span>
+</code></pre>
+<ul>
+<li><code>StringBuffer</code>是可变长度的字符序列。可以理解成长度可变的 String</li>
+<li><code>StringBuffer</code>是一个<strong>容器</strong></li>
+<li><code>StringBuffer</code>的父类<code>AbstractStringBuilder</code>里边有一个<code>char[] value;</code>这里存放字符串内容。⚠️不是 final 的。另外存放在堆里边而不是常量池了（因为数组在堆里边）。</li>
+</ul>
+<hr />
+<h2 id="stringbuilder">✏️ StringBuilder</h2>
+<p>由于 StringBuffer 操作字符串的方法加了 <a href="https://javabetter.cn/thread/synchronized-1.html"><code>synchronized</code> 关键字</a>进行了同步，主要是考虑到多线程环境下的安全问题，所以如果在非多线程环境下，执行效率就会比较低，因为加了没必要的锁。</p>
+<p>于是 Java 就给 StringBuffer “生了个兄弟”，名叫 StringBuilder，说，“孩子，你别管线程安全了，你就在单线程环境下使用，这样效率会高得多，如果要在多线程环境下修改字符串，你到时候可以使用 <a href="https://javabetter.cn/thread/ThreadLocal.html"><code>ThreadLocal</code></a> 来避免多线程冲突。”</p>
+<ul>
+<li>当需要在<strong>单个线程</strong>中频繁修改字符串内容时，推荐使用 <code>StringBuilder</code>。</li>
+<li>由于 <code>StringBuilder</code> 不是线程安全的，因此在<strong>多线程环境</strong>中应使用 <code>StringBuffer</code>。</li>
+</ul>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kd">class</span> <span class="nc">StringBuilder</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">AbstractStringBuilder</span>
+<span class="w">   </span><span class="kd">implements</span><span class="w"> </span><span class="n">java</span><span class="p">.</span><span class="na">io</span><span class="p">.</span><span class="na">Serializable</span><span class="p">,</span><span class="w"> </span><span class="n">CharSequence</span>
+<span class="p">{</span>
+<span class="w">   </span><span class="c1">// ...</span>
+
+<span class="w">   </span><span class="kd">public</span><span class="w"> </span><span class="n">StringBuilder</span><span class="w"> </span><span class="nf">append</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">str</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">super</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">;</span>
+<span class="w">   </span><span class="p">}</span>
+
+<span class="w">   </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// Create a copy, don't share the array</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">String</span><span class="p">(</span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">);</span>
+<span class="w">   </span><span class="p">}</span>
+
+<span class="w">   </span><span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>除了类名不同，方法没有加 synchronized，基本上完全一样。</strong></p>
+<p>实际开发中，StringBuilder 的使用频率也是远高于 StringBuffer，甚至可以这么说，StringBuilder 完全取代了 StringBuffer。</p>
+<p>最后看一下他们三个的比较</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">StringBuilderVsString</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">text</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">""</span><span class="p">;</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">startTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="n">L</span><span class="p">;</span>
+<span class="w">        </span><span class="kt">long</span><span class="w"> </span><span class="n">endTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="n">L</span><span class="p">;</span>
+
+<span class="w">        </span><span class="c1">// 使用 StringBuffer</span>
+<span class="w">        </span><span class="n">StringBuffer</span><span class="w"> </span><span class="n">buffer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StringBuffer</span><span class="p">(</span><span class="s">""</span><span class="p">);</span>
+<span class="w">        </span><span class="n">startTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">20000</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">buffer</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="n">String</span><span class="p">.</span><span class="na">valueOf</span><span class="p">(</span><span class="n">i</span><span class="p">));</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="n">endTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"StringBuffer的执行时间: "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="n">endTime</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">startTime</span><span class="p">));</span>
+
+<span class="w">        </span><span class="c1">// 使用 StringBuilder</span>
+<span class="w">        </span><span class="n">startTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="n">StringBuilder</span><span class="w"> </span><span class="n">builder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StringBuilder</span><span class="p">(</span><span class="s">""</span><span class="p">);</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">20000</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">builder</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="n">String</span><span class="p">.</span><span class="na">valueOf</span><span class="p">(</span><span class="n">i</span><span class="p">));</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="n">endTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"StringBuilder的执行时间: "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="n">endTime</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">startTime</span><span class="p">));</span>
+
+<span class="w">        </span><span class="c1">// 使用 String 进行连接</span>
+<span class="w">        </span><span class="n">startTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">20000</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">text</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">text</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">i</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="n">endTime</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">();</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"String的执行时间: "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="p">(</span><span class="n">endTime</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">startTime</span><span class="p">));</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="bash"><code class="language-bash md-fencescode">StringBuffer的执行时间:<span class="w"> </span><span class="m">1</span>
+StringBuilder的执行时间:<span class="w"> </span><span class="m">0</span>
+String的执行时间:<span class="w"> </span><span class="m">73</span>
+</code></pre>
+<ol>
+<li>如果字符串存在大量的修改操作，一般使用 StringBuffer 或 StringBuilder</li>
+<li>如果字符串存在大量的修改操作，并在单线程的情况，使用 StringBuilder</li>
+<li>如果字符串存在大量的修改操作，并在多线程的情况，使用 StringBuffer</li>
+<li>如果我们字符串很少修改，被多个对象引用，使用 String，比如配置信息等</li>
+</ol>
+<hr />
+<h2 id="abstractstringbuilder">✏️ AbstractStringBuilder 扩容机制（重点）</h2>
+<blockquote>
+<p>重点是扩容规则要记住，初始化大小要记住。</p>
+</blockquote>
+<ol>
+<li>初始大小：默认是 <strong>16</strong>，也可以指定初始大小。</li>
+<li>扩容大小：$$ space_{new} = space_{old} + \max{(space_{old}+2, need)} $$</li>
+</ol>
+<p>案例一</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// 创建一个初始化容量是16的StringBuilder对象  </span>
+<span class="n">StringBuilder</span><span class="w"> </span><span class="n">stringBuilder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StringBuilder</span><span class="p">();</span><span class="w">   </span><span class="c1">// 16</span>
+
+<span class="c1">// 进行字符串的拼接操作  </span>
+<span class="n">stringBuilder</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="s">"hello"</span><span class="p">);</span><span class="w">  </span><span class="c1">// 16 （用了 5）</span>
+<span class="n">stringBuilder</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="s">"world"</span><span class="p">);</span><span class="w">  </span><span class="c1">// 16 （用了 10）</span>
+<span class="n">stringBuilder</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="mi">100</span><span class="p">);</span><span class="w">      </span><span class="c1">// 16 （用了 13）</span>
+<span class="n">stringBuilder</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="kc">false</span><span class="p">);</span><span class="w">    </span><span class="c1">// 16 + max(16+2, 2) = 34 （用了 18）</span>
+</code></pre>
+<p>案例二（重点）</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// 创建一个初始化容量是16的StringBuilder对象  </span>
+<span class="n">StringBuilder</span><span class="w"> </span><span class="n">stringBuilder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StringBuilder</span><span class="p">();</span><span class="w"> </span><span class="c1">// 16</span>
+
+<span class="n">stringBuilder</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="s">"12345678910000000000000000000000000000000000000000"</span><span class="p">);</span>
+<span class="c1">// 需要扩容：34 = max(old space + 2, need) = max(16 + 2, 50 - 16)</span>
+<span class="c1">// new = 16 + max(18, 34) = 50 (用了 50, 还剩 0)</span>
+<span class="n">stringBuilder</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="s">"abcdef"</span><span class="p">);</span>
+<span class="c1">// 需要扩容：52 = max(50 + 2, 56 - 50) </span>
+<span class="c1">// new = 50 + max(52, 6) = 102 (用了 56)</span>
+</code></pre>
+<p>下面是具体的分析</p>
+<p>StringBuilder 初始创建过程会创建大小为 16 的空字符串</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="cm">/**</span>
+<span class="cm"> * Constructs a string builder with no characters in it and an</span>
+<span class="cm"> * initial capacity of 16 characters.</span>
+<span class="cm"> */</span>
+<span class="kd">public</span><span class="w"> </span><span class="nf">StringBuilder</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">super</span><span class="p">(</span><span class="mi">16</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>在调用字符串变量相加的时候结束时，系统会默认调用 StringBuilder 的 toString()</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">String</span><span class="p">(</span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">);</span><span class="w"> </span>
+<span class="p">}</span>
+</code></pre>
+<p>在调用字符串变量相加的时候，会把要相加的内容通过 append() 进行拼接</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="n">StringBuilder</span><span class="w"> </span><span class="nf">append</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">str</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">super</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="n">AbstractStringBuilder</span><span class="w"> </span><span class="nf">append</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">str</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">str</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">appendNull</span><span class="p">();</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">len</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">str</span><span class="p">.</span><span class="na">length</span><span class="p">();</span>
+<span class="w">    </span><span class="c1">// count + len就是 ensureCapacityInternal传入的minimumCapacity</span>
+<span class="w">    </span><span class="n">ensureCapacityInternal</span><span class="p">(</span><span class="n">count</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">len</span><span class="p">);</span>
+<span class="w">    </span><span class="n">str</span><span class="p">.</span><span class="na">getChars</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">len</span><span class="p">,</span><span class="w"> </span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">);</span>
+<span class="w">    </span><span class="n">count</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">len</span><span class="p">;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<p>注意如果添加的是null 就真的会添加"null"字符串进去！</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">private</span><span class="w"> </span><span class="n">AbstractStringBuilder</span><span class="w"> </span><span class="nf">appendNull</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="n">ensureCapacityInternal</span><span class="p">(</span><span class="n">count</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">4</span><span class="p">);</span><span class="w">  </span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="na">count</span><span class="p">;</span><span class="w">  </span>
+<span class="w">    </span><span class="kt">byte</span><span class="o">[]</span><span class="w"> </span><span class="n">val</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="na">value</span><span class="p">;</span><span class="w">  </span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">isLatin1</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">        </span><span class="n">val</span><span class="o">[</span><span class="n">count</span><span class="o">++]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sc">'n'</span><span class="p">;</span><span class="w">  </span>
+<span class="w">        </span><span class="n">val</span><span class="o">[</span><span class="n">count</span><span class="o">++]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sc">'u'</span><span class="p">;</span><span class="w">  </span>
+<span class="w">        </span><span class="n">val</span><span class="o">[</span><span class="n">count</span><span class="o">++]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sc">'l'</span><span class="p">;</span><span class="w">  </span>
+<span class="w">        </span><span class="n">val</span><span class="o">[</span><span class="n">count</span><span class="o">++]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sc">'l'</span><span class="p">;</span><span class="w">  </span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">        </span><span class="n">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">StringUTF16</span><span class="p">.</span><span class="na">putCharsAt</span><span class="p">(</span><span class="n">val</span><span class="p">,</span><span class="w"> </span><span class="n">count</span><span class="p">,</span><span class="w"> </span><span class="sc">'n'</span><span class="p">,</span><span class="w"> </span><span class="sc">'u'</span><span class="p">,</span><span class="w"> </span><span class="sc">'l'</span><span class="p">,</span><span class="w"> </span><span class="sc">'l'</span><span class="p">);</span><span class="w">  </span>
+<span class="w">    </span><span class="p">}</span><span class="w">  </span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="na">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">count</span><span class="p">;</span><span class="w">  </span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">;</span><span class="w">  </span>
+<span class="p">}</span>
+</code></pre>
+<p>查看容量的具体代码如下</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">private</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">ensureCapacityInternal</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">minimumCapacity</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// minimumCapacity = append()的 count + len</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">minimumCapacity</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">value</span><span class="p">.</span><span class="na">length</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span>
+<span class="w">        </span><span class="c1">// 不够用了，扩容</span>
+<span class="w">        </span><span class="n">expandCapacity</span><span class="p">(</span><span class="n">minimumCapacity</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span><span class="w"> </span><span class="nf">expandCapacity</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">minimumCapacity</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 扩容策略：新容量为旧容量的两倍加上 2</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">newCapacity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">value</span><span class="p">.</span><span class="na">length</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">// 如果新容量小于指定的最小容量，则新容量为指定的最小容量</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">newCapacity</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">minimumCapacity</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span>
+<span class="w">        </span><span class="n">newCapacity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">minimumCapacity</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">// 如果新容量小于 0，则新容量为 Integer.MAX_VALUE</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">newCapacity</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">minimumCapacity</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="c1">// overflow</span>
+<span class="w">            </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">OutOfMemoryError</span><span class="p">();</span>
+<span class="w">        </span><span class="n">newCapacity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Integer</span><span class="p">.</span><span class="na">MAX_VALUE</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="c1">// 将字符序列的容量扩容到新容量的大小</span>
+<span class="w">    </span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Arrays</span><span class="p">.</span><span class="na">copyOf</span><span class="p">(</span><span class="n">value</span><span class="p">,</span><span class="w"> </span><span class="n">newCapacity</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>快速记忆</p>
+<ol>
+<li>初始化：默认 16，也可以指定</li>
+<li>append：默认新容量为旧容量的两倍加上 2，如果不够，就是原长度+要加的长度</li>
+</ol>
+<hr />
+<h2 id="stringbuffer-string">🍭StringBuffer 和 String 的对比</h2>
+<ul>
+<li>String 类</li>
+<li><strong>特性</strong>：<code>String</code> 保存的是字符串常量，其值不可更改。</li>
+<li><strong>内存管理</strong>：每次对 <code>String</code> 类的更新实际上是在内存中创建一个新的字符串对象，这意味着原字符串对象的地址会改变。</li>
+<li><strong>性能</strong>：由于每次更新都涉及到内存地址的更改，因此效率相对较低。</li>
+<li><strong>示例代码</strong>：</li>
+</ul>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="n">value</span><span class="o">[]</span><span class="p">;</span>
+</code></pre>
+<ul>
+<li>StringBuffer 类</li>
+<li><strong>特性</strong>：<code>StringBuffer</code> 保存的是字符串变量，其值可以更改。</li>
+<li><strong>内存管理</strong>：<code>StringBuffer</code> 的更新实际上可以在原有对象上进行，不需要每次都创建新的对象，因此不需要更新内存地址。</li>
+<li><strong>性能</strong>：由于不需要频繁地创建新对象和更改内存地址，因此效率较高。</li>
+<li><strong>示例代码</strong>：</li>
+</ul>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kt">char</span><span class="o">[]</span><span class="w"> </span><span class="n">value</span><span class="p">;</span><span class="w"> </span><span class="c1">// 这个放在堆中</span>
+</code></pre>
+<ul>
+<li>使用场景</li>
+<li><code>String</code> 类适合于不需要修改字符串内容的场景，因为其不可变性保证了字符串的安全性。</li>
+<li><code>StringBuffer</code> 类适合于需要频繁修改字符串内容的场景，因为它提供了更高的效率。</li>
+</ul>
+<hr />
+<h2 id="_1">🍭 四种构造器</h2>
+<ol>
+<li>
+<p><code>StringBuffer()</code></p>
+<ul>
+<li><strong>描述</strong>：构造一个不带字符的字符串缓冲区，其初始容量为 16 个字符。</li>
+<li><strong>用途</strong>：当你需要一个空的 <code>StringBuffer</code> 实例，并且初始容量不是问题时使用。</li>
+</ul>
+</li>
+<li>
+<p><code>StringBuffer(CharSequence seq)</code></p>
+<ul>
+<li><strong>描述</strong>：构造一个字符串缓冲区，它包含与指定的 <code>CharSequence</code> 相同的字符。</li>
+<li><strong>用途</strong>：当你需要一个 <code>StringBuffer</code> 实例，并且已经有一个 <code>CharSequence</code>（如 <code>String</code>）作为内容时使用。</li>
+</ul>
+</li>
+<li>
+<p><code>StringBuffer(int capacity)</code></p>
+<ul>
+<li><strong>描述</strong>：构造一个不带字符，但具有指定初始容量的字符串缓冲区。即对 <code>char[]</code> 大小进行指定。</li>
+<li><strong>用途</strong>：当你需要一个 <code>StringBuffer</code> 实例，并且知道所需的初始容量时使用，这可以避免后续的容量调整。</li>
+</ul>
+</li>
+<li>
+<p><code>StringBuffer(String str)</code></p>
+<ul>
+<li><strong>描述</strong>：构造一个字符串缓冲区，并将其内容初始化为指定的字符串内容。</li>
+<li><strong>用途</strong>：当你需要一个 <code>StringBuffer</code> 实例，并且已经有一个 <code>String</code> 作为初始内容时使用。</li>
+</ul>
+</li>
+</ol>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">StringBufferExample</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 使用默认构造器</span>
+<span class="w">    </span><span class="n">StringBuffer</span><span class="w"> </span><span class="n">sb1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StringBuffer</span><span class="p">();</span>
+<span class="w">    </span><span class="n">sb1</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="s">"Hello"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">sb1</span><span class="p">.</span><span class="na">toString</span><span class="p">());</span><span class="w"> </span><span class="c1">// 输出: Hello</span>
+
+<span class="w">    </span><span class="c1">// 使用 CharSequence 构造器</span>
+<span class="w">    </span><span class="n">CharSequence</span><span class="w"> </span><span class="n">charSequence</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"World"</span><span class="p">;</span>
+<span class="w">    </span><span class="n">StringBuffer</span><span class="w"> </span><span class="n">sb2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StringBuffer</span><span class="p">(</span><span class="n">charSequence</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">sb2</span><span class="p">.</span><span class="na">toString</span><span class="p">());</span><span class="w"> </span><span class="c1">// 输出: World</span>
+
+<span class="w">    </span><span class="c1">// 使用指定容量构造器</span>
+<span class="w">    </span><span class="n">StringBuffer</span><span class="w"> </span><span class="n">sb3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StringBuffer</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span><span class="w"> </span><span class="c1">// 初始容量为 10</span>
+<span class="w">    </span><span class="n">sb3</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="s">"Java"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">sb3</span><span class="p">.</span><span class="na">toString</span><span class="p">());</span><span class="w"> </span><span class="c1">// 输出: Java</span>
+
+<span class="w">    </span><span class="c1">// 使用 String 构造器</span>
+<span class="w">    </span><span class="n">StringBuffer</span><span class="w"> </span><span class="n">sb4</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StringBuffer</span><span class="p">(</span><span class="s">"Kimi"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">sb4</span><span class="p">.</span><span class="na">toString</span><span class="p">());</span><span class="w"> </span><span class="c1">// 输出: Kimi</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="bash"><code class="language-bash md-fencescode">Hello
+World
+Java
+Kimi
+</code></pre>
+<ul>
+<li><code>StringBuffer</code> 是一个可变的字符序列，适用于需要频繁修改字符串内容的场景。</li>
+<li>选择合适的构造器可以提高程序的效率，特别是在需要大量字符串操作的情况下。</li>
+<li>通过指定初始容量，可以避免多次扩容操作，从而提高性能。</li>
+</ul>
+<hr />
+<h2 id="stringbuffer-string_1">🍭 StringBuffer 与 String 的转换</h2>
+<p>在 Java 开发中，经常需要在 <code>String</code> 和 <code>StringBuffer</code> 之间进行转换。以下是如何实现这些转换的详细说明和示例代码。</p>
+<ol>
+<li>
+<p><code>String</code> 转换为 <code>StringBuffer</code></p>
+<p><strong>方法1</strong>：
+* 使用 <code>StringBuffer</code> 的构造器直接将 <code>String</code> 转换为 <code>StringBuffer</code>。
+* 示例代码：</p>
+</li>
+</ol>
+<pre lang="java"><code class="language-java md-fencescode"><span class="w">    </span><span class="n">String</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"hello"</span><span class="p">;</span>
+<span class="w">    </span><span class="n">StringBuffer</span><span class="w"> </span><span class="n">b1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StringBuffer</span><span class="p">(</span><span class="n">s</span><span class="p">);</span>
+</code></pre>
+<pre><code class="md-fencescode">**方法2**：
+* 创建一个空的 `StringBuffer` 对象，然后使用 `append` 方法添加字符串。
+* 示例代码：
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="w">    </span><span class="n">StringBuffer</span><span class="w"> </span><span class="n">b2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StringBuffer</span><span class="p">();</span>
+<span class="w">    </span><span class="n">b2</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="n">s</span><span class="p">);</span>
+</code></pre>
+<ol>
+<li>
+<p><code>StringBuffer</code> 转换为 <code>String</code></p>
+<p><strong>方法1</strong>：</p>
+<ul>
+<li>使用 <code>StringBuffer</code> 的 <code>toString()</code> 方法将 <code>StringBuffer</code> 转换为 <code>String</code>。</li>
+<li>示例代码：</li>
+</ul>
+</li>
+</ol>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">String</span><span class="w"> </span><span class="n">s2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b1</span><span class="p">.</span><span class="na">toString</span><span class="p">();</span>
+</code></pre>
+<pre><code class="md-fencescode">**方法2**：
+
+* 使用 `String` 的构造器，将 `StringBuffer` 作为参数传递。
+* 示例代码：
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">String</span><span class="w"> </span><span class="n">s3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">String</span><span class="p">(</span><span class="n">b1</span><span class="p">);</span>
+</code></pre>
+<p>示例代码</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">StringAndStringBuffer</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// String 转换为 StringBuffer</span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"hello"</span><span class="p">;</span>
+<span class="w">        </span><span class="c1">// 方式1: 使用构造器</span>
+<span class="w">        </span><span class="n">StringBuffer</span><span class="w"> </span><span class="n">b1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StringBuffer</span><span class="p">(</span><span class="n">s</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 方式2: 使用 append 方法</span>
+<span class="w">        </span><span class="n">StringBuffer</span><span class="w"> </span><span class="n">b2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StringBuffer</span><span class="p">();</span>
+<span class="w">        </span><span class="n">b2</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="n">s</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// StringBuffer 转换为 String</span>
+<span class="w">        </span><span class="c1">// 方式1: 使用 toString 方法</span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">s2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b1</span><span class="p">.</span><span class="na">toString</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">// 方式2: 使用 String 构造器</span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">s3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">String</span><span class="p">(</span><span class="n">b1</span><span class="p">);</span>
+
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"String from b1: "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">s2</span><span class="p">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"String from b1: "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">s3</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="bash"><code class="language-bash md-fencescode">String<span class="w"> </span>from<span class="w"> </span>b1:<span class="w"> </span>hello
+String<span class="w"> </span>from<span class="w"> </span>b1:<span class="w"> </span>hello
+</code></pre>
+<ul>
+<li><code>String</code> 是不可变的，每次修改都会创建新的对象。</li>
+<li><code>StringBuffer</code> 是可变的，可以在原有对象上进行修改，适合频繁修改的场景。</li>
+<li>通过上述方法，可以在 <code>String</code> 和 <code>StringBuffer</code> 之间灵活转换，以满足不同的编程需求。</li>
+</ul>
+<hr />
+<h2 id="stringbuffer_1">🍭 StringBuffer 的常用方法</h2>
+<p><code>StringBuffer</code> 类提供了多种方法来操作字符串缓冲区。以下是一些常用方法的笔记：</p>
+<ol>
+<li>增加内容 (<code>append</code>)<ul>
+<li><strong>描述</strong>：在缓冲区的末尾追加新的字符串。</li>
+<li><strong>示例</strong>：</li>
+</ul>
+</li>
+</ol>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">StringBuffer</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StringBuffer</span><span class="p">(</span><span class="s">"hello"</span><span class="p">);</span>
+<span class="n">s</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="s">", "</span><span class="p">);</span>
+<span class="n">s</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="s">"张三丰"</span><span class="p">);</span>
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">s</span><span class="p">);</span><span class="w"> </span><span class="c1">// 输出: hello, 张三丰</span>
+</code></pre>
+<ol>
+<li>删除内容 (<code>delete</code>)<ul>
+<li><strong>描述</strong>：删除缓冲区中从 <code>start</code> 到 <code>end</code>（不包括 <code>end</code>）的字符。</li>
+<li><strong>示例</strong>：</li>
+</ul>
+</li>
+</ol>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">s</span><span class="p">.</span><span class="na">delete</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span><span class="w"> </span><span class="mi">14</span><span class="p">);</span>
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">s</span><span class="p">);</span><span class="w"> </span><span class="c1">// 输出: hello, 张三丰</span>
+</code></pre>
+<ol>
+<li>修改内容 (<code>replace</code>)<ul>
+<li><strong>描述</strong>：将缓冲区中从 <code>start</code> 到 <code>end</code>（不包括 <code>end</code>）的内容替换为新的字符串。</li>
+<li><strong>示例</strong>：</li>
+</ul>
+</li>
+</ol>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">s</span><span class="p">.</span><span class="na">replace</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span><span class="w"> </span><span class="mi">11</span><span class="p">,</span><span class="w"> </span><span class="s">"周芷若"</span><span class="p">);</span>
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">s</span><span class="p">);</span><span class="w"> </span><span class="c1">// 输出: hello, 周芷若</span>
+</code></pre>
+<ol>
+<li>查找索引 (<code>indexOf</code>)<ul>
+<li><strong>描述</strong>：查找子串在字符串中第一次出现的索引，如果找不到返回 -1。</li>
+<li><strong>示例</strong>：</li>
+</ul>
+</li>
+</ol>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kt">int</span><span class="w"> </span><span class="n">index</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="na">indexOf</span><span class="p">(</span><span class="s">"张三丰"</span><span class="p">);</span>
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">index</span><span class="p">);</span><span class="w"> </span><span class="c1">// 输出: -1</span>
+</code></pre>
+<ol>
+<li>插入内容 (<code>insert</code>)<ul>
+<li><strong>描述</strong>：在指定位置插入字符串。</li>
+<li><strong>示例</strong>：</li>
+</ul>
+</li>
+</ol>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">s</span><span class="p">.</span><span class="na">insert</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span><span class="w"> </span><span class="s">"赵敏"</span><span class="p">);</span>
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">s</span><span class="p">);</span><span class="w"> </span><span class="c1">// 输出: hello, 赵敏, 周芷若</span>
+</code></pre>
+<ol>
+<li>获取长度 (<code>length</code>)<ul>
+<li><strong>描述</strong>：获取缓冲区中字符串的长度。</li>
+<li><strong>示例</strong>：</li>
+</ul>
+</li>
+</ol>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="na">length</span><span class="p">());</span><span class="w"> </span><span class="c1">// 输出: 18</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">StringBufferMethods</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">StringBuffer</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StringBuffer</span><span class="p">(</span><span class="s">"hello"</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 增加内容</span>
+<span class="w">        </span><span class="n">s</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="s">", "</span><span class="p">);</span>
+<span class="w">        </span><span class="n">s</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="s">"张三丰"</span><span class="p">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">s</span><span class="p">);</span><span class="w"> </span><span class="c1">// hello, 张三丰</span>
+
+<span class="w">        </span><span class="c1">// 删除内容</span>
+<span class="w">        </span><span class="n">s</span><span class="p">.</span><span class="na">delete</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span><span class="w"> </span><span class="mi">14</span><span class="p">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">s</span><span class="p">);</span><span class="w"> </span><span class="c1">// hello, 张三丰</span>
+
+<span class="w">        </span><span class="c1">// 修改内容</span>
+<span class="w">        </span><span class="n">s</span><span class="p">.</span><span class="na">replace</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span><span class="w"> </span><span class="mi">11</span><span class="p">,</span><span class="w"> </span><span class="s">"周芷若"</span><span class="p">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">s</span><span class="p">);</span><span class="w"> </span><span class="c1">// hello, 周芷若</span>
+
+<span class="w">        </span><span class="c1">// 查找索引</span>
+<span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">index</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="na">indexOf</span><span class="p">(</span><span class="s">"张三丰"</span><span class="p">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">index</span><span class="p">);</span><span class="w"> </span><span class="c1">// -1</span>
+
+<span class="w">        </span><span class="c1">// 插入内容</span>
+<span class="w">        </span><span class="n">s</span><span class="p">.</span><span class="na">insert</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span><span class="w"> </span><span class="s">"赵敏"</span><span class="p">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">s</span><span class="p">);</span><span class="w"> </span><span class="c1">// hello, 赵敏, 周芷若</span>
+
+<span class="w">        </span><span class="c1">// 获取长度</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="na">length</span><span class="p">());</span><span class="w"> </span><span class="c1">// 18</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="bash"><code class="language-bash md-fencescode">hello,<span class="w"> </span>张三丰
+hello,<span class="w"> </span>张三丰
+hello,<span class="w"> </span>周芷若
+-1
+hello,<span class="w"> </span>赵敏,<span class="w"> </span>周芷若
+<span class="m">18</span>
+</code></pre>
+<ul>
+<li><code>StringBuffer</code> 是一个可变的字符序列，适合在需要频繁修改字符串内容的场景中使用。</li>
+<li>通过这些方法，可以方便地对字符串缓冲区进行增删改查等操作。</li>
+</ul>
+<p>练习（有点坑，请留意）</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">String</span><span class="w"> </span><span class="n">str</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="n">StringBuffer</span><span class="w"> </span><span class="n">sb</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StringBuffer</span><span class="p">();</span>
+<span class="n">sb</span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="n">str</span><span class="p">);</span><span class="w">  </span><span class="c1">// append 如果插入的是空，就是加入了“null”字符串！！！⚠️</span>
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">sb</span><span class="p">.</span><span class="na">length</span><span class="p">());</span><span class="w"> </span><span class="c1">// 4</span>
+
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">sb</span><span class="p">);</span><span class="w"> </span><span class="c1">// null</span>
+<span class="n">StringBuffer</span><span class="w"> </span><span class="n">sb1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StringBuffer</span><span class="p">(</span><span class="n">str</span><span class="p">);</span><span class="w"> </span><span class="c1">// 构造器不能插入null，报错！空指针异常</span>
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">sb1</span><span class="p">);</span>
+</code></pre>
+<p>练习</p>
+<p>输入商品名称和商品价格，要求打印效果示例，使用前面学习的方法完成：
+商品名 商品价格
+手机 123,564.59</p>
+<p>要求：<strong>价格的小数点前面每三位用逗号隔开</strong>。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">ex_commom</span><span class="p">;</span><span class="w">  </span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.Scanner</span><span class="p">;</span><span class="w">  </span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">StringBufferEx</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">){</span><span class="w">  </span>
+<span class="w">        </span><span class="n">Scanner</span><span class="w"> </span><span class="n">scanner</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Scanner</span><span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="na">in</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">print</span><span class="p">(</span><span class="s">"请输入商品名:"</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">String</span><span class="p">(</span><span class="n">scanner</span><span class="p">.</span><span class="na">next</span><span class="p">());</span><span class="w">  </span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">print</span><span class="p">(</span><span class="s">"请输入商品价格:"</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="c1">// StringBuffer sb = new StringBuffer(scanner.nextDouble()+"");  </span>
+<span class="w">        </span><span class="n">StringBuffer</span><span class="w"> </span><span class="n">sb</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StringBuffer</span><span class="p">(</span><span class="s">"123456789.0"</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="kt">int</span><span class="w"> </span><span class="n">index</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sb</span><span class="p">.</span><span class="na">indexOf</span><span class="p">(</span><span class="s">"."</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="o">=</span><span class="n">index</span><span class="o">-</span><span class="mi">3</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">i</span><span class="o">-=</span><span class="mi">3</span><span class="p">)</span><span class="w">  </span>
+<span class="w">            </span><span class="n">sb</span><span class="p">.</span><span class="na">insert</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="w"> </span><span class="s">","</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">print</span><span class="p">(</span><span class="s">"商品\t商品价格"</span><span class="p">);</span><span class="w">  </span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">print</span><span class="p">(</span><span class="n">name</span><span class="o">+</span><span class="s">"\t"</span><span class="o">+</span><span class="n">sb</span><span class="p">);</span><span class="w">  </span>
+<span class="w">    </span><span class="p">}</span><span class="w">  </span>
+<span class="p">}</span>
+</code></pre>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

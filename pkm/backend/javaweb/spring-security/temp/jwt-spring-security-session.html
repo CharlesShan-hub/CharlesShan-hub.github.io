@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>jwt-spring-security-session</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="jwt">JWT</h1>
+<p><strong><font style="color:rgb(15, 17, 21);">JWT 是一个完全独立的技术标准（RFC 7519）</font></strong><font style="color:rgb(15, 17, 21);">，它本身并不隶属于 OAuth2 或 Spring Security，但三者经常一起使用。</font></p>
+<h2 id="spring-security">Spring Security 的默认会话机制</h2>
+<p><strong>Spring Security 默认使用的是 Session 机制。</strong></p>
+<p><strong>具体解释：</strong></p>
+<p>在现在的 GitHub OAuth2 项目中，Spring Security 的默认工作流程是这样的：</p>
+<p><strong>登录成功后</strong></p>
+<ul>
+<li>Spring Security 会将认证信息（包括从 GitHub 获取的用户信息 <code>OAuth2User</code>）存储在 <strong>HttpSession</strong> 中</li>
+<li>同时在浏览器端设置一个名为 <code>JSESSIONID</code> 的 Cookie</li>
+</ul>
+<p><strong>后续请求中</strong></p>
+<ul>
+<li>浏览器自动携带 <code>JSESSIONID</code> Cookie</li>
+<li>Spring Security 根据这个 ID 找到对应的 Session</li>
+<li>从 Session 中恢复认证信息，让你能在 Controller 中通过 <code>@AuthenticationPrincipal</code> 获取用户信息</li>
+</ul>
+<p><strong>代码证明</strong></p>
+<p>在 Controller 中：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@GetMapping</span><span class="p">(</span><span class="s">"/"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">index</span><span class="p">(</span><span class="n">Model</span><span class="w"> </span><span class="n">model</span><span class="p">,</span><span class="w"> </span><span class="nd">@AuthenticationPrincipal</span><span class="w"> </span><span class="n">OAuth2User</span><span class="w"> </span><span class="n">oauth2User</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 这个 oauth2User 就是从 Session 中取出来的</span>
+<span class="w">    </span><span class="c1">// 不需要每次请求都去 GitHub 重新获取</span>
+<span class="w">    </span><span class="n">model</span><span class="p">.</span><span class="na">addAttribute</span><span class="p">(</span><span class="s">"userName"</span><span class="p">,</span><span class="w"> </span><span class="n">oauth2User</span><span class="p">.</span><span class="na">getName</span><span class="p">());</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s">"index"</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>Session 有效期</strong></p>
+<ul>
+<li>默认情况下，Session 在用户关闭浏览器后失效</li>
+<li>也可以在 <code>application.yml</code> 中配置：</li>
+</ul>
+<pre lang="yaml"><code class="language-yaml md-fencescode"><span class="nt">server</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">servlet</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">session</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">timeout</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1800</span><span class="w"> </span><span class="c1"># 30分钟（以秒为单位）</span>
+</code></pre>
+<h2 id="jwt-jwt">用 JWT 和不用 JWT 的区别</h2>
+<p>用了JWT，前端可以直接从 JWT 令牌中读取用户信息而不用问后端；没用JWT，前端每次需要用户信息时都必须请求后端接口。</p>
+<ul>
+<li><strong>用JWT</strong>：用户基本信息「写在身份证上」，谁都能看，前端自给自足</li>
+<li><strong>不用JWT</strong>：用户基本信息「锁在服务器保险柜里」，前端每次都要敲门问</li>
+</ul>
+<p>最核心的区别——<strong>信息存储位置和访问方式</strong>不同。</p>
+<p><strong>想象一下，你经常去一个</strong><strong>健身房</strong><strong>。</strong></p>
+<p><strong>没用 JWT 的时候（传统 Session）：</strong></p>
+<p>你第一次去，前台给你一张<strong>磁卡</strong>（Session ID）。这张卡本身没信息，只是健身房电脑系统里的一个编号。</p>
+<p>每次你进健身房，都要<strong>刷卡</strong>（发送请求）。<br />
+前台要<strong>打电话问后台</strong>（查询数据库/Session）：“卡号 888 是谁？他有啥权限？”<br />
+后台查完告诉前台：“是张三，可以进器械区。”<br />
+然后才放你进去。</p>
+<p><strong>缺点</strong>：前台每次都要问后台，很麻烦。如果健身房开了连锁店（多个服务器），信息可能不同步。</p>
+<hr />
+<p><strong>用了 JWT 的时候：</strong></p>
+<p>你第一次去，前台给你一张<strong>高级防伪会员卡</strong>（JWT）。</p>
+<p>这张卡很神奇，上面用<strong>特殊防伪技术</strong>（签名）写着你的所有信息：</p>
+<blockquote>
+<p>“姓名：张三，会员等级：金卡，有效期至：2024年底...”（<strong>Payload - 有效信息</strong>）<br />
+这些信息被<strong>特殊编码</strong>过（Base64 编码：只是为了防止网络传输中乱码），但谁都能看懂（信息是明文形式）。
+</p>
+</blockquote>
+<p>现在你进任何一家连锁店，前台只需要：</p>
+<ol>
+<li>用专门的<strong>验钞灯</strong>（签名验证算法）照一下卡的<strong>防伪标记</strong>（Signature）。</li>
+<li>如果防伪标记是真的，他就<strong>直接相信卡上写的所有信息</strong>，不再打电话问总部。</li>
+</ol>
+<p><strong>优点</strong>：速度快（不用每次查数据库），去哪家店都行（无状态、扩展性好）。</p>
+<p><strong>总结一下 JWT 的核心特点：</strong></p>
+<ol>
+<li><strong>自包含</strong>：信息就写在卡上（令牌里），不用去后台查。</li>
+<li><strong>可验证</strong>：通过防伪签名（Signature）确保信息没人篡改。</li>
+<li><strong>有期限</strong>：卡上写着有效期，过期就作废。</li>
+</ol>
+<p>所以，<strong>JWT 就是一个自带防伪标识、写着用户信息的数字身份证</strong>。验证方只要验证身份证真伪，就可以直接相信上面的信息，省去了每次查询中央数据库的麻烦。</p>
+<h2 id="jwt_1">什么是 JWT</h2>
+<p><strong><font style="color:rgb(15, 17, 21);">JWT 是 JSON Web Token 的缩写。</font></strong></p>
+<p><font style="color:rgb(15, 17, 21);">把它拆开理解就非常简单：</font></p>
+<ul>
+<li><strong><font style="color:rgb(15, 17, 21);">JSON</font></strong><font style="color:rgb(15, 17, 21);">：说明它使用</font><font style="color:rgb(15, 17, 21);"> </font><strong><font style="color:rgb(15, 17, 21);">JSON 格式</font></strong><font style="color:rgb(15, 17, 21);"> </font><font style="color:rgb(15, 17, 21);">来存储信息。就像你平时写的</font><font style="color:rgb(15, 17, 21);"> </font><code>&lt;font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"&gt;{"name": "张三", "age": 25}&lt;/font&gt;</code><font style="color:rgb(15, 17, 21);"> </font><font style="color:rgb(15, 17, 21);">这种键值对。</font></li>
+<li><strong><font style="color:rgb(15, 17, 21);">Web</font></strong><font style="color:rgb(15, 17, 21);">：说明它是为</font><font style="color:rgb(15, 17, 21);"> </font><strong><font style="color:rgb(15, 17, 21);">网络应用</font></strong><font style="color:rgb(15, 17, 21);"> </font><font style="color:rgb(15, 17, 21);">设计的，专门用于在网站、API 之间安全地传递信息。</font></li>
+<li><strong><font style="color:rgb(15, 17, 21);">Token</font></strong><font style="color:rgb(15, 17, 21);">：意思是 </font><strong><font style="color:rgb(15, 17, 21);">“令牌”</font></strong><font style="color:rgb(15, 17, 21);"> 或 </font><strong><font style="color:rgb(15, 17, 21);">“凭证”</font></strong><font style="color:rgb(15, 17, 21);">。就像开门用的钥匙、进入游乐园的门票。</font></li>
+</ul>
+<p><font style="color:rgb(15, 17, 21);">如果是前后端分离的系统，那就不能使用 HttpSession 技术了，就需要使用 JWT 了。</font></p>
+<h2 id="jwt_2">JWT 底层机制</h2>
+<p>我们回到健身房的例子，但这次我们来看看这张“防伪会员卡”到底是怎么从无到有制作出来的。</p>
+<h3 id="jwt_3">第一幕：准备材料（签发 JWT）</h3>
+<p>想象你是一家健身房的老板，要给自己制作一张高级防伪会员卡。</p>
+<p><strong>第一步：写下核心信息（创建 Payload）</strong><br />
+你拿出一张卡片，写上你的基本信息：</p>
+<pre lang="json"><code class="language-json md-fencescode"><span class="p">{</span>
+<span class="w">  </span><span class="nt">"姓名"</span><span class="p">:</span><span class="w"> </span><span class="s2">"张三"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"等级"</span><span class="p">:</span><span class="w"> </span><span class="s2">"金卡会员"</span><span class="p">,</span><span class="w"> </span>
+<span class="w">  </span><span class="nt">"发卡时间"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2024-01-01"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"有效期至"</span><span class="p">:</span><span class="w"> </span><span class="s2">"2024-12-31"</span>
+<span class="p">}</span>
+</code></pre>
+<p>这就是 <strong>Payload（有效载荷）</strong>，即卡里要存储的核心信息。</p>
+<p><strong>第二步：写明防伪技术（创建 Header）</strong><br />
+为了防止别人伪造，你决定采用一种复杂的防伪技术。你在卡片角落注明：</p>
+<pre lang="json"><code class="language-json md-fencescode"><span class="p">{</span>
+<span class="w">  </span><span class="nt">"防伪技术"</span><span class="p">:</span><span class="w"> </span><span class="s2">"健身房独家秘方V1"</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"卡片类型"</span><span class="p">:</span><span class="w"> </span><span class="s2">"JWT会员卡"</span>
+<span class="p">}</span>
+</code></pre>
+<p>这就是 <strong>Header（头部）</strong>，说明了使用的签名算法(<strong>HS256 算法</strong>)和类型。</p>
+<h3 id="signature">第二幕：制作防伪标识（生成 Signature）</h3>
+<p>这是最关键的一步，决定了卡片的真伪。</p>
+<p><strong>第三步：混合编码（Base64Url 编码）</strong></p>
+<ol>
+<li>你把 <strong>Header</strong> 这张小纸条的内容，用一种<strong>通用翻译器</strong>（Base64Url 编码）转成一串看似乱码的文字：<code>aaaa</code></li>
+<li>你把 <strong>Payload</strong> 这张卡片的内容，也用同样的<strong>通用翻译器</strong>转成另一串乱码：<code>bbbb</code></li>
+<li>你把这两串乱码用点号连接起来：<code>aaaa.bbbb</code></li>
+</ol>
+<p><strong>第四步：核心加密（生成签名）</strong><br />
+现在到了最核心的步骤：</p>
+<ul>
+<li>你有一个只有健身房经理才知道的 <strong>“绝密配方”</strong>（Secret Key）。</li>
+<li>你把这个 <strong>“绝密配方”</strong> 和刚才那串 <code>aaaa.bbbb</code> 放进一个<strong>特殊的机器</strong>（签名算法，如 HS256）里进行加工。</li>
+<li>机器吐出一串全新的、独一无二的<strong>防伪码</strong>（Signature）：<code>cccc</code></li>
+</ul>
+<p><strong>最终成品：</strong><br />
+你把所有部分用点号连接起来，最终得到了一张完整的、带有防伪标识的会员卡：<br />
+<code>aaaa.bbbb.cccc</code></p>
+<p>这就是一个完整的 <strong>JWT</strong>。</p>
+<h3 id="jwt_4">第三幕：验卡过程（验证 JWT）</h3>
+<p>现在，你拿着这张卡 <code>aaaa.bbbb.cccc</code> 去健身房前台。</p>
+<p>前台小哥的验卡流程如下：</p>
+<p><strong>第一步：拆解</strong><br />
+他把卡片拆成三部分：<code>aaaa</code>、<code>bbbb</code> 和 <code>cccc</code>。</p>
+<p><strong>第二步：重现防伪码</strong></p>
+<ol>
+<li>前台小哥也有一台同样的<strong>特殊机器</strong>（验证算法）。</li>
+<li>他知道健身房通用的 <strong>“绝密配方”</strong>（Secret Key）。</li>
+<li>他把 <code>aaaa</code> 和 <code>bbbb</code> 重新组合成 <code>aaaa.bbbb</code>，然后和 <strong>“绝密配方”</strong> 一起放进机器。</li>
+<li>机器也吐出一串防伪码，我们称之为 <code>cccc2</code>。</li>
+</ol>
+<p><strong>第三步：比对</strong><br />
+现在，他开始比对他自己算出来的 <code>cccc2</code> 和卡片上印着的 <code>cccc</code>。</p>
+<ul>
+<li><strong>情况A（验卡通过）</strong>：如果 <code>cccc2</code> 和 <code>cccc</code> <strong>完全一样</strong>。<ul>
+<li>结论：“卡是真的！信息有效！”</li>
+<li>前台小哥信任卡片上的所有信息，直接为你服务。</li>
+</ul>
+</li>
+<li><strong>情况B（验卡失败）</strong>：如果 <code>cccc2</code> 和 <code>cccc</code> <strong>对不上</strong>。<ul>
+<li>结论：“卡是假的！信息被篡改过！”</li>
+<li>立即拒绝服务。</li>
+</ul>
+</li>
+</ul>
+<h3 id="_1">底层机制的核心要点总结</h3>
+<ol>
+<li><strong>三部分组成</strong>：<code>Header.Payload.Signature</code>，用点连接。</li>
+<li><strong>信息透明</strong>：Header 和 Payload 只是做了 Base64 编码，<strong>谁都能解码看清内容</strong>，所以不能存放密码等敏感信息。</li>
+<li><strong>安全全靠签名</strong>：整个 JWT 的安全性和可信度，100% 依赖于 <strong>Signature</strong>。Signature 是由 Header、Payload 和 Secret Key 共同通过加密算法计算得出的。</li>
+<li><strong>验证原理</strong>：验证方用同样的算法和 Secret Key，对收到的 Header 和 Payload 重新计算一次签名，然后与 JWT 自带的 Signature 进行比对。一致则可信。</li>
+<li><strong>密钥是关键</strong>：那个 <strong>Secret Key</strong> 至关重要，如果泄露，任何人都可以伪造合法的 JWT。它必须被严格保护在服务器端。</li>
+</ol>
+<p>简单说，JWT 的底层就是一个 <strong>“信息 + 防伪码”</strong> 的结构，它的安全性不在于隐藏信息，而在于通过密码学手段确保信息<strong>无法被篡改</strong>。</p>
+<p><font style="color:rgb(15, 17, 21);">站在 Web 前端角度来说，首次登录成功后从后端接收到 JWT，可以将其存储在浏览器本地（如 LocalStorage 或 Cookie）。之后需要获取用户基本信息（如用户名、头像）时，前端</font><strong><font style="color:rgb(15, 17, 21);">无需再请求后端接口</font></strong><font style="color:rgb(15, 17, 21);">，只需直接解析 JWT 的 Payload 部分即可读取这些信息。</font></p>
+<p><font style="color:rgb(15, 17, 21);"></font></p>
+<p><font style="color:rgb(15, 17, 21);">不过要注意：JWT 虽然自带有效期，但</font><strong><font style="color:rgb(15, 17, 21);">无法在有效期内主动失效</font></strong><font style="color:rgb(15, 17, 21);">。也就是说，就算用户已经主动退出系统了，JWT 只要还没有过期，该 Token 还是有效的。这是 JWT “无状态”特性带来的权衡，在实际应用中通常需要借助黑名单、设置较短有效期等策略来弥补这一点。</font></p>
+<h2 id="oauth2-githubjwt">OAuth2 GitHub登录项目集成JWT</h2>
+<h3 id="_2"><font style="color:rgb(15, 17, 21);">添加依赖</font></h3>
+<p><font style="color:rgb(15, 17, 21);">首先在 </font><code>&lt;font style="color:rgb(15, 17, 21);"&gt;pom.xml&lt;/font&gt;</code><font style="color:rgb(15, 17, 21);"> 中添加JWT相关依赖：JJWT（</font><strong><font style="color:rgb(15, 17, 21);">Java JWT 的库</font></strong><font style="color:rgb(15, 17, 21);">）</font></p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cm">&lt;!--提供JWT创建和解析的接口和抽象类，是开发时的主要编程接口。--&gt;</span>
+<span class="nt">&lt;dependency&gt;</span>
+<span class="w">    </span><span class="nt">&lt;groupId&gt;</span>io.jsonwebtoken<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>jjwt-api<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;version&gt;</span>0.13.0<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+<span class="cm">&lt;!--提供JJWT接口的具体实现，在运行时负责实际的JWT令牌处理逻辑。--&gt;</span>
+<span class="nt">&lt;dependency&gt;</span>
+<span class="w">    </span><span class="nt">&lt;groupId&gt;</span>io.jsonwebtoken<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>jjwt-impl<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;version&gt;</span>0.13.0<span class="nt">&lt;/version&gt;</span>
+<span class="w">    </span><span class="nt">&lt;scope&gt;</span>runtime<span class="nt">&lt;/scope&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+<span class="cm">&lt;!--使用Jackson库来处理JWT的JSON序列化和反序列化操作。--&gt;</span>
+<span class="nt">&lt;dependency&gt;</span>
+<span class="w">    </span><span class="nt">&lt;groupId&gt;</span>io.jsonwebtoken<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>jjwt-jackson<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;version&gt;</span>0.13.0<span class="nt">&lt;/version&gt;</span>
+<span class="w">    </span><span class="nt">&lt;scope&gt;</span>runtime<span class="nt">&lt;/scope&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre>
+<h3 id="jwt_5"><font style="color:rgb(15, 17, 21);">配置JWT属性</font></h3>
+<p><font style="color:rgb(15, 17, 21);">在 </font><code>&lt;font style="color:rgb(15, 17, 21);"&gt;application.yml&lt;/font&gt;</code><font style="color:rgb(15, 17, 21);"> 中添加JWT配置：</font></p>
+<pre lang="yaml"><code class="language-yaml md-fencescode"><span class="nt">app</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">jwt</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">secret</span><span class="p">:</span><span class="w"> </span><span class="s">"oauth2-login-demo-jwt-secret-2024@Secure!Key#256Bits$MinLengthRequired"</span><span class="w"> </span><span class="c1"># 一定是强秘钥</span>
+<span class="w">    </span><span class="nt">expiration</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">86400000</span><span class="w"> </span><span class="c1"># 24小时</span>
+<span class="w">    </span><span class="nt">issuer</span><span class="p">:</span><span class="w"> </span><span class="s">"oauth2-login-demo"</span><span class="w"> </span><span class="c1"># 标明这个 JWT 是由哪个应用颁发的，在验证 token 时可以检查发行者是否匹配</span>
+</code></pre>
+<h3 id="jwt_6"><font style="color:rgb(15, 17, 21);">创建JWT工具类</font></h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.oauth2.logindemo.config.jwt</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">io.jsonwebtoken.Claims</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">io.jsonwebtoken.JwtException</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">io.jsonwebtoken.Jwts</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">io.jsonwebtoken.SignatureAlgorithm</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">io.jsonwebtoken.security.Keys</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.beans.factory.annotation.Value</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.security.core.Authentication</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.security.core.GrantedAuthority</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">javax.crypto.SecretKey</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.ArrayList</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.Date</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.List</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.stream.Collectors</span><span class="p">;</span>
+
+<span class="nd">@Component</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">JwtTokenProvider</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@Value</span><span class="p">(</span><span class="s">"${app.jwt.secret}"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">jwtSecret</span><span class="p">;</span>
+
+<span class="w">    </span><span class="nd">@Value</span><span class="p">(</span><span class="s">"${app.jwt.expiration}"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kt">long</span><span class="w"> </span><span class="n">jwtExpiration</span><span class="p">;</span>
+
+<span class="w">    </span><span class="nd">@Value</span><span class="p">(</span><span class="s">"${app.jwt.issuer}"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">jwtIssuer</span><span class="p">;</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * 根据配置的密钥字符串生成JWT签名所需的SecretKey对象。</span>
+<span class="cm">     *</span>
+<span class="cm">     * @return</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">SecretKey</span><span class="w"> </span><span class="nf">getSigningKey</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Keys</span><span class="p">.</span><span class="na">hmacShaKeyFor</span><span class="p">(</span><span class="n">jwtSecret</span><span class="p">.</span><span class="na">getBytes</span><span class="p">());</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * 使用用户认证信息生成包含用户名、角色和过期时间的JWT令牌。</span>
+<span class="cm">     *</span>
+<span class="cm">     * @param authentication</span>
+<span class="cm">     * @return</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">generateToken</span><span class="p">(</span><span class="n">Authentication</span><span class="w"> </span><span class="n">authentication</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">username</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">authentication</span><span class="p">.</span><span class="na">getName</span><span class="p">();</span>
+<span class="w">        </span><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">roles</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">authentication</span><span class="p">.</span><span class="na">getAuthorities</span><span class="p">().</span><span class="na">stream</span><span class="p">().</span><span class="na">map</span><span class="p">(</span><span class="n">GrantedAuthority</span><span class="p">::</span><span class="n">getAuthority</span><span class="p">).</span><span class="na">collect</span><span class="p">(</span><span class="n">Collectors</span><span class="p">.</span><span class="na">toList</span><span class="p">());</span>
+
+<span class="w">        </span><span class="c1">// 每个角色名前添加 ROLE_ 前缀。</span>
+<span class="w">        </span><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">normalizedRoles</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">normalizeRoles</span><span class="p">(</span><span class="n">roles</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 系统当前时间</span>
+<span class="w">        </span><span class="n">Date</span><span class="w"> </span><span class="n">now</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Date</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">// 过期时间</span>
+<span class="w">        </span><span class="n">Date</span><span class="w"> </span><span class="n">expiryDate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Date</span><span class="p">(</span><span class="n">now</span><span class="p">.</span><span class="na">getTime</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">jwtExpiration</span><span class="p">);</span>
+
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Jwts</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">                </span><span class="p">.</span><span class="na">setSubject</span><span class="p">(</span><span class="n">username</span><span class="p">)</span><span class="w">           </span><span class="c1">// 设置JWT主题，存储用户名作为用户唯一标识</span>
+<span class="w">                </span><span class="p">.</span><span class="na">setIssuer</span><span class="p">(</span><span class="n">jwtIssuer</span><span class="p">)</span><span class="w">            </span><span class="c1">// 设置JWT签发者，标识token来自哪个应用</span>
+<span class="w">                </span><span class="p">.</span><span class="na">setIssuedAt</span><span class="p">(</span><span class="n">now</span><span class="p">)</span><span class="w">                </span><span class="c1">// 设置JWT签发时间，用于计算token年龄</span>
+<span class="w">                </span><span class="p">.</span><span class="na">setExpiration</span><span class="p">(</span><span class="n">expiryDate</span><span class="p">)</span><span class="w">       </span><span class="c1">// 设置JWT过期时间，到达此时间后token失效</span>
+<span class="w">                </span><span class="p">.</span><span class="na">claim</span><span class="p">(</span><span class="s">"roles"</span><span class="p">,</span><span class="w"> </span><span class="n">normalizedRoles</span><span class="p">)</span><span class="w"> </span><span class="c1">// 添加自定义声明，存储用户标准化后的角色列表</span>
+<span class="w">                </span><span class="p">.</span><span class="na">signWith</span><span class="p">(</span><span class="n">getSigningKey</span><span class="p">(),</span><span class="w"> </span><span class="n">SignatureAlgorithm</span><span class="p">.</span><span class="na">HS256</span><span class="p">)</span><span class="w"> </span><span class="c1">// 使用 HS256算法和密钥 对JWT进行签名，防止篡改</span>
+<span class="w">                </span><span class="p">.</span><span class="na">compact</span><span class="p">();</span><span class="w">                       </span><span class="c1">// 将以上所有设置组装成最终的JWT字符串</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * 标准化角色列表，确保包含 ROLE_USER 并正确处理各种角色格式</span>
+<span class="cm">     * @PreAuthorize("hasRole('ADMIN')")  在检查的时候会判断用户是否有ROLE_ADMIN角色</span>
+<span class="cm">     * 因此，下面的方法是给所有的角色统一添加 ROLE_ 前缀。</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">normalizeRoles</span><span class="p">(</span><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">roles</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">normalizedRoles</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ArrayList</span><span class="o">&lt;&gt;</span><span class="p">();</span>
+
+<span class="w">        </span><span class="c1">// 这不是必须的，是业务需求，不是技术必须：让所有登录用户都拥有一个基础角色（ROLE_USER），确保每个人在应用内都有最基本的权限</span>
+<span class="w">        </span><span class="n">normalizedRoles</span><span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="s">"ROLE_USER"</span><span class="p">);</span>
+
+<span class="w">        </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">role</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">roles</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">role</span><span class="p">.</span><span class="na">startsWith</span><span class="p">(</span><span class="s">"SCOPE_"</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="c1">// SCOPE_ 开头的是 GitHub 的 OAuth2 授权范围，和我应用自身的业务角色无关，不需要混入我的角色体系</span>
+<span class="w">                </span><span class="c1">// SCOPE_ 开头是 Spring Security 在处理 OAuth2 登录时，自动将 GitHub 返回的授权范围（scope）加上前缀后转换成的 GrantedAuthority</span>
+<span class="w">                </span><span class="k">continue</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">role</span><span class="p">.</span><span class="na">startsWith</span><span class="p">(</span><span class="s">"ROLE_"</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">normalizedRoles</span><span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="s">"ROLE_"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">role</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">normalizedRoles</span><span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="n">role</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">normalizedRoles</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * 从JWT令牌中解析并提取用户名主题(subject)。</span>
+<span class="cm">     *</span>
+<span class="cm">     * @param token</span>
+<span class="cm">     * @return</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getUsernameFromToken</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">token</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Claims</span><span class="w"> </span><span class="n">claims</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Jwts</span><span class="p">.</span><span class="na">parser</span><span class="p">().</span><span class="na">setSigningKey</span><span class="p">(</span><span class="n">getSigningKey</span><span class="p">()).</span><span class="na">build</span><span class="p">().</span><span class="na">parseClaimsJws</span><span class="p">(</span><span class="n">token</span><span class="p">).</span><span class="na">getBody</span><span class="p">();</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">claims</span><span class="p">.</span><span class="na">getSubject</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * 验证JWT令牌的签名有效性和格式正确性。</span>
+<span class="cm">     *</span>
+<span class="cm">     * @param token</span>
+<span class="cm">     * @return</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="nf">validateToken</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">token</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">Jwts</span><span class="p">.</span><span class="na">parser</span><span class="p">().</span><span class="na">setSigningKey</span><span class="p">(</span><span class="n">getSigningKey</span><span class="p">()).</span><span class="na">build</span><span class="p">().</span><span class="na">parseClaimsJws</span><span class="p">(</span><span class="n">token</span><span class="p">);</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">JwtException</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">IllegalArgumentException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * 从JWT令牌中提取用户角色权限列表。</span>
+<span class="cm">     *</span>
+<span class="cm">     * @param token</span>
+<span class="cm">     * @return</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">getRolesFromToken</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">token</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Claims</span><span class="w"> </span><span class="n">claims</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Jwts</span><span class="p">.</span><span class="na">parser</span><span class="p">().</span><span class="na">setSigningKey</span><span class="p">(</span><span class="n">getSigningKey</span><span class="p">()).</span><span class="na">build</span><span class="p">().</span><span class="na">parseClaimsJws</span><span class="p">(</span><span class="n">token</span><span class="p">).</span><span class="na">getBody</span><span class="p">();</span>
+
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">claims</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="s">"roles"</span><span class="p">,</span><span class="w"> </span><span class="n">List</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="jwt_7"><font style="color:rgb(15, 17, 21);">创建JWT认证过滤器</font></h3>
+<p><strong><font style="color:rgb(15, 17, 21);">表单登录（Form Login）的认证过滤器大家都知道：</font></strong><code>**&lt;font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"&gt;UsernamePasswordAuthenticationFilter&lt;/font&gt;**</code></p>
+<p><font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"></font></p>
+<p><font style="color:rgb(15, 17, 21);">如果使用 JWT，Spring Security </font><strong><font style="color:rgb(15, 17, 21);">没有内置的默认认证过滤器</font></strong><font style="color:rgb(15, 17, 21);">，需要</font><strong><font style="color:rgb(15, 17, 21);">自定义过滤器</font></strong><font style="color:rgb(15, 17, 21);">来完成 JWT 的认证工作</font></p>
+<p><font style="color:rgb(15, 17, 21);"></font></p>
+<p><font style="color:rgb(15, 17, 21);">自定义过滤器，继承 </font><code>&lt;font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"&gt;OncePerRequestFilter&lt;/font&gt;</code><font style="color:rgb(15, 17, 21);">，在过滤器中：</font></p>
+<ol>
+<li><font style="color:rgb(15, 17, 21);">从请求头中提取 JWT（一般是</font><font style="color:rgb(15, 17, 21);"> </font><code>&lt;font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"&gt;Authorization: Bearer &lt;token&gt;&lt;/font&gt;</code><font style="color:rgb(15, 17, 21);">）</font></li>
+<li><font style="color:rgb(15, 17, 21);">验证 JWT 的签名和有效性</font></li>
+<li><font style="color:rgb(15, 17, 21);">从 JWT 中解析用户信息（用户名、角色等）</font></li>
+<li><font style="color:rgb(15, 17, 21);">创建 </font><code>&lt;font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"&gt;UsernamePasswordAuthenticationToken&lt;/font&gt;</code><font style="color:rgb(15, 17, 21);"> 并设置到 </font><code>&lt;font style="color:rgb(15, 17, 21);background-color:rgb(235, 238, 242);"&gt;SecurityContextHolder&lt;/font&gt;</code><font style="color:rgb(15, 17, 21);"> 中</font></li>
+</ol>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.oauth2.logindemo.config.jwt</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.FilterChain</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.ServletException</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.http.HttpServletRequest</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.http.HttpServletResponse</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.security.authentication.UsernamePasswordAuthenticationToken</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.security.core.authority.SimpleGrantedAuthority</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.security.core.context.SecurityContextHolder</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.web.filter.OncePerRequestFilter</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.io.IOException</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.List</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.stream.Collectors</span><span class="p">;</span>
+
+<span class="c1">// OncePerRequestFilter 的核心作用是：在一个请求的完整生命周期中，不管它经过了多少次内部跳转，这个过滤器都只执行一次。</span>
+<span class="c1">// 他是springmvc中提供的，不是security中提供的。</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">JwtAuthenticationFilter</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">OncePerRequestFilter</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">JwtTokenProvider</span><span class="w"> </span><span class="n">jwtTokenProvider</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// 构造函数注入JWT令牌提供者用于后续的令牌验证和解析</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">JwtAuthenticationFilter</span><span class="p">(</span><span class="n">JwtTokenProvider</span><span class="w"> </span><span class="n">jwtTokenProvider</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">jwtTokenProvider</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">jwtTokenProvider</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// 拦截每个HTTP请求，验证JWT令牌并设置用户认证信息到安全上下文。</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">protected</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">doFilterInternal</span><span class="p">(</span><span class="n">HttpServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">HttpServletResponse</span><span class="w"> </span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">FilterChain</span><span class="w"> </span><span class="n">filterChain</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">ServletException</span><span class="p">,</span><span class="w"> </span><span class="n">IOException</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getTokenFromRequest</span><span class="p">(</span><span class="n">request</span><span class="p">);</span>
+
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">token</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">jwtTokenProvider</span><span class="p">.</span><span class="na">validateToken</span><span class="p">(</span><span class="n">token</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">String</span><span class="w"> </span><span class="n">username</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">jwtTokenProvider</span><span class="p">.</span><span class="na">getUsernameFromToken</span><span class="p">(</span><span class="n">token</span><span class="p">);</span>
+<span class="w">            </span><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">roles</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">jwtTokenProvider</span><span class="p">.</span><span class="na">getRolesFromToken</span><span class="p">(</span><span class="n">token</span><span class="p">);</span>
+
+<span class="w">            </span><span class="n">List</span><span class="o">&lt;</span><span class="n">SimpleGrantedAuthority</span><span class="o">&gt;</span><span class="w"> </span><span class="n">authorities</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">roles</span><span class="p">.</span><span class="na">stream</span><span class="p">().</span><span class="na">map</span><span class="p">(</span><span class="n">SimpleGrantedAuthority</span><span class="p">::</span><span class="k">new</span><span class="p">).</span><span class="na">collect</span><span class="p">(</span><span class="n">Collectors</span><span class="p">.</span><span class="na">toList</span><span class="p">());</span>
+
+<span class="w">            </span><span class="n">UsernamePasswordAuthenticationToken</span><span class="w"> </span><span class="n">authentication</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">UsernamePasswordAuthenticationToken</span><span class="p">(</span><span class="n">username</span><span class="p">,</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="n">authorities</span><span class="p">);</span>
+
+<span class="w">            </span><span class="n">SecurityContextHolder</span><span class="p">.</span><span class="na">getContext</span><span class="p">().</span><span class="na">setAuthentication</span><span class="p">(</span><span class="n">authentication</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="n">filterChain</span><span class="p">.</span><span class="na">doFilter</span><span class="p">(</span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">response</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// 从请求的Authorization头部提取Bearer令牌字符串。</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getTokenFromRequest</span><span class="p">(</span><span class="n">HttpServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">bearerToken</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">request</span><span class="p">.</span><span class="na">getHeader</span><span class="p">(</span><span class="s">"Authorization"</span><span class="p">);</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">bearerToken</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">bearerToken</span><span class="p">.</span><span class="na">startsWith</span><span class="p">(</span><span class="s">"Bearer "</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">bearerToken</span><span class="p">.</span><span class="na">substring</span><span class="p">(</span><span class="mi">7</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="security"><font style="color:rgb(15, 17, 21);">修改Security配置</font></h3>
+<p><font style="color:rgb(15, 17, 21);">更新你的Security配置类：</font></p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.oauth2.logindemo.config</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.oauth2.logindemo.config.jwt.JwtAuthenticationFilter</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.oauth2.logindemo.config.jwt.JwtTokenProvider</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.annotation.Bean</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.annotation.Configuration</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.security.config.annotation.web.builders.HttpSecurity</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.security.config.annotation.web.configuration.EnableWebSecurity</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.security.config.http.SessionCreationPolicy</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.security.web.SecurityFilterChain</span><span class="p">;</span>
+
+<span class="nd">@Configuration</span>
+<span class="nd">@EnableWebSecurity</span><span class="w"> </span><span class="c1">// 启用Spring Security的Web安全支持。</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">SecurityConfig</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">JwtTokenProvider</span><span class="w"> </span><span class="n">jwtTokenProvider</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">SecurityConfig</span><span class="p">(</span><span class="n">JwtTokenProvider</span><span class="w"> </span><span class="n">jwtTokenProvider</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">jwtTokenProvider</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">jwtTokenProvider</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// 定义HTTP安全过滤链的主配置方法。</span>
+<span class="w">    </span><span class="nd">@Bean</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">SecurityFilterChain</span><span class="w"> </span><span class="nf">filterChain</span><span class="p">(</span><span class="n">HttpSecurity</span><span class="w"> </span><span class="n">http</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">http</span>
+<span class="w">                </span><span class="c1">// 配置CORS跨域支持使用默认设置。</span>
+<span class="w">                </span><span class="p">.</span><span class="na">cors</span><span class="p">(</span><span class="n">cors</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">cors</span><span class="p">.</span><span class="na">configure</span><span class="p">(</span><span class="n">http</span><span class="p">))</span>
+<span class="w">                </span><span class="c1">// 禁用CSRF防护因为使用无状态的JWT认证。</span>
+<span class="w">                </span><span class="p">.</span><span class="na">csrf</span><span class="p">(</span><span class="n">csrf</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">csrf</span><span class="p">.</span><span class="na">disable</span><span class="p">())</span>
+<span class="w">                </span><span class="c1">// 设置会话管理为无状态，不创建服务器端Session。</span>
+<span class="w">                </span><span class="p">.</span><span class="na">sessionManagement</span><span class="p">(</span><span class="n">session</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">sessionCreationPolicy</span><span class="p">(</span><span class="n">SessionCreationPolicy</span><span class="p">.</span><span class="na">STATELESS</span><span class="p">))</span>
+<span class="w">                </span><span class="c1">// 配置请求授权规则。</span>
+<span class="w">                </span><span class="p">.</span><span class="na">authorizeHttpRequests</span><span class="p">(</span><span class="n">authz</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">authz</span>
+<span class="w">                        </span><span class="c1">// 允许这些路径无需认证即可访问。实际上当引入oauth2的client依赖后，/login/** 和 /oauth2/** 会被默认放行。</span>
+<span class="w">                        </span><span class="p">.</span><span class="na">requestMatchers</span><span class="p">(</span><span class="s">"/"</span><span class="p">,</span><span class="w"> </span><span class="s">"/login"</span><span class="p">,</span><span class="w"> </span><span class="s">"/oauth2/**"</span><span class="p">,</span><span class="w"> </span><span class="s">"/auth/**"</span><span class="p">,</span><span class="w"> </span><span class="s">"/api/public"</span><span class="p">)</span>
+<span class="w">                        </span><span class="p">.</span><span class="na">permitAll</span><span class="p">()</span>
+<span class="w">                        </span><span class="p">.</span><span class="na">requestMatchers</span><span class="p">(</span><span class="s">"/api/protected"</span><span class="p">)</span>
+<span class="w">                        </span><span class="p">.</span><span class="na">hasRole</span><span class="p">(</span><span class="s">"USER"</span><span class="p">)</span>
+<span class="w">                        </span><span class="p">.</span><span class="na">anyRequest</span><span class="p">()</span>
+<span class="w">                        </span><span class="p">.</span><span class="na">authenticated</span><span class="p">()</span><span class="w"> </span><span class="c1">// 其他所有请求都需要认证后才能访问。</span>
+<span class="w">                </span><span class="p">)</span>
+<span class="w">                </span><span class="c1">//  配置OAuth2登录功能。</span>
+<span class="w">                </span><span class="p">.</span><span class="na">oauth2Login</span><span class="p">(</span><span class="n">oauth2</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">oauth2</span>
+<span class="w">                        </span><span class="c1">// 设置OAuth2登录成功后的自定义处理器。</span>
+<span class="w">                        </span><span class="p">.</span><span class="na">successHandler</span><span class="p">(</span><span class="n">oauth2AuthenticationSuccessHandler</span><span class="p">()))</span>
+<span class="w">                </span><span class="c1">//在OAuth2登录过滤器前添加JWT认证过滤器。</span>
+<span class="w">                </span><span class="c1">// 如果请求已经携带有效 JWT 时，直接认证通过，不再走 OAuth2 登录流程</span>
+<span class="w">                </span><span class="p">.</span><span class="na">addFilterBefore</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">JwtAuthenticationFilter</span><span class="p">(</span><span class="n">jwtTokenProvider</span><span class="p">),</span><span class="w"> </span><span class="n">org</span><span class="p">.</span><span class="na">springframework</span><span class="p">.</span><span class="na">security</span><span class="p">.</span><span class="na">oauth2</span><span class="p">.</span><span class="na">client</span><span class="p">.</span><span class="na">web</span><span class="p">.</span><span class="na">OAuth2LoginAuthenticationFilter</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">http</span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Bean</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">OAuth2AuthenticationSuccessHandler</span><span class="w"> </span><span class="nf">oauth2AuthenticationSuccessHandler</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">OAuth2AuthenticationSuccessHandler</span><span class="p">(</span><span class="n">jwtTokenProvider</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="oauth2"><font style="color:rgb(15, 17, 21);">创建OAuth2成功处理器</font></h3>
+<p><strong><font style="color:rgb(15, 17, 21);">在用户通过 GitHub 认证成功后，生成 JWT 并直接以 JSON 格式返回给前端，而不是重定向到页面。</font></strong></p>
+<p><strong><font style="color:rgb(15, 17, 21);">这样前端系统收到后，可以将 token 存储到 storage 中。</font></strong></p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.oauth2.logindemo.config</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.oauth2.logindemo.config.jwt.JwtTokenProvider</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.ServletException</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.http.HttpServletRequest</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.http.HttpServletResponse</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.security.core.Authentication</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.security.oauth2.core.user.OAuth2User</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.io.IOException</span><span class="p">;</span>
+
+<span class="nd">@Component</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">OAuth2AuthenticationSuccessHandler</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">SimpleUrlAuthenticationSuccessHandler</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">JwtTokenProvider</span><span class="w"> </span><span class="n">jwtTokenProvider</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">OAuth2AuthenticationSuccessHandler</span><span class="p">(</span><span class="n">JwtTokenProvider</span><span class="w"> </span><span class="n">jwtTokenProvider</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">jwtTokenProvider</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">jwtTokenProvider</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">onAuthenticationSuccess</span><span class="p">(</span><span class="n">HttpServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">HttpServletResponse</span><span class="w"> </span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">Authentication</span><span class="w"> </span><span class="n">authentication</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">IOException</span><span class="p">,</span><span class="w"> </span><span class="n">ServletException</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">        </span><span class="n">OAuth2User</span><span class="w"> </span><span class="n">oAuth2User</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">OAuth2User</span><span class="p">)</span><span class="w"> </span><span class="n">authentication</span><span class="p">.</span><span class="na">getPrincipal</span><span class="p">();</span>
+
+<span class="w">        </span><span class="c1">// 生成JWT token</span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">jwtToken</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">jwtTokenProvider</span><span class="p">.</span><span class="na">generateToken</span><span class="p">(</span><span class="n">authentication</span><span class="p">);</span>
+
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">username</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getUsernameFromOAuth2User</span><span class="p">(</span><span class="n">oAuth2User</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 将token返回给前端</span>
+<span class="w">        </span><span class="n">response</span><span class="p">.</span><span class="na">setContentType</span><span class="p">(</span><span class="s">"application/json"</span><span class="p">);</span>
+<span class="w">        </span><span class="n">response</span><span class="p">.</span><span class="na">setCharacterEncoding</span><span class="p">(</span><span class="s">"UTF-8"</span><span class="p">);</span>
+
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">jsonResponse</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">String</span><span class="p">.</span><span class="na">format</span><span class="p">(</span><span class="s">"{\"token\": \"%s\", \"username\": \"%s\"}"</span><span class="p">,</span><span class="w"> </span><span class="n">jwtToken</span><span class="p">,</span><span class="w"> </span><span class="n">username</span><span class="p">);</span>
+
+<span class="w">        </span><span class="n">response</span><span class="p">.</span><span class="na">getWriter</span><span class="p">().</span><span class="na">write</span><span class="p">(</span><span class="n">jsonResponse</span><span class="p">);</span>
+<span class="w">        </span><span class="n">response</span><span class="p">.</span><span class="na">getWriter</span><span class="p">().</span><span class="na">flush</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getUsernameFromOAuth2User</span><span class="p">(</span><span class="n">OAuth2User</span><span class="w"> </span><span class="n">oAuth2User</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">oAuth2User</span><span class="p">.</span><span class="na">getAttribute</span><span class="p">(</span><span class="s">"login"</span><span class="p">)</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">oAuth2User</span><span class="p">.</span><span class="na">getAttribute</span><span class="p">(</span><span class="s">"login"</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">oAuth2User</span><span class="p">.</span><span class="na">getName</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="_3"><font style="color:rgb(15, 17, 21);">创建测试控制器</font></h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.oauth2.logindemo.controller</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.http.ResponseEntity</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.security.access.prepost.PreAuthorize</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.security.core.Authentication</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.web.bind.annotation.GetMapping</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.web.bind.annotation.RequestMapping</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.web.bind.annotation.RestController</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.HashMap</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.Map</span><span class="p">;</span>
+
+<span class="nd">@RestController</span>
+<span class="nd">@RequestMapping</span><span class="p">(</span><span class="s">"/api"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">TestController</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@GetMapping</span><span class="p">(</span><span class="s">"/public"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">ResponseEntity</span><span class="o">&lt;?&gt;</span><span class="w"> </span><span class="nf">publicEndpoint</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">HashMap</span><span class="o">&lt;&gt;</span><span class="p">();</span>
+<span class="w">        </span><span class="n">response</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"message"</span><span class="p">,</span><span class="w"> </span><span class="s">"这是一个公开的端点"</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">ResponseEntity</span><span class="p">.</span><span class="na">ok</span><span class="p">(</span><span class="n">response</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@GetMapping</span><span class="p">(</span><span class="s">"/protected"</span><span class="p">)</span>
+<span class="w">    </span><span class="nd">@PreAuthorize</span><span class="p">(</span><span class="s">"hasRole('USER')"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">ResponseEntity</span><span class="o">&lt;?&gt;</span><span class="w"> </span><span class="nf">protectedEndpoint</span><span class="p">(</span><span class="n">Authentication</span><span class="w"> </span><span class="n">authentication</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">HashMap</span><span class="o">&lt;&gt;</span><span class="p">();</span>
+<span class="w">        </span><span class="n">response</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"message"</span><span class="p">,</span><span class="w"> </span><span class="s">"这是一个受保护的端点"</span><span class="p">);</span>
+<span class="w">        </span><span class="n">response</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"username"</span><span class="p">,</span><span class="w"> </span><span class="n">authentication</span><span class="p">.</span><span class="na">getName</span><span class="p">());</span>
+<span class="w">        </span><span class="n">response</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"authorities"</span><span class="p">,</span><span class="w"> </span><span class="n">authentication</span><span class="p">.</span><span class="na">getAuthorities</span><span class="p">());</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">ResponseEntity</span><span class="p">.</span><span class="na">ok</span><span class="p">(</span><span class="n">response</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="indexcontroller">修改 IndexController</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Controller</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.web.bind.annotation.GetMapping</span><span class="p">;</span>
+
+<span class="nd">@Controller</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">IndexController</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@GetMapping</span><span class="p">(</span><span class="s">"/"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">index</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"index"</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="indexhtml">修改 index.html</h3>
+<pre lang="html"><code class="language-html md-fencescode"><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>Spring Security - OAuth 2 Login<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">"utf-8"</span><span class="p">/&gt;</span>
+<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>OAuth 2 Login with Spring Security<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">div</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>请使用以下方式登录获取 JWT Token：<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">a</span> <span class="na">href</span><span class="o">=</span><span class="s">"/oauth2/authorization/github"</span><span class="p">&gt;</span>使用GitHub登录<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">div</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>登录成功后，请在响应中获取 JWT token，然后使用以下命令测试API：<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">pre</span><span class="p">&gt;</span>
+# 测试公开端点
+curl http://localhost:8080/api/public
+
+# 测试受保护端点（需要JWT token）
+curl -H "Authorization: Bearer YOUR_TOKEN" http://localhost:8080/api/protected
+    <span class="p">&lt;/</span><span class="nt">pre</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</code></pre>
+<h3 id="_4"><font style="color:rgb(15, 17, 21);">测试步骤</font></h3>
+<p><strong><font style="color:rgb(15, 17, 21);">步骤1: 测试GitHub登录</font></strong></p>
+<p><font style="color:rgb(15, 17, 21);">访问你的应用，使用GitHub登录，成功后应该返回JWT token。</font></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1759556680293-b2f7bb94-7214-47ec-bee9-573705ddd2cf.png" width="607.4285714285714" title="" crop="0,0,1,1" id="u3a316e80" class="ne-image" style="font-size: 16px"></p>
+<p><font style="color:rgb(15, 17, 21);"></font></p>
+<p><strong><font style="color:rgb(15, 17, 21);">步骤2: 访问公开的端点</font></strong></p>
+<pre lang="bash"><code class="language-bash md-fencescode">curl<span class="w"> </span>http://localhost:8080/api/public
+</code></pre>
+<p><strong><font style="color:rgb(15, 17, 21);">步骤 3: 使用JWT访问受保护端点</font></strong></p>
+<pre lang="bash"><code class="language-bash md-fencescode"><span class="c1"># 使用返回的token访问受保护端点</span>
+curl<span class="w"> </span>-H<span class="w"> </span><span class="s2">"Authorization: Bearer YOUR_JWT_TOKEN"</span><span class="w"> </span>http://localhost:8080/api/protected
+</code></pre>
+<h3 id="_5"><font style="color:rgb(15, 17, 21);">完整的工作流程</font></h3>
+<ol>
+<li><font style="color:rgb(15, 17, 21);">用户访问应用，点击GitHub登录</font></li>
+<li><font style="color:rgb(15, 17, 21);">GitHub认证成功后，调用成功处理器</font></li>
+<li><font style="color:rgb(15, 17, 21);">成功处理器生成JWT token并返回给前端</font></li>
+<li><font style="color:rgb(15, 17, 21);">前端在后续请求中在Header中携带JWT token</font></li>
+<li><font style="color:rgb(15, 17, 21);">JWT过滤器验证token并设置认证信息</font></li>
+<li><font style="color:rgb(15, 17, 21);">用户访问受保护的API端点</font></li>
+</ol>
+<h3 id="_6"><font style="color:rgb(15, 17, 21);">注意事项</font></h3>
+<ol>
+<li><strong>密钥安全</strong><font style="color:rgb(15, 17, 21);">: 生产环境请使用其他无规律的密钥，并将密钥配置到环境变量中，而不是放到 </font><code>&lt;font style="color:rgb(15, 17, 21);"&gt;application.yml&lt;/font&gt;</code><font style="color:rgb(15, 17, 21);">中。</font></li>
+<li><strong>Token存储</strong><font style="color:rgb(15, 17, 21);">: 前端需要安全地存储JWT token（建议使用httpOnly cookie）</font></li>
+<li><strong>过期时间</strong><font style="color:rgb(15, 17, 21);">: 根据安全需求调整token过期时间</font></li>
+<li><strong>刷新Token</strong><font style="color:rgb(15, 17, 21);">: </font><strong><font style="color:rgb(15, 17, 21);">JWT 的 Refresh Token 实现原理：在 access token 过期后通过专用接口申请新的 access token，实现用户无感知的自动续期。</font></strong></li>
+</ol>
+<p><font style="color:rgb(15, 17, 21);">这样你就成功在Spring Boot OAuth2 GitHub登录项目中集成了JWT功能！</font></p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

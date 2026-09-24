@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>springboot-webmvc-autoconfig-source</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="webmvcautoconfiguration"><strong>WebMvcAutoConfiguration 源码解释</strong></h1>
+<hr />
+<h2 id="webmvc">WebMvc自动配置是否生效的条件</h2>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// 先加载这几个类，然后再加载WebMvcAutoConfiguration</span>
+<span class="nd">@AutoConfiguration</span><span class="p">(</span><span class="n">after</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">DispatcherServletAutoConfiguration</span><span class="p">.</span><span class="na">class</span><span class="p">,</span><span class="w"> </span><span class="n">TaskExecutionAutoConfiguration</span><span class="p">.</span><span class="na">class</span><span class="p">,</span><span class="n">ValidationAutoConfiguration</span><span class="p">.</span><span class="na">class</span><span class="w"> </span><span class="p">})</span>
+<span class="c1">// 必须是一个web应用，WebMvcAutoConfiguration才会生效</span>
+<span class="nd">@ConditionalOnWebApplication</span><span class="p">(</span><span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Type</span><span class="p">.</span><span class="na">SERVLET</span><span class="p">)</span>
+<span class="c1">// 类路径中必须存在这几个类，WebMvcAutoConfiguration才会生效</span>
+<span class="nd">@ConditionalOnClass</span><span class="p">({</span><span class="w"> </span><span class="n">Servlet</span><span class="p">.</span><span class="na">class</span><span class="p">,</span><span class="w"> </span><span class="n">DispatcherServlet</span><span class="p">.</span><span class="na">class</span><span class="p">,</span><span class="w"> </span><span class="n">WebMvcConfigurer</span><span class="p">.</span><span class="na">class</span><span class="w"> </span><span class="p">})</span>
+<span class="c1">// 如果有这样一个Bean，WebMvcAutoConfiguration不生效</span>
+<span class="c1">// 针对这个可以看一下@EnableWebMvc注解，你会发现它导入了DelegatingWebMvcConfiguration，而它继承了WebMvcConfigurationSupport</span>
+<span class="c1">// 因此当我们使用 @EnableWebMvc注解时，默认配置会全部失效</span>
+<span class="nd">@ConditionalOnMissingBean</span><span class="p">(</span><span class="n">WebMvcConfigurationSupport</span><span class="p">.</span><span class="na">class</span><span class="p">)</span>
+<span class="c1">// 以下这两个不重要</span>
+<span class="nd">@AutoConfigureOrder</span><span class="p">(</span><span class="n">Ordered</span><span class="p">.</span><span class="na">HIGHEST_PRECEDENCE</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">10</span><span class="p">)</span>
+<span class="nd">@ImportRuntimeHints</span><span class="p">(</span><span class="n">WebResourcesRuntimeHints</span><span class="p">.</span><span class="na">class</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">WebMvcAutoConfiguration</span><span class="w"> </span><span class="p">{}</span>
+</code></pre>
+<hr />
+<h2 id="webmvcfilter-bean">WebMvc自动配置生效后引入了两个Filter Bean</h2>
+<h3 id="hiddenhttpmethodfilter-bean">引入了<strong>HiddenHttpMethodFilter Bean</strong></h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Bean</span>
+<span class="nd">@ConditionalOnMissingBean</span><span class="p">(</span><span class="n">HiddenHttpMethodFilter</span><span class="p">.</span><span class="na">class</span><span class="p">)</span>
+<span class="nd">@ConditionalOnProperty</span><span class="p">(</span><span class="n">prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"spring.mvc.hiddenmethod.filter"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"enabled"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">OrderedHiddenHttpMethodFilter</span><span class="w"> </span><span class="nf">hiddenHttpMethodFilter</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">OrderedHiddenHttpMethodFilter</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre>
+<p>提供对浏览器表单支持PUT、DELETE等HTTP方法的兼容处理</p>
+<h3 id="formcontentfilter-bean">引入了<strong>FormContentFilter Bean</strong></h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Bean</span>
+<span class="nd">@ConditionalOnMissingBean</span><span class="p">(</span><span class="n">FormContentFilter</span><span class="p">.</span><span class="na">class</span><span class="p">)</span>
+<span class="nd">@ConditionalOnProperty</span><span class="p">(</span><span class="n">prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"spring.mvc.formcontent.filter"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"enabled"</span><span class="p">,</span><span class="w"> </span><span class="n">matchIfMissing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">OrderedFormContentFilter</span><span class="w"> </span><span class="nf">formContentFilter</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">OrderedFormContentFilter</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>解析并处理</strong><code>**application/x-www-form-urlencoded**</code><strong>格式的PUT、DELETE请求体数据。</strong></p>
+<hr />
+<h2 id="webmvcwebmvcconfigurer">WebMvc自动配置生效后引入了WebMvcConfigurer接口的实现类</h2>
+<p><strong>知识点清单：</strong></p>
+<ol>
+<li><code>**WebMvcAutoConfiguration**</code><strong>类中的静态内部类</strong><code>**WebMvcAutoConfigurationAdapter**</code><strong>实现了WebMvcConfigurer 接口。</strong></li>
+<li><strong>这个接口的实现我们之前写过，在 SpringMVC 全注解开发时写过。因此 SpringBoot 对 MVC 的默认配置都在这个内部类中。</strong></li>
+<li><strong>想修改默认配置：在 application.yml 文件中配置</strong><code>**spring.mvc**</code><strong>、</strong><code>**spring.web**</code></li>
+<li><strong>想对默认配置进行扩展，例如添加拦截器：编写类实现</strong><code>**WebMvcConfigurer**</code><strong>接口+</strong><code>**@Configuration**</code></li>
+</ol>
+<p>在SpringBoot框架的<code>WebMvcAutoConfiguration</code>类中提供了一个内部类：<code>WebMvcAutoConfigurationAdapter</code></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730345630650-62e11666-3e95-4c64-9787-c0b18d083c91.png" width="1080" title="" crop="0,0,1,1" id="ue6dbe412" class="ne-image"></p>
+<p>SpringBoot在这个类<code>WebMvcAutoConfigurationAdapter</code>中进行了一系列的Spring MVC相关配置。</p>
+<h3 id="webmvcconfigurer">关于<code>WebMvcConfigurer</code>接口</h3>
+<p>这个接口我们以前就用过。在 SpringMVC 中进行全注解式开发时就用了。在这个接口中提供了很多方法，需要改变Spring MVC的哪个行为，则重写对应的方法即可，下面是这个接口中所有的方法，以及每个方法对应的Spring MVC行为的解释：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">WebMvcConfigurer</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 用于定制 Spring MVC 如何匹配请求路径到控制器</span>
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">configurePathMatch</span><span class="p">(</span><span class="n">PathMatchConfigurer</span><span class="w"> </span><span class="n">configurer</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">    </span><span class="c1">// 用于定制 Spring MVC 的内容协商策略，以确定如何根据请求的内容类型来选择合适的处理方法或返回数据格式</span>
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">configureContentNegotiation</span><span class="p">(</span><span class="n">ContentNegotiationConfigurer</span><span class="w"> </span><span class="n">configurer</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">    </span><span class="c1">// 用于定制 Spring MVC 处理异步请求的方式</span>
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">configureAsyncSupport</span><span class="p">(</span><span class="n">AsyncSupportConfigurer</span><span class="w"> </span><span class="n">configurer</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">    </span><span class="c1">// 用于定制是否将某些静态资源请求转发WEB容器默认的Servlet处理</span>
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">configureDefaultServletHandling</span><span class="p">(</span><span class="n">DefaultServletHandlerConfigurer</span><span class="w"> </span><span class="n">configurer</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">    </span><span class="c1">// 用于定制 Spring MVC 解析视图的方式，以确定如何将控制器返回的视图名称转换为实际的视图资源。</span>
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">configureViewResolvers</span><span class="p">(</span><span class="n">ViewResolverRegistry</span><span class="w"> </span><span class="n">registry</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">    </span><span class="c1">// 用于定制 Spring MVC 如何处理 HTTP 请求和响应的数据格式，包括 JSON、XML 等内容类型的转换</span>
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">configureMessageConverters</span><span class="p">(</span><span class="n">List</span><span class="o">&lt;</span><span class="n">HttpMessageConverter</span><span class="o">&lt;?&gt;&gt;</span><span class="w"> </span><span class="n">converters</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">    </span><span class="c1">// 用于定制 Spring MVC 如何处理控制器方法中发生的异常，并提供相应的错误处理逻辑。</span>
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">configureHandlerExceptionResolvers</span><span class="p">(</span><span class="n">List</span><span class="o">&lt;</span><span class="n">HandlerExceptionResolver</span><span class="o">&gt;</span><span class="w"> </span><span class="n">resolvers</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+
+<span class="w">    </span><span class="c1">// 用于定制 Spring MVC 如何处理数据的格式化和解析，例如日期、数值等类型的对象的输入和输出格式。</span>
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">addFormatters</span><span class="p">(</span><span class="n">FormatterRegistry</span><span class="w"> </span><span class="n">registry</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">    </span><span class="c1">// 用于定制 Spring MVC 如何使用拦截器来处理请求和响应，包括在请求进入控制器之前和之后执行特定的操作。</span>
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">addInterceptors</span><span class="p">(</span><span class="n">InterceptorRegistry</span><span class="w"> </span><span class="n">registry</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">    </span><span class="c1">// 用于定制 Spring MVC 如何处理静态资源（如 CSS、JavaScript、图片等文件）的请求。</span>
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">addResourceHandlers</span><span class="p">(</span><span class="n">ResourceHandlerRegistry</span><span class="w"> </span><span class="n">registry</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">    </span><span class="c1">// 用于定制 Spring MVC 如何处理跨域请求，确保应用程序可以正确地响应来自不同域名的 AJAX 请求或其他跨域请求。</span>
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">addCorsMappings</span><span class="p">(</span><span class="n">CorsRegistry</span><span class="w"> </span><span class="n">registry</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">    </span><span class="c1">// 用于快速定义简单的 URL 到视图的映射，而无需编写完整的控制器类和方法。</span>
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">addViewControllers</span><span class="p">(</span><span class="n">ViewControllerRegistry</span><span class="w"> </span><span class="n">registry</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">    </span><span class="c1">// 用于定制 Spring MVC 如何解析控制器方法中的参数，包括如何从请求中获取并转换参数值。</span>
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">addArgumentResolvers</span><span class="p">(</span><span class="n">List</span><span class="o">&lt;</span><span class="n">HandlerMethodArgumentResolver</span><span class="o">&gt;</span><span class="w"> </span><span class="n">resolvers</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">    </span><span class="c1">// 用于定制 Spring MVC 如何处理控制器方法的返回值，包括如何将返回值转换为实际的 HTTP 响应。</span>
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">addReturnValueHandlers</span><span class="p">(</span><span class="n">List</span><span class="o">&lt;</span><span class="n">HandlerMethodReturnValueHandler</span><span class="o">&gt;</span><span class="w"> </span><span class="n">handlers</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+
+<span class="w">    </span><span class="c1">// 用于定制 Spring MVC 如何处理 HTTP 请求和响应的数据格式，允许你添加或调整默认的消息转换器，以支持特定的数据格式。</span>
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">extendMessageConverters</span><span class="p">(</span><span class="n">List</span><span class="o">&lt;</span><span class="n">HttpMessageConverter</span><span class="o">&lt;?&gt;&gt;</span><span class="w"> </span><span class="n">converters</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+<span class="w">    </span><span class="c1">// 用于定制 Spring MVC 如何处理控制器方法中抛出的异常，允许你添加额外的异常处理逻辑。</span>
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">extendHandlerExceptionResolvers</span><span class="p">(</span><span class="n">List</span><span class="o">&lt;</span><span class="n">HandlerExceptionResolver</span><span class="o">&gt;</span><span class="w"> </span><span class="n">resolvers</span><span class="p">)</span><span class="w"> </span><span class="p">{}</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="webmvcconfigurerwebmvcautoconfigurationadapter"><code>WebMvcConfigurer</code>接口的实现类<code>WebMvcAutoConfigurationAdapter</code></h3>
+<p><code>WebMvcAutoConfigurationAdapter</code>是Spring Boot框架提供的，实现了Spring MVC中的<code>WebMvcConfigurer</code>接口，对Spring MVC的所有行为进行了默认的配置。</p>
+<p>如果想要改变这些默认配置，应该怎么办呢？看源码：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730353008999-076f3b3f-2a0b-4936-a9f2-5d6cfe88b346.png" width="1010" title="" crop="0,0,1,1" id="u0962da1b" class="ne-image"></p>
+<p>可以看到，该类上有一个注解<code>@EnableConfigurationProperties({ WebMvcProperties.class, WebProperties.class })</code>，该注解负责启用配置属性。会将配置文件<code>application.properties</code>或<code>application.yml</code>中的配置传递到该类中。因此可以通过<code>application.properties</code>或<code>application.yml</code>配置文件来改变Spring Boot对SpringMVC的默认配置。<code>WebMvcProperties</code>和<code>WebProperties</code>源码如下： </p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730354494823-2adf83a4-aa2a-4fed-a5df-66b156de15c5.png" width="565" title="" crop="0,0,1,1" id="ua84cb938" class="ne-image"></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730354507221-6424a72a-0728-478b-92eb-e52d3d5a6f38.png" width="425" title="" crop="0,0,1,1" id="ue279b932" class="ne-image"></p>
+<p>通过以上源码得知要改变SpringBoot对SpringMVC的默认配置，需要在配置文件中使用以下前缀的配置：</p>
+<ul>
+<li>spring.mvc：<strong>主要用于配置 Spring MVC 的相关行为，例如路径匹配、视图解析、静态资源处理等</strong></li>
+<li>spring.web：通常用于配置一些通用的 Web 层设置，如资源处理、安全性配置等。</li>
+</ul>
+<hr />
+<h2 id="_1">一个小小的疑惑</h2>
+<p>我们来看一下<code>WebMvcAutoConfiguration</code>的生效条件：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730424986145-0d76b7da-06c5-4942-a5f2-3e55f0249c89.png" width="1130" title="" crop="0,0,1,1" id="iBmex" class="ne-image"></p>
+<p>上图红框内表示，要求Spring容器中缺失<code>WebMvcConfigurationSupport</code>这个Bean，<code>WebMvcAutoConfiguration</code>才会生效。</p>
+<p>但是我们来看一下<code>EnableWebMvcConfiguration</code>的继承结构：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730425120392-dda2febe-d932-452c-9599-6df5859a2062.png" width="376" title="" crop="0,0,1,1" id="f94jB" class="ne-image"></p>
+<p>很明显，<code>EnableWebMvcConfiguration</code>就是一个<code>WebMvcConfigurationSupport</code>这样的Bean。</p>
+<p>那疑问就有了：既然容器中存在<code>WebMvcConfigurationSupport</code>这样的Bean，<code>WebMvcAutoConfiguration</code>为什么还会生效呢？</p>
+<p>原因是因为：<code>EnableWebMvcConfiguration</code>是<code>WebMvcAutoConfiguration</code>类的内部类。在<code>WebMvcAutoConfiguration</code>进行加载的时候，<code>EnableWebMvcConfiguration</code>这个内部类还没有加载。因此这个时候在容器中还不存在<code>WebMvcConfigurationSupport</code>的Bean，所以<code>WebMvcAutoConfiguration</code>仍然会生效。</p>
+<p><strong>以上所说的</strong><code>**WebMvcAutoConfiguration**</code><strong>类中的内部类</strong><code>**EnableWebMvcConfiguration**</code><strong>，是用来启用Web MVC默认配置的。</strong>注意区分：WebMvcAutoConfiguration的两个内部类：</p>
+<ul>
+<li><code>WebMvcAutoConfigurationAdapter</code>作用是用来：<strong>配置 MVC 的</strong>。</li>
+<li><code>EnableWebMvcConfiguration</code>作用是用来：<strong>启用 MVC 配置的</strong>。</li>
+</ul>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sub-query</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="_1">子查询</h1>
+<blockquote>
+<p>本章案例的数据初始化：<a href="../details/powerpoint-init-data.html">powerpoint-init-data</a></p>
+</blockquote>
+<hr />
+<h2 id="_2">什么是子查询</h2>
+<ol>
+<li>select语句中嵌套select语句就叫做子查询。</li>
+<li>select语句可以嵌套在哪里？where后面、from后面、select后面都是可以的。</li>
+</ol>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">select</span><span class="w"> </span><span class="p">..(</span><span class="k">select</span><span class="p">)..</span>
+<span class="k">from</span><span class="w"> </span><span class="p">..(</span><span class="k">select</span><span class="p">)..</span>
+<span class="k">where</span><span class="w"> </span><span class="p">..(</span><span class="k">select</span><span class="p">)..</span>
+</code></pre>
+<hr />
+<h2 id="where">where后面使用子查询</h2>
+<p>案例：找出高于平均薪资的员工姓名和薪资。</p>
+<p>错误的示范：</p>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">select</span><span class="w"> </span><span class="n">ename</span><span class="p">,</span><span class="n">sal</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">emp</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">sal</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="k">avg</span><span class="p">(</span><span class="n">sal</span><span class="p">);</span>
+</code></pre>
+<p>错误原因：where后面不能直接使用分组函数。</p>
+<p>可以使用子查询：</p>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">select</span><span class="w"> </span><span class="n">ename</span><span class="p">,</span><span class="n">sal</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">emp</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">sal</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="p">(</span><span class="k">select</span><span class="w"> </span><span class="k">avg</span><span class="p">(</span><span class="n">sal</span><span class="p">)</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">emp</span><span class="p">);</span>
+</code></pre>
+<hr />
+<h2 id="from">from后面使用子查询</h2>
+<p>小窍门：<strong>from后面的子查询可以看做一张临时表</strong>。</p>
+<p>案例：找出每个部门的平均工资的等级。</p>
+<p>第一步：先找出每个部门平均工资。</p>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">select</span><span class="w"> </span><span class="n">deptno</span><span class="p">,</span><span class="w"> </span><span class="k">avg</span><span class="p">(</span><span class="n">sal</span><span class="p">)</span><span class="w"> </span><span class="n">avgsal</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">emp</span><span class="w"> </span><span class="k">group</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">deptno</span><span class="p">;</span>
+</code></pre>
+<pre lang="shell"><code class="language-shell md-fencescode">+--------+-------------+
+<span class="p">|</span><span class="w"> </span>deptno<span class="w"> </span><span class="p">|</span><span class="w"> </span>avgsal<span class="w">      </span><span class="p">|</span>
++--------+-------------+
+<span class="p">|</span><span class="w">     </span><span class="m">20</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="m">2175</span>.000000<span class="w"> </span><span class="p">|</span>
+<span class="p">|</span><span class="w">     </span><span class="m">30</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="m">1566</span>.666667<span class="w"> </span><span class="p">|</span>
+<span class="p">|</span><span class="w">     </span><span class="m">10</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="m">2916</span>.666667<span class="w"> </span><span class="p">|</span>
++--------+-------------+
+<span class="m">3</span><span class="w"> </span>rows<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="o">(</span><span class="m">0</span>.003<span class="w"> </span>sec<span class="o">)</span>
+</code></pre>
+<p>第二步：将以上查询结果当做临时表t，t表和salgrade表进行连接查询。条件：<code>t.avgsal between s.losal and s.hisal</code></p>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">select</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="o">*</span><span class="p">,</span><span class="n">s</span><span class="p">.</span><span class="n">grade</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="p">(</span><span class="k">select</span><span class="w"> </span><span class="n">deptno</span><span class="p">,</span><span class="w"> </span><span class="k">avg</span><span class="p">(</span><span class="n">sal</span><span class="p">)</span><span class="w"> </span><span class="n">avgsal</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">emp</span><span class="w"> </span><span class="k">group</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">deptno</span><span class="p">)</span><span class="w"> </span><span class="n">t</span><span class="w"> </span><span class="k">join</span><span class="w"> </span><span class="n">salgrade</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="k">on</span><span class="w"> </span><span class="n">t</span><span class="p">.</span><span class="n">avgsal</span><span class="w"> </span><span class="k">between</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">losal</span><span class="w"> </span><span class="k">and</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="n">hisal</span><span class="p">;</span>
+</code></pre>
+<pre lang="shell"><code class="language-shell md-fencescode">+--------+-------------+-------+
+<span class="p">|</span><span class="w"> </span>deptno<span class="w"> </span><span class="p">|</span><span class="w"> </span>avgsal<span class="w">      </span><span class="p">|</span><span class="w"> </span>grade<span class="w"> </span><span class="p">|</span>
++--------+-------------+-------+
+<span class="p">|</span><span class="w">     </span><span class="m">20</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="m">2175</span>.000000<span class="w"> </span><span class="p">|</span><span class="w">     </span><span class="m">4</span><span class="w"> </span><span class="p">|</span>
+<span class="p">|</span><span class="w">     </span><span class="m">30</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="m">1566</span>.666667<span class="w"> </span><span class="p">|</span><span class="w">     </span><span class="m">3</span><span class="w"> </span><span class="p">|</span>
+<span class="p">|</span><span class="w">     </span><span class="m">10</span><span class="w"> </span><span class="p">|</span><span class="w"> </span><span class="m">2916</span>.666667<span class="w"> </span><span class="p">|</span><span class="w">     </span><span class="m">4</span><span class="w"> </span><span class="p">|</span>
++--------+-------------+-------+
+<span class="m">3</span><span class="w"> </span>rows<span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="nb">set</span><span class="w"> </span><span class="o">(</span><span class="m">0</span>.002<span class="w"> </span>sec<span class="o">)</span>
+</code></pre>
+<hr />
+<h2 id="select">select后面使用子查询</h2>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">select</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">ename</span><span class="p">,(</span><span class="k">select</span><span class="w"> </span><span class="n">d</span><span class="p">.</span><span class="n">dname</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">dept</span><span class="w"> </span><span class="n">d</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">deptno</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">d</span><span class="p">.</span><span class="n">deptno</span><span class="p">)</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="n">dname</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">emp</span><span class="w"> </span><span class="n">e</span><span class="p">;</span>
+</code></pre>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="o">+</span><span class="c1">--------+------------+</span>
+<span class="o">|</span><span class="w"> </span><span class="n">ename</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="n">dname</span><span class="w">      </span><span class="o">|</span>
+<span class="o">+</span><span class="c1">--------+------------+</span>
+<span class="o">|</span><span class="w"> </span><span class="n">SMITH</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="n">RESEARCH</span><span class="w">   </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">ALLEN</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="n">SALES</span><span class="w">      </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">WARD</span><span class="w">   </span><span class="o">|</span><span class="w"> </span><span class="n">SALES</span><span class="w">      </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">JONES</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="n">RESEARCH</span><span class="w">   </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">MARTIN</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">SALES</span><span class="w">      </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">BLAKE</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="n">SALES</span><span class="w">      </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">CLARK</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="n">ACCOUNTING</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">SCOTT</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="n">RESEARCH</span><span class="w">   </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">KING</span><span class="w">   </span><span class="o">|</span><span class="w"> </span><span class="n">ACCOUNTING</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">TURNER</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">SALES</span><span class="w">      </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">ADAMS</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="n">RESEARCH</span><span class="w">   </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">JAMES</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="n">SALES</span><span class="w">      </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">FORD</span><span class="w">   </span><span class="o">|</span><span class="w"> </span><span class="n">RESEARCH</span><span class="w">   </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">MILLER</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">ACCOUNTING</span><span class="w"> </span><span class="o">|</span>
+<span class="o">+</span><span class="c1">--------+------------+</span>
+<span class="mi">14</span><span class="w"> </span><span class="k">rows</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">set</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">002</span><span class="w"> </span><span class="n">sec</span><span class="p">)</span>
+</code></pre>
+<hr />
+<h2 id="existsnot-exists">exists、not exists</h2>
+<p>在 MySQL 数据库中，EXISTS（存在）用于检查子查询的查询结果行数是否大于0。如果子查询的查询结果行数大于0，则 EXISTS 条件为真。（即存在查询结果则是true。）</p>
+<p>主要应用场景：
+- EXISTS 可以与 SELECT、UPDATE、DELETE 一起使用，用于检查另一个查询是否返回任何行；
+- EXISTS 可以用于验证条件子句中的表达式是否存在；
+- EXISTS 常用于子查询条件过滤，例如查询有订单的用户等。</p>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">drop</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="k">exists</span><span class="w"> </span><span class="n">t_customer</span><span class="p">;</span>
+<span class="k">drop</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="k">exists</span><span class="w"> </span><span class="n">t_order</span><span class="p">;</span>
+
+<span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">t_customer</span><span class="p">(</span>
+<span class="w">    </span><span class="n">customer_id</span><span class="w"> </span><span class="nb">int</span><span class="p">,</span>
+<span class="w">    </span><span class="n">customer_name</span><span class="w"> </span><span class="nb">varchar</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span>
+<span class="p">);</span>
+
+<span class="k">create</span><span class="w"> </span><span class="k">table</span><span class="w"> </span><span class="n">t_order</span><span class="p">(</span>
+<span class="w">    </span><span class="n">order_id</span><span class="w"> </span><span class="nb">int</span><span class="p">,</span>
+<span class="w">    </span><span class="n">order_price</span><span class="w"> </span><span class="nb">decimal</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span>
+<span class="w">    </span><span class="n">customer_id</span><span class="w"> </span><span class="nb">int</span>
+<span class="p">);</span>
+
+<span class="k">insert</span><span class="w"> </span><span class="k">into</span><span class="w"> </span><span class="n">t_customer</span><span class="p">(</span><span class="n">customer_id</span><span class="p">,</span><span class="n">customer_name</span><span class="p">)</span><span class="w"> </span><span class="k">values</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="s1">'zhangsan'</span><span class="p">);</span>
+<span class="k">insert</span><span class="w"> </span><span class="k">into</span><span class="w"> </span><span class="n">t_customer</span><span class="p">(</span><span class="n">customer_id</span><span class="p">,</span><span class="n">customer_name</span><span class="p">)</span><span class="w"> </span><span class="k">values</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="s1">'lisi'</span><span class="p">);</span>
+<span class="k">insert</span><span class="w"> </span><span class="k">into</span><span class="w"> </span><span class="n">t_customer</span><span class="p">(</span><span class="n">customer_id</span><span class="p">,</span><span class="n">customer_name</span><span class="p">)</span><span class="w"> </span><span class="k">values</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="s1">'wangwu'</span><span class="p">);</span>
+
+<span class="k">insert</span><span class="w"> </span><span class="k">into</span><span class="w"> </span><span class="n">t_order</span><span class="p">(</span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_price</span><span class="p">,</span><span class="w"> </span><span class="n">customer_id</span><span class="p">)</span><span class="w"> </span><span class="k">values</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="mi">1000</span><span class="p">.</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+<span class="k">insert</span><span class="w"> </span><span class="k">into</span><span class="w"> </span><span class="n">t_order</span><span class="p">(</span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_price</span><span class="p">,</span><span class="w"> </span><span class="n">customer_id</span><span class="p">)</span><span class="w"> </span><span class="k">values</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="w"> </span><span class="mi">2000</span><span class="p">.</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+<span class="k">insert</span><span class="w"> </span><span class="k">into</span><span class="w"> </span><span class="n">t_order</span><span class="p">(</span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_price</span><span class="p">,</span><span class="w"> </span><span class="n">customer_id</span><span class="p">)</span><span class="w"> </span><span class="k">values</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span><span class="w"> </span><span class="mi">3000</span><span class="p">.</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">);</span>
+<span class="k">insert</span><span class="w"> </span><span class="k">into</span><span class="w"> </span><span class="n">t_order</span><span class="p">(</span><span class="n">order_id</span><span class="p">,</span><span class="w"> </span><span class="n">order_price</span><span class="p">,</span><span class="w"> </span><span class="n">customer_id</span><span class="p">)</span><span class="w"> </span><span class="k">values</span><span class="p">(</span><span class="mi">40</span><span class="p">,</span><span class="w"> </span><span class="mi">4000</span><span class="p">.</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">);</span>
+
+<span class="k">commit</span><span class="p">;</span>
+<span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t_customer</span><span class="p">;</span>
+<span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t_order</span><span class="p">;</span>
+</code></pre>
+<p>现在我们来看一个简单的案例，假设我们要查询先前有过订单的顾客，而订单信息保存在 t_order 表中，顾客信息保存在 t_customer 表中。我们可以使用以下 sql 语句：</p>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t_customer</span><span class="w"> </span><span class="k">c</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="k">exists</span><span class="p">(</span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t_order</span><span class="w"> </span><span class="n">o</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">customer_id</span><span class="o">=</span><span class="k">c</span><span class="p">.</span><span class="n">customer_id</span><span class="p">);</span>
+</code></pre>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="n">mysql</span><span class="o">&gt;</span><span class="w"> </span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t_customer</span><span class="w"> </span><span class="k">c</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="k">exists</span><span class="p">(</span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t_order</span><span class="w"> </span><span class="n">o</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">customer_id</span><span class="o">=</span><span class="k">c</span><span class="p">.</span><span class="n">customer_id</span><span class="p">);</span>
+<span class="o">+</span><span class="c1">-------------+---------------+</span>
+<span class="o">|</span><span class="w"> </span><span class="n">customer_id</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">customer_name</span><span class="w"> </span><span class="o">|</span>
+<span class="o">+</span><span class="c1">-------------+---------------+</span>
+<span class="o">|</span><span class="w">           </span><span class="mi">1</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">zhangsan</span><span class="w">      </span><span class="o">|</span>
+<span class="o">|</span><span class="w">           </span><span class="mi">2</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">lisi</span><span class="w">          </span><span class="o">|</span>
+<span class="o">+</span><span class="c1">-------------+---------------+</span>
+<span class="mi">2</span><span class="w"> </span><span class="k">rows</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">set</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">003</span><span class="w"> </span><span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span><span class="w"> </span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t_customer</span><span class="p">;</span>
+<span class="o">+</span><span class="c1">-------------+---------------+</span>
+<span class="o">|</span><span class="w"> </span><span class="n">customer_id</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">customer_name</span><span class="w"> </span><span class="o">|</span>
+<span class="o">+</span><span class="c1">-------------+---------------+</span>
+<span class="o">|</span><span class="w">           </span><span class="mi">1</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">zhangsan</span><span class="w">      </span><span class="o">|</span>
+<span class="o">|</span><span class="w">           </span><span class="mi">2</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">lisi</span><span class="w">          </span><span class="o">|</span>
+<span class="o">|</span><span class="w">           </span><span class="mi">3</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">wangwu</span><span class="w">        </span><span class="o">|</span>
+<span class="o">+</span><span class="c1">-------------+---------------+</span>
+<span class="mi">3</span><span class="w"> </span><span class="k">rows</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">set</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">000</span><span class="w"> </span><span class="n">sec</span><span class="p">)</span>
+
+<span class="n">mysql</span><span class="o">&gt;</span><span class="w"> </span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t_order</span><span class="p">;</span>
+
+<span class="o">+</span><span class="c1">----------+-------------+-------------+</span>
+<span class="o">|</span><span class="w"> </span><span class="n">order_id</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">order_price</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="n">customer_id</span><span class="w"> </span><span class="o">|</span>
+<span class="o">+</span><span class="c1">----------+-------------+-------------+</span>
+<span class="o">|</span><span class="w">       </span><span class="mi">10</span><span class="w"> </span><span class="o">|</span><span class="w">      </span><span class="mi">1000</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="o">|</span><span class="w">           </span><span class="mi">1</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w">       </span><span class="mi">20</span><span class="w"> </span><span class="o">|</span><span class="w">      </span><span class="mi">2000</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="o">|</span><span class="w">           </span><span class="mi">1</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w">       </span><span class="mi">30</span><span class="w"> </span><span class="o">|</span><span class="w">      </span><span class="mi">3000</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="o">|</span><span class="w">           </span><span class="mi">2</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w">       </span><span class="mi">40</span><span class="w"> </span><span class="o">|</span><span class="w">      </span><span class="mi">4000</span><span class="p">.</span><span class="mi">0</span><span class="w"> </span><span class="o">|</span><span class="w">           </span><span class="mi">2</span><span class="w"> </span><span class="o">|</span>
+<span class="o">+</span><span class="c1">----------+-------------+-------------+</span>
+<span class="mi">4</span><span class="w"> </span><span class="k">rows</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">set</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">000</span><span class="w"> </span><span class="n">sec</span><span class="p">)</span>
+</code></pre>
+<p>在这个查询语句中，子查询用于检查是否有订单与每个客户相关联。如果子查询返回至少一行，则表示该顾客已经下过订单，并返回此客户的所有信息，否则该顾客将不被包含在结果中。</p>
+<p>以下是这个查询语句的执行过程：</p>
+<ol>
+<li>首先查询表 t_customer 中的所有顾客信息（以下简称为顾客表）；</li>
+<li>对于顾客表中的每一行，都执行一次子查询，子查询查询该顾客有没有订单，如果有，则在结果集中保留该顾客信息；如果没有，则将该顾客排除；</li>
+<li>最终返回有订单顾客的所有信息。</li>
+</ol>
+<p>除了 EXISTS，也可以使用 NOT EXISTS 条件从 SELECT、UPDATE、DELETE 语句中获取子查询的返回结果。NOT EXISTS 用于检查一个子查询是否返回任何行，如果没有行返回，那么 NOT EXISTS 将返回 true。</p>
+<p>例如，我们想要查找所有没有下过订单的顾客，可以使用以下 sql 语句：</p>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t_customer</span><span class="w"> </span><span class="k">c</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="k">not</span><span class="w"> </span><span class="k">exists</span><span class="p">(</span><span class="k">select</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">t_order</span><span class="w"> </span><span class="n">o</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">o</span><span class="p">.</span><span class="n">customer_id</span><span class="o">=</span><span class="k">c</span><span class="p">.</span><span class="n">customer_id</span><span class="p">);</span>
+</code></pre>
+<p>在这个查询语句中，如果没有任何与顾客相关联的订单，则 NOT EXISTS 子查询将返回一个空结果集，这时候 WHERE 条件为 true，并将返回所有顾客信息。如果顾客有订单，则 NOT EXISTS 子查询的结果集将不为空，WHERE 条件为 false，则不会返回该顾客的信息。</p>
+<p>总之，无论是 EXISTS 还是 NOT EXISTS，都是非常有用的 SQL 工具。可以通过它们来结合子查询来动态过滤查询结果，使 SQL 查询变得更加灵活和高效。</p>
+<hr />
+<h2 id="inexists">in和exists区别</h2>
+<p>IN 和 EXISTS 都是用于关系型数据库查询的操作符。不同之处在于（面试题）：</p>
+<ol>
+<li><strong>IN 操作符</strong>是根据指定列表中的<strong>值</strong>来判断是否满足条件，而 <strong>EXISTS 操作符</strong>则是根据子查询的结果<strong>是否有返回记录集</strong>来判断。</li>
+<li><strong>EXISTS 操作符通常比 IN 操作符更快</strong>，尤其是在子查询返回记录数很大的情况下。<strong>因为 EXISTS 只需要判断是否存在符合条件的记录，而 IN 操作符需要比对整个列表</strong>，因此执行效率相对较低。</li>
+<li>IN 操作符可同时匹配<strong>多个值</strong>，而 EXISTS <strong>只能匹配一组条件</strong>。</li>
+</ol>
+<p>下面是一个简单的示例，用于演示 IN 和 EXISTS 之间的区别。假设我们有两个表 orders 和 products，orders 表中记录了订单信息，products 表中记录了商品信息。现在我们想查询所有“手机”和“平板电脑”这两种商品中，至少有一笔订单销售了 $1000 以上的商品：</p>
+<p>使用 IN 操作符：</p>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">products</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">product_name</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">'手机'</span><span class="p">,</span><span class="w"> </span><span class="s1">'平板电脑'</span><span class="p">)</span>
+<span class="k">AND</span><span class="w"> </span><span class="n">product_id</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">product_id</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">orders</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">order_amount</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1000</span>
+<span class="p">);</span>
+</code></pre>
+<p>使用 EXISTS 操作符：</p>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">products</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">product_name</span><span class="w"> </span><span class="k">IN</span><span class="w"> </span><span class="p">(</span><span class="s1">'手机'</span><span class="p">,</span><span class="w"> </span><span class="s1">'平板电脑'</span><span class="p">)</span>
+<span class="k">AND</span><span class="w"> </span><span class="k">EXISTS</span><span class="w"> </span><span class="p">(</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="o">*</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">orders</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">orders</span><span class="p">.</span><span class="n">product_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">products</span><span class="p">.</span><span class="n">product_id</span>
+<span class="k">AND</span><span class="w"> </span><span class="n">order_amount</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">1000</span>
+<span class="p">);</span>
+</code></pre>
+<p>总之，IN 和 EXISTS 都是用于条件过滤的操作符，但其实现方式和性能特点都不同，需要根据具体情况进行选择和使用。</p>
+<hr />
+<h2 id="unionunion-all">union&amp;union all</h2>
+<p>不管是union还是union all都可以将两个查询结果集进行合并。</p>
+<p><strong>union</strong>会对合并之后的查询结果集进行<strong>去重操作</strong>。</p>
+<p>union all是直接将查询结果集合并，不进行去重操作。（union all和union都可以完成的话，<strong>优先选择union all</strong>，union all因为不需要去重，所以效率高一些。）</p>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="c1">-- 只查询'salesman','clerk'的员工</span>
+<span class="n">mysql</span><span class="o">&gt;</span><span class="w"> </span><span class="k">select</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">ename</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">sal</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">emp</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">job</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="p">(</span><span class="s1">'salesman'</span><span class="p">,</span><span class="s1">'clerk'</span><span class="p">);</span>
+<span class="o">+</span><span class="c1">--------+---------+</span>
+<span class="o">|</span><span class="w"> </span><span class="n">ename</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="n">sal</span><span class="w">     </span><span class="o">|</span>
+<span class="o">+</span><span class="c1">--------+---------+</span>
+<span class="o">|</span><span class="w"> </span><span class="n">SMITH</span><span class="w">  </span><span class="o">|</span><span class="w">  </span><span class="mi">800</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">ALLEN</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="mi">1600</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">WARD</span><span class="w">   </span><span class="o">|</span><span class="w"> </span><span class="mi">1250</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">MARTIN</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="mi">1250</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">TURNER</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="mi">1500</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">ADAMS</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="mi">1100</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">JAMES</span><span class="w">  </span><span class="o">|</span><span class="w">  </span><span class="mi">950</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">MILLER</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="mi">1300</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">+</span><span class="c1">--------+---------+</span>
+<span class="mi">8</span><span class="w"> </span><span class="k">rows</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">set</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">001</span><span class="w"> </span><span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">-- 只查询'manager','clerk'的员工</span>
+<span class="n">mysql</span><span class="o">&gt;</span><span class="w"> </span><span class="k">select</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">ename</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">sal</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">emp</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">job</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="p">(</span><span class="s1">'manager'</span><span class="p">,</span><span class="s1">'clerk'</span><span class="p">);</span>
+<span class="o">+</span><span class="c1">--------+---------+</span>
+<span class="o">|</span><span class="w"> </span><span class="n">ename</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="n">sal</span><span class="w">     </span><span class="o">|</span>
+<span class="o">+</span><span class="c1">--------+---------+</span>
+<span class="o">|</span><span class="w"> </span><span class="n">SMITH</span><span class="w">  </span><span class="o">|</span><span class="w">  </span><span class="mi">800</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">JONES</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="mi">2975</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">BLAKE</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="mi">2850</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">CLARK</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="mi">2450</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">ADAMS</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="mi">1100</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">JAMES</span><span class="w">  </span><span class="o">|</span><span class="w">  </span><span class="mi">950</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">MILLER</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="mi">1300</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">+</span><span class="c1">--------+---------+</span>
+<span class="mi">7</span><span class="w"> </span><span class="k">rows</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">set</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">000</span><span class="w"> </span><span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">-- 使用union对两个结果合并（会自动去重）</span>
+<span class="n">mysql</span><span class="o">&gt;</span><span class="w"> </span><span class="k">select</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">ename</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">sal</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">emp</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">job</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="p">(</span><span class="s1">'salesman'</span><span class="p">,</span><span class="s1">'clerk'</span><span class="p">)</span>
+<span class="w">    </span><span class="o">-&gt;</span><span class="w"> </span><span class="k">union</span>
+<span class="w">    </span><span class="o">-&gt;</span><span class="w"> </span><span class="k">select</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">ename</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">sal</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">emp</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">job</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="p">(</span><span class="s1">'manager'</span><span class="p">,</span><span class="s1">'clerk'</span><span class="p">);</span>
+<span class="o">+</span><span class="c1">--------+---------+</span>
+<span class="o">|</span><span class="w"> </span><span class="n">ename</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="n">sal</span><span class="w">     </span><span class="o">|</span>
+<span class="o">+</span><span class="c1">--------+---------+</span>
+<span class="o">|</span><span class="w"> </span><span class="n">SMITH</span><span class="w">  </span><span class="o">|</span><span class="w">  </span><span class="mi">800</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">ALLEN</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="mi">1600</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">WARD</span><span class="w">   </span><span class="o">|</span><span class="w"> </span><span class="mi">1250</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">MARTIN</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="mi">1250</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">TURNER</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="mi">1500</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">ADAMS</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="mi">1100</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">JAMES</span><span class="w">  </span><span class="o">|</span><span class="w">  </span><span class="mi">950</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">MILLER</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="mi">1300</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">JONES</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="mi">2975</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">BLAKE</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="mi">2850</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">CLARK</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="mi">2450</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">+</span><span class="c1">--------+---------+</span>
+<span class="mi">11</span><span class="w"> </span><span class="k">rows</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">set</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">004</span><span class="w"> </span><span class="n">sec</span><span class="p">)</span>
+
+<span class="c1">-- 使用union all对两个结果合并（不会去重）</span>
+<span class="n">mysql</span><span class="o">&gt;</span><span class="w"> </span><span class="k">select</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">ename</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">sal</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">emp</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">job</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="p">(</span><span class="s1">'salesman'</span><span class="p">,</span><span class="s1">'clerk'</span><span class="p">)</span>
+<span class="w">    </span><span class="o">-&gt;</span><span class="w"> </span><span class="k">union</span><span class="w"> </span><span class="k">all</span>
+<span class="w">    </span><span class="o">-&gt;</span><span class="w"> </span><span class="k">select</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">ename</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">sal</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">emp</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">job</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="p">(</span><span class="s1">'manager'</span><span class="p">,</span><span class="s1">'clerk'</span><span class="p">);</span>
+<span class="o">+</span><span class="c1">--------+---------+</span>
+<span class="o">|</span><span class="w"> </span><span class="n">ename</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="n">sal</span><span class="w">     </span><span class="o">|</span>
+<span class="o">+</span><span class="c1">--------+---------+</span>
+<span class="o">|</span><span class="w"> </span><span class="n">SMITH</span><span class="w">  </span><span class="o">|</span><span class="w">  </span><span class="mi">800</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">ALLEN</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="mi">1600</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">WARD</span><span class="w">   </span><span class="o">|</span><span class="w"> </span><span class="mi">1250</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">MARTIN</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="mi">1250</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">TURNER</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="mi">1500</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">ADAMS</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="mi">1100</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">JAMES</span><span class="w">  </span><span class="o">|</span><span class="w">  </span><span class="mi">950</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">MILLER</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="mi">1300</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">SMITH</span><span class="w">  </span><span class="o">|</span><span class="w">  </span><span class="mi">800</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">JONES</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="mi">2975</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">BLAKE</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="mi">2850</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">CLARK</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="mi">2450</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">ADAMS</span><span class="w">  </span><span class="o">|</span><span class="w"> </span><span class="mi">1100</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">JAMES</span><span class="w">  </span><span class="o">|</span><span class="w">  </span><span class="mi">950</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">|</span><span class="w"> </span><span class="n">MILLER</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="mi">1300</span><span class="p">.</span><span class="mi">00</span><span class="w"> </span><span class="o">|</span>
+<span class="o">+</span><span class="c1">--------+---------+</span>
+<span class="mi">15</span><span class="w"> </span><span class="k">rows</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="k">set</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">001</span><span class="w"> </span><span class="n">sec</span><span class="p">)</span>
+</code></pre>
+<p>以上案例采用or也可以完成，那or和union all有什么区别？：<strong>考虑走索引优化之类的选择union all，其它选择or</strong>。</p>
+<p>两个结果集合并时，列数量要相同：</p>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="n">mysql</span><span class="o">&gt;</span><span class="w"> </span><span class="k">select</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">ename</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">emp</span><span class="w"> </span><span class="n">e</span>
+<span class="w">    </span><span class="o">-&gt;</span><span class="w"> </span><span class="k">union</span>
+<span class="w">    </span><span class="o">-&gt;</span><span class="w"> </span><span class="k">select</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">ename</span><span class="p">,</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="n">sal</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">emp</span><span class="w"> </span><span class="n">e</span><span class="p">;</span>
+<span class="n">ERROR</span><span class="w"> </span><span class="mi">1222</span><span class="w"> </span><span class="p">(</span><span class="mi">2100</span><span class="p">):</span><span class="w"> </span><span class="n">The</span><span class="w"> </span><span class="n">used</span><span class="w"> </span><span class="k">SELECT</span><span class="w"> </span><span class="n">statements</span><span class="w"> </span><span class="n">have</span><span class="w"> </span><span class="n">a</span><span class="w"> </span><span class="n">different</span><span class="w"> </span><span class="nb">number</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="n">columns</span>
+</code></pre>
+<hr />
+<h2 id="limit">limit</h2>
+<ol>
+<li>limit作用：查询第几条到第几条的记录。通常是因为表中数据量太大，需要分页显示。</li>
+<li>limit语法格式：<code>limit 开始下标, 长度</code></li>
+<li>案例：查询员工表前5条记录</li>
+</ol>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">select</span><span class="w"> </span><span class="n">ename</span><span class="p">,</span><span class="n">sal</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">emp</span><span class="w"> </span><span class="k">limit</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span>
+</code></pre>
+<pre><code class="md-fencescode">如果下标是从0开始，可以简写为：
+</code></pre>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">select</span><span class="w"> </span><span class="n">ename</span><span class="p">,</span><span class="n">sal</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">emp</span><span class="w"> </span><span class="k">limit</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span>
+</code></pre>
+<ol>
+<li>查询工资排名在前5名的员工（limit是在order by执行之后才会执行的</li>
+</ol>
+<pre lang="sql"><code class="language-sql md-fencescode"><span class="k">select</span><span class="w"> </span><span class="n">ename</span><span class="p">,</span><span class="n">sal</span><span class="w"> </span><span class="k">from</span><span class="w"> </span><span class="n">emp</span><span class="w"> </span><span class="k">order</span><span class="w"> </span><span class="k">by</span><span class="w"> </span><span class="n">sal</span><span class="w"> </span><span class="k">desc</span><span class="w"> </span><span class="k">limit</span><span class="w"> </span><span class="mi">5</span><span class="p">;</span>
+</code></pre>
+<ol>
+<li>通用的分页sql</li>
+</ol>
+<p>假设每页显示3条记录：pageSize = 3
+第1页：limit 0, 3
+第2页：limit 3, 3
+第3页：limit 6, 3
+第pageNo页：<code>limit (pageNo - 1)*pageSize, pageSize</code></p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

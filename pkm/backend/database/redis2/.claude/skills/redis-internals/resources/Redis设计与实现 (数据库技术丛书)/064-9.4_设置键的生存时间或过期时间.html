@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>064-9.4_设置键的生存时间或过期时间</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../../themes/github.css">
+</head>
+<body class="done">
+<p>9.4 设置键的生存时间或过期时间</p>
+<p>通过EXPIRE命令或者PEXPIRE命令，客户端可以以秒或者毫秒精度为数据库中的某个键设置生存时间（Time To Live，TTL），在经过指定的秒数或者毫秒数之后，服务器就会自动删除生存时间为0的键：</p>
+<hr />
+<blockquote>
+<p>redis&gt; SET key value<br />
+OK<br />
+redis&gt; EXPIRE key 5<br />
+(integer) 1<br />
+redis&gt; GET key // 5<br />
+秒之内<br />
+"value"<br />
+redis&gt; GET key // 5<br />
+秒之后<br />
+(nil)  </p>
+</blockquote>
+<hr />
+<p><img alt="" src="./images/00411.jpg" />注意</p>
+<p>SETEX命令可以在设置一个字符串键的同时为键设置过期时间，因为这个命令是一个类型限定的命令（只能用于字符串键），所以本章不会对这个命令进行介绍，但SETEX命令设置过期时间的原理和本章介绍的EXPIRE命令设置过期时间的原理是完全一样的。</p>
+<p>与EXPIRE命令和PEXPIRE命令类似，客户端可以通过EXPIREAT命令或PEXPIREAT命令，以秒或者毫秒精度给数据库中的某个键设置过期时间（expire time）。</p>
+<p>过期时间是一个UNIX时间戳，当键的过期时间来临时，服务器就会自动从数据库中删除这个键：</p>
+<hr />
+<blockquote>
+<p>redis&gt; SET key value<br />
+OK<br />
+redis&gt; EXPIREAT key 1377257300<br />
+(integer) 1<br />
+redis&gt; TIME<br />
+1)"1377257296"<br />
+2)"296543"<br />
+redis&gt; GET key // 1377257300<br />
+之前<br />
+"value"<br />
+redis&gt; TIME<br />
+1)"1377257303"<br />
+2)"230656"<br />
+redis&gt; GET key // 1377257300<br />
+之后<br />
+(nil)  </p>
+</blockquote>
+<hr />
+<p>TTL命令和PTTL命令接受一个带有生存时间或者过期时间的键，返回这个键的剩余生存时间，也就是，返回距离这个键被服务器自动删除还有多长时间：</p>
+<hr />
+<blockquote>
+<p>redis&gt; SET key value<br />
+OK<br />
+redis&gt; EXPIRE key 1000<br />
+(integer) 1<br />
+redis&gt; TTL key<br />
+(integer) 997<br />
+redis&gt; SET another_key another_value<br />
+OK<br />
+redis&gt; TIME<br />
+1)"1377333070"<br />
+2)"761687"<br />
+redis&gt; EXPIREAT another_key 1377333100<br />
+(integer) 1<br />
+redis&gt; TTL another_key<br />
+(integer) 10  </p>
+</blockquote>
+<hr />
+<p>在上一节我们讨论了数据库的底层实现，以及各种数据库操作的实现原理，但是，关于数据库如何保存键的生存时间和过期时间，以及服务器如何自动删除那些带有生存时间和过期时间的键这两个问题，我们还没有讨论。</p>
+<p>本节将对服务器保存键的生存时间和过期时间的方法进行介绍，并在下一节介绍服务器自动删除过期键的方法。</p>
+<p>9.4.1 设置过期时间</p>
+<p>Redis有四个不同的命令可以用于设置键的生存时间（键可以存在多久）或过期时间（键什么时候会被删除）：</p>
+<p>·EXPIRE<key><ttl>命令用于将键key的生存时间设置为ttl秒。</p>
+<p>·PEXPIRE<key><ttl>命令用于将键key的生存时间设置为ttl毫秒。</p>
+<p>·EXPIREAT<key><timestamp>命令用于将键key的过期时间设置为timestamp所指定的秒数时间戳。</p>
+<p>·PEXPIREAT<key><timestamp>命令用于将键key的过期时间设置为timestamp所指定的毫秒数时间戳。</p>
+<p>虽然有多种不同单位和不同形式的设置命令，但实际上EXPIRE、PEXPIRE、EXPIREAT三个命令都是使用PEXPIREAT命令来实现的：无论客户端执行的是以上四个命令中的哪一个，经过转换之后，最终的执行效果都和执行PEXPIREAT命令一样。</p>
+<p>首先，EXPIRE命令可以转换成PEXPIRE命令：</p>
+<hr />
+<blockquote>
+<p>def EXPIRE(key,ttl_in_sec):  </p>
+<h1 id="_1"></h1>
+<p>将TTL<br />
+从秒转换成毫秒<br />
+ttl_in_ms = sec_to_ms(ttl_in_sec)<br />
+PEXPIRE(key, ttl_in_ms)  </p>
+</blockquote>
+<hr />
+<p>接着，PEXPIRE命令又可以转换成PEXPIREAT命令：</p>
+<hr />
+<blockquote>
+<p>def PEXPIRE(key,ttl_in_ms):  </p>
+<h1 id="_2"></h1>
+<p>获取以毫秒计算的当前UNIX<br />
+时间戳<br />
+now_ms = get_current_unix_timestamp_in_ms()  </p>
+<h1 id="_3"></h1>
+<p>当前时间加上TTL<br />
+，得出毫秒格式的键过期时间<br />
+PEXPIREAT(key,now_ms+ttl_in_ms)  </p>
+</blockquote>
+<hr />
+<p>并且，EXPIREAT命令也可以转换成PEXPIREAT命令：</p>
+<hr />
+<blockquote>
+<p>def EXPIREAT(key,expire_time_in_sec):<br />
+# <br />
+将过期时间从秒转换为毫秒<br />
+expire_time_in_ms = sec_to_ms(expire_time_in_sec)<br />
+PEXPIREAT(key, expire_time_in_ms)  </p>
+</blockquote>
+<hr />
+<p>最终，EXPIRE、PEXPIRE和EXPIREAT三个命令都会转换成PEXPIREAT命令来执行，如图9-11所示。</p>
+<p><img alt="" src="./images/00003.jpg" /></p>
+<p>图9-11 设置生存时间和设置过期时间的命令之间的转换</p>
+<p>9.4.2 保存过期时间</p>
+<p>redisDb结构的expires字典保存了数据库中所有键的过期时间，我们称这个字典为过期字典：</p>
+<p>·过期字典的键是一个指针，这个指针指向键空间中的某个键对象（也即是某个数据库键）。</p>
+<p>·过期字典的值是一个long long类型的整数，这个整数保存了键所指向的数据库键的过期时间——一个毫秒精度的UNIX时间戳。</p>
+<hr />
+<blockquote>
+<p>typedef struct redisDb {<br />
+// ...<br />
+// <br />
+过期字典，保存着键的过期时间<br />
+dict *expires;<br />
+// ...<br />
+} redisDb;  </p>
+</blockquote>
+<hr />
+<p>图9-12展示了一个带有过期字典的数据库例子，在这个例子中，键空间保存了数据库中的所有键值对，而过期字典则保存了数据库键的过期时间。</p>
+<p><img alt="" src="./images/00411.jpg" />注意</p>
+<p>为了展示方便，图9-12的键空间和过期字典中重复出现了两次alphabet键对象和book键对象。在实际中，键空间的键和过期字典的键都指向同一个键对象，所以不会出现任何重复对象，也不会浪费任何空间。</p>
+<p><img alt="" src="./images/00017.jpg" /></p>
+<p>图9-12 带有过期字典的数据库例子</p>
+<p>图9-12中的过期字典保存了两个键值对：</p>
+<p>·第一个键值对的键为alphabet键对象，值为1385877600000，这表示数据库键alphabet的过期时间为1385877600000（2013年12月1日零时）。</p>
+<p>·第二个键值对的键为book键对象，值为1388556000000，这表示数据库键book的过期时间为1388556000000（2014年1月1日零时）。</p>
+<p>当客户端执行PEXPIREAT命令（或者其他三个会转换成PEXPIREAT命令的命令）为一个数据库键设置过期时间时，服务器会在数据库的过期字典中关联给定的数据库键和过期时间。</p>
+<p>举个例子，如果数据库当前的状态如图9-12所示，那么在服务器执行以下命令之后：</p>
+<hr />
+<blockquote>
+<p>redis&gt; PEXPIREAT message 1391234400000<br />
+(integer) 1  </p>
+</blockquote>
+<hr />
+<p>过期字典将新增一个键值对，其中键为message键对象，而值则为1391234400000（2014年2月1日零时），如图9-13所示。</p>
+<p><img alt="" src="./images/00033.jpg" /></p>
+<p>图9-13 执行PEXPIREAT命令之后的数据库</p>
+<p>以下是PEXPIREAT命令的伪代码定义：</p>
+<hr />
+<blockquote>
+<p>def PEXPIREAT(key, expire_time_in_ms):<br />
+# <br />
+如果给定的键不存在于键空间，那么不能设置过期时间<br />
+if key not in redisDb.dict:<br />
+return0<br />
+# <br />
+在过期字典中关联键和过期时间<br />
+redisDb.expires[key] = expire_time_in_ms<br />
+# <br />
+过期时间设置成功<br />
+return 1  </p>
+</blockquote>
+<hr />
+<p>9.4.3 移除过期时间</p>
+<p>PERSIST命令可以移除一个键的过期时间：</p>
+<hr />
+<blockquote>
+<p>redis&gt; PEXPIREAT message 1391234400000<br />
+(integer) 1<br />
+redis&gt; TTL message<br />
+(integer) 13893281<br />
+redis&gt; PERSIST message<br />
+(integer) 1<br />
+redis&gt; TTL message<br />
+(integer) -1  </p>
+</blockquote>
+<hr />
+<p>PERSIST命令就是PEXPIREAT命令的反操作：PERSIST命令在过期字典中查找给定的键，并解除键和值（过期时间）在过期字典中的关联。</p>
+<p>举个例子，如果数据库当前的状态如图9-12所示，那么当服务器执行以下命令之后：</p>
+<hr />
+<blockquote>
+<p>redis&gt; PERSIST book<br />
+(integer) 1  </p>
+</blockquote>
+<hr />
+<p>数据库将更新成图9-14所示的状态。</p>
+<p><img alt="" src="./images/00110.jpg" /></p>
+<p>图9-14 执行PERSIST之后的数据库</p>
+<p>可以看到，当PERSIST命令执行之后，过期字典中原来的book键值对消失了，这代表数据库键book的过期时间已经被移除。</p>
+<p>以下是PERSIST命令的伪代码定义：</p>
+<hr />
+<blockquote>
+<p>def PERSIST(key):<br />
+# <br />
+如果键不存在，或者键没有设置过期时间，那么直接返回<br />
+if key not in redisDb.expires:<br />
+return0<br />
+# <br />
+移除过期字典中给定键的键值对关联<br />
+redisDb.expires.remove(key)<br />
+# <br />
+键的过期时间移除成功<br />
+return 1  </p>
+</blockquote>
+<hr />
+<p>9.4.4 计算并返回剩余生存时间</p>
+<p>TTL命令以秒为单位返回键的剩余生存时间，而PTTL命令则以毫秒为单位返回键的剩余生存时间：</p>
+<hr />
+<blockquote>
+<p>redis&gt; PEXPIREAT alphabet 1385877600000<br />
+(integer) 1<br />
+redis&gt; TTL alphabet<br />
+(integer) 8549007<br />
+redis&gt; PTTL alphabet<br />
+(integer) 8549001011  </p>
+</blockquote>
+<hr />
+<p>TTL和PTTL两个命令都是通过计算键的过期时间和当前时间之间的差来实现的，以下是这两个命令的伪代码实现：</p>
+<hr />
+<blockquote>
+<p>def PTTL(key):<br />
+# <br />
+键不存在于数据库<br />
+if key not in redisDb.dict:<br />
+return-2<br />
+# <br />
+尝试取得键的过期时间<br />
+# <br />
+如果键没有设置过期时间，那么 expire_time_in_ms <br />
+将为 None<br />
+expire_time_in_ms = redisDb.expires.get(key)<br />
+# <br />
+键没有设置过期时间<br />
+if expire_time_in_ms is None:<br />
+return -1<br />
+# <br />
+获得当前时间<br />
+now_ms = get_current_unix_timestamp_in_ms()<br />
+# <br />
+过期时间减去当前时间，得出的差就是键的剩余生存时间<br />
+return(expire_time_in_ms - now_ms)<br />
+def TTL(key):<br />
+# <br />
+获取以毫秒为单位的剩余生存时间<br />
+ttl_in_ms = PTTL(key)<br />
+if ttl_in_ms &lt; 0:  </p>
+<h1 id="_4"></h1>
+<p>处理返回值为-2<br />
+和-1<br />
+的情况<br />
+return ttl_in_ms<br />
+else:<br />
+# <br />
+将毫秒转换为秒<br />
+return ms_to_sec(ttl_in_ms)  </p>
+</blockquote>
+<hr />
+<p>举个例子，对于一个过期时间为1385877600000（2013年12月1日零时）的键alphabet来说：</p>
+<p>·如果当前时间为1383282000000（2013年11月1日零时），那么对键alphabet执行PTTL命令将返回2595600000，这个值是通过用alphabet键的过期时间减去当前时间计算得出的：1385877600000-1383282000000=2595600000。</p>
+<p>·另一方面，如果当前时间为1383282000000（2013年11月1日零时），那么对键alphabet执行TTL命令将返回2595600，这个值是通过计算alphabet键的过期时间减去当前时间的差，然后将差值从毫秒转换为秒之后得出的。</p>
+<p>9.4.5 过期键的判定</p>
+<p>通过过期字典，程序可以用以下步骤检查一个给定键是否过期：</p>
+<p>1）检查给定键是否存在于过期字典：如果存在，那么取得键的过期时间。</p>
+<p>2）检查当前UNIX时间戳是否大于键的过期时间：如果是的话，那么键已经过期；否则的话，键未过期。</p>
+<p>可以用伪代码来描述这一过程：</p>
+<hr />
+<blockquote>
+<p>def is_expired(key):<br />
+# <br />
+取得键的过期时间<br />
+expire_time_in_ms = redisDb.expires.get(key)<br />
+# <br />
+键没有设置过期时间<br />
+if expire_time_in_ms is None:<br />
+return False<br />
+# <br />
+取得当前时间的UNIX<br />
+时间戳<br />
+now_ms = get_current_unix_timestamp_in_ms()<br />
+# <br />
+检查当前时间是否大于键的过期时间<br />
+if now_ms &gt; expire_time_in_ms:<br />
+# <br />
+是，键已经过期<br />
+return True<br />
+else:<br />
+# <br />
+否，键未过期<br />
+return False  </p>
+</blockquote>
+<hr />
+<p>举个例子，对于一个过期时间为1385877600000（2013年12月1日零时）的键alphabet来说：</p>
+<p>·如果当前时间为1383282000000（2013年11月1日零时），那么调用is_expired（alphabet）将返回False，因为当前时间小于alphabet键的过期时间。</p>
+<p>·另一方面，如果当前时间为1385964000000（2013年12月2日零时），那么调用is_expired（alphabet）将返回True，因为当前时间大于alphabet键的过期时间。</p>
+<p><img alt="" src="./images/00411.jpg" />注意</p>
+<p>实现过期键判定的另一种方法是使用TTL命令或者PTTL命令，比如说，如果对某个键执行TTL命令，并且命令返回的值大于等于0，那么说明该键未过期。在实际中，Redis检查键是否过期的方法和is_expired函数所描述的方法一致，因为直接访问字典比执行一个命令稍微快一些。</p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

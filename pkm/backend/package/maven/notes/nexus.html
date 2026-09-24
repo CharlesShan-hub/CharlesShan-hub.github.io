@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>nexus</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="maven">Maven私服</h1>
+<h2 id="_1">什么是私服</h2>
+<p><strong>Maven 私服是一种特殊的远程仓库，它是架设在局域网内的仓库服务</strong>，用来代理位于外部的远程仓库（中央仓库、其他远程公共仓库）。一些无法从外部仓库下载到的构件，也能从本地上传到私服供其他人使用。</p>
+<p>Maven 私服其实并不是 Maven 的核心概念，它仅仅是一种衍生出来的特殊的仓库，但这并不代表它不重要，相反由于私服具有降低中央仓库负荷、节省外网带宽、以及提高项目稳定性等优点，使得私服在实际开发过程中得到了相当普遍地使用。建立了 Maven 私服后，当局域网内的用户需要某个构件时，会先请求本地仓库，若本地仓库不存在所需构件，则请求 Maven 私服，将所需构件下载到本地仓库，若私服中不存在所需构件，再去请求外部的远程仓库，将所需构件下载并缓存到 Maven 私服，若外部远程仓库不存在所需构件，则 Maven 直接报错。</p>
+<h2 id="mavennexus">Maven仓库管理器Nexus</h2>
+<h3 id="nexus">什么是Nexus</h3>
+<p>Nexus 是 Sonatype（中央仓库实际的维护方） 公司发布的一款仓库（Repository）管理软件，常用来搭建 Maven 私服，所以也有人将 Nexus 称为“Maven仓库管理器”。 Sonatype Nexus 是当前最流行，使用最广泛的 Maven 仓库管理器。Nexus 分为开源版和专业版，开源版足以满足大部分 Maven 用户的需求。</p>
+<h3 id="nexus_1">Nexus仓库的类型</h3>
+<p>Nexus默认内置了许多仓库，这些仓库被分为三大类，每种类型的仓库用于存放特定的<code>jar</code>包：</p>
+<ol>
+<li>
+<p>代理仓库（proxy）：缓存下载过的依赖，避免重复从外网拉取。例如Nexus中内置的<code>maven-central</code>库就是一个代理仓库，从远程中央仓库中下载的<code>jar</code>包会被缓存到<code>maven-central</code>这个代理仓库中。</p>
+</li>
+<li>
+<p>宿主仓库（hosted）：存储本地构建的私有构件，如公司内部开发的 Jar 包。对于宿主仓库来说，包含多个子分类，例如：</p>
+<ol>
+<li>
+<p>Release：存放稳定版本（如Nexus内置的<code>maven-releases</code>仓库），一旦发布到<code>&lt;font style="color:rgb(64, 64, 64);"&gt;Release&lt;/font&gt;</code>类型的仓库，同一个版本的构件<strong>不允许重复部署或覆盖</strong>。</p>
+</li>
+<li>
+<p>Snapshot：存放快照版本（如Nexus内置的<code>maven-snapshots</code>仓库），发布到<code>&lt;font style="color:rgb(64, 64, 64);"&gt;Snapshot&lt;/font&gt;</code>类型的仓库的构件<strong>可以被多次覆盖</strong>。</p>
+</li>
+</ol>
+</li>
+<li>
+<p>仓库组（group）：将多个仓库合并为一个逻辑入口，简化客户端配置。例如Nexus中内置的<code>maven-public</code>仓库，主要是为了简化配置，这么多仓库不需要都配置，只需要配置一个仓库组就行了。</p>
+</li>
+</ol>
+<p><img alt="" src="../assets/1748415005673-89afe0b0-da62-4231-b017-f4ea2c2fb0e5.png" /></p>
+<p><img alt="" src="../assets/1748416008789-f89e99fa-867a-465a-b102-52e9e8af9fc9.png" /></p>
+<h3 id="_2">仓库为什么要分类</h3>
+<p>分类的目的是 <strong>明确职责，优化管理</strong>：</p>
+<ul>
+<li><strong>隔离环境</strong>：区分快照（Snapshot）和正式版（Release），避免混淆。</li>
+<li><strong>权限控制</strong>：可以为不同仓库设置不同的读写权限（如开发人员可上传 Snapshot，但只有管理员能发布 Release）。</li>
+<li><strong>性能优化</strong>：代理仓库可以缓存热门依赖，而宿主仓库专注于私有构件。</li>
+<li><strong>简化客户端配置</strong>：通过仓库组统一暴露仓库，客户端无需关心底层细节。</li>
+</ul>
+<h3 id="nexus_2">安装Nexus</h3>
+<h4 id="nexus_3">下载Nexus</h4>
+<p>下载地址：<a href="https://help.sonatype.com/en/download.html">https://help.sonatype.com/en/download.html</a></p>
+<p><img alt="" src="../assets/1748416143307-fbfa7646-2817-46ba-ab65-3a2572d6ebde.png" /></p>
+<h4 id="nexus_4">解压安装Nexus</h4>
+<p>下载后解压到一个没有中文的路径下：</p>
+<p><img alt="" src="../assets/1748417212139-306b2152-a385-46f7-915e-94d86414c884.png" /></p>
+<h4 id="nexus_5">启动Nexus服务</h4>
+<p>进入<code>C:\nexus-3.66.0-02\bin</code>目录下：</p>
+<p><img alt="" src="../assets/1748416328972-9a00cd53-6e6f-46e0-ba30-82889c09a3bb.png" /></p>
+<p>以管理员身份打开cmd窗口，并且<code>cd</code>到<code>bin</code>目录下，输入命令：<code>nexus /run</code>，需要等待一段时间，直到出现 <code>Started Sonatype Nexus OSS 3.66.0-02</code> 说明启动成功。</p>
+<p><img alt="" src="../assets/1748417327078-7366cef0-9e43-4f15-9622-3e6c0daa54ee.png" /></p>
+<p>并且会生成一个比较重要的<code>work</code>目录，如下：</p>
+<p><img alt="" src="../assets/1748417416853-34a37c63-e2cc-4592-bdbe-3aafc347afef.png" /></p>
+<h4 id="nexus_6">访问Nexus</h4>
+<p>访问地址：<a href="http://localhost:8081">http://localhost:8081</a></p>
+<p><img alt="" src="../assets/1748416595988-2b24beb1-6cd2-4e14-afb7-c991679f0621.png" /></p>
+<p>端口可以修改，在这个文件中：</p>
+<p><img alt="" src="../assets/1748416672545-14d2e604-9c45-41e6-b24c-c862d8c614e3.png" /></p>
+<h2 id="nexus_7">Nexus私服的应用</h2>
+<h3 id="_3">登录</h3>
+<p><img alt="" src="../assets/1748416775783-982bc2e5-d7e2-4065-ab5d-a6e654c9b7a5.png" /></p>
+<p>用户名是：<code>admin</code>，密码在这个文件中：</p>
+<p><img alt="" src="../assets/1748417478053-d125829e-5832-4f35-b9ec-df0948119dee.png" /></p>
+<p>登录：</p>
+<p><img alt="" src="../assets/1748417582886-1ce0eac9-0671-495b-a3a0-46c528a3bc41.png" /></p>
+<p>第一次登录成功后会提示你修改密码：</p>
+<p><img alt="" src="../assets/1748417640216-18c7217e-b59d-4451-a321-5c85ff207cb6.png" /></p>
+<p><img alt="" src="../assets/1748417687043-dce55a17-e3ce-422e-a08c-917c2fb2f495.png" /></p>
+<p>登录成功后的界面：</p>
+<p><img alt="" src="../assets/1748417749345-eeefe671-73ef-4237-a24e-4c823a4ab76b.png" /></p>
+<h3 id="_4">浏览仓库</h3>
+<p><img alt="" src="../assets/1748417874332-867e01a3-e465-4c44-a4cc-5af47dfdc674.png" /></p>
+<h3 id="_5">设置仓库</h3>
+<h4 id="_6">创建仓库</h4>
+<p><img alt="" src="../assets/1748418119807-30a574a7-9620-4b0f-9ffd-84436d349060.png" /></p>
+<h4 id="_7">创建代理仓库</h4>
+<p><img alt="" src="../assets/1748418482049-0ba32f7f-1cda-4c17-b5b3-94e31a705ca5.png" /></p>
+<p><img alt="" src="../assets/1748418706156-27e54b6e-a49b-424b-bba4-4ac44fe2d5a2.png" /></p>
+<p>阿里云 Maven 镜像：<code>https://maven.aliyun.com/repository/central</code></p>
+<p><img alt="" src="../assets/1748418762670-c61ab893-ce50-40c3-8cb0-8ff34f9c2eda.png" /></p>
+<h4 id="release">创建宿主仓库：Release</h4>
+<p><img alt="" src="../assets/1748418837443-c0a6356a-7834-4546-829b-2cc8dde19a05.png" /></p>
+<p><img alt="" src="../assets/1748418901072-41331b13-0b44-4c42-95a2-60c4d26b543f.png" /></p>
+<p><img alt="" src="../assets/1748418927704-4dbd87ec-5371-45c7-95dd-6c1851b9636d.png" /></p>
+<h4 id="snapshot">创建宿主仓库：Snapshot</h4>
+<p><img alt="" src="../assets/1748418837443-c0a6356a-7834-4546-829b-2cc8dde19a05.png" /></p>
+<p><img alt="" src="../assets/1748419020431-465240ef-1267-4f74-9b68-888c3bda88f1.png" /></p>
+<p><img alt="" src="../assets/1748418927704-4dbd87ec-5371-45c7-95dd-6c1851b9636d.png" /></p>
+<h4 id="_8">创建仓库组</h4>
+<p><img alt="" src="../assets/1748419084151-0fe17e4f-3c7b-4833-b8e1-10c775dbe7c5.png" /></p>
+<p><img alt="" src="../assets/1748419158555-216555b4-a397-47f0-8442-167a79815d9b.png" /></p>
+<p>这一步非常重要，将创建的仓库放到一个仓库组当中：</p>
+<p><img alt="" src="../assets/1748419193925-86d73c38-a87e-46a7-8ccc-e3977850404e.png" /></p>
+<p>最后所有创建的仓库如下：</p>
+<p><img alt="" src="../assets/1748419530535-d55af541-5879-4732-82c7-6e34b0fd5daf.png" /></p>
+<h3 id="nexusjar">使用Nexus下载jar包</h3>
+<h4 id="maven_1">设置Maven本地仓库地址</h4>
+<p>修改<code>MAVEN_HOME/conf/settings.xml</code>文件：</p>
+<p><localRepository>D:\repository-nexus</localRepository></p>
+<h4 id="mirror">设置<code>&lt;mirror&gt;</code>标签</h4>
+<p><mirror><br />
+  <id>nexus-jkweilai</id><br />
+  <mirrorOf>central</mirrorOf><br />
+  <name>nexusjkweilai</name><br />
+  <url>http://localhost:8081/repository/maven-public-jkweilai/</url><br />
+</mirror></p>
+<p>url从这里获取：</p>
+<p><img alt="" src="../assets/1748420039479-cbc13fca-3da8-42fd-8585-c217ae989353.png" /></p>
+<h4 id="nexus_8">设置Nexus的用户名和密码</h4>
+<p>找到 <code>settings.xml</code>文件的 <code>servers</code>标签，添加以下配置：</p>
+<p><server><br />
+  <id>nexus-jkweilai</id><br />
+  <username>admin</username><br />
+  <password>admin</password><br />
+</server></p>
+<p>注意：<code>&lt;id&gt;</code>必须和<code>&lt;mirror&gt;</code>中的<code>&lt;id&gt;</code>保持一致。</p>
+<h4 id="ideamaven">确定IDEA中Maven指向的本地仓库地址</h4>
+<p><img alt="" src="../assets/1748420366169-e927a0cd-f1c7-4838-a37a-c9ab8fc9a4dc.png" /></p>
+<h4 id="mavenclean">随意运行一个Maven项目的<code>clean</code></h4>
+<p><img alt="" src="../assets/1748420677388-10d3929e-df1c-4f03-9d10-b6de32f1e269.png" /></p>
+<p><img alt="" src="../assets/1748420817495-b8e0dec7-375e-4351-98fb-79e553761898.png" /></p>
+<h4 id="_9">观察本地仓库</h4>
+<p><img alt="" src="../assets/1748420870835-8315dad6-74ed-4086-bcf2-3a9737ec2a8d.png" /></p>
+<h4 id="maven-public-jkweilai">观察私服上的<code>maven-public-jkweilai</code></h4>
+<p><img alt="" src="../assets/1748420902870-e400f32c-5687-4a53-83ef-2eabaafc5699.png" /></p>
+<p><img alt="" src="../assets/1748420929741-9a2aa082-dadd-4a2d-bcf3-00be740c1491.png" /></p>
+<h3 id="ideajarnexus">使用IDEA部署jar包到Nexus私服</h3>
+<p>私服Nexus是部署在局域网的，是全公司共享的仓库地址，每个团队都可以将已完成的功能或测试版本发布到私服供别人来使用。</p>
+<h4 id="_10">设置部署路径</h4>
+<p>打开要部署的项目的pom.xml文件，设置上传路径</p>
+<p><distributionManagement><br />
+    <repository><br />
+        <id>nexus-jkweilai</id><br />
+        <url>http://localhost:8081/repository/maven-releases-jkweilai/</url><br />
+    </repository><br />
+    <snapshotRepository><br />
+        <id>nexus-jkweilai</id><br />
+        <url>http://localhost:8081/repository/maven-snapshots-jkweilai/</url><br />
+    </snapshotRepository><br />
+</distributionManagement></p>
+<p>url从这里拿：</p>
+<p><img alt="" src="../assets/1748421233515-e304970b-4f17-449f-9025-51dce69cb788.png" /></p>
+<h4 id="deploy">运行deploy部署命令</h4>
+<p><img alt="" src="../assets/1748421306635-f4f8bdd6-4ea8-4796-9a4d-c689d1ed0dd2.png" /></p>
+<h4 id="_11">观察私服对应仓库变化</h4>
+<ul>
+<li>release项目部署</li>
+</ul>
+<p><img alt="" src="../assets/1748421447379-5c54fc63-d155-4fec-9c15-68bce03261d0.png" /></p>
+<ul>
+<li>snapshot项目部署</li>
+</ul>
+<p><img alt="" src="../assets/1748421360744-05870ded-4be1-437f-955c-d298713678fc.png" /></p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gson-syn</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="part-2">Part 2：源码级理解（从外到内）</h1>
+<blockquote>
+<p>目标：不追求逐行读懂源码，而是带着问题看 —— <strong>这个类解决了什么问题？设计决策是什么？边界情况怎么处理？</strong></p>
+</blockquote>
+<h2 id="_1">核心类清单（按阅读顺序）</h2>
+<table>
+<thead>
+<tr>
+<th>类</th>
+<th>重点关注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Gson</code></td>
+<td><code>toJson()</code> / <code>fromJson()</code> 的入口流程</td>
+</tr>
+<tr>
+<td><code>GsonBuilder</code></td>
+<td>各种配置如何影响内部组件</td>
+</tr>
+<tr>
+<td><code>TypeAdapter</code></td>
+<td>序列化/反序列化的核心接口</td>
+</tr>
+<tr>
+<td><code>ReflectiveTypeAdapterFactory</code></td>
+<td>反射怎么读写字段（<strong>核心！</strong>）</td>
+</tr>
+<tr>
+<td><code>TypeToken</code></td>
+<td>泛型捕获的原理</td>
+</tr>
+<tr>
+<td><code>JsonReader</code> / <code>JsonWriter</code></td>
+<td>流式解析的实现</td>
+</tr>
+<tr>
+<td>## <code>Gson</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<h3 id="_2">准备</h3>
+<p>还是这个动物的案例，继续序列化和反序列化：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">top.charles</span><span class="p">;</span><span class="w">  </span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">lombok.AllArgsConstructor</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">lombok.NoArgsConstructor</span><span class="p">;</span><span class="w">  </span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">lombok.ToString</span><span class="p">;</span><span class="w">  </span>
+
+<span class="nd">@AllArgsConstructor</span><span class="w">  </span>
+<span class="nd">@NoArgsConstructor</span><span class="w"> </span><span class="c1">// 必须有默认构造器（无参构造）  </span>
+<span class="nd">@ToString</span><span class="w">  </span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Animal</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">;</span><span class="w">  </span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">birthYear</span><span class="p">;</span><span class="w">  </span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="_3">序列化</h3>
+<h4 id="gsonjava">第一步：<code>Gson.java</code>的工作</h4>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">Animal</span><span class="w"> </span><span class="n">a1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Animal</span><span class="p">(</span><span class="s">"Tom"</span><span class="p">,</span><span class="w"> </span><span class="mi">1938</span><span class="p">);</span><span class="w">  </span>
+<span class="n">String</span><span class="w"> </span><span class="n">json</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">gson</span><span class="p">.</span><span class="na">toJson</span><span class="p">(</span><span class="n">a1</span><span class="p">);</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// Gosn.java</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toJson</span><span class="p">(</span><span class="n">Object</span><span class="w"> </span><span class="n">src</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">src</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">toJson</span><span class="p">(</span><span class="n">JsonNull</span><span class="p">.</span><span class="na">INSTANCE</span><span class="p">);</span><span class="w">    </span><span class="c1">// &lt;-</span>
+<span class="w">  </span><span class="p">}</span><span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">toJson</span><span class="p">(</span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">src</span><span class="p">.</span><span class="na">getClass</span><span class="p">());</span><span class="w"> </span><span class="c1">// &lt;-</span>
+<span class="p">}</span>
+</code></pre>
+<p>如果对象真的是空，会输出<code>"null"</code></p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Test</span><span class="w">  </span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testNullObject</span><span class="p">(){</span><span class="w">  </span>
+<span class="w">    </span><span class="n">Animal</span><span class="w"> </span><span class="n">a1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span><span class="w">  </span>
+<span class="w">    </span><span class="n">String</span><span class="w"> </span><span class="n">json1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">gson</span><span class="p">.</span><span class="na">toJson</span><span class="p">(</span><span class="n">a1</span><span class="p">);</span><span class="w">  </span>
+<span class="w">    </span><span class="c1">// togo: return toJson(JsonNull.INSTANCE);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">json1</span><span class="p">);</span><span class="w"> </span><span class="c1">// null  </span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">json1</span><span class="p">.</span><span class="na">equals</span><span class="p">(</span><span class="s">"null"</span><span class="p">));</span><span class="w"> </span><span class="c1">// true  </span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">json1</span><span class="p">.</span><span class="na">length</span><span class="p">());</span><span class="w"> </span><span class="c1">// 4  </span>
+<span class="p">}</span>
+</code></pre>
+<p>如果对象不是空则会默认先找到运行时类型，然后再传入一个<code>StringWriter</code>：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// Gosn.java</span>
+<span class="c1">// return toJson(src, src.getClass());</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toJson</span><span class="p">(</span><span class="n">Object</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">Type</span><span class="w"> </span><span class="n">typeOfSrc</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">  </span><span class="n">StringWriter</span><span class="w"> </span><span class="n">writer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StringWriter</span><span class="p">();</span><span class="w">  </span>
+<span class="w">  </span><span class="n">toJson</span><span class="p">(</span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">typeOfSrc</span><span class="p">,</span><span class="w"> </span><span class="n">writer</span><span class="p">);</span><span class="w">  </span><span class="c1">// &lt;-</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">writer</span><span class="p">.</span><span class="na">toString</span><span class="p">();</span><span class="w">  </span>
+<span class="p">}</span>
+</code></pre>
+<p><code>StringWriter</code> 是 Java 标准库里的一个<strong>字符输出流</strong>，比直接用 <code>String</code> 拼接高效（避免了大量不可变字符串的创建）。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// Gosn.java</span>
+<span class="c1">// toJson(src, typeOfSrc, writer);</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">toJson</span><span class="p">(</span><span class="n">Object</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">Type</span><span class="w"> </span><span class="n">typeOfSrc</span><span class="p">,</span><span class="w"> </span><span class="n">Appendable</span><span class="w"> </span><span class="n">writer</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">JsonIOException</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="n">JsonWriter</span><span class="w"> </span><span class="n">jsonWriter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">newJsonWriter</span><span class="p">(</span><span class="n">Streams</span><span class="p">.</span><span class="na">writerForAppendable</span><span class="p">(</span><span class="n">writer</span><span class="p">));</span><span class="w">  </span>
+<span class="w">    </span><span class="n">toJson</span><span class="p">(</span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">typeOfSrc</span><span class="p">,</span><span class="w"> </span><span class="n">jsonWriter</span><span class="p">);</span><span class="w">  </span><span class="c1">// &lt;-</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">IOException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">JsonIOException</span><span class="p">(</span><span class="n">e</span><span class="p">);</span><span class="w">  </span>
+<span class="w">  </span><span class="p">}</span><span class="w">  </span>
+<span class="p">}</span>
+</code></pre>
+<p><code>JsonWriter</code> 是 Gson 自己的流式写入器
+1. <strong><code>Appendable</code> 是宽泛的接口</strong> —— 不止 <code>StringWriter</code>，<code>StringBuilder</code>、<code>Writer</code> 等都实现了它。Gson 对外暴露的是 <code>Appendable</code>，调用方可以传任何实现。
+2. <strong>但 Gson 内部需要的是 <code>JsonWriter</code></strong> —— 它提供了 <code>name()</code>、<code>value()</code>、<code>beginObject()</code> 等 JSON 语法方法。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// Gosn.java</span>
+<span class="c1">// toJson(src, typeOfSrc, jsonWriter);</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">toJson</span><span class="p">(</span><span class="n">JsonElement</span><span class="w"> </span><span class="n">jsonElement</span><span class="p">,</span><span class="w"> </span><span class="n">JsonWriter</span><span class="w"> </span><span class="n">writer</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">JsonIOException</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">  </span><span class="kt">boolean</span><span class="w"> </span><span class="n">oldLenient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">writer</span><span class="p">.</span><span class="na">isLenient</span><span class="p">();</span><span class="w">  </span>
+<span class="w">  </span><span class="n">writer</span><span class="p">.</span><span class="na">setLenient</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span><span class="w">  </span>
+<span class="w">  </span><span class="kt">boolean</span><span class="w"> </span><span class="n">oldHtmlSafe</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">writer</span><span class="p">.</span><span class="na">isHtmlSafe</span><span class="p">();</span><span class="w">  </span>
+<span class="w">  </span><span class="n">writer</span><span class="p">.</span><span class="na">setHtmlSafe</span><span class="p">(</span><span class="n">htmlSafe</span><span class="p">);</span><span class="w">  </span>
+<span class="w">  </span><span class="kt">boolean</span><span class="w"> </span><span class="n">oldSerializeNulls</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">writer</span><span class="p">.</span><span class="na">getSerializeNulls</span><span class="p">();</span><span class="w">  </span>
+<span class="w">  </span><span class="n">writer</span><span class="p">.</span><span class="na">setSerializeNulls</span><span class="p">(</span><span class="n">serializeNulls</span><span class="p">);</span><span class="w">  </span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Streams</span><span class="p">.</span><span class="na">write</span><span class="p">(</span><span class="n">jsonElement</span><span class="p">,</span><span class="w"> </span><span class="n">writer</span><span class="p">);</span><span class="w">  </span><span class="c1">// &lt;-</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">IOException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">JsonIOException</span><span class="p">(</span><span class="n">e</span><span class="p">);</span><span class="w">  </span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">AssertionError</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">AssertionError</span><span class="p">(</span><span class="s">"AssertionError (GSON "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">GsonBuildConfig</span><span class="p">.</span><span class="na">VERSION</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">"): "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">e</span><span class="p">.</span><span class="na">getMessage</span><span class="p">(),</span><span class="w"> </span><span class="n">e</span><span class="p">);</span><span class="w">  </span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">finally</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">    </span><span class="n">writer</span><span class="p">.</span><span class="na">setLenient</span><span class="p">(</span><span class="n">oldLenient</span><span class="p">);</span><span class="w">  </span>
+<span class="w">    </span><span class="n">writer</span><span class="p">.</span><span class="na">setHtmlSafe</span><span class="p">(</span><span class="n">oldHtmlSafe</span><span class="p">);</span><span class="w">  </span>
+<span class="w">    </span><span class="n">writer</span><span class="p">.</span><span class="na">setSerializeNulls</span><span class="p">(</span><span class="n">oldSerializeNulls</span><span class="p">);</span><span class="w">  </span>
+<span class="w">  </span><span class="p">}</span><span class="w">  </span>
+<span class="p">}</span>
+</code></pre>
+<ol>
+<li><strong>保存旧状态</strong>（<code>oldLenient</code>、<code>oldHtmlSafe</code>、<code>oldSerializeNulls</code>）</li>
+<li><strong>临时覆盖成 Gson 实例自己的配置</strong>（<code>lenient</code>、<code>htmlSafe</code>、<code>serializeNulls</code>）</li>
+<li><strong>真正干活</strong>（<code>Streams.write</code>）</li>
+<li><strong>finally 恢复旧状态</strong> —— 不管成功还是失败，都不污染外部的 <code>JsonWriter</code></li>
+</ol>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// Streams.java</span>
+<span class="c1">//Streams.write(jsonElement, writer);</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="n">JsonElement</span><span class="w"> </span><span class="n">element</span><span class="p">,</span><span class="w"> </span><span class="n">JsonWriter</span><span class="w"> </span><span class="n">writer</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">IOException</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">  </span><span class="n">TypeAdapters</span><span class="p">.</span><span class="na">JSON_ELEMENT</span><span class="p">.</span><span class="na">write</span><span class="p">(</span><span class="n">writer</span><span class="p">,</span><span class="w"> </span><span class="n">element</span><span class="p">);</span><span class="w">  </span>
+<span class="p">}</span>
+</code></pre>
+<h4 id="streamjava">第二步：<code>Stream.java</code>的工作</h4>
+<hr />
+<ol>
+<li>
+<p><strong><code>Gson</code> + <code>GsonBuilder</code></strong>：先看入口，理解 Gson 实例里装了什么</p>
+</li>
+<li>
+<p><strong><code>TypeAdapter</code> + <code>TypeAdapterFactory</code></strong>：核心机制，理解了这两个，Gson 的 80% 就懂了</p>
+</li>
+<li>
+<p><strong><code>JsonReader</code> + <code>JsonWriter</code></strong>：底层 IO，看 Gson 如何流式处理 JSON</p>
+</li>
+<li>
+<p><strong><code>ReflectiveTypeAdapterFactory</code></strong>：Gson 最“魔法”的部分，反射 + 缓存</p>
+</li>
+<li>
+<p><strong><code>TypeToken</code></strong>：理解 Gson 如何处理泛型</p>
+</li>
+<li>
+<p><strong><code>Excluder</code> + <code>FieldNamingStrategy</code></strong>：配置相关的细节</p>
+</li>
+<li>
+<p><strong><code>JsonSerializer</code> / <code>JsonDeserializer</code></strong>：了解历史遗留接口，便于维护旧代码</p>
+</li>
+</ol>
+<hr />
+<h2 id="_4">二、源码阅读策略：跟踪一个案例</h2>
+<p><strong>不要从头读到尾</strong>，用"跟踪一个案例"的方式：</p>
+<ol>
+<li>写一个最简单的对象（如 <code>User</code>）</li>
+<li>在 <code>gson.toJson()</code> 入口打断点</li>
+<li>一步步跟进去，看它：</li>
+<li>怎么获取 <code>TypeAdapter</code></li>
+<li>怎么拿到字段列表</li>
+<li>怎么处理每个字段（<code>@SerializedName</code>、<code>transient</code>、<code>@Expose</code>）</li>
+<li>记录每一步的<strong>关键类名和方法名</strong></li>
+</ol>
+<blockquote>
+<p>一次跟踪 30-60 分钟，比读三天文档都有用。</p>
+</blockquote>
+<hr />
+<h2 id="_5">三、笔记形式：源码路径 + 核心逻辑</h2>
+<pre lang="markdown"><code class="language-markdown md-fencescode"><span class="gu">## 场景：Xxx</span>
+
+<span class="k">&gt; </span><span class="ge">背景：xxx</span>
+
+💡 源码位置：`Gson.toJson()` → <span class="sb">`getAdapter()`</span> → <span class="sb">`ReflectiveTypeAdapterFactory.create()`</span>
+
+核心逻辑：
+<span class="k">1.</span> xxx
+<span class="k">2.</span> xxx
+<span class="k">3.</span> xxx
+
+关键代码片段（截取核心几行，不要大段贴）：
+</code></pre>
+<blockquote>
+<p>以后忘了细节，看一眼源码路径就能快速定位，不用重新搜索。</p>
+</blockquote>
+<hr />
+<h2 id="_6">四、笔记结构（从外到内）</h2>
+<ol>
+<li><strong>入口篇</strong>：<code>Gson.toJson()</code> / <code>fromJson()</code> —— 整体流程骨架</li>
+<li><strong>适配器篇</strong>：<code>TypeAdapter</code> 体系 —— 为什么要有适配器？怎么获取？</li>
+<li><strong>反射篇</strong>：<code>ReflectiveTypeAdapterFactory</code> —— 怎么读写字段（核心）</li>
+<li><strong>类型篇</strong>：<code>TypeToken</code> —— 泛型捕获原理（相对独立，可单独一章）</li>
+<li><strong>流式篇</strong>：<code>JsonReader</code> / <code>JsonWriter</code> —— 怎么解析/生成 JSON</li>
+</ol>
+<p>每个篇章目标：<strong>能用自己的话讲清楚这个模块的职责和核心逻辑</strong>。</p>
+<hr />
+<h2 id="_7">五、费曼检验标准</h2>
+<p>学完一个模块，问自己：</p>
+<blockquote>
+<p>"如果现在有人问我 Gson 怎么把 JSON 变成 Java 对象的，我能用 3 句话讲清楚吗？"</p>
+</blockquote>
+<p><strong>3 句版本参考</strong>：</p>
+<ol>
+<li>Gson 通过 <code>TypeToken</code> 获取目标类型的完整信息（包括泛型）</li>
+<li>根据类型查找或创建对应的 <code>TypeAdapter</code>（反射适配器是兜底方案）</li>
+<li><code>TypeAdapter</code> 用 <code>JsonReader</code> 逐个读取 JSON 令牌，用反射填充 Java 对象字段</li>
+</ol>
+<hr />
+<h2 id="part-1-part-2">六、Part 1 的亮点，Part 2 继续保持</h2>
+<ul>
+<li>✅ 每个场景都有"为什么需要"的背景</li>
+<li>✅ 每个用法标注"本质"</li>
+<li>✅ 有"错误示例"和"为什么错"</li>
+<li>✅ 最后总结，提炼设计哲学</li>
+</ul>
+<h2 id="part-2_1">Part 2：深度源码与核心类（语法 + 坑）</h2>
+<blockquote>
+<p>目标：理解 Gson 内部机制，掌握容易踩坑的点。</p>
+</blockquote>
+<hr />
+<h3 id="21-gson-api">2.1 <code>Gson</code> 类：核心 API 原理</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">Gson</span><span class="w"> </span><span class="n">gson</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Gson</span><span class="p">();</span>
+</code></pre>
+<ul>
+<li><code>Gson</code> 是线程安全的，可以全局复用（不要每次 new）</li>
+<li>内部维护了一个 <strong>TypeAdapterFactory 注册表</strong>，用于查找类型的适配器</li>
+<li><code>toJson()</code> 内部流程：</li>
+<li>根据对象类型查找对应的 <code>TypeAdapter</code></li>
+<li>调用 <code>adapter.write(jsonWriter, obj)</code> 写出 JSON</li>
+<li><code>fromJson()</code> 内部流程：</li>
+<li>根据目标类型查找对应的 <code>TypeAdapter</code></li>
+<li>调用 <code>adapter.read(jsonReader)</code> 读取 JSON</li>
+</ul>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// 源码简化示意</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toJson</span><span class="p">(</span><span class="n">Object</span><span class="w"> </span><span class="n">src</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">TypeAdapter</span><span class="o">&lt;</span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">adapter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">TypeAdapter</span><span class="o">&lt;</span><span class="n">Object</span><span class="o">&gt;</span><span class="p">)</span><span class="w"> </span><span class="n">getAdapter</span><span class="p">(</span><span class="n">src</span><span class="p">.</span><span class="na">getClass</span><span class="p">());</span>
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre>
+<hr />
+<h3 id="22-gsonbuilder">2.2 <code>GsonBuilder</code>：配置项逐一深入</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">Gson</span><span class="w"> </span><span class="n">gson</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">GsonBuilder</span><span class="p">()</span>
+<span class="w">    </span><span class="p">.</span><span class="na">serializeNulls</span><span class="p">()</span><span class="w">                    </span><span class="c1">// 序列化 null 字段</span>
+<span class="w">    </span><span class="p">.</span><span class="na">setPrettyPrinting</span><span class="p">()</span><span class="w">                 </span><span class="c1">// 格式化输出</span>
+<span class="w">    </span><span class="p">.</span><span class="na">setDateFormat</span><span class="p">(</span><span class="s">"yyyy-MM-dd"</span><span class="p">)</span><span class="w">         </span><span class="c1">// 自定义日期格式</span>
+<span class="w">    </span><span class="p">.</span><span class="na">setFieldNamingPolicy</span><span class="p">(</span><span class="n">FieldNamingPolicy</span><span class="p">.</span><span class="na">LOWER_CASE_WITH_UNDERSCORES</span><span class="p">)</span><span class="w">  </span><span class="c1">// 字段命名策略</span>
+<span class="w">    </span><span class="p">.</span><span class="na">excludeFieldsWithoutExposeAnnotation</span><span class="p">()</span><span class="w">  </span><span class="c1">// 只序列化 @Expose 注解的字段</span>
+<span class="w">    </span><span class="p">.</span><span class="na">setVersion</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span><span class="w">                     </span><span class="c1">// 版本控制（与 @Since/@Until 配合）</span>
+<span class="w">    </span><span class="p">.</span><span class="na">setLongSerializationPolicy</span><span class="p">(</span><span class="n">LongSerializationPolicy</span><span class="p">.</span><span class="na">STRING</span><span class="p">)</span><span class="w">  </span><span class="c1">// Long 转 String</span>
+<span class="w">    </span><span class="p">.</span><span class="na">disableInnerClassSerialization</span><span class="p">()</span><span class="w">    </span><span class="c1">// 禁止序列化内部类</span>
+<span class="w">    </span><span class="p">.</span><span class="na">disableHtmlEscaping</span><span class="p">()</span><span class="w">               </span><span class="c1">// 禁止 HTML 转义（默认会把 `&lt;` 转成 `\u003c`）</span>
+<span class="w">    </span><span class="p">.</span><span class="na">create</span><span class="p">();</span>
+</code></pre>
+<h4 id="_8">常见配置详解</h4>
+<table>
+<thead>
+<tr>
+<th>配置</th>
+<th>作用</th>
+<th>典型坑</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>serializeNulls()</code></td>
+<td>默认不输出 null 字段，开启后输出 <code>"field":null</code></td>
+<td>默认行为容易导致字段丢失</td>
+</tr>
+<tr>
+<td><code>setDateFormat()</code></td>
+<td>默认日期格式是 <code>"Jun 8, 2021 10:00:00 AM"</code>，不符合大多数业务需求</td>
+<td>不设置的话前后端解析会失败</td>
+</tr>
+<tr>
+<td><code>setLongSerializationPolicy(STRING)</code></td>
+<td>防止 JS 解析大整数丢失精度（超过 2^53）</td>
+<td>不设置时 Long 会转成 Double 或丢失精度</td>
+</tr>
+<tr>
+<td><code>disableHtmlEscaping()</code></td>
+<td>默认会把 <code>&lt;</code>、<code>&gt;</code>、<code>&amp;</code> 转成 Unicode 转义</td>
+<td>不关闭的话，HTML 标签会被转义成 <code>\u003c</code></td>
+</tr>
+<tr>
+<td><code>excludeFieldsWithoutExposeAnnotation()</code></td>
+<td>配合 <code>@Expose</code> 控制字段白名单</td>
+<td>开了之后没有 <code>@Expose</code> 的字段全部丢失</td>
+</tr>
+<tr>
+<td><code>setVersion()</code></td>
+<td>配合 <code>@Since</code> / <code>@Until</code> 做版本兼容</td>
+<td>不设置版本时 <code>@Since</code>/<code>@Until</code> 无效</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="23">2.3 注解体系</h3>
+<table>
+<thead>
+<tr>
+<th>注解</th>
+<th>作用</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>@SerializedName</code></td>
+<td>指定 JSON 字段名（应对命名不一致、字段重名）</td>
+<td><code>@SerializedName("user_name") private String userName;</code></td>
+</tr>
+<tr>
+<td><code>@Expose</code></td>
+<td>配合 <code>serializeNulls()</code> 或 <code>excludeFieldsWithoutExposeAnnotation()</code> 控制序列化范围</td>
+<td><code>@Expose(serialize = false, deserialize = false)</code></td>
+</tr>
+<tr>
+<td><code>@Since</code> / <code>@Until</code></td>
+<td>版本控制，结合 <code>setVersion()</code> 使用</td>
+<td><code>@Since(1.0)</code> 表示版本 &gt;= 1.0 才生效</td>
+</tr>
+<tr>
+<td><code>@JsonAdapter</code></td>
+<td>指定自定义类型适配器（Part 3 详述）</td>
+<td><code>@JsonAdapter(UserAdapter.class)</code></td>
+</tr>
+</tbody>
+</table>
+<h4 id="serializedname"><code>@SerializedName</code> 高级用法：字段重名（多备选名）</h4>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">User</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@SerializedName</span><span class="p">(</span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"name"</span><span class="p">,</span><span class="w"> </span><span class="n">alternate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="s">"userName"</span><span class="p">,</span><span class="w"> </span><span class="s">"username"</span><span class="p">})</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="c1">// 反序列化时，JSON 中 "name"、"userName"、"username" 都能映射到 name</span>
+<span class="c1">// 但序列化时只会输出 "name"</span>
+</code></pre>
+<hr />
+<h3 id="24-typetoken-type">2.4 <code>TypeToken</code> 原理：泛型擦除 + Type 体系</h3>
+<h4 id="typetoken">为什么需要 TypeToken？</h4>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// ❌ 泛型被擦除，运行时不知道 List&lt;User&gt; 的泛型参数</span>
+<span class="n">Type</span><span class="w"> </span><span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">List</span><span class="p">.</span><span class="na">class</span><span class="p">;</span><span class="w">  </span><span class="c1">// 只知道是 List，不知道元素是 User</span>
+
+<span class="c1">// ✅ TypeToken 通过匿名内部类捕获泛型参数</span>
+<span class="n">Type</span><span class="w"> </span><span class="n">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">TypeToken</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">User</span><span class="o">&gt;&gt;</span><span class="p">(){}.</span><span class="na">getType</span><span class="p">();</span>
+</code></pre>
+<h4 id="type">背后的 Type 体系</h4>
+<table>
+<thead>
+<tr>
+<th>接口/类</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Type</code></td>
+<td>所有类型的父接口（<code>Class</code>、<code>ParameterizedType</code> 等都实现它）</td>
+</tr>
+<tr>
+<td><code>Class&lt;?&gt;</code></td>
+<td>具体类类型，如 <code>User.class</code></td>
+</tr>
+<tr>
+<td><code>ParameterizedType</code></td>
+<td>参数化类型，如 <code>List&lt;User&gt;</code>，能拿到原始类型 + 泛型参数</td>
+</tr>
+<tr>
+<td><code>GenericArrayType</code></td>
+<td>泛型数组，如 <code>T[]</code></td>
+</tr>
+<tr>
+<td><code>WildcardType</code></td>
+<td>通配符类型，如 <code>? extends Number</code></td>
+</tr>
+</tbody>
+</table>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// TypeToken 的核心是内部的匿名类</span>
+<span class="k">new</span><span class="w"> </span><span class="n">TypeToken</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">User</span><span class="o">&gt;&gt;</span><span class="p">(){}.</span><span class="na">getType</span><span class="p">();</span>
+<span class="c1">// 通过 getGenericSuperclass() 拿到 TypeToken&lt;T&gt; 的泛型参数</span>
+</code></pre>
+<hr />
+<h3 id="25">2.5 序列化/反序列化内部流程</h3>
+<h4 id="fieldattributes">反射 + <code>FieldAttributes</code></h4>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// 默认的 ReflectiveTypeAdapterFactory 会：</span>
+<span class="c1">// 1. 遍历类的所有字段（包括父类）</span>
+<span class="c1">// 2. 通过反射读取/写入字段值（不调用 getter/setter）</span>
+</code></pre>
+<h4 id="_9">类型适配器查找机制</h4>
+<pre><code class="md-fencescode">Gson 内部有一个 TypeAdapterFactory 链：
+
+1. 用户通过 registerTypeAdapter() 注册的 → 优先匹配
+2. 注解 @JsonAdapter 指定的 → 其次
+3. 内置的基础类型（String、int、boolean 等）→ 再次
+4. 集合/Map 类型 → 再次
+5. 最后才是反射默认适配器
+</code></pre>
+<hr />
+<h3 id="26">2.6 常见坑（重点）</h3>
+<h4 id="1null">坑 1：<code>null</code> 字段丢失</h4>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">User</span><span class="w"> </span><span class="n">user</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">User</span><span class="p">();</span>
+<span class="n">user</span><span class="p">.</span><span class="na">setName</span><span class="p">(</span><span class="kc">null</span><span class="p">);</span>
+<span class="n">user</span><span class="p">.</span><span class="na">setAge</span><span class="p">(</span><span class="mi">25</span><span class="p">);</span>
+
+<span class="n">gson</span><span class="p">.</span><span class="na">toJson</span><span class="p">(</span><span class="n">user</span><span class="p">);</span><span class="w">  </span><span class="c1">// {"age":25}  name 字段直接消失了！</span>
+<span class="c1">// 解决：gson = new GsonBuilder().serializeNulls().create();</span>
+</code></pre>
+<h4 id="2">坑 2：默认日期格式奇怪</h4>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">Date</span><span class="w"> </span><span class="n">date</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Date</span><span class="p">();</span>
+<span class="n">gson</span><span class="p">.</span><span class="na">toJson</span><span class="p">(</span><span class="n">date</span><span class="p">);</span><span class="w">  </span><span class="c1">// "Jun 8, 2021 10:00:00 AM"  ← 美国人格式</span>
+<span class="c1">// 解决：new GsonBuilder().setDateFormat("yyyy-MM-dd HH:mm:ss").create();</span>
+</code></pre>
+<h4 id="3">坑 3：循环引用无限递归 → 栈溢出</h4>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">User</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">User</span><span class="w"> </span><span class="n">friend</span><span class="p">;</span><span class="w">  </span><span class="c1">// 互相引用</span>
+<span class="p">}</span>
+<span class="c1">// user.friend = user;  直接死循环！</span>
+<span class="c1">// 解决：@JsonIgnore 或自定义序列化策略</span>
+</code></pre>
+<h4 id="4">坑 4：接口/抽象类无法确定子类型</h4>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">Animal</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Dog</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Animal</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
+
+<span class="c1">// gson.fromJson(json, Animal.class);</span>
+<span class="c1">// 报错：Cannot construct instance of Animal (no default constructor)</span>
+<span class="c1">// 解决：自定义 JsonDeserializer 或使用 @JsonAdapter</span>
+</code></pre>
+<h4 id="5">坑 5：大整数精度丢失</h4>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">Long</span><span class="w"> </span><span class="n">bigNum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1234567890123456789L</span><span class="p">;</span>
+<span class="n">gson</span><span class="p">.</span><span class="na">toJson</span><span class="p">(</span><span class="n">bigNum</span><span class="p">);</span><span class="w">  </span><span class="c1">// 1234567890123456789  ← JSON 里没问题</span>
+
+<span class="c1">// 但 JS 解析时会丢失精度（JS 最大安全整数 2^53 - 1）</span>
+<span class="c1">// 解决：new GsonBuilder().setLongSerializationPolicy(LongSerializationPolicy.STRING).create();</span>
+<span class="c1">// 输出： "1234567890123456789"</span>
+</code></pre>
+<h4 id="6">坑 6：无默认构造器的类无法反序列化</h4>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">User</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">User</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">name</span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w">  </span><span class="c1">// 没有无参构造！</span>
+<span class="p">}</span>
+<span class="c1">// gson.fromJson(json, User.class);  // 报错</span>
+<span class="c1">// 解决：使用 Unsafe 绕过构造器（Gson 默认会尝试），但不可靠</span>
+<span class="c1">// 更推荐：自定义 InstanceCreator 或 JsonDeserializer</span>
+</code></pre>
+<h4 id="7">坑 7：内部类序列化问题</h4>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Outer</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Inner</span><span class="w"> </span><span class="p">{</span><span class="w">   </span><span class="c1">// 非 static 内部类</span>
+<span class="w">        </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">value</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+<span class="c1">// 序列化内部类时，会带上隐式的外部类引用 outer</span>
+<span class="c1">// 解决：new GsonBuilder().disableInnerClassSerialization().create();</span>
+<span class="c1">// 或者把内部类改成 static</span>
+</code></pre>
+<hr />
+<h3 id="27">2.7 小结</h3>
+<p>掌握这些核心机制和坑点，你就能在项目里放心使用 Gson 了。接下来进入第三部分，看看如何通过自定义 <code>TypeAdapter</code> / <code>JsonDeserializer</code> 解决更复杂的场景。</p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

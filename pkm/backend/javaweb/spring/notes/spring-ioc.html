@@ -1,0 +1,1876 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>spring-ioc</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="springioc">Spring对IoC的实现</h1>
+<hr />
+<h2 id="ioc">IoC 控制反转</h2>
+<ul>
+<li>控制反转是一种思想。</li>
+<li>控制反转是为了降低程序耦合度，提高程序扩展力，达到OCP原则，达到DIP原则。</li>
+<li>控制反转，反转的是什么？<ul>
+<li>将对象的创建权利交出去，交给第三方容器负责。</li>
+<li>将对象和对象之间关系的维护权交出去，交给第三方容器负责。</li>
+</ul>
+</li>
+<li>控制反转这种思想如何实现呢？<ul>
+<li>DI（Dependency Injection）：依赖注入</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2 id="_1">依赖注入</h2>
+<p>依赖注入实现了控制反转的思想。</p>
+<p><strong><em>*Spring通过依赖注入的方式来完成Bean管理的。</em></strong>*</p>
+<p><strong><em>*Bean管理说的是：Bean对象的创建，以及Bean对象中属性的赋值（或者叫做Bean对象之间关系的维护）。</em></strong>*</p>
+<p>依赖注入：</p>
+<ul>
+<li>依赖指的是对象和对象之间的关联关系。</li>
+<li>注入指的是一种数据传递行为，通过注入行为来让对象和对象产生关系。</li>
+</ul>
+<p>依赖注入常见的实现方式包括两种：</p>
+<ul>
+<li>第一种：set注入</li>
+<li>第二种：构造注入</li>
+</ul>
+<p>新建模块：spring-002-dependency-injection</p>
+<h3 id="set">set注入</h3>
+<p>set注入，基于set方法实现的，底层会通过反射机制调用属性对应的set方法然后给属性赋值。这种方式要求属性必须对外提供set方法。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.dao</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">UserDao</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">insert</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"正在保存用户数据。"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.service</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.jkweilai.spring.dao.UserDao</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">UserService</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">UserDao</span><span class="w"> </span><span class="n">userDao</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// 使用set方式注入，必须提供set方法。</span>
+<span class="w">    </span><span class="c1">// 反射机制要调用这个方法给属性赋值的。</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setUserDao</span><span class="p">(</span><span class="n">UserDao</span><span class="w"> </span><span class="n">userDao</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">userDao</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">userDao</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">save</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">userDao</span><span class="p">.</span><span class="na">insert</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>像这样去配置他们的关系：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"userDaoBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.dao.UserDao"</span><span class="nt">/&gt;</span>
+
+<span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"userServiceBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.service.UserService"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"userDao"</span><span class="w"> </span><span class="na">ref=</span><span class="s">"userDaoBean"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">DITest</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@Test</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testSetDI</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ClassPathXmlApplicationContext</span><span class="p">(</span><span class="s">"spring.xml"</span><span class="p">);</span>
+<span class="w">        </span><span class="n">UserService</span><span class="w"> </span><span class="n">userService</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"userServiceBean"</span><span class="p">,</span><span class="w"> </span><span class="n">UserService</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">        </span><span class="n">userService</span><span class="p">.</span><span class="na">save</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>运行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763703270197-41c911da-b886-43e5-9412-e31e91cdbb2b.png" /></p>
+<p>重点内容是，什么原理：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"userDaoBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.dao.UserDao"</span><span class="nt">/&gt;</span>
+
+<span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"userServiceBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.service.UserService"</span><span class="nt">&gt;</span>
+<span class="w">  </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"userDao"</span><span class="w"> </span><span class="na">ref=</span><span class="s">"userDaoBean"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+</code></pre>
+<p>实现原理：</p>
+<ul>
+<li>通过property标签获取到属性名：userDao</li>
+<li>通过属性名推断出set方法名：setUserDao</li>
+<li>通过反射机制调用setUserDao()方法给属性赋值</li>
+<li>property标签的name是属性名。</li>
+<li>property标签的ref是要注入的bean对象的id。<strong><em>*(通过ref属性来完成bean的装配，这是bean最简单的一种装配方式。装配指的是：创建系统组件之间关联的动作)</em></strong>*</li>
+</ul>
+<p><strong>可以把set方法注释掉，再测试一下</strong>：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718228299-478ab23d-ebde-4f03-867e-fe4a91bf8d3c.png" /></p>
+<p>通过测试得知，底层实际上调用了setUserDao()方法。所以需要确保这个方法的存在。</p>
+<p>我们现在把属性名修改一下，但方法名还是setUserDao()，我们来测试一下：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">UserService</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">UserDao</span><span class="w"> </span><span class="n">aaa</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// 使用set方式注入，必须提供set方法。</span>
+<span class="w">    </span><span class="c1">// 反射机制要调用这个方法给属性赋值的。</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setUserDao</span><span class="p">(</span><span class="n">UserDao</span><span class="w"> </span><span class="n">userDao</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">aaa</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">userDao</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">save</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">aaa</span><span class="p">.</span><span class="na">insert</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>运行测试程序：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763703431816-e00a0a7f-80e6-41c6-851a-484a6e0fc93a.png" /></p>
+<p>通过测试看到程序仍然可以正常执行，说明property标签的name是：setUserDao()方法名演变得到的。演变的规律是：</p>
+<ul>
+<li>setUsername() 演变为 username</li>
+<li>setPassword() 演变为 password</li>
+<li>setUserDao() 演变为 userDao</li>
+<li>setUserService() 演变为 userService</li>
+</ul>
+<p>另外，对于property标签来说，ref属性也可以采用标签的方式，但使用ref属性是多数的：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"userServiceBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.service.UserService"</span><span class="nt">&gt;</span>
+<span class="w">  </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"userDao"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;ref</span><span class="w"> </span><span class="na">bean=</span><span class="s">"userDaoBean"</span><span class="nt">/&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/property&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+</code></pre>
+<p><strong><em>*总结：set注入的核心实现原理：通过反射机制调用set方法来给属性赋值，让两个对象之间产生关系。</em></strong>*</p>
+<hr />
+<h3 id="_2">构造注入</h3>
+<p>核心原理：通过调用构造方法来给属性赋值。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">OrderDao</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">deleteById</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"正在删除订单。。。"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">OrderService</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">OrderDao</span><span class="w"> </span><span class="n">orderDao</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// 通过反射机制调用构造方法给属性赋值</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">OrderService</span><span class="p">(</span><span class="n">OrderDao</span><span class="w"> </span><span class="n">orderDao</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">orderDao</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">orderDao</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">delete</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">orderDao</span><span class="p">.</span><span class="na">deleteById</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"orderDaoBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.dao.OrderDao"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"orderServiceBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.service.OrderService"</span><span class="nt">&gt;</span>
+<span class="w">  </span><span class="cm">&lt;!--index="0"表示构造方法的第一个参数，将orderDaoBean对象传递给构造方法的第一个参数。--&gt;</span>
+<span class="w">  </span><span class="nt">&lt;constructor-arg</span><span class="w"> </span><span class="na">index=</span><span class="s">"0"</span><span class="w"> </span><span class="na">ref=</span><span class="s">"orderDaoBean"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Test</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testConstructorDI</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ClassPathXmlApplicationContext</span><span class="p">(</span><span class="s">"spring.xml"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">OrderService</span><span class="w"> </span><span class="n">orderServiceBean</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"orderServiceBean"</span><span class="p">,</span><span class="w"> </span><span class="n">OrderService</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">orderServiceBean</span><span class="p">.</span><span class="na">delete</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre>
+<p>运行结果如下：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763703541233-f144603f-0a7c-4efc-be49-7e4cb31ee9f0.png" /></p>
+<hr />
+<p><strong><em>*如果构造方法有两个参数：</em></strong>*</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">OrderService</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">OrderDao</span><span class="w"> </span><span class="n">orderDao</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">UserDao</span><span class="w"> </span><span class="n">userDao</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// 通过反射机制调用构造方法给属性赋值</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">OrderService</span><span class="p">(</span><span class="n">OrderDao</span><span class="w"> </span><span class="n">orderDao</span><span class="p">,</span><span class="w"> </span><span class="n">UserDao</span><span class="w"> </span><span class="n">userDao</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">orderDao</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">orderDao</span><span class="p">;</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">userDao</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">userDao</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">delete</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">orderDao</span><span class="p">.</span><span class="na">deleteById</span><span class="p">();</span>
+<span class="w">        </span><span class="n">userDao</span><span class="p">.</span><span class="na">insert</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>spring配置文件：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"orderDaoBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.dao.OrderDao"</span><span class="nt">/&gt;</span>
+
+<span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"orderServiceBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.service.OrderService"</span><span class="nt">&gt;</span>
+<span class="w">  </span><span class="cm">&lt;!--第一个参数下标是0--&gt;</span>
+<span class="w">  </span><span class="nt">&lt;constructor-arg</span><span class="w"> </span><span class="na">index=</span><span class="s">"0"</span><span class="w"> </span><span class="na">ref=</span><span class="s">"orderDaoBean"</span><span class="nt">/&gt;</span>
+<span class="w">  </span><span class="cm">&lt;!--第二个参数下标是1--&gt;</span>
+<span class="w">  </span><span class="nt">&lt;constructor-arg</span><span class="w"> </span><span class="na">index=</span><span class="s">"1"</span><span class="w"> </span><span class="na">ref=</span><span class="s">"userDaoBean"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+
+<span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"userDaoBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.dao.UserDao"</span><span class="nt">/&gt;</span>
+</code></pre>
+<p>执行测试程序：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763703565658-98132ed3-4e4c-4524-9633-89ecbb517c76.png" /></p>
+<hr />
+<p><strong><em>*不使用参数下标，使用参数的名字可以吗？</em></strong>*</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"orderDaoBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.dao.OrderDao"</span><span class="nt">/&gt;</span>
+
+<span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"orderServiceBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.service.OrderService"</span><span class="nt">&gt;</span>
+<span class="w">  </span><span class="cm">&lt;!--这里使用了构造方法上参数的名字--&gt;</span>
+<span class="w">  </span><span class="nt">&lt;constructor-arg</span><span class="w"> </span><span class="na">name=</span><span class="s">"orderDao"</span><span class="w"> </span><span class="na">ref=</span><span class="s">"orderDaoBean"</span><span class="nt">/&gt;</span>
+<span class="w">  </span><span class="nt">&lt;constructor-arg</span><span class="w"> </span><span class="na">name=</span><span class="s">"userDao"</span><span class="w"> </span><span class="na">ref=</span><span class="s">"userDaoBean"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+
+<span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"userDaoBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.dao.UserDao"</span><span class="nt">/&gt;</span>
+</code></pre>
+<p>执行测试程序：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763703580933-9558d7db-975e-4289-969b-d910c1b3d3ee.png" /></p>
+<p><strong><em>*不指定参数下标，不指定参数名字，可以吗？</em></strong>*</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"orderDaoBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.dao.OrderDao"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"orderServiceBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.service.OrderService"</span><span class="nt">&gt;</span>
+<span class="w">  </span><span class="cm">&lt;!--没有指定下标，也没有指定参数名字--&gt;</span>
+<span class="w">  </span><span class="nt">&lt;constructor-arg</span><span class="w"> </span><span class="na">ref=</span><span class="s">"orderDaoBean"</span><span class="nt">/&gt;</span>
+<span class="w">  </span><span class="nt">&lt;constructor-arg</span><span class="w"> </span><span class="na">ref=</span><span class="s">"userDaoBean"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+
+<span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"userDaoBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.dao.UserDao"</span><span class="nt">/&gt;</span>
+</code></pre>
+<p>执行测试程序：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763703580933-9558d7db-975e-4289-969b-d910c1b3d3ee.png" /></p>
+<hr />
+<p><strong><em>*配置文件中构造方法参数的类型顺序和构造方法参数的类型顺序不一致呢？</em></strong>*</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"orderDaoBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.dao.OrderDao"</span><span class="nt">/&gt;</span>
+
+<span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"orderServiceBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.service.OrderService"</span><span class="nt">&gt;</span>
+<span class="w">  </span><span class="cm">&lt;!--顺序已经和构造方法的参数顺序不同了--&gt;</span>
+<span class="w">  </span><span class="nt">&lt;constructor-arg</span><span class="w"> </span><span class="na">ref=</span><span class="s">"userDaoBean"</span><span class="nt">/&gt;</span>
+<span class="w">  </span><span class="nt">&lt;constructor-arg</span><span class="w"> </span><span class="na">ref=</span><span class="s">"orderDaoBean"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+
+<span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"userDaoBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.dao.UserDao"</span><span class="nt">/&gt;</span>
+</code></pre>
+<p>执行测试程序：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763703580933-9558d7db-975e-4289-969b-d910c1b3d3ee.png" /></p>
+<p>通过测试得知，通过构造方法注入的时候：</p>
+<ul>
+<li>可以通过下标</li>
+<li>可以通过参数名</li>
+<li>也可以不指定下标和参数名，可以类型自动推断。</li>
+</ul>
+<p>Spring在装配方面做的还是比较健壮的。</p>
+<hr />
+<h2 id="set_1">set注入专题</h2>
+<h3 id="bean">注入外部Bean</h3>
+<p>在之前4.2.1中使用的案例就是注入外部Bean的方式。</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"userDaoBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.dao.UserDao"</span><span class="nt">/&gt;</span>
+
+<span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"userServiceBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.service.UserService"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"userDao"</span><span class="w"> </span><span class="na">ref=</span><span class="s">"userDaoBean"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+</code></pre>
+<p>外部Bean的特点：bean定义到外面，在property标签中使用ref属性进行注入。通常这种方式是常用的。</p>
+<h3 id="bean_1">注入内部Bean</h3>
+<p>内部Bean的方式：在bean标签中嵌套bean标签。</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"userServiceBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.service.UserService"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"userDao"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.dao.UserDao"</span><span class="nt">/&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/property&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Test</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testInnerBean</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ClassPathXmlApplicationContext</span><span class="p">(</span><span class="s">"spring-inner-bean.xml"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">UserService</span><span class="w"> </span><span class="n">userService</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"userServiceBean"</span><span class="p">,</span><span class="w"> </span><span class="n">UserService</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">userService</span><span class="p">.</span><span class="na">save</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行测试程序：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763703724923-3d6fe488-4cc4-464a-9fb4-46737d190786.png" /></p>
+<p>这种方式作为了解。</p>
+<h3 id="_3">注入简单类型</h3>
+<p>我们之前在进行注入的时候，对象的属性是另一个对象。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">UserService</span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">UserDao</span><span class="w"> </span><span class="n">userDao</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setUserDao</span><span class="p">(</span><span class="n">UserDao</span><span class="w"> </span><span class="n">userDao</span><span class="p">){</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">userDao</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">userDao</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="p">}</span>
+</code></pre>
+<p>那如果对象的属性是int类型呢？</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">User</span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setAge</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">age</span><span class="p">){</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">age</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="p">}</span>
+</code></pre>
+<p>可以通过set注入的方式给该属性赋值吗？</p>
+<ul>
+<li>当然可以。因为只要能够调用set方法就可以给属性赋值。</li>
+</ul>
+<p><strong>编写程序给一个User对象的age属性赋值20：</strong></p>
+<p>第一步：定义User类，提供age属性，提供age属性的setter方法。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">User</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setAge</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">age</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">age</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"User{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"age="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">age</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>第二步：编写spring配置文件：spring-simple-type.xml</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"userBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.User"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="cm">&lt;!--如果像这种int类型的属性，我们称为简单类型，这种简单类型在注入的时候要使用value属性，不能使用ref--&gt;</span>
+<span class="w">    </span><span class="cm">&lt;!--&lt;property name="age" value="20"/&gt;--&gt;</span>
+<span class="w">    </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"age"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;value&gt;</span>20<span class="nt">&lt;/value&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/property&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+</code></pre>
+<p>第三步：编写测试程序</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Test</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testSimpleType</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ClassPathXmlApplicationContext</span><span class="p">(</span><span class="s">"spring-simple-type.xml"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">User</span><span class="w"> </span><span class="n">user</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"userBean"</span><span class="p">,</span><span class="w"> </span><span class="n">User</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">user</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>第四步：运行测试程序</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763703886349-7e587def-2b4f-4abf-aff0-6c0f41011328.png" /></p>
+<hr />
+<p><strong><em>*需要特别注意：如果给简单类型赋值，使用value属性或value标签。而不是ref。</em></strong>*</p>
+<p>简单类型包括哪些呢？可以通过Spring的源码来分析一下：BeanUtils类、ClassUtils类：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1726729479656-34799374-2f4a-4d05-a2ce-89defea2ad21.png" /></p>
+<p>简单类型包括：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1726729370217-81b396a1-bf0b-4459-9b15-2c1e77c37093.png" /></p>
+<p><strong>经典案例：给数据源的属性注入值：</strong></p>
+<p>假设我们现在要自己手写一个数据源，我们都知道所有的数据源都要实现javax.sql.DataSource接口，并且数据源中应该有连接数据库的信息，例如：driver、url、username、password等。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MyDataSource</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">DataSource</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">driver</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">url</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">username</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">password</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setDriver</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">driver</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">driver</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">driver</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setUrl</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">url</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">url</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setUsername</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">username</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">username</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">username</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setPassword</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">password</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">password</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">password</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"MyDataSource{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"driver='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">driver</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", url='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">url</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", username='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">username</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", password='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">password</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Connection</span><span class="w"> </span><span class="nf">getConnection</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">SQLException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Connection</span><span class="w"> </span><span class="nf">getConnection</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">username</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">password</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">SQLException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">PrintWriter</span><span class="w"> </span><span class="nf">getLogWriter</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">SQLException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setLogWriter</span><span class="p">(</span><span class="n">PrintWriter</span><span class="w"> </span><span class="n">out</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">SQLException</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setLoginTimeout</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">seconds</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">SQLException</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">getLoginTimeout</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">SQLException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Logger</span><span class="w"> </span><span class="nf">getParentLogger</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">SQLFeatureNotSupportedException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="n">T</span><span class="w"> </span><span class="nf">unwrap</span><span class="p">(</span><span class="n">Class</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="n">iface</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">SQLException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="nf">isWrapperFor</span><span class="p">(</span><span class="n">Class</span><span class="o">&lt;?&gt;</span><span class="w"> </span><span class="n">iface</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">SQLException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>我们给driver、url、username、password四个属性分别提供了setter方法，我们可以使用spring的依赖注入完成数据源对象的创建和属性的赋值吗？看配置文件</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;beans</span><span class="w"> </span><span class="na">xmlns=</span><span class="s">"http://www.springframework.org/schema/beans"</span>
+<span class="w">       </span><span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+<span class="w">       </span><span class="na">xsi:schemaLocation=</span><span class="s">"http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"</span><span class="nt">&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"dataSource"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.MyDataSource"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"driver"</span><span class="w"> </span><span class="na">value=</span><span class="s">"com.mysql.cj.jdbc.Driver"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"url"</span><span class="w"> </span><span class="na">value=</span><span class="s">"jdbc:mysql://localhost:3306/spring"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"username"</span><span class="w"> </span><span class="na">value=</span><span class="s">"root"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"password"</span><span class="w"> </span><span class="na">value=</span><span class="s">"123456"</span><span class="nt">/&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/bean&gt;</span>
+
+<span class="nt">&lt;/beans&gt;</span>
+</code></pre>
+<p>测试程序：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Test</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testDataSource</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ClassPathXmlApplicationContext</span><span class="p">(</span><span class="s">"spring-datasource.xml"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">MyDataSource</span><span class="w"> </span><span class="n">dataSource</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"dataSource"</span><span class="p">,</span><span class="w"> </span><span class="n">MyDataSource</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">dataSource</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行测试程序：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763703988968-74f61c13-64c3-4af9-aa3f-0124482b808d.png" /></p>
+<p>你学会了吗？</p>
+<hr />
+<h3 id="_4">级联属性赋值（了解）</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Clazz</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">Clazz</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">Clazz</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getName</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setName</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"Clazz{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"name='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Student</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Clazz</span><span class="w"> </span><span class="n">clazz</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">Student</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">Student</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">Clazz</span><span class="w"> </span><span class="n">clazz</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">clazz</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">clazz</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setName</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setClazz</span><span class="p">(</span><span class="n">Clazz</span><span class="w"> </span><span class="n">clazz</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">clazz</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">clazz</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Clazz</span><span class="w"> </span><span class="nf">getClazz</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">clazz</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"Student{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"name='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", clazz="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">clazz</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"clazzBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.Clazz"</span><span class="nt">/&gt;</span>
+
+<span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"student"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.Student"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"name"</span><span class="w"> </span><span class="na">value=</span><span class="s">"张三"</span><span class="nt">/&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!--要点1：以下两行配置的顺序不能颠倒--&gt;</span>
+<span class="w">    </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"clazz"</span><span class="w"> </span><span class="na">ref=</span><span class="s">"clazzBean"</span><span class="nt">/&gt;</span>
+<span class="w">    </span><span class="cm">&lt;!--要点2：clazz属性必须有getter方法--&gt;</span>
+<span class="w">    </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"clazz.name"</span><span class="w"> </span><span class="na">value=</span><span class="s">"高三一班"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Test</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testCascade</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ClassPathXmlApplicationContext</span><span class="p">(</span><span class="s">"spring-cascade.xml"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">Student</span><span class="w"> </span><span class="n">student</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"student"</span><span class="p">,</span><span class="w"> </span><span class="n">Student</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">student</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>运行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763704075496-763dcaba-4244-4d90-8b1b-a2b6c8148730.png" /></p>
+<p><strong><em>*要点：</em></strong>*</p>
+<ul>
+<li><strong><em>*在spring配置文件中，如上，注意顺序。</em></strong>*</li>
+<li><strong><em>*在spring配置文件中，clazz属性必须提供getter方法。</em></strong>*</li>
+</ul>
+<hr />
+<h3 id="_5">注入数组</h3>
+<p><strong>当数组中的元素是简单类型</strong>：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.beans</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.Arrays</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Person</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">favoriteFoods</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setFavoriteFoods</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">favoriteFoods</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">favoriteFoods</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">favoriteFoods</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"Person{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"favoriteFoods="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">Arrays</span><span class="p">.</span><span class="na">toString</span><span class="p">(</span><span class="n">favoriteFoods</span><span class="p">)</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"person"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.Person"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"favoriteFoods"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;array&gt;</span>
+<span class="w">            </span><span class="nt">&lt;value&gt;</span>鸡排<span class="nt">&lt;/value&gt;</span>
+<span class="w">            </span><span class="nt">&lt;value&gt;</span>汉堡<span class="nt">&lt;/value&gt;</span>
+<span class="w">            </span><span class="nt">&lt;value&gt;</span>鹅肝<span class="nt">&lt;/value&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/array&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/property&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Test</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testArraySimple</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ClassPathXmlApplicationContext</span><span class="p">(</span><span class="s">"spring-array-simple.xml"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">Person</span><span class="w"> </span><span class="n">person</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"person"</span><span class="p">,</span><span class="w"> </span><span class="n">Person</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">person</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>当数组中的元素是非简单类型：一个订单中包含多个商品。</strong></p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Goods</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">Goods</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">Goods</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getName</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setName</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"Goods{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"name='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Order</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 一个订单中有多个商品</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Goods</span><span class="o">[]</span><span class="w"> </span><span class="n">goods</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">Order</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">Order</span><span class="p">(</span><span class="n">Goods</span><span class="o">[]</span><span class="w"> </span><span class="n">goods</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">goods</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">goods</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setGoods</span><span class="p">(</span><span class="n">Goods</span><span class="o">[]</span><span class="w"> </span><span class="n">goods</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">goods</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">goods</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"Order{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"goods="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">Arrays</span><span class="p">.</span><span class="na">toString</span><span class="p">(</span><span class="n">goods</span><span class="p">)</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"goods1"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.Goods"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"name"</span><span class="w"> </span><span class="na">value=</span><span class="s">"西瓜"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+
+<span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"goods2"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.Goods"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"name"</span><span class="w"> </span><span class="na">value=</span><span class="s">"苹果"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+
+<span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"order"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.Order"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"goods"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;array&gt;</span>
+<span class="w">            </span><span class="cm">&lt;!--这里使用ref标签即可--&gt;</span>
+<span class="w">            </span><span class="nt">&lt;ref</span><span class="w"> </span><span class="na">bean=</span><span class="s">"goods1"</span><span class="nt">/&gt;</span>
+<span class="w">            </span><span class="nt">&lt;ref</span><span class="w"> </span><span class="na">bean=</span><span class="s">"goods2"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/array&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/property&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+</code></pre>
+<p>测试程序：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Test</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testArray</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ClassPathXmlApplicationContext</span><span class="p">(</span><span class="s">"spring-array.xml"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">Order</span><span class="w"> </span><span class="n">order</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"order"</span><span class="p">,</span><span class="w"> </span><span class="n">Order</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">order</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763717431738-ef375752-075c-43bd-bf25-d62f957e52f2.png" /></p>
+<p><strong><em>*要点：</em></strong>*</p>
+<ul>
+<li><strong><em>*如果数组中是简单类型，使用value标签。</em></strong>*</li>
+<li><strong><em>*如果数组中是非简单类型，使用ref标签。</em></strong>*</li>
+</ul>
+<hr />
+<h3 id="list">注入List集合</h3>
+<p>List集合：有序可重复</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">People</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 一个人有多个名字</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">names</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setNames</span><span class="p">(</span><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">names</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">names</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">names</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"People{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"names="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">names</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"peopleBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.People"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"names"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;list&gt;</span>
+<span class="w">            </span><span class="nt">&lt;value&gt;</span>铁锤<span class="nt">&lt;/value&gt;</span>
+<span class="w">            </span><span class="nt">&lt;value&gt;</span>张三<span class="nt">&lt;/value&gt;</span>
+<span class="w">            </span><span class="nt">&lt;value&gt;</span>张三<span class="nt">&lt;/value&gt;</span>
+<span class="w">            </span><span class="nt">&lt;value&gt;</span>张三<span class="nt">&lt;/value&gt;</span>
+<span class="w">            </span><span class="nt">&lt;value&gt;</span>狼<span class="nt">&lt;/value&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/list&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/property&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Test</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testCollection</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ClassPathXmlApplicationContext</span><span class="p">(</span><span class="s">"spring-collection.xml"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">People</span><span class="w"> </span><span class="n">peopleBean</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"peopleBean"</span><span class="p">,</span><span class="w"> </span><span class="n">People</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">peopleBean</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763717474219-f00a5de9-fe99-401d-8540-0dfb59671bb2.png" /></p>
+<p><strong><em>*注意：注入List集合的时候使用list标签，如果List集合中是简单类型使用value标签，反之使用ref标签。</em></strong>*</p>
+<hr />
+<h3 id="set_2">注入Set集合</h3>
+<p>Set集合：无序不可重复</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">People</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 一个人有多个电话</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Set</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">phones</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setPhones</span><span class="p">(</span><span class="n">Set</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">phones</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">phones</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">phones</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">//......</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"People{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"phones="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">phones</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", names="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">names</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"peopleBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.People"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"phones"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;set&gt;</span>
+<span class="w">            </span><span class="cm">&lt;!--非简单类型可以使用ref，简单类型使用value--&gt;</span>
+<span class="w">            </span><span class="nt">&lt;value&gt;</span>110<span class="nt">&lt;/value&gt;</span>
+<span class="w">            </span><span class="nt">&lt;value&gt;</span>110<span class="nt">&lt;/value&gt;</span>
+<span class="w">            </span><span class="nt">&lt;value&gt;</span>120<span class="nt">&lt;/value&gt;</span>
+<span class="w">            </span><span class="nt">&lt;value&gt;</span>120<span class="nt">&lt;/value&gt;</span>
+<span class="w">            </span><span class="nt">&lt;value&gt;</span>119<span class="nt">&lt;/value&gt;</span>
+<span class="w">            </span><span class="nt">&lt;value&gt;</span>119<span class="nt">&lt;/value&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/set&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/property&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+</code></pre>
+<p>执行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763717525860-5898bf62-8e74-438d-afee-979fb446ff0f.png" /></p>
+<p><strong><em>*要点：</em></strong>*</p>
+<ul>
+<li><strong><em>*使用<set>标签</em></strong>*</li>
+<li><strong><em>*set集合中元素是简单类型的使用value标签，反之使用ref标签。</em></strong>*</li>
+</ul>
+<hr />
+<h3 id="map">注入Map集合</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">People</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 一个人有多个住址</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">Integer</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">addrs</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setAddrs</span><span class="p">(</span><span class="n">Map</span><span class="o">&lt;</span><span class="n">Integer</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">addrs</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">addrs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">addrs</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">//......</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"People{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"addrs="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">addrs</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", phones="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">phones</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", names="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">names</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="p">}</span>
+</code></pre>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"peopleBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.People"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"addrs"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;map&gt;</span>
+<span class="w">            </span><span class="cm">&lt;!--如果key不是简单类型，使用 key-ref 属性--&gt;</span>
+<span class="w">            </span><span class="cm">&lt;!--如果value不是简单类型，使用 value-ref 属性--&gt;</span>
+<span class="w">            </span><span class="nt">&lt;entry</span><span class="w"> </span><span class="na">key=</span><span class="s">"1"</span><span class="w"> </span><span class="na">value=</span><span class="s">"北京海淀"</span><span class="nt">/&gt;</span>
+<span class="w">            </span><span class="nt">&lt;entry</span><span class="w"> </span><span class="na">key=</span><span class="s">"2"</span><span class="w"> </span><span class="na">value=</span><span class="s">"上海浦东"</span><span class="nt">/&gt;</span>
+<span class="w">            </span><span class="nt">&lt;entry</span><span class="w"> </span><span class="na">key=</span><span class="s">"3"</span><span class="w"> </span><span class="na">value=</span><span class="s">"天津南开"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/map&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/property&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+</code></pre>
+<p><strong><em>*要点：</em></strong>*</p>
+<ul>
+<li><strong><em>*使用<map>标签</em></strong>*</li>
+<li><strong><em>*如果key是简单类型，使用 key 属性，反之使用 key-ref 属性。</em></strong>*</li>
+<li><strong><em>*如果value是简单类型，使用 value 属性，反之使用 value-ref 属性。</em></strong>*</li>
+</ul>
+<hr />
+<h3 id="properties">注入Properties</h3>
+<p>java.util.Properties继承java.util.Hashtable，所以Properties也是一个Map集合。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">People</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Properties</span><span class="w"> </span><span class="n">properties</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setProperties</span><span class="p">(</span><span class="n">Properties</span><span class="w"> </span><span class="n">properties</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">properties</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">properties</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">//......</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"People{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"properties="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">properties</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", addrs="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">addrs</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", phones="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">phones</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", names="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">names</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"peopleBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.People"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"properties"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;props&gt;</span>
+<span class="w">            </span><span class="nt">&lt;prop</span><span class="w"> </span><span class="na">key=</span><span class="s">"driver"</span><span class="nt">&gt;</span>com.mysql.cj.jdbc.Driver<span class="nt">&lt;/prop&gt;</span>
+<span class="w">            </span><span class="nt">&lt;prop</span><span class="w"> </span><span class="na">key=</span><span class="s">"url"</span><span class="nt">&gt;</span>jdbc:mysql://localhost:3306/spring<span class="nt">&lt;/prop&gt;</span>
+<span class="w">            </span><span class="nt">&lt;prop</span><span class="w"> </span><span class="na">key=</span><span class="s">"username"</span><span class="nt">&gt;</span>root<span class="nt">&lt;/prop&gt;</span>
+<span class="w">            </span><span class="nt">&lt;prop</span><span class="w"> </span><span class="na">key=</span><span class="s">"password"</span><span class="nt">&gt;</span>123456<span class="nt">&lt;/prop&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/props&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/property&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+</code></pre>
+<p>执行测试程序：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763717687274-17ec7c70-16b4-4a1a-b67b-d252ccfef797.png" /></p>
+<p><strong><em>*要点：</em></strong>*</p>
+<ul>
+<li><strong><em>*使用<props>标签嵌套<prop>标签完成。</em></strong>*</li>
+</ul>
+<hr />
+<h3 id="null">注入null和空字符串</h3>
+<p>注入空字符串使用：<value/> 或者 value=""</p>
+<p>注入null使用：<null/> 或者 不为该属性赋值</p>
+<ul>
+<li>我们先来看一下，怎么注入空字符串。</li>
+</ul>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Vip</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">email</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setEmail</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">email</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">email</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">email</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"Vip{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"email='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">email</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;beans</span><span class="w"> </span><span class="na">xmlns=</span><span class="s">"http://www.springframework.org/schema/beans"</span>
+<span class="w">       </span><span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+<span class="w">       </span><span class="na">xsi:schemaLocation=</span><span class="s">"http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"</span><span class="nt">&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"vipBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.Vip"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="cm">&lt;!--空串的第一种方式--&gt;</span>
+<span class="w">        </span><span class="cm">&lt;!--&lt;property name="email" value=""/&gt;--&gt;</span>
+<span class="w">        </span><span class="cm">&lt;!--空串的第二种方式--&gt;</span>
+<span class="w">        </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"email"</span><span class="nt">&gt;</span>
+<span class="w">            </span><span class="nt">&lt;value/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/property&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/bean&gt;</span>
+
+<span class="nt">&lt;/beans&gt;</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Test</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testNull</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ClassPathXmlApplicationContext</span><span class="p">(</span><span class="s">"spring-null.xml"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">Vip</span><span class="w"> </span><span class="n">vipBean</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"vipBean"</span><span class="p">,</span><span class="w"> </span><span class="n">Vip</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">vipBean</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763717731445-35c6fea4-2f21-4450-b29c-2111f2ce1d7a.png" /></p>
+<ul>
+<li>怎么注入null呢？</li>
+</ul>
+<p>第一种方式：不给属性赋值</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;beans</span><span class="w"> </span><span class="na">xmlns=</span><span class="s">"http://www.springframework.org/schema/beans"</span>
+<span class="w">       </span><span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+<span class="w">       </span><span class="na">xsi:schemaLocation=</span><span class="s">"http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"</span><span class="nt">&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"vipBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.Vip"</span><span class="w"> </span><span class="nt">/&gt;</span>
+
+<span class="nt">&lt;/beans&gt;</span>
+</code></pre>
+<p>执行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763717749034-ffa72b1d-fb17-4b6d-8f2c-d6b88208bae1.png" /></p>
+<p>第二种方式：使用<null/></p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;beans</span><span class="w"> </span><span class="na">xmlns=</span><span class="s">"http://www.springframework.org/schema/beans"</span>
+<span class="w">       </span><span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+<span class="w">       </span><span class="na">xsi:schemaLocation=</span><span class="s">"http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"</span><span class="nt">&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"vipBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.Vip"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"email"</span><span class="nt">&gt;</span>
+<span class="w">            </span><span class="nt">&lt;null/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/property&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/bean&gt;</span>
+
+<span class="nt">&lt;/beans&gt;</span>
+</code></pre>
+<p>执行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763717759124-7724e7c6-92ba-4ae8-b3e1-d9cd847c712e.png" /></p>
+<h3 id="_6">注入的值中含有特殊符号</h3>
+<p>XML中有5个特殊字符，分别是：<code>&lt;``&gt;``'``"``&amp;</code></p>
+<p>以上5个特殊符号在XML中会被特殊对待，会被当做XML语法的一部分进行解析，如果这些特殊符号直接出现在注入的字符串当中，会报错。</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718169577-c2150391-6ada-4ba4-8d78-ed66ce8db5f4.png" /></p>
+<p>解决方案包括两种：</p>
+<ul>
+<li>第一种：特殊符号使用转义字符代替。</li>
+<li>第二种：将含有特殊符号的字符串放到：<![CDATA[]]> 当中。因为放在CDATA区中的数据不会被XML文件解析器解析。</li>
+</ul>
+<p>5个特殊字符对应的转义字符分别是：</p>
+<table>
+<thead>
+<tr>
+<th><strong>特殊字符</strong></th>
+<th><strong>转义字符</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&gt;</td>
+<td>&gt;</td>
+</tr>
+<tr>
+<td>&lt;</td>
+<td>&lt;</td>
+</tr>
+<tr>
+<td>'</td>
+<td>&apos;</td>
+</tr>
+<tr>
+<td>"</td>
+<td>&quot;</td>
+</tr>
+<tr>
+<td>&amp;</td>
+<td>&amp;</td>
+</tr>
+</tbody>
+</table>
+<p>先使用转义字符来代替：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Math</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">result</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setResult</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">result</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">result</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"Math{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"result='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"mathBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.Math"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"result"</span><span class="w"> </span><span class="na">value=</span><span class="s">"2 &amp;lt; 3"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Test</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testSpecial</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ClassPathXmlApplicationContext</span><span class="p">(</span><span class="s">"spring-special.xml"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">Math</span><span class="w"> </span><span class="n">mathBean</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"mathBean"</span><span class="p">,</span><span class="w"> </span><span class="n">Math</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">mathBean</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763717850747-fe3fa73b-806c-4ae2-ab0f-06e5359075e6.png" /></p>
+<p>我们再来使用CDATA方式：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"mathBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.Math"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"result"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="cm">&lt;!--只能使用value标签--&gt;</span>
+<span class="w">        </span><span class="nt">&lt;value&gt;</span><span class="cp">&lt;![CDATA[2 &lt; 3]]&gt;</span><span class="nt">&lt;/value&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/property&gt;</span>
+<span class="nt">&lt;/bean&gt;</span>
+</code></pre>
+<p><strong><em>*注意：使用CDATA时，不能使用value属性，只能使用value标签。</em></strong>*</p>
+<p>执行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763717882333-4ff84443-b20b-499b-bf88-bc489e189fe1.png" /></p>
+<hr />
+<h2 id="p">p命名空间注入</h2>
+<p>目的：简化配置。</p>
+<p>使用p命名空间注入的前提条件包括两个：</p>
+<ul>
+<li>第一：在XML头部信息中添加p命名空间的配置信息：xmlns:p="<a href="http://www.springframework.org/schema/p&quot;">http://www.springframework.org/schema/p"</a></li>
+<li>第二：p命名空间注入是基于setter方法的，所以需要对应的属性提供setter方法。</li>
+</ul>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Customer</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setName</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setAge</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">age</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">age</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"Customer{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"name='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", age="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">age</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;beans</span><span class="w"> </span><span class="na">xmlns=</span><span class="s">"http://www.springframework.org/schema/beans"</span>
+<span class="w">       </span><span class="na">xmlns:p=</span><span class="s">"http://www.springframework.org/schema/p"</span>
+<span class="w">       </span><span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+<span class="w">       </span><span class="na">xsi:schemaLocation=</span><span class="s">"http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"</span><span class="nt">&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"customerBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.Customer"</span><span class="w"> </span><span class="na">p:name=</span><span class="s">"zhangsan"</span><span class="w"> </span><span class="na">p:age=</span><span class="s">"20"</span><span class="nt">/&gt;</span>
+
+<span class="nt">&lt;/beans&gt;</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Test</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testP</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ClassPathXmlApplicationContext</span><span class="p">(</span><span class="s">"spring-p.xml"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">Customer</span><span class="w"> </span><span class="n">customerBean</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"customerBean"</span><span class="p">,</span><span class="w"> </span><span class="n">Customer</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">customerBean</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718009839-ade48dfb-1431-4f10-a994-4ab8374ef367.png" /></p>
+<p>把setter方法去掉：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718119042-3c78856d-6f8b-4b23-8559-51d174a399f9.png" /></p>
+<p>所以p命名空间实际上是对set注入的简化。</p>
+<hr />
+<h2 id="c">c命名空间注入</h2>
+<p>c命名空间是简化构造方法注入的。</p>
+<p>使用c命名空间的两个前提条件：</p>
+<p>第一：需要在xml配置文件头部添加信息：<strong>xmlns:</strong><strong>c</strong><strong>="http://www.springframework.org/schema/c"</strong></p>
+<p>第二：需要提供构造方法。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MyTime</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">year</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">month</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">day</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">MyTime</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">year</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">month</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">day</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">year</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">year</span><span class="p">;</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">month</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">month</span><span class="p">;</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">day</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">day</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"MyTime{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"year="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">year</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", month="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">month</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", day="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">day</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;beans</span><span class="w"> </span><span class="na">xmlns=</span><span class="s">"http://www.springframework.org/schema/beans"</span>
+<span class="w">       </span><span class="na">xmlns:c=</span><span class="s">"http://www.springframework.org/schema/c"</span>
+<span class="w">       </span><span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+<span class="w">       </span><span class="na">xsi:schemaLocation=</span><span class="s">"http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"</span><span class="nt">&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"myTimeBean"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.MyTime"</span><span class="w"> </span><span class="na">c:_0=</span><span class="s">"2008"</span><span class="w"> </span><span class="na">c:_1=</span><span class="s">"8"</span><span class="w"> </span><span class="na">c:_2=</span><span class="s">"8"</span><span class="nt">/&gt;</span>
+
+<span class="nt">&lt;/beans&gt;</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Test</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testC</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ClassPathXmlApplicationContext</span><span class="p">(</span><span class="s">"spring-c.xml"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">MyTime</span><span class="w"> </span><span class="n">myTimeBean</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"myTimeBean"</span><span class="p">,</span><span class="w"> </span><span class="n">MyTime</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">myTimeBean</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718096636-e9af0497-bb5a-4341-bf38-eabde32ba060.png" /></p>
+<p>把构造方法注释掉：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718138114-98841768-357f-4408-aef7-7c57107cdb3e.png" /></p>
+<p>所以，c命名空间是依靠构造方法的。</p>
+<p><strong><em>*注意：不管是p命名空间还是c命名空间，注入的时候都可以注入简单类型以及非简单类型。</em></strong>*</p>
+<hr />
+<hr />
+<h2 id="util">util命名空间</h2>
+<p>使用util命名空间可以让<strong><em>*配置复用</em></strong>*。</p>
+<p>使用util命名空间的前提是：在spring配置文件头部添加配置信息。如下：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2022/png/21376908/1665218059794-30411b76-a22c-4339-ab60-acad8f02ab28.png" /></p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MyDataSource1</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Properties</span><span class="w"> </span><span class="n">properties</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setProperties</span><span class="p">(</span><span class="n">Properties</span><span class="w"> </span><span class="n">properties</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">properties</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">properties</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"MyDataSource1{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"properties="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">properties</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MyDataSource2</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Properties</span><span class="w"> </span><span class="n">properties</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setProperties</span><span class="p">(</span><span class="n">Properties</span><span class="w"> </span><span class="n">properties</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">properties</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">properties</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"MyDataSource2{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"properties="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">properties</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;beans</span><span class="w"> </span><span class="na">xmlns=</span><span class="s">"http://www.springframework.org/schema/beans"</span>
+<span class="w">       </span><span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+<span class="w">       </span><span class="na">xmlns:util=</span><span class="s">"http://www.springframework.org/schema/util"</span>
+<span class="w">       </span><span class="na">xsi:schemaLocation=</span><span class="s">"http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd</span>
+<span class="s">                           http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd"</span><span class="nt">&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;util:properties</span><span class="w"> </span><span class="na">id=</span><span class="s">"prop"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;prop</span><span class="w"> </span><span class="na">key=</span><span class="s">"driver"</span><span class="nt">&gt;</span>com.mysql.cj.jdbc.Driver<span class="nt">&lt;/prop&gt;</span>
+<span class="w">        </span><span class="nt">&lt;prop</span><span class="w"> </span><span class="na">key=</span><span class="s">"url"</span><span class="nt">&gt;</span>jdbc:mysql://localhost:3306/spring<span class="nt">&lt;/prop&gt;</span>
+<span class="w">        </span><span class="nt">&lt;prop</span><span class="w"> </span><span class="na">key=</span><span class="s">"username"</span><span class="nt">&gt;</span>root<span class="nt">&lt;/prop&gt;</span>
+<span class="w">        </span><span class="nt">&lt;prop</span><span class="w"> </span><span class="na">key=</span><span class="s">"password"</span><span class="nt">&gt;</span>123456<span class="nt">&lt;/prop&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/util:properties&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"dataSource1"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.MyDataSource1"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"properties"</span><span class="w"> </span><span class="na">ref=</span><span class="s">"prop"</span><span class="nt">/&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/bean&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"dataSource2"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.MyDataSource2"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"properties"</span><span class="w"> </span><span class="na">ref=</span><span class="s">"prop"</span><span class="nt">/&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/bean&gt;</span>
+<span class="nt">&lt;/beans&gt;</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Test</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testUtil</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ClassPathXmlApplicationContext</span><span class="p">(</span><span class="s">"spring-util.xml"</span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">MyDataSource1</span><span class="w"> </span><span class="n">dataSource1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"dataSource1"</span><span class="p">,</span><span class="w"> </span><span class="n">MyDataSource1</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">dataSource1</span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">MyDataSource2</span><span class="w"> </span><span class="n">dataSource2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"dataSource2"</span><span class="p">,</span><span class="w"> </span><span class="n">MyDataSource2</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">dataSource2</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718455643-7d9355ac-8556-47fe-ab67-1e2349d580e2.png" /></p>
+<hr />
+<h2 id="xml">基于XML的自动装配</h2>
+<p>Spring还可以完成自动化的注入，自动化注入又被称为自动装配。它可以根据<strong><em>*名字</em></strong><em>进行自动装配，也可以根据</em><strong><em>类型</em></strong>*进行自动装配。</p>
+<h3 id="_7">根据名称自动装配</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">UserDao</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">insert</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"正在保存用户数据。"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">UserService</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">UserDao</span><span class="w"> </span><span class="n">aaa</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// 这个set方法非常关键</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setAaa</span><span class="p">(</span><span class="n">UserDao</span><span class="w"> </span><span class="n">aaa</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">aaa</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">aaa</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">save</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">aaa</span><span class="p">.</span><span class="na">insert</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>Spring的配置文件这样配置：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"userService"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.service.UserService"</span><span class="w"> </span><span class="na">autowire=</span><span class="s">"byName"</span><span class="nt">/&gt;</span>
+
+<span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"aaa"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.dao.UserDao"</span><span class="nt">/&gt;</span>
+</code></pre>
+<p>这个配置起到关键作用：</p>
+<ul>
+<li>UserService Bean中需要添加autowire="byName"，表示通过名称进行装配。</li>
+<li>UserService类中有一个UserDao属性，而UserDao属性的名字是aaa，<strong><em>*对应的set方法是setAaa()</em></strong>*，正好和UserDao Bean的id是一样的。这就是根据名称自动装配。</li>
+</ul>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Test</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testAutowireByName</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ClassPathXmlApplicationContext</span><span class="p">(</span><span class="s">"spring-autowire.xml"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">UserService</span><span class="w"> </span><span class="n">userService</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"userService"</span><span class="p">,</span><span class="w"> </span><span class="n">UserService</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">userService</span><span class="p">.</span><span class="na">save</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718549628-c1b58d51-d746-4d9e-aeb0-c8c5ee1f0a59.png" /></p>
+<p>我们来测试一下，byName装配是和属性名有关还是和set方法名有关系：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">UserService</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 这里没修改</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">UserDao</span><span class="w"> </span><span class="n">aaa</span><span class="p">;</span>
+
+<span class="w">    </span><span class="cm">/*public void setAaa(UserDao aaa) {</span>
+<span class="cm">        this.aaa = aaa;</span>
+<span class="cm">    }*/</span>
+
+<span class="w">    </span><span class="c1">// set方法名变化了</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setDao</span><span class="p">(</span><span class="n">UserDao</span><span class="w"> </span><span class="n">aaa</span><span class="p">){</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">aaa</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">aaa</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">save</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">aaa</span><span class="p">.</span><span class="na">insert</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>在执行测试程序：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718582395-53105c38-4844-412e-bcba-cc52e90013ab.png" /></p>
+<p>通过测试得知，aaa属性并没有赋值成功。也就是并没有装配成功。</p>
+<p>我们将spring配置文件修改以下：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;beans</span><span class="w"> </span><span class="na">xmlns=</span><span class="s">"http://www.springframework.org/schema/beans"</span>
+<span class="w">       </span><span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+<span class="w">       </span><span class="na">xsi:schemaLocation=</span><span class="s">"http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"</span><span class="nt">&gt;</span>
+
+<span class="w">  </span><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"userService"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.service.UserService"</span><span class="w"> </span><span class="na">autowire=</span><span class="s">"byName"</span><span class="nt">/&gt;</span>
+<span class="w">  </span><span class="cm">&lt;!--这个id修改了--&gt;</span>
+<span class="w">  </span><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"dao"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.dao.UserDao"</span><span class="nt">/&gt;</span>
+
+<span class="nt">&lt;/beans&gt;</span>
+</code></pre>
+<p>执行测试程序：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718621703-01a7eaa0-f0cb-44c1-80f6-d113eb52eb86.png" /></p>
+<p>这说明，如果根据名称装配(byName)，底层会调用set方法进行注入。</p>
+<p>例如：setAge() 对应的名字是age，setPassword()对应的名字是password，setEmail()对应的名字是email。</p>
+<h3 id="_8">根据类型自动装配</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">AccountDao</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">insert</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"正在保存账户信息"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">AccountService</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">AccountDao</span><span class="w"> </span><span class="n">accountDao</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setAccountDao</span><span class="p">(</span><span class="n">AccountDao</span><span class="w"> </span><span class="n">accountDao</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">accountDao</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">accountDao</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">save</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">accountDao</span><span class="p">.</span><span class="na">insert</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;beans</span><span class="w"> </span><span class="na">xmlns=</span><span class="s">"http://www.springframework.org/schema/beans"</span>
+<span class="w">       </span><span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+<span class="w">       </span><span class="na">xsi:schemaLocation=</span><span class="s">"http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"</span><span class="nt">&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!--byType表示根据类型自动装配--&gt;</span>
+<span class="w">    </span><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"accountService"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.service.AccountService"</span><span class="w"> </span><span class="na">autowire=</span><span class="s">"byType"</span><span class="nt">/&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.dao.AccountDao"</span><span class="nt">/&gt;</span>
+
+<span class="nt">&lt;/beans&gt;</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Test</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testAutowireByType</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ClassPathXmlApplicationContext</span><span class="p">(</span><span class="s">"spring-autowire.xml"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">AccountService</span><span class="w"> </span><span class="n">accountService</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"accountService"</span><span class="p">,</span><span class="w"> </span><span class="n">AccountService</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">accountService</span><span class="p">.</span><span class="na">save</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718680599-8c83ff07-8541-4638-9607-6b2a2585c4c3.png" /></p>
+<p>我们把UserService中的set方法注释掉，再执行：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718687238-6eb11940-af46-4b9f-81cd-7715d0605040.png" /></p>
+<p>可以看到无论是byName还是byType，在装配的时候都是基于set方法的。所以set方法是必须要提供的。提供构造方法是不行的，大家可以测试一下。这里就不再赘述。</p>
+<p>如果byType，根据类型装配时，如果配置文件中有两个类型一样的bean会出现什么问题呢？</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;beans</span><span class="w"> </span><span class="na">xmlns=</span><span class="s">"http://www.springframework.org/schema/beans"</span>
+<span class="w">       </span><span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+<span class="w">       </span><span class="na">xsi:schemaLocation=</span><span class="s">"http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd"</span><span class="nt">&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"accountService"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.service.AccountService"</span><span class="w"> </span><span class="na">autowire=</span><span class="s">"byType"</span><span class="nt">/&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"x"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.dao.AccountDao"</span><span class="nt">/&gt;</span>
+<span class="w">    </span><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"y"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.dao.AccountDao"</span><span class="nt">/&gt;</span>
+
+<span class="nt">&lt;/beans&gt;</span>
+</code></pre>
+<p>执行测试程序：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718715528-42fe5699-776e-4cd1-b4d2-6bc55d8590be.png" /></p>
+<p>测试结果说明了，当byType进行自动装配的时候，配置文件中某种类型的Bean必须是唯一的，不能出现多个。</p>
+<hr />
+<h2 id="spring">Spring引入外部属性配置文件</h2>
+<p>我们都知道编写数据源的时候是需要连接数据库的信息的，例如：driver url username password等信息。这些信息可以单独写到一个属性配置文件中吗，这样用户修改起来会更加的方便。当然可以。</p>
+<p>第一步：写一个数据源类，提供相关属性。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MyDataSource</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">DataSource</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"MyDataSource{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"driver='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">driver</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", url='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">url</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", username='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">username</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", password='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">password</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">driver</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">url</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">username</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">password</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setDriver</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">driver</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">driver</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">driver</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setUrl</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">url</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">url</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">url</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setUsername</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">username</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">username</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">username</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setPassword</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">password</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">password</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">password</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">//......</span>
+<span class="p">}</span>
+</code></pre>
+<p>第二步：在类路径下新建jdbc.properties文件，并配置信息。</p>
+<pre lang="properties"><code class="language-properties md-fencescode"><span class="na">driver</span><span class="o">=</span><span class="s">com.mysql.cj.jdbc.Driver</span>
+<span class="na">url</span><span class="o">=</span><span class="s">jdbc:mysql://localhost:3306/spring</span>
+<span class="na">username</span><span class="o">=</span><span class="s">root</span>
+<span class="na">password</span><span class="o">=</span><span class="s">root123</span>
+</code></pre>
+<p>第三步：在spring配置文件中引入context命名空间。</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;beans</span><span class="w"> </span><span class="na">xmlns=</span><span class="s">"http://www.springframework.org/schema/beans"</span>
+<span class="w">       </span><span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+<span class="w">       </span><span class="na">xmlns:context=</span><span class="s">"http://www.springframework.org/schema/context"</span>
+<span class="w">       </span><span class="na">xsi:schemaLocation=</span><span class="s">"http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd</span>
+<span class="s">                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd"</span><span class="nt">&gt;</span>
+
+<span class="nt">&lt;/beans&gt;</span>
+</code></pre>
+<p>第四步：在spring中配置使用jdbc.properties文件。</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;beans</span><span class="w"> </span><span class="na">xmlns=</span><span class="s">"http://www.springframework.org/schema/beans"</span>
+<span class="w">       </span><span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+<span class="w">       </span><span class="na">xmlns:context=</span><span class="s">"http://www.springframework.org/schema/context"</span>
+<span class="w">       </span><span class="na">xsi:schemaLocation=</span><span class="s">"http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd</span>
+<span class="s">                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd"</span><span class="nt">&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;context:property-placeholder</span><span class="w"> </span><span class="na">location=</span><span class="s">"jdbc.properties"</span><span class="nt">/&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"dataSource"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.MyDataSource"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"driver"</span><span class="w"> </span><span class="na">value=</span><span class="s">"${driver}"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"url"</span><span class="w"> </span><span class="na">value=</span><span class="s">"${url}"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"username"</span><span class="w"> </span><span class="na">value=</span><span class="s">"${username}"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"password"</span><span class="w"> </span><span class="na">value=</span><span class="s">"${password}"</span><span class="nt">/&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/bean&gt;</span>
+<span class="nt">&lt;/beans&gt;</span>
+</code></pre>
+<p>测试程序：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Test</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testProperties</span><span class="p">(){</span>
+<span class="w">    </span><span class="n">ApplicationContext</span><span class="w"> </span><span class="n">applicationContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ClassPathXmlApplicationContext</span><span class="p">(</span><span class="s">"spring-properties.xml"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">MyDataSource</span><span class="w"> </span><span class="n">dataSource</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">applicationContext</span><span class="p">.</span><span class="na">getBean</span><span class="p">(</span><span class="s">"dataSource"</span><span class="p">,</span><span class="w"> </span><span class="n">MyDataSource</span><span class="p">.</span><span class="na">class</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">dataSource</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行结果：</p>
+<p><img alt="" src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718790927-1686291f-2da2-4f2b-a8b5-e22901e90044.png" /></p>
+<p><strong><em>*这里有一个坑。</em></strong><strong><em>配置文件中用户名是</em>*<code>**root**</code></strong>，但是取出来的是<strong><code>**Adminitrator**</code></strong>。什么原因？**</p>
+<p><strong>这个问题很常见，是因为系统环境变量的优先级导致的。Spring在解析</strong><code>**${}**</code><strong>占位符时，会按照以下顺序查找：</strong></p>
+<ol>
+<li><strong><em>*系统环境变量</em></strong><strong><em>（如</em>*<code>**USERNAME**</code></strong>）**</li>
+<li><strong><em>*JVM 系统属性</em></strong><strong><em>（</em>*<code>**System.getProperties()**</code></strong>）**</li>
+<li><strong><em>*属性文件</em></strong><strong>*中定义的值</strong></li>
+</ol>
+<p><strong>在Windows系统中，</strong><code>**USERNAME**</code><strong>是一个默认的环境变量，存储了当前登录用户的用户名，所以Spring会优先使用这个值而不是你属性文件中的值。</strong></p>
+<p><strong><em>*解决这个问题很简单：</em></strong>*</p>
+<pre lang="properties"><code class="language-properties md-fencescode"><span class="na">jdbc.driver</span><span class="o">=</span><span class="s">com.mysql.cj.jdbc.Driver</span>
+<span class="na">jdbc.url</span><span class="o">=</span><span class="s">jdbc:mysql://localhost:3306/spring</span>
+<span class="na">jdbc.username</span><span class="o">=</span><span class="s">root</span>
+<span class="na">jdbc.password</span><span class="o">=</span><span class="s">root123</span>
+</code></pre>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;beans</span><span class="w"> </span><span class="na">xmlns=</span><span class="s">"http://www.springframework.org/schema/beans"</span>
+<span class="w">       </span><span class="na">xmlns:xsi=</span><span class="s">"http://www.w3.org/2001/XMLSchema-instance"</span>
+<span class="w">       </span><span class="na">xmlns:context=</span><span class="s">"http://www.springframework.org/schema/context"</span>
+<span class="w">       </span><span class="na">xsi:schemaLocation=</span><span class="s">"http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd</span>
+<span class="s">                           http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd"</span><span class="nt">&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;context:property-placeholder</span><span class="w"> </span><span class="na">location=</span><span class="s">"jdbc.properties"</span><span class="nt">/&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;bean</span><span class="w"> </span><span class="na">id=</span><span class="s">"dataSource"</span><span class="w"> </span><span class="na">class=</span><span class="s">"com.jkweilai.spring.beans.MyDataSource"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"driver"</span><span class="w"> </span><span class="na">value=</span><span class="s">"${jdbc.driver}"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"url"</span><span class="w"> </span><span class="na">value=</span><span class="s">"${jdbc.url}"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"username"</span><span class="w"> </span><span class="na">value=</span><span class="s">"${jdbc.username}"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;property</span><span class="w"> </span><span class="na">name=</span><span class="s">"password"</span><span class="w"> </span><span class="na">value=</span><span class="s">"${jdbc.password}"</span><span class="nt">/&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/bean&gt;</span>
+<span class="nt">&lt;/beans&gt;</span>
+</code></pre>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

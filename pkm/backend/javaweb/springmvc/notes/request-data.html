@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>request-data</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="_1">获取请求数据</h1>
+<p>假设有这样一个请求：http://localhost:8080/springmvc/register?name=zhangsan&amp;password=123&amp;email=zhangsan@jkweilai.com</p>
+<p>在SpringMVC中应该如何获取请求提交的数据呢？</p>
+<p>在SpringMVC中又应该如何获取请求头信息呢？</p>
+<p>在SpringMVC中又应该如何获取客户端提交的Cookie数据呢？</p>
+<p><strong>创建新的模块：</strong><code>springmvc-003</code></p>
+<hr />
+<h2 id="_2">准备工作</h2>
+<h3 id="usercontroller">创建UserController</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.springmvc.controller</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Controller</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.web.bind.annotation.RequestMapping</span><span class="p">;</span>
+
+<span class="nd">@Controller</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">UserController</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@RequestMapping</span><span class="p">(</span><span class="s">"/"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toRegisterPage</span><span class="p">(){</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"register"</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="_3">提供一个注册页面</h3>
+<pre lang="html"><code class="language-html md-fencescode"><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">lang</span><span class="o">=</span><span class="s">"en"</span> <span class="na">xmlns:th</span><span class="o">=</span><span class="s">"http://www.thymeleaf.org"</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">"UTF-8"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>用户注册<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">h3</span><span class="p">&gt;</span>用户注册<span class="p">&lt;/</span><span class="nt">h3</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">hr</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">form</span> <span class="na">th:action</span><span class="o">=</span><span class="s">"@{/register}"</span> <span class="na">method</span><span class="o">=</span><span class="s">"post"</span><span class="p">&gt;</span>
+    用户名：<span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"text"</span> <span class="na">name</span><span class="o">=</span><span class="s">"username"</span><span class="p">&gt;&lt;</span><span class="nt">br</span><span class="p">&gt;</span>
+    密码：<span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"password"</span> <span class="na">name</span><span class="o">=</span><span class="s">"password"</span><span class="p">&gt;&lt;</span><span class="nt">br</span><span class="p">&gt;</span>
+    性别：
+        男 <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"radio"</span> <span class="na">name</span><span class="o">=</span><span class="s">"sex"</span> <span class="na">value</span><span class="o">=</span><span class="s">"1"</span><span class="p">&gt;</span>
+        女 <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"radio"</span> <span class="na">name</span><span class="o">=</span><span class="s">"sex"</span> <span class="na">value</span><span class="o">=</span><span class="s">"0"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">br</span><span class="p">&gt;</span>
+    爱好：
+        跑步 <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"checkbox"</span> <span class="na">name</span><span class="o">=</span><span class="s">"hobby"</span> <span class="na">value</span><span class="o">=</span><span class="s">"1"</span><span class="p">&gt;</span>
+        唱歌 <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"checkbox"</span> <span class="na">name</span><span class="o">=</span><span class="s">"hobby"</span> <span class="na">value</span><span class="o">=</span><span class="s">"2"</span><span class="p">&gt;</span>
+        跳舞 <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"checkbox"</span> <span class="na">name</span><span class="o">=</span><span class="s">"hobby"</span> <span class="na">value</span><span class="o">=</span><span class="s">"3"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">br</span><span class="p">&gt;</span>
+    简介：<span class="p">&lt;</span><span class="nt">textarea</span> <span class="na">rows</span><span class="o">=</span><span class="s">"10"</span> <span class="na">cols</span><span class="o">=</span><span class="s">"60"</span> <span class="na">name</span><span class="o">=</span><span class="s">"intro"</span><span class="p">&gt;&lt;/</span><span class="nt">textarea</span><span class="p">&gt;&lt;</span><span class="nt">br</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"submit"</span> <span class="na">value</span><span class="o">=</span><span class="s">"注册"</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">form</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</code></pre>
+<hr />
+<h2 id="servlet-api">使用原生的Servlet API进行获取</h2>
+<p><strong><em>*知识点列表：</em></strong>*</p>
+<ol>
+<li><strong>什么是原生 Servlet API？</strong>HttpServletRequest、HttpServletResponse 等</li>
+<li><strong>Servlet 原生 API 如何注入？直接方法参数即可注入。</strong></li>
+<li><strong>开发中是否推荐？不推荐。因为这种方式会导致 Controller 无法脱离 web 容器进行单元测试。</strong></li>
+<li><strong>什么时候使用这种方式？比如需要手动设置响应头的场景就必须使用这种方式了。</strong></li>
+</ol>
+<p><strong>原生的Servlet API指的是：</strong>HttpServletRequest、HttpServletResponse 等。</p>
+<p>在SpringMVC当中，一个Controller类中的方法参数上如果有HttpServletRequest，SpringMVC会自动将<code>****当前请求对象****</code>传递给这个参数，因此我们可以通过这个参数来获取请求提交的数据。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@PostMapping</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s">"/register"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="n">HttpServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">){</span>
+<span class="w">    </span><span class="c1">// 通过当前请求对象获取提交的数据</span>
+<span class="w">    </span><span class="n">String</span><span class="w"> </span><span class="n">username</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">request</span><span class="p">.</span><span class="na">getParameter</span><span class="p">(</span><span class="s">"username"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">String</span><span class="w"> </span><span class="n">password</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">request</span><span class="p">.</span><span class="na">getParameter</span><span class="p">(</span><span class="s">"password"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">String</span><span class="w"> </span><span class="n">sex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">request</span><span class="p">.</span><span class="na">getParameter</span><span class="p">(</span><span class="s">"sex"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">hobbies</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">request</span><span class="p">.</span><span class="na">getParameterValues</span><span class="p">(</span><span class="s">"hobby"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">String</span><span class="w"> </span><span class="n">intro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">request</span><span class="p">.</span><span class="na">getParameter</span><span class="p">(</span><span class="s">"intro"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">username</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">","</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">password</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">","</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">sex</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">","</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">Arrays</span><span class="p">.</span><span class="na">toString</span><span class="p">(</span><span class="n">hobbies</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">","</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">intro</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s">"success"</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>以下代码是完成一个文件下载的功能，这种情况下就需要使用原生的 Servlet API 了：</strong></p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@GetMapping</span><span class="p">(</span><span class="s">"/down"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">downloadJpg</span><span class="p">(</span><span class="n">HttpServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">HttpServletResponse</span><span class="w"> </span><span class="n">response</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 获取ServletContext对象。</span>
+<span class="w">        </span><span class="n">ServletContext</span><span class="w"> </span><span class="n">application</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">request</span><span class="p">.</span><span class="na">getServletContext</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">// 通过ServletContext获取文件绝对路径。</span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">realPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">application</span><span class="p">.</span><span class="na">getRealPath</span><span class="p">(</span><span class="s">"/img/image.jpg"</span><span class="p">);</span>
+<span class="w">        </span><span class="n">File</span><span class="w"> </span><span class="n">file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">File</span><span class="p">(</span><span class="n">realPath</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 设置图片相关的响应头</span>
+<span class="w">        </span><span class="n">response</span><span class="p">.</span><span class="na">setContentType</span><span class="p">(</span><span class="s">"image/jpeg"</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 设置文件下载行为：attachment 强制下载，不直接在浏览器中显示</span>
+<span class="w">        </span><span class="n">response</span><span class="p">.</span><span class="na">setHeader</span><span class="p">(</span><span class="s">"Content-Disposition"</span><span class="p">,</span><span class="w"> </span><span class="s">"attachment; filename=\"image.jpg\""</span><span class="p">);</span>
+<span class="w">        </span><span class="n">response</span><span class="p">.</span><span class="na">setHeader</span><span class="p">(</span><span class="s">"Content-Length"</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="p">.</span><span class="na">valueOf</span><span class="p">(</span><span class="n">file</span><span class="p">.</span><span class="na">length</span><span class="p">()));</span>
+
+<span class="w">        </span><span class="c1">// 写入响应流</span>
+<span class="w">        </span><span class="n">Files</span><span class="p">.</span><span class="na">copy</span><span class="p">(</span><span class="n">file</span><span class="p">.</span><span class="na">toPath</span><span class="p">(),</span><span class="w"> </span><span class="n">response</span><span class="p">.</span><span class="na">getOutputStream</span><span class="p">());</span>
+<span class="w">        </span><span class="n">response</span><span class="p">.</span><span class="na">flushBuffer</span><span class="p">();</span>
+
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">IOException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 处理异常</span>
+<span class="w">        </span><span class="n">response</span><span class="p">.</span><span class="na">setStatus</span><span class="p">(</span><span class="n">HttpServletResponse</span><span class="p">.</span><span class="na">SC_NOT_FOUND</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<hr />
+<h2 id="requestparam">使用RequestParam注解标注</h2>
+<p><strong>知识点列表：</strong></p>
+<ol>
+<li><strong>RequestParam注解作用：将</strong><code>**请求参数**</code><strong>与方法上的</strong><code>**形参**</code><strong>映射。</strong></li>
+<li><strong>对于@RequestParam注解来说，属性有value和name，这两个属性的作用相同，都是用来指定提交数据的name。</strong></li>
+<li><strong>@RequestParam(value="name2") 中value一定不要写错，写错就会出现 400 错误。</strong></li>
+<li><strong>出现 400 错误的本质原因是：</strong><code>**@RequestParam**</code><strong>注解有一个 </strong><code>**required**</code><strong>属性，该属性未指定时，默认为 </strong><code>**true**</code><strong>，表示前端提交数据时必须提交该参数，如果不提交，则出现 400 错误。想避免该错误的发生，可以将 </strong><code>**required**</code><strong>属性值设置为 </strong><code>**false**</code><strong>。</strong></li>
+<li><code>**@RequestParam**</code><strong>注解有一个 </strong><code>**defaultValue**</code><strong>属性，用来指定参数的默认值，当没有提交该参数或提交的是空字符串时，</strong><code>**defaultValue**</code><strong>属性起作用。</strong></li>
+</ol>
+<h3 id="requestparam_1">RequestParam注解的基本使用</h3>
+<p>RequestParam注解作用：将<code>请求参数</code>与方法上的<code>形参</code>映射。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@PostMapping</span><span class="p">(</span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"/register"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span>
+<span class="w">        </span><span class="nd">@RequestParam</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s">"username"</span><span class="p">)</span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">a</span><span class="p">,</span>
+<span class="w">        </span><span class="nd">@RequestParam</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s">"password"</span><span class="p">)</span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">b</span><span class="p">,</span>
+<span class="w">        </span><span class="nd">@RequestParam</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s">"sex"</span><span class="p">)</span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">c</span><span class="p">,</span>
+<span class="w">        </span><span class="nd">@RequestParam</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s">"hobby"</span><span class="p">)</span>
+<span class="w">        </span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">d</span><span class="p">,</span>
+<span class="w">        </span><span class="nd">@RequestParam</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">"intro"</span><span class="p">)</span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">a</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">b</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">c</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">Arrays</span><span class="p">.</span><span class="na">toString</span><span class="p">(</span><span class="n">d</span><span class="p">));</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s">"success"</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<p>注意：对于@RequestParam注解来说，属性有value和name，这两个属性的作用相同，都是用来指定提交数据的name。</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710428008416-73b3a547-46ab-47bb-922c-b3d090e0cfc9.png" width="494" title="" crop="0,0,1,1" id="uaf3c3ba7" class="ne-image" style="font-size: 16px"></p>
+<p>例如：发送请求时提交的数据是：name1=value1&amp;name2=value2，则这个注解应该这样写：@RequestParam(value="name1")、@RequestParam(value="name2")</p>
+<p>一定要注意： @RequestParam(value="name2") 中value一定不要写错，写错就会出现以下问题：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710428081389-9ac88bba-c37c-4fb8-9b9d-f7a9091b97ab.png" width="608" title="" crop="0,0,1,1" id="ua16f46af" class="ne-image" style="font-size: 16px"></p>
+<p>测试结果：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710428139767-d3888c35-e2f8-407f-accb-f744a7098148.png" width="741" title="" crop="0,0,1,1" id="u1fdff3b9" class="ne-image" style="font-size: 16px"></p>
+<h3 id="requestparamrequired">RequestParam注解的required属性</h3>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710465027479-caeb1d78-c92d-4fca-b9fa-80e6bcf06c7a.png" width="670" title="" crop="0,0,1,1" id="u05ce0a11" class="ne-image" style="font-size: 16px"></p>
+<p>required属性用来设置该方法参数是否为必须的。</p>
+<p>默认情况下，这个参数为 <code>true</code>，表示方法参数是必需的。如果请求中缺少对应的参数，则会抛出异常。</p>
+<p>可以将其设置为<code>false</code>，false表示不是必须的，如果请求中缺少对应的参数，则方法的参数为null。</p>
+<p>测试，修改register方法，如下：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710468078605-3c6a2dd2-e9c4-4450-9712-02f11b5543d3.png" width="610" title="" crop="0,0,1,1" id="ue64914c9" class="ne-image" style="font-size: 16px"></p>
+<p>添加了一个 age 形参，没有指定 required 属性时，默认是true，表示必需的，但前端表单中没有年龄age，我们来看报错信息：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710468194109-56b8df42-2110-4b2b-9e73-064884f2e04b.png" width="807" title="" crop="0,0,1,1" id="u1a3fb4dc" class="ne-image" style="font-size: 16px"></p>
+<p>错误信息告诉我们：参数age是必需的。没有提供这个请求参数，HTTP状态码 400</p>
+<p>如果将 required 属性设置为 false。则该参数则不是必须的，如果请求参数仍然未提供时，我们来看结果：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710468402437-7395c6e2-6ab4-4bdc-a66e-cb82811be4e4.png" width="685" title="" crop="0,0,1,1" id="u3168e498" class="ne-image" style="font-size: 16px"></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710468358266-82e27b39-b24a-4aca-902e-9a69c5630ca7.png" width="488" title="" crop="0,0,1,1" id="u0b40f7d7" class="ne-image" style="font-size: 16px"></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710468442095-a0aa03e0-390e-440c-b9db-61139b8098cb.png" width="290" title="" crop="0,0,1,1" id="uf8a54914" class="ne-image" style="font-size: 16px"></p>
+<p>通过测试得知，如果一个参数被设置为<code>不是必需的</code>，当没有提交对应的请求参数时，形参默认值null。</p>
+<h3 id="apipost">安装接口测试工具 Apipost</h3>
+<p>它是一个<strong>国产的</strong>接口测试工具，目前在国内使用较多。把它安装一下。咱们接下来使用一下：</p>
+<p><strong>使用 Apipost 发送 get 请求，携带查询参数：</strong></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764495647856-59d7c579-1696-4426-92d9-05a655fb3333.png" width="553.6" title="" crop="0,0,1,1" id="uc3431823" class="ne-image" style="font-size: 16px"></p>
+<p><strong>使用 Apipost 发送 post 请求，以普通文本形式提交表单数据：</strong></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764495789233-7daadea7-40f2-4dc5-a5c0-f3701794a167.png" width="547.2" title="" crop="0,0,1,1" id="u085eb63f" class="ne-image" style="font-size: 16px"></p>
+<p><strong>使用 Apipost 发送 post 请求，以二进制的方式提交表单数据：（适合文件上传）</strong></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764495917686-99311377-3e74-4b25-988e-0a4bfd9a4f37.png" width="593.6" title="" crop="0,0,1,1" id="u4e78698a" class="ne-image" style="font-size: 16px"></p>
+<p><strong>使用 Apipost 发送 post 请求，并且提交 JSON 字符串到服务器：</strong></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764496082736-acc6506c-f8b4-4197-8892-b95cd4b12db4.png" width="650.4" title="" crop="0,0,1,1" id="u072e2fb2" class="ne-image" style="font-size: 16px"></p>
+<p><strong>使用 Apipost 工具发送请求时，设置请求头：</strong></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764496187497-29597aed-7976-4807-a66b-880656ea95e9.png" width="650.4" title="" crop="0,0,1,1" id="u3101b1bf" class="ne-image" style="font-size: 16px"></p>
+<p><strong>使用 Apipost 工作提交纯二进制数据，例如做单文件上传：</strong></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764496419092-5687f07c-4d95-44c7-8621-af888667dfce.png" width="720" title="" crop="0,0,1,1" id="u55d8dfc6" class="ne-image" style="font-size: 16px"></p>
+<h3 id="requestparamdefaultvalue">RequestParam注解的defaultValue属性</h3>
+<p>defaultValue属性用来设置形参的默认值，当<code>没有提供对应的请求参数</code>或者<code>请求参数的值是空字符串""</code>的时候，方法的形参会采用默认值。</p>
+<p><strong>当前端页面没有提交email的时候：</strong></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764496959630-5ca32659-fda5-4544-8438-23435d293a3b.png" width="677.6" title="" crop="0,0,1,1" id="u3ce279cc" class="ne-image" style="font-size: 16px"></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764496981766-b5dc6d20-aec2-4fb2-974c-3fa170c2504e.png" width="200" title="" crop="0,0,1,1" id="UodRn" class="ne-image" style="font-size: 16px"></p>
+<p><strong>当前端页面提交的email是空字符串的时候：</strong></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764497016535-d8e10530-4012-4fe5-8884-c1d7a298b1da.png" width="638.4" title="" crop="0,0,1,1" id="u33cba45d" class="ne-image" style="font-size: 16px"></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764496981766-b5dc6d20-aec2-4fb2-974c-3fa170c2504e.png" width="200" title="" crop="0,0,1,1" id="nMmHO" class="ne-image" style="font-size: 16px"></p>
+<p><strong>当前端提交的email不是空字符串的时候：</strong></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764497068703-6a9e6352-92f9-4fdd-8c21-5916c1d3f099.png" width="553.6" title="" crop="0,0,1,1" id="u766b6549" class="ne-image" style="font-size: 16px"></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764497048835-480702a7-7869-4344-a4f5-cca96e8c584f.png" width="185.6" title="" crop="0,0,1,1" id="u2d8acedd" class="ne-image" style="font-size: 16px"></p>
+<hr />
+<h2 id="_4">依靠控制器方法上的形参名来接收</h2>
+<p><strong>知识点列表：</strong></p>
+<ol>
+<li><strong>@RequestParam 这个注解是可以省略的，如果方法形参的名字和提交数据时的name相同，则 @RequestParam 可以省略。</strong></li>
+<li><strong>但有一个前提：如果你采用的是Spring6+版本，你需要在pom.xml文件中指定编译参数'-parameter'</strong></li>
+<li><strong>形参名必须和提交数据的 name 一致。如果不一致，则形参值为 null。</strong></li>
+<li><strong>如果前端提交的数组，后端也可以用 String 来接收，不一定使用数组。</strong></li>
+</ol>
+<p>配置如下：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;build&gt;</span>
+<span class="w">    </span><span class="nt">&lt;plugins&gt;</span>
+<span class="w">        </span><span class="nt">&lt;plugin&gt;</span>
+<span class="w">            </span><span class="nt">&lt;groupId&gt;</span>org.apache.maven.plugins<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">            </span><span class="nt">&lt;artifactId&gt;</span>maven-compiler-plugin<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">            </span><span class="nt">&lt;version&gt;</span>3.12.1<span class="nt">&lt;/version&gt;</span>
+<span class="w">            </span><span class="nt">&lt;configuration&gt;</span>
+<span class="w">                </span><span class="nt">&lt;source&gt;</span>21<span class="nt">&lt;/source&gt;</span>
+<span class="w">                </span><span class="nt">&lt;target&gt;</span>21<span class="nt">&lt;/target&gt;</span>
+<span class="w">                </span><span class="nt">&lt;compilerArgs&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;arg&gt;</span>-parameters<span class="nt">&lt;/arg&gt;</span>
+<span class="w">                </span><span class="nt">&lt;/compilerArgs&gt;</span>
+<span class="w">            </span><span class="nt">&lt;/configuration&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/plugin&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/plugins&gt;</span>
+<span class="nt">&lt;/build&gt;</span>
+</code></pre>
+<p><strong><em>*注意：如果你使用的是Spring5的版本，以上的配置是不需要的。</em></strong>*</p>
+<p>Controller中的方法只需要这样写：<strong><em>*形参的名字必须和提交的数据的name一致！！！！！</em></strong>*</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@PostMapping</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s">"/register"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">username</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">password</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">sex</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">hobby</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">intro</span><span class="p">){</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">username</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">","</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">password</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">","</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">sex</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">","</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">Arrays</span><span class="p">.</span><span class="na">toString</span><span class="p">(</span><span class="n">hobby</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">","</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">intro</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s">"success"</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<p>如果形参名和提交的数据的name不一致时：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710428636791-b1c4eb79-ce31-4ecf-9ee5-4db8e6ffb0d6.png" width="1252" title="" crop="0,0,1,1" id="u3d867463" class="ne-image" style="font-size: 16px"></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710428682813-4c2440c7-0500-4d02-a66a-7a3852ebd981.png" width="465" title="" crop="0,0,1,1" id="u4de014af" class="ne-image" style="font-size: 16px"></p>
+<p>另外，还有一点，对于提交的hobby数据，也可以采用String来接收，不一定使用数组方式：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@PostMapping</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s">"/register"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">username</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">password</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">sex</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">hobby</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">intro</span><span class="p">){</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">username</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">","</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">password</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">","</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">sex</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">","</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">hobby</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">","</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">intro</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s">"success"</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<p>根据输出结果可以看到多个hobby是采用“,”进行连接的。</p>
+<hr />
+<h2 id="javabean">使用 JavaBean 接收请求参数</h2>
+<p><strong>知识点列表：</strong></p>
+<ol>
+<li><strong>使用 JavaBean 接收数据更方便。</strong></li>
+<li><strong>前提条件是提交的参数 name 必须和 JavaBean 的属性名保持一致。</strong></li>
+<li><strong>底层实现原理是：通过反射机制调用 setter 方法给属性赋值的。</strong></li>
+</ol>
+<p>以上方式大家可以看到，当提交的数据非常多时，方法的形参个数会非常多，这不是很好的设计。在SpringMVC中也可以使用POJO类/JavaBean来接收请求参数。不过有一个非常重要的要求：<code>POJO类的属性名</code>必须和<code>请求参数的参数名</code>保持一致。</p>
+<p><strong>提供以下的 javabean 类：</strong></p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.springmvc.pojo</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.Arrays</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">User</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Long</span><span class="w"> </span><span class="n">id</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">username</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">password</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">sex</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">hobby</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">intro</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// setter and getter</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"User{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"id="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", username='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">username</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", password='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">password</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", sex='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">sex</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", hobby="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">Arrays</span><span class="p">.</span><span class="na">toString</span><span class="p">(</span><span class="n">hobby</span><span class="p">)</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", intro='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">intro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>在控制器方法的形参位置上使用javabean来接收请求参数：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@PostMapping</span><span class="p">(</span><span class="s">"/register"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="n">User</span><span class="w"> </span><span class="n">user</span><span class="p">){</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">user</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s">"success"</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong><em>*底层的实现原理：反射机制。先获取请求参数的名字，因为请求参数的名字就是JavaBean的属性名，通过这种方式给对应的属性赋值</em></strong>*。</p>
+<p>我们来测试一下：当JavaBean的属性名和请求参数的参数名不一致时，会出现什么问题？（注意：<strong><em>*getter和setter的方法名不修改，只修改属性名</em></strong>*）</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.springmvc.pojo</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.Arrays</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">User</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Long</span><span class="w"> </span><span class="n">id</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">uname</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">upwd</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">usex</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">uhobby</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">uintro</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">User</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">User</span><span class="p">(</span><span class="n">Long</span><span class="w"> </span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">username</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">password</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">sex</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">hobby</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">intro</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">id</span><span class="p">;</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">uname</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">username</span><span class="p">;</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">upwd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">password</span><span class="p">;</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">usex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sex</span><span class="p">;</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">uhobby</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hobby</span><span class="p">;</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">uintro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">intro</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Long</span><span class="w"> </span><span class="nf">getId</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">id</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setId</span><span class="p">(</span><span class="n">Long</span><span class="w"> </span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">id</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getUsername</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">uname</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setUsername</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">username</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">uname</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">username</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getPassword</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">upwd</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setPassword</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">password</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">upwd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">password</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getSex</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">usex</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setSex</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">sex</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">usex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sex</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="nf">getHobby</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">uhobby</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setHobby</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">hobby</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">uhobby</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">hobby</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getIntro</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">uintro</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setIntro</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">intro</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">uintro</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">intro</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"User{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"id="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", username='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">uname</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", password='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">upwd</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", sex='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">usex</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", hobby="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">Arrays</span><span class="p">.</span><span class="na">toString</span><span class="p">(</span><span class="n">uhobby</span><span class="p">)</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", intro='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">uintro</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>测试结果：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710471772183-af36c134-1f73-4cb4-afc6-4a6a827aacbd.png" width="1139" title="" crop="0,0,1,1" id="u0d56b9d1" class="ne-image" style="font-size: 16px"></p>
+<p>通过测试，我们得知：<code>请求参数名</code>可以和<code>JavaBean的属性名</code>不一致。</p>
+<p>我们继续将其中一个属性的setter和getter方法名修改一下：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710471908862-89d1b430-cff1-43e2-9678-49017f49d663.png" width="455" title="" crop="0,0,1,1" id="u86492b81" class="ne-image" style="font-size: 16px"></p>
+<p>再次测试：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710471961917-33f50796-7f73-4d40-a0ef-2befe83d5ebf.png" width="1179" title="" crop="0,0,1,1" id="u358b10f2" class="ne-image" style="font-size: 16px"></p>
+<p><strong><em>*通过测试可以看到：username属性没有赋上值。可见请求参数是否可以赋值到JavaBean对应的属性上，不是取决于属性名，而是setter方法名</em></strong>*。</p>
+<hr />
+<h2 id="requestheader"><strong>RequestHeader注解</strong></h2>
+<p><strong>知识点列表：</strong></p>
+<ol>
+<li><strong>该注解的作用是：将</strong><code>**请求头信息**</code><strong>映射到</strong><code>**方法的形参上**</code><strong>。</strong></li>
+<li><strong>和RequestParam注解功能相似，RequestParam注解的作用：将</strong><code>**请求参数**</code><strong>映射到</strong><code>**方法的形参**</code><strong>上。</strong></li>
+<li><strong>对于RequestHeader注解来说，也有三个属性：value、required、defaultValue，和RequestParam一样。</strong></li>
+</ol>
+<p>测试：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@PostMapping</span><span class="p">(</span><span class="s">"/register"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="n">User</span><span class="w"> </span><span class="n">user</span><span class="p">,</span><span class="w"> </span>
+<span class="w">                       </span><span class="nd">@RequestHeader</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s">"Referer"</span><span class="p">,</span><span class="w"> </span><span class="n">required</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">defaultValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">""</span><span class="p">)</span><span class="w"> </span>
+<span class="w">                       </span><span class="n">String</span><span class="w"> </span><span class="n">referer</span><span class="p">){</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">user</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">referer</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s">"success"</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行结果：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710472685320-fa79ddc4-04e0-4f8e-b97e-56f3f28ee60f.png" width="1131" title="" crop="0,0,1,1" id="u968684d7" class="ne-image" style="font-size: 16px"></p>
+<hr />
+<h2 id="cookievalue"><strong>CookieValue注解</strong></h2>
+<p><strong>知识点列表：</strong></p>
+<ol>
+<li><strong>该注解的作用：将</strong><code>**请求提交的Cookie数据**</code><strong>映射到</strong><code>**方法形参**</code><strong>上</strong></li>
+<li><strong>同样是有三个属性：value、required、defaultValue</strong></li>
+</ol>
+<p>前端页面中编写发送cookie的代码：</p>
+<pre lang="html"><code class="language-html md-fencescode"><span class="p">&lt;</span><span class="nt">script</span> <span class="na">type</span><span class="o">=</span><span class="s">"text/javascript"</span><span class="p">&gt;</span>
+<span class="w">    </span><span class="kd">function</span><span class="w"> </span><span class="nx">sendCookie</span><span class="p">(){</span>
+<span class="w">        </span><span class="nb">document</span><span class="p">.</span><span class="nx">cookie</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"id=123456789; expires=Thu, 18 Dec 2025 12:00:00 UTC; path=/"</span><span class="p">;</span>
+<span class="w">        </span><span class="nb">document</span><span class="p">.</span><span class="nx">location</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"/springmvc/register"</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">button</span> <span class="na">onclick</span><span class="o">=</span><span class="s">"sendCookie()"</span><span class="p">&gt;</span>向服务器端发送Cookie<span class="p">&lt;/</span><span class="nt">button</span><span class="p">&gt;</span>
+</code></pre>
+<p>后端UserController代码：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="w">    </span><span class="nd">@GetMapping</span><span class="p">(</span><span class="s">"/register"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="n">User</span><span class="w"> </span><span class="n">user</span><span class="p">,</span>
+<span class="w">                           </span><span class="nd">@RequestHeader</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s">"Referer"</span><span class="p">,</span><span class="w"> </span><span class="n">required</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">defaultValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">""</span><span class="p">)</span>
+<span class="w">                           </span><span class="n">String</span><span class="w"> </span><span class="n">referer</span><span class="p">,</span>
+<span class="w">                           </span><span class="nd">@CookieValue</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="s">"id"</span><span class="p">,</span><span class="w"> </span><span class="n">required</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span><span class="w"> </span><span class="n">defaultValue</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"2222222222"</span><span class="p">)</span>
+<span class="w">                           </span><span class="n">String</span><span class="w"> </span><span class="n">id</span><span class="p">){</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">user</span><span class="p">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">referer</span><span class="p">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">id</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"success"</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+</code></pre>
+<p>测试结果：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710473271244-7a95563a-fff4-458e-914f-25b314c78bd1.png" width="989" title="" crop="0,0,1,1" id="ue186aba0" class="ne-image" style="font-size: 16px"></p>
+<hr />
+<h2 id="_5">请求的中文乱码问题</h2>
+<p><strong>知识点列表：</strong></p>
+<ol>
+<li><strong>get 请求乱码如何解决？</strong></li>
+<li><strong>post 请求乱码如何解决？</strong></li>
+<li><strong>Tomcat10+版本已经默认将 GET/POST 字符编码方式设置为 UTF-8 了，因此多数情况下是不存在乱码问题的。</strong></li>
+<li><strong>在 Controller 中编写 </strong><code>**request.setCharacterEncoding("UTF-8");**</code><strong>可以解决请求体的乱码问题吗？</strong></li>
+<li><strong>SpringMVC 中内置了一个字符编码过滤器，它解决了乱码问题。直接配置它就行了。</strong></li>
+</ol>
+<p>有可能很多同学使用的不是Tomcat10，如果不是Tomcat10，则会出现乱码问题，我们来模拟一下乱码的产生，将apache-tomcat-10.1.19\conf\web.xml文件中的UTF-8配置修改为ISO-8859-1：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710732413713-0f034192-e4d4-4c33-aeb3-169726468251.png" width="1076" title="" crop="0,0,1,1" id="u2e406be6" class="ne-image" style="font-size: 16px"></p>
+<p><strong><em>*一定要重启Tomcat10</em></strong>*，新的配置才能生效，来测试一下是否存在乱码：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710732483068-b356942a-9183-4734-812d-041a151df48d.png" width="1261" title="" crop="0,0,1,1" id="u6f629e75" class="ne-image" style="font-size: 16px"></p>
+<p>那么，在SpringMVC中如何解决请求体的中文乱码问题呢？当然，还是使用<code>request.setCharacterEncoding("UTF-8")</code></p>
+<p>使用它有一个前提条件，要想解决请求体乱码问题，以上代码必须在 <code>request.getParameter("username")</code>执行之前执行才有效。</p>
+<p>也就是说以上代码如果放在Controller的相关方法中执行是无效的，因为Controller的方法在执行之前 DispatcherServlet已经调用了 <code>request.getParameter("username")</code>方法。因此在Controller方法中使用<code>request.setCharacterEncoding("UTF-8");</code>无效我们来测试一下：</p>
+<pre lang="html"><code class="language-html md-fencescode"><span class="p">&lt;</span><span class="nt">form</span> <span class="na">th:action</span><span class="o">=</span><span class="s">"@{/register}"</span> <span class="na">method</span><span class="o">=</span><span class="s">"post"</span><span class="p">&gt;</span>
+    用户名：<span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"text"</span> <span class="na">name</span><span class="o">=</span><span class="s">"username"</span><span class="p">&gt;&lt;</span><span class="nt">br</span><span class="p">&gt;</span>
+    密码：<span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"password"</span> <span class="na">name</span><span class="o">=</span><span class="s">"password"</span><span class="p">&gt;&lt;</span><span class="nt">br</span><span class="p">&gt;</span>
+    性别：
+        男 <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"radio"</span> <span class="na">name</span><span class="o">=</span><span class="s">"sex"</span> <span class="na">value</span><span class="o">=</span><span class="s">"1"</span><span class="p">&gt;</span>
+        女 <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"radio"</span> <span class="na">name</span><span class="o">=</span><span class="s">"sex"</span> <span class="na">value</span><span class="o">=</span><span class="s">"0"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">br</span><span class="p">&gt;</span>
+    爱好：
+        抽烟 <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"checkbox"</span> <span class="na">name</span><span class="o">=</span><span class="s">"hobby"</span> <span class="na">value</span><span class="o">=</span><span class="s">"smoke"</span><span class="p">&gt;</span>
+        喝酒 <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"checkbox"</span> <span class="na">name</span><span class="o">=</span><span class="s">"hobby"</span> <span class="na">value</span><span class="o">=</span><span class="s">"drink"</span><span class="p">&gt;</span>
+        烫头 <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"checkbox"</span> <span class="na">name</span><span class="o">=</span><span class="s">"hobby"</span> <span class="na">value</span><span class="o">=</span><span class="s">"perm"</span><span class="p">&gt;</span>
+        <span class="p">&lt;</span><span class="nt">br</span><span class="p">&gt;</span>
+    简介：<span class="p">&lt;</span><span class="nt">textarea</span> <span class="na">rows</span><span class="o">=</span><span class="s">"10"</span> <span class="na">cols</span><span class="o">=</span><span class="s">"60"</span> <span class="na">name</span><span class="o">=</span><span class="s">"intro"</span><span class="p">&gt;&lt;/</span><span class="nt">textarea</span><span class="p">&gt;&lt;</span><span class="nt">br</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"submit"</span> <span class="na">value</span><span class="o">=</span><span class="s">"注册"</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">form</span><span class="p">&gt;</span>
+</code></pre>
+<p>注意：以上表单已经修改为post请求</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@PostMapping</span><span class="p">(</span><span class="s">"/register"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">register</span><span class="p">(</span><span class="n">User</span><span class="w"> </span><span class="n">user</span><span class="p">,</span><span class="w"> </span><span class="n">HttpServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">UnsupportedEncodingException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">request</span><span class="p">.</span><span class="na">setCharacterEncoding</span><span class="p">(</span><span class="s">"UTF-8"</span><span class="p">);</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">user</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s">"success"</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<p>测试结果：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710732483068-b356942a-9183-4734-812d-041a151df48d.png" width="1261" title="" crop="0,0,1,1" id="prLSj" class="ne-image" style="font-size: 16px"></p>
+<p>通过测试可以看到：在Controller当中调用<code>request.setCharacterEncoding("UTF-8")</code>是无法解决POST乱码问题的。</p>
+<p>那怎么办呢？怎么样才能在DispatcherServlet之前执行<code>request.setCharacterEncoding("UTF-8")</code>呢？没错，我相信大家想到了：过滤器Filter。过滤器Filter可以在Servlet执行之前执行。有同学又说了：监听器不行吗？不行。因为我们需要对每一次请求解决乱码，而监听器只在服务器启动阶段执行一次。因此这里解决每一次请求的乱码问题，应该使用过滤器Filter。并且，告诉大家一个好消息，SpringMVC已经将这个字符编码的过滤器提前写好了，我们直接配置好即可：<code>CharacterEncodingFilter</code>，我们一起看一下它的源码：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="cm">/*</span>
+<span class="cm"> * Copyright 2002-2018 the original author or authors.</span>
+<span class="cm"> *</span>
+<span class="cm"> * Licensed under the Apache License, Version 2.0 (the "License");</span>
+<span class="cm"> * you may not use this file except in compliance with the License.</span>
+<span class="cm"> * You may obtain a copy of the License at</span>
+<span class="cm"> *</span>
+<span class="cm"> *      https://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="cm"> *</span>
+<span class="cm"> * Unless required by applicable law or agreed to in writing, software</span>
+<span class="cm"> * distributed under the License is distributed on an "AS IS" BASIS,</span>
+<span class="cm"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="cm"> * See the License for the specific language governing permissions and</span>
+<span class="cm"> * limitations under the License.</span>
+<span class="cm"> */</span>
+
+<span class="kn">package</span><span class="w"> </span><span class="nn">org.springframework.web.filter</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.io.IOException</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.FilterChain</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.ServletException</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.http.HttpServletRequest</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.http.HttpServletResponse</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.lang.Nullable</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.util.Assert</span><span class="p">;</span>
+
+<span class="cm">/**</span>
+<span class="cm"> * Servlet Filter that allows one to specify a character encoding for requests.</span>
+<span class="cm"> * This is useful because current browsers typically do not set a character</span>
+<span class="cm"> * encoding even if specified in the HTML page or form.</span>
+<span class="cm"> *</span>
+<span class="cm"> * &lt;p&gt;This filter can either apply its encoding if the request does not already</span>
+<span class="cm"> * specify an encoding, or enforce this filter's encoding in any case</span>
+<span class="cm"> * ("forceEncoding"="true"). In the latter case, the encoding will also be</span>
+<span class="cm"> * applied as default response encoding (although this will usually be overridden</span>
+<span class="cm"> * by a full content type set in the view).</span>
+<span class="cm"> *</span>
+<span class="cm"> * @author Juergen Hoeller</span>
+<span class="cm"> * @since 15.03.2004</span>
+<span class="cm"> * @see #setEncoding</span>
+<span class="cm"> * @see #setForceEncoding</span>
+<span class="cm"> * @see jakarta.servlet.http.HttpServletRequest#setCharacterEncoding</span>
+<span class="cm"> * @see jakarta.servlet.http.HttpServletResponse#setCharacterEncoding</span>
+<span class="cm"> */</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">CharacterEncodingFilter</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">OncePerRequestFilter</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@Nullable</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">encoding</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="n">forceRequestEncoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="n">forceResponseEncoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * Create a default {@code CharacterEncodingFilter},</span>
+<span class="cm">     * with the encoding to be set via {@link #setEncoding}.</span>
+<span class="cm">     * @see #setEncoding</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">CharacterEncodingFilter</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * Create a {@code CharacterEncodingFilter} for the given encoding.</span>
+<span class="cm">     * @param encoding the encoding to apply</span>
+<span class="cm">     * @since 4.2.3</span>
+<span class="cm">     * @see #setEncoding</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">CharacterEncodingFilter</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">encoding</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">(</span><span class="n">encoding</span><span class="p">,</span><span class="w"> </span><span class="kc">false</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * Create a {@code CharacterEncodingFilter} for the given encoding.</span>
+<span class="cm">     * @param encoding the encoding to apply</span>
+<span class="cm">     * @param forceEncoding whether the specified encoding is supposed to</span>
+<span class="cm">     * override existing request and response encodings</span>
+<span class="cm">     * @since 4.2.3</span>
+<span class="cm">     * @see #setEncoding</span>
+<span class="cm">     * @see #setForceEncoding</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">CharacterEncodingFilter</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">encoding</span><span class="p">,</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="n">forceEncoding</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">(</span><span class="n">encoding</span><span class="p">,</span><span class="w"> </span><span class="n">forceEncoding</span><span class="p">,</span><span class="w"> </span><span class="n">forceEncoding</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * Create a {@code CharacterEncodingFilter} for the given encoding.</span>
+<span class="cm">     * @param encoding the encoding to apply</span>
+<span class="cm">     * @param forceRequestEncoding whether the specified encoding is supposed to</span>
+<span class="cm">     * override existing request encodings</span>
+<span class="cm">     * @param forceResponseEncoding whether the specified encoding is supposed to</span>
+<span class="cm">     * override existing response encodings</span>
+<span class="cm">     * @since 4.3</span>
+<span class="cm">     * @see #setEncoding</span>
+<span class="cm">     * @see #setForceRequestEncoding(boolean)</span>
+<span class="cm">     * @see #setForceResponseEncoding(boolean)</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">CharacterEncodingFilter</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">encoding</span><span class="p">,</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="n">forceRequestEncoding</span><span class="p">,</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="n">forceResponseEncoding</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Assert</span><span class="p">.</span><span class="na">hasLength</span><span class="p">(</span><span class="n">encoding</span><span class="p">,</span><span class="w"> </span><span class="s">"Encoding must not be empty"</span><span class="p">);</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">encoding</span><span class="p">;</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">forceRequestEncoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">forceRequestEncoding</span><span class="p">;</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">forceResponseEncoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">forceResponseEncoding</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * Set the encoding to use for requests. This encoding will be passed into a</span>
+<span class="cm">     * {@link jakarta.servlet.http.HttpServletRequest#setCharacterEncoding} call.</span>
+<span class="cm">     * &lt;p&gt;Whether this encoding will override existing request encodings</span>
+<span class="cm">     * (and whether it will be applied as default response encoding as well)</span>
+<span class="cm">     * depends on the {@link #setForceEncoding "forceEncoding"} flag.</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setEncoding</span><span class="p">(</span><span class="nd">@Nullable</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">encoding</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">encoding</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * Return the configured encoding for requests and/or responses.</span>
+<span class="cm">     * @since 4.3</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="nd">@Nullable</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getEncoding</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="na">encoding</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * Set whether the configured {@link #setEncoding encoding} of this filter</span>
+<span class="cm">     * is supposed to override existing request and response encodings.</span>
+<span class="cm">     * &lt;p&gt;Default is "false", i.e. do not modify the encoding if</span>
+<span class="cm">     * {@link jakarta.servlet.http.HttpServletRequest#getCharacterEncoding()}</span>
+<span class="cm">     * returns a non-null value. Switch this to "true" to enforce the specified</span>
+<span class="cm">     * encoding in any case, applying it as default response encoding as well.</span>
+<span class="cm">     * &lt;p&gt;This is the equivalent to setting both {@link #setForceRequestEncoding(boolean)}</span>
+<span class="cm">     * and {@link #setForceResponseEncoding(boolean)}.</span>
+<span class="cm">     * @see #setForceRequestEncoding(boolean)</span>
+<span class="cm">     * @see #setForceResponseEncoding(boolean)</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setForceEncoding</span><span class="p">(</span><span class="kt">boolean</span><span class="w"> </span><span class="n">forceEncoding</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">forceRequestEncoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">forceEncoding</span><span class="p">;</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">forceResponseEncoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">forceEncoding</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * Set whether the configured {@link #setEncoding encoding} of this filter</span>
+<span class="cm">     * is supposed to override existing request encodings.</span>
+<span class="cm">     * &lt;p&gt;Default is "false", i.e. do not modify the encoding if</span>
+<span class="cm">     * {@link jakarta.servlet.http.HttpServletRequest#getCharacterEncoding()}</span>
+<span class="cm">     * returns a non-null value. Switch this to "true" to enforce the specified</span>
+<span class="cm">     * encoding in any case.</span>
+<span class="cm">     * @since 4.3</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setForceRequestEncoding</span><span class="p">(</span><span class="kt">boolean</span><span class="w"> </span><span class="n">forceRequestEncoding</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">forceRequestEncoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">forceRequestEncoding</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * Return whether the encoding should be forced on requests.</span>
+<span class="cm">     * @since 4.3</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="nf">isForceRequestEncoding</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="na">forceRequestEncoding</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * Set whether the configured {@link #setEncoding encoding} of this filter</span>
+<span class="cm">     * is supposed to override existing response encodings.</span>
+<span class="cm">     * &lt;p&gt;Default is "false", i.e. do not modify the encoding.</span>
+<span class="cm">     * Switch this to "true" to enforce the specified encoding</span>
+<span class="cm">     * for responses in any case.</span>
+<span class="cm">     * @since 4.3</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setForceResponseEncoding</span><span class="p">(</span><span class="kt">boolean</span><span class="w"> </span><span class="n">forceResponseEncoding</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">forceResponseEncoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">forceResponseEncoding</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * Return whether the encoding should be forced on responses.</span>
+<span class="cm">     * @since 4.3</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="nf">isForceResponseEncoding</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="na">forceResponseEncoding</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">protected</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">doFilterInternal</span><span class="p">(</span>
+<span class="w">            </span><span class="n">HttpServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">HttpServletResponse</span><span class="w"> </span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">FilterChain</span><span class="w"> </span><span class="n">filterChain</span><span class="p">)</span>
+<span class="w">            </span><span class="kd">throws</span><span class="w"> </span><span class="n">ServletException</span><span class="p">,</span><span class="w"> </span><span class="n">IOException</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getEncoding</span><span class="p">();</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">encoding</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">isForceRequestEncoding</span><span class="p">()</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">request</span><span class="p">.</span><span class="na">getCharacterEncoding</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">request</span><span class="p">.</span><span class="na">setCharacterEncoding</span><span class="p">(</span><span class="n">encoding</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">isForceResponseEncoding</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">response</span><span class="p">.</span><span class="na">setCharacterEncoding</span><span class="p">(</span><span class="n">encoding</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="n">filterChain</span><span class="p">.</span><span class="na">doFilter</span><span class="p">(</span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">response</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="p">}</span>
+</code></pre>
+<p>最核心的方法是：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Override</span>
+<span class="kd">protected</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">doFilterInternal</span><span class="p">(</span>
+<span class="w">        </span><span class="n">HttpServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">HttpServletResponse</span><span class="w"> </span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">FilterChain</span><span class="w"> </span><span class="n">filterChain</span><span class="p">)</span>
+<span class="w">        </span><span class="kd">throws</span><span class="w"> </span><span class="n">ServletException</span><span class="p">,</span><span class="w"> </span><span class="n">IOException</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="n">String</span><span class="w"> </span><span class="n">encoding</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getEncoding</span><span class="p">();</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">encoding</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">isForceRequestEncoding</span><span class="p">()</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">request</span><span class="p">.</span><span class="na">getCharacterEncoding</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">request</span><span class="p">.</span><span class="na">setCharacterEncoding</span><span class="p">(</span><span class="n">encoding</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">isForceResponseEncoding</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">response</span><span class="p">.</span><span class="na">setCharacterEncoding</span><span class="p">(</span><span class="n">encoding</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="n">filterChain</span><span class="p">.</span><span class="na">doFilter</span><span class="p">(</span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">response</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>分析以上核心方法得知该过滤器对请求和响应都设置了字符编码方式。</p>
+<ul>
+<li>当<code>**强行使用请求字符编码方式为true**</code>时，或者<code>**请求对象的字符编码方式为null**</code>时，设置请求的字符编码方式。</li>
+<li>当<code>**强行使用响应字符编码方式为true**</code>时，设置响应的字符编码方式。</li>
+</ul>
+<p>根据以上代码，可以得出以下配置信息，在web.xml文件中对过滤器进行如下配置：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cm">&lt;!--字符编码过滤器--&gt;</span>
+<span class="nt">&lt;filter&gt;</span>
+<span class="w">    </span><span class="nt">&lt;filter-name&gt;</span>characterEncodingFilter<span class="nt">&lt;/filter-name&gt;</span>
+<span class="w">    </span><span class="nt">&lt;filter-class&gt;</span>org.springframework.web.filter.CharacterEncodingFilter<span class="nt">&lt;/filter-class&gt;</span>
+<span class="w">    </span><span class="nt">&lt;init-param&gt;</span>
+<span class="w">        </span><span class="nt">&lt;param-name&gt;</span>encoding<span class="nt">&lt;/param-name&gt;</span>
+<span class="w">        </span><span class="nt">&lt;param-value&gt;</span>UTF-8<span class="nt">&lt;/param-value&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/init-param&gt;</span>
+<span class="w">    </span><span class="nt">&lt;init-param&gt;</span>
+<span class="w">        </span><span class="nt">&lt;param-name&gt;</span>forceRequestEncoding<span class="nt">&lt;/param-name&gt;</span>
+<span class="w">        </span><span class="nt">&lt;param-value&gt;</span>true<span class="nt">&lt;/param-value&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/init-param&gt;</span>
+<span class="w">    </span><span class="nt">&lt;init-param&gt;</span>
+<span class="w">        </span><span class="nt">&lt;param-name&gt;</span>forceResponseEncoding<span class="nt">&lt;/param-name&gt;</span>
+<span class="w">        </span><span class="nt">&lt;param-value&gt;</span>true<span class="nt">&lt;/param-value&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/init-param&gt;</span>
+<span class="nt">&lt;/filter&gt;</span>
+<span class="nt">&lt;filter-mapping&gt;</span>
+<span class="w">    </span><span class="nt">&lt;filter-name&gt;</span>characterEncodingFilter<span class="nt">&lt;/filter-name&gt;</span>
+<span class="w">    </span><span class="nt">&lt;url-pattern&gt;</span>/*<span class="nt">&lt;/url-pattern&gt;</span>
+<span class="nt">&lt;/filter-mapping&gt;</span>
+</code></pre>
+<p>我们再来测试，重启Tomcat10，看看乱码是否能够解决？</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710733643651-29370350-6188-4ada-a8b0-99c6264f3b7a.png" width="1166" title="" crop="0,0,1,1" id="ubacc784a" class="ne-image" style="font-size: 16px"></p>
+<p>注意：针对于我们当前的Tomcat10的配置来说，它有默认的字符集ISO-8859-1，因此以下在web.xml文件中的配置是不能缺少的：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;init-param&gt;</span>
+<span class="w">    </span><span class="nt">&lt;param-name&gt;</span>forceRequestEncoding<span class="nt">&lt;/param-name&gt;</span>
+<span class="w">    </span><span class="nt">&lt;param-value&gt;</span>true<span class="nt">&lt;/param-value&gt;</span>
+<span class="nt">&lt;/init-param&gt;</span>
+</code></pre>
+<p>如果缺少它，仍然是会存在乱码问题的。自行测试一下！！！！</p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

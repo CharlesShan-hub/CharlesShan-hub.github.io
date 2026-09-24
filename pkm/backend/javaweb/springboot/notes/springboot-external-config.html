@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>springboot-external-config</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="_1">外部化配置</h1>
+<hr />
+<h2 id="_2">什么是外部化配置</h2>
+<p>外部化配置是指：将<code>配置信息</code>存储在<code>应用程序代码</code>之外的地方。这样<code>配置信息</code>可以独立于代码进行管理。这样方便了配置的修改，并且修改后不需要重新编译代码，也不需要重新部署项目。</p>
+<h3 id="_3">外部化配置的方式</h3>
+<p>SpringBoot支持多种外部化配置方式，包括但不限于：</p>
+<ul>
+<li>properties文件</li>
+<li>YAML文件</li>
+<li>系统环境变量</li>
+<li>命令行参数</li>
+<li>......</li>
+</ul>
+<h3 id="_4">外部化配置的优势</h3>
+<ol>
+<li><strong>灵活性</strong>：配置文件可以独立于应用程序部署，这使得可以根据运行环境的不同来调整配置，而无需修改代码。</li>
+<li><strong>易于维护</strong>：配置变更不需要重新构建和部署应用程序，降低了维护成本。</li>
+<li><strong>安全性</strong>：敏感信息如数据库密码、API密钥等可以存储在外部，并且可以限制谁有权限访问这些配置信息。</li>
+<li><strong>共享性</strong>：多实例或多服务可以共享相同的配置信息，减少重复配置的工作量。</li>
+<li><strong>版本控制</strong>：配置文件可以存放在版本控制系统中，便于跟踪历史版本和回滚配置。</li>
+</ol>
+<p>总之，外部化配置使得配置更加灵活、安全、易于管理和共享，是现代云原生应用中非常推荐的做法</p>
+<h3 id="_5">外部化配置对比传统配置</h3>
+<p>在传统的SSM三大框架中，如果修改XML的配置后，需要对应用重新打包，重新部署。</p>
+<p>使用SpringBoot框架的<code>外部化配置</code>后，修改配置后，不需要对应用重新打包，也不需要重新部署，<strong>最多重启一下服务即可</strong>。</p>
+<hr />
+<h2 id="applicationproperties">application.properties</h2>
+<p><code>application.properties</code>配置文件是SpringBoot框架默认的配置文件。</p>
+<p><code>application.properties</code>不是必须的，SpringBoot对于应用程序来说，都提供了一套默认配置（就是我们所说的自动配置）。</p>
+<p>如果你要改变这些默认的行为，可以在<code>application.properties</code>文件中进行配置。</p>
+<p><code>application.properties</code>可以放在类路径当中，也可以放在项目之外。因此称为外部化配置。</p>
+<p>Spring Boot 框架在启动时会尝试从以下位置加载 <code>application.properties</code> 配置文件：</p>
+<ol>
+<li><code>**file:./config/**</code>：首先在Spring Boot 当前工作目录下的 <code>config</code> 文件夹中查找。<ol>
+<li><strong>注意：如果没有找到</strong><code>**application.properties**</code><strong>会继续找</strong><code>**application.yml**</code><strong>，如果这两个都没有找到，才会进入以下位置查找，以此类推。</strong></li>
+</ol>
+</li>
+<li><code>**file:./**</code>：如果在当前工作目录下<code>config</code>目录中找不到时，再从当前工作目录中查找。</li>
+<li><code>**classpath:/config/**</code>： 如果从工作目录中找不到，会从类路径中找，先从类路径的 <code>/config/</code> 目录下寻找配置文件。</li>
+<li><code>**classpath:/**</code>：如果在 <code>/config/</code> 下没有找到，它会在类路径的根目录下查找。</li>
+</ol>
+<p><strong>覆盖规则</strong>：**</p>
+<ul>
+<li><strong>优先级从高到低</strong>（1 最高，4 最低）。**</li>
+<li><strong>高优先级配置文件中的属性会覆盖低优先级中的同名属性</strong>。**</li>
+<li><strong>所有配置会合并</strong>，不冲突的属性会同时生效。**</li>
+</ul>
+<p>如果你想要指定其他的配置文件位置或者改变默认的行为，可以通过 <code>--spring.config.location=</code> 后跟路径的方式来指定配置文件的具体位置。例如 ：</p>
+<pre lang="plain"><code class="language-plain md-fencescode">java -jar sb3-01-first-web-1.0-SNAPSHOT.jar --spring.config.location=file:///E:\a\b\application.properties
+</code></pre>
+<p>这样，Spring Boot 将会首先从 <code>E:\a\b\</code> 这个路径加载配置文件。注意，这种方式可以用来覆盖默认的配置文件位置，<strong>它的优先级是最高的</strong>。</p>
+<p>注意：以上的<code>--spring.config.location=file:///E:\a\b\application.properties</code>就属于命令行参数，它将来会被传递到<strong>main方法的(String[] args)</strong>参数上。</p>
+<hr />
+<h2 id="value">使用@Value注解</h2>
+<p><strong>知识点列表：</strong></p>
+<ol>
+<li><code>**@Value("${key}")**</code><strong>可以取配置文件中的配置信息。</strong></li>
+<li><code>**@Value("${key}")**</code><strong>如果指定的 key 不存在，会报错。</strong></li>
+<li><code>**@Value("${key: defalut}")**</code><strong>语法可以指定默认值。</strong></li>
+<li><code>**@Value("${APP_KEY}")**</code><strong>语法也可以取操作系统的环境变量值。这是一个比较重要的注解，在 Spring 中我们已经用过了，在这里再回顾一下。然后再补充一点内容。</strong></li>
+</ol>
+<p>@Value注解可以将<code>application.properties</code>/<code>application.yml</code>文件中的配置信息注入/绑定到java对象的属性上。</p>
+<p><strong>语法格式：@Value("${key}")</strong></p>
+<p>使用脚手架创建SpringBoot项目，不添加任何启动器：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729589121331-13dc38dc-a34f-413f-963d-d1833df9686d.png" width="243" title="" crop="0,0,1,1" id="u042ae6c1" class="ne-image"></p>
+<p>在<code>resources/application.properties</code>文件中进行如下配置：</p>
+<pre lang="properties"><code class="language-properties md-fencescode"><span class="na">myapp.username</span><span class="o">=</span><span class="s">jack</span>
+<span class="na">myapp.email</span><span class="o">=</span><span class="s">jack@123.com</span>
+<span class="na">myapp.age</span><span class="o">=</span><span class="s">30</span>
+</code></pre>
+<p>编写service类：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Service</span><span class="p">(</span><span class="s">"userService"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">UserService</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@Value</span><span class="p">(</span><span class="s">"${myapp.username}"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">username</span><span class="p">;</span>
+
+<span class="w">    </span><span class="nd">@Value</span><span class="p">(</span><span class="s">"${myapp.email}"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">email</span><span class="p">;</span>
+
+<span class="w">    </span><span class="nd">@Value</span><span class="p">(</span><span class="s">"${myapp.age}"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Integer</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">printInfo</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">str</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">String</span><span class="p">.</span><span class="na">join</span><span class="p">(</span><span class="s">","</span><span class="p">,</span><span class="w"> </span><span class="n">username</span><span class="p">,</span><span class="w"> </span><span class="n">email</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="p">.</span><span class="na">valueOf</span><span class="p">(</span><span class="n">age</span><span class="p">));</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>编写单元测试：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@SpringBootTest</span>
+<span class="kd">class</span> <span class="nc">Sb307ExternalConfigApplicationTests</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Autowired</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">UserService</span><span class="w"> </span><span class="n">userService</span><span class="p">;</span>
+<span class="w">    </span><span class="nd">@Test</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">test01</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">userService</span><span class="p">.</span><span class="na">printInfo</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>运行结果：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729648496732-56988017-05c1-4d2c-9d72-6b88bca91656.png" width="257" title="" crop="0,0,1,1" id="u25a180e1" class="ne-image"></p>
+<p>使用@Value注解时也可以指定默认值，当指定默认值时，如果配置文件中没有指定配置值，则采用默认值。</p>
+<p><strong>语法格式：@Value("${key:defalut}")</strong></p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Service</span><span class="p">(</span><span class="s">"userService"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">UserService</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@Value</span><span class="p">(</span><span class="s">"${myapp.username}"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">username</span><span class="p">;</span>
+
+<span class="w">    </span><span class="nd">@Value</span><span class="p">(</span><span class="s">"${myapp.email}"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">email</span><span class="p">;</span>
+
+<span class="w">    </span><span class="nd">@Value</span><span class="p">(</span><span class="s">"${myapp.age}"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Integer</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+
+<span class="w">    </span><span class="nd">@Value</span><span class="p">(</span><span class="s">"${myapp.password:123456}"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">password</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">printInfo</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">str</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">String</span><span class="p">.</span><span class="na">join</span><span class="p">(</span><span class="s">","</span><span class="p">,</span><span class="w"> </span><span class="n">username</span><span class="p">,</span><span class="w"> </span><span class="n">email</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="p">.</span><span class="na">valueOf</span><span class="p">(</span><span class="n">age</span><span class="p">),</span><span class="w"> </span><span class="n">password</span><span class="p">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行结果：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729648777588-90155042-3924-4126-b610-3e201ced970a.png" width="288" title="" crop="0,0,1,1" id="u352c8f1b" class="ne-image"></p>
+<p>当然，如果配置文件进行了相关的配置，则不会采用默认值，修改配置文件<code>application.properties</code>：</p>
+<pre lang="properties"><code class="language-properties md-fencescode"><span class="na">myapp.username</span><span class="o">=</span><span class="s">jack</span>
+<span class="na">myapp.email</span><span class="o">=</span><span class="s">jack@123.com</span>
+<span class="na">myapp.age</span><span class="o">=</span><span class="s">30</span>
+<span class="na">myapp.password</span><span class="o">=</span><span class="s">888888</span>
+</code></pre>
+<p>执行结果：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729648891492-48293951-3910-4180-8ace-c2741dc0b378.png" width="289" title="" crop="0,0,1,1" id="ue78d94f6" class="ne-image"></p>
+<p><strong>另外，使用</strong><code>**@Value**</code><strong>注解也可以读取系统的环境变量，例如 windows 系统有一个环境变量</strong><code>**APP_KEY**</code><strong>，那么使用</strong><code>**@Value("${APP_KEY}")**</code><strong>是可以读取到的。但配置文件</strong><code>**APP_KEY**</code><strong>之后，一定要重启 windows 系统才行。</strong></p>
+<hr />
+<h2 id="yaml">YAML</h2>
+<h3 id="yaml_1">YAML概述</h3>
+<p>SpringBoot采用集中式配置管理，所有的配置都编写到一个配置文件中：<code>application.properties</code></p>
+<p>如果配置非常多，层级不够分明，因此SpringBoot为了提高配置文件可读性，也支持YAML格式的配置文件：<code>application.yml</code></p>
+<p>YAML（YAML Ain't Markup Language）是一种人类可读的数据序列化格式，它通常用于配置文件，在各种编程语言中作为一种存储或传输数据的方式。YAML的设计目标是易于阅读和编写，同时保持足够的表达能力来表示复杂的数据结构。</p>
+<p><strong>YAML文件的扩展名可以是</strong><code>**.yaml**</code><strong>或</strong><code>**.yml**</code><strong>。</strong></p>
+<h3 id="_6">常见的数据存储和交换格式</h3>
+<p><code>properties</code>、<code>XML</code>、<code>JSON</code>、<code>YAML</code>这几种格式确实是用来存储和交换数据的常见方式，但它们各有特点和适用场景：</p>
+<p><strong>Properties</strong></p>
+<ul>
+<li>这种格式主要用于Java应用程序中的配置文件。它是键值对的形式，每一行是一个键值对，使用等号或冒号分隔键和值。</li>
+<li>特点是简单易懂，但在处理复杂结构的数据时显得力不从心。</li>
+</ul>
+<p><strong>XML (eXtensible Markup Language)</strong></p>
+<ul>
+<li>XML是一种标记语言，用来描述数据的格式。它支持复杂的数据结构，包括嵌套和属性。</li>
+<li>XML文档具有良好的结构化特性，适合传输和存储结构化的数据。但是，XML文档通常体积较大，解析起来也比较耗资源。</li>
+</ul>
+<p><strong>JSON (JavaScript Object Notation)</strong></p>
+<ul>
+<li>JSON是一种轻量级的数据交换格式，易于人阅读和编写，同时也易于机器解析和生成。它基于JavaScript的一个子集，支持多种数据类型，如数字、字符串、布尔值、数组和对象。</li>
+<li>JSON因为简洁和高效而广泛应用于Web应用程序之间进行数据交换。</li>
+</ul>
+<p><strong>YAML (YAML Ain't Markup Language)</strong></p>
+<ul>
+<li>YAML设计的目标之一就是让人类更容易阅读。它支持类似JSON的数据序列化，但提供了更多的灵活性，例如缩进来表示数据结构。</li>
+<li>YAML非常适合用来编写配置文件，因为它允许以一种自然的方式组织数据，并且可以包含注释和其他人类可读的元素。</li>
+</ul>
+<p>总结来说，这四种格式都可以用来存储和交换数据，但它们的设计初衷和最佳使用场景有所不同。选择哪种格式取决于具体的应用需求、数据复杂度、性能要求等因素。</p>
+<h3 id="yaml_2">YAML的语法规则</h3>
+<p>YAML的语法规则如下：</p>
+<ol>
+<li>数据结构：YAML支持多种数据类型，包括：<ol>
+<li>字符串、数字、布尔值</li>
+<li>数组、list集合</li>
+<li>map键值对   等。</li>
+</ol>
+</li>
+<li>YAML使用<code>一个冒号和一个空格</code>来分隔<code>属性名</code>和<code>属性值</code>，例如：<ol>
+<li><code>properties</code>文件中这样的配置：<code>name=jack</code></li>
+<li><code>yaml</code>文件中需要这样配置：<code>name: jack</code></li>
+</ol>
+</li>
+<li>YAML用<code>换行+空格</code>来表示层级关系。注意不能使用tab，必须是空格，空格数量无要求，大部分建议2个或4个空格。例如：<ol>
+<li><code>properties</code>文件中这样的配置：<code>myapp.name=mall</code></li>
+<li><code>yaml</code>文件中就需要这样配置：</li>
+</ol>
+</li>
+</ol>
+<pre lang="yaml"><code class="language-yaml md-fencescode"><span class="nt">myapp</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mall</span>
+</code></pre>
+<ol>
+<li>同级元素左对齐。例如：<ol>
+<li><code>properties</code>文件中有这样的配置：</li>
+</ol>
+</li>
+</ol>
+<pre lang="properties"><code class="language-properties md-fencescode"><span class="na">myapp.name</span><span class="o">=</span><span class="s">mall</span>
+<span class="na">myapp.count</span><span class="o">=</span><span class="s">10</span>
+</code></pre>
+<pre><code class="md-fencescode">2. `yaml`文件中就应该这样配置：
+</code></pre>
+<pre lang="yaml"><code class="language-yaml md-fencescode"><span class="nt">myapp</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">mall</span>
+<span class="w">  </span><span class="nt">count</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+</code></pre>
+<ol>
+<li>键必须是唯一的：在一个映射中，键必须是唯一的。</li>
+<li>注释：使用<code>#</code>进行注释。</li>
+<li>区分大小写。</li>
+</ol>
+<h3 id="yaml_3">YAML的使用小细节</h3>
+<p><strong>第一：</strong>普通文本也可以使用单引号或双引号括起来：（当然普通文本也可以不使用单引号和双引号括起来。）</p>
+<ul>
+<li>单引号括起来：单引号内所有的内容都被当做普通文本，不转义（例如字符串中有\n，则\n被当做普通的字符串）</li>
+<li>双引号括起来：双引号中有 \n 则会被转义为换行符</li>
+<li>单引号和双引号都不加，和添加单引号的效果一样。</li>
+</ul>
+<p><strong>第二：</strong>保留文本格式</p>
+<ul>
+<li><code>|</code>      将文本写到这个符号的下层，会自动保留格式。</li>
+</ul>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764911738962-23784ede-1206-4272-aa19-93950ba84bdb.png" width="315.2" title="" crop="0,0,1,1" id="uf250886d" class="ne-image"></p>
+<p><strong>第三：</strong>换行变空格</p>
+<ul>
+<li><code>&gt;</code>     将文本写到这个符号的下层，内容中换行会自动变成空格。</li>
+</ul>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764911715905-473c2f95-77ee-4c93-8871-d7a951af446f.png" width="134.4" title="" crop="0,0,1,1" id="iQrra" class="ne-image"></p>
+<p><strong>第四：</strong>文档切割</p>
+<ul>
+<li>--- 这个符号下面的配置可以认为是一个独立的yaml文件。便于庞大文件的阅读。</li>
+</ul>
+<p><strong>### application.yml
+Spring Boot框架同时支持<code>properties</code>和<code>yaml</code>。</strong>强调：在同一个目录下同时存在<strong><code>**application.properties**</code></strong>和<strong><code>**application.yml**</code></strong>时，SpringBoot优先解析<strong><code>**application.properties**</code></strong>文件。**在<code>resources/config</code>目录下新建<code>application.yml</code>文件，进行如下配置：</p>
+<pre lang="yaml"><code class="language-yaml md-fencescode"><span class="nt">myapp</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">jim</span>
+<span class="w">  </span><span class="nt">email</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">jim@123.com</span>
+<span class="w">  </span><span class="nt">age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">40</span>
+<span class="w">  </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">jim123</span>
+</code></pre>
+<p>一定要把<code>resources/config</code>目录下<code>application.properties</code>名字修改为<code>application2.properties</code>，这样Spring Boot才会解析<code>resources/config/application.yml</code>。</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729654743068-a014695d-b7ea-42fe-91f8-0ea230bcb7d3.png" width="286" title="" crop="0,0,1,1" id="ud9c6ceee" class="ne-image"></p>
+<p>运行测试程序：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729654822036-0c4b5c28-1c39-41c7-9321-03225aa3ec7a.png" width="295" title="" crop="0,0,1,1" id="uacb464b5" class="ne-image"></p>
+<hr />
+<h2 id="_7">配置文件合并</h2>
+<p>一个项目中所有的配置全部编写到<code>application.properties</code>文件中，会导致配置臃肿，不易维护，有时我们会将配置编写到不同的文件中，例如：<code>application-mysql.properties</code>专门配置mysql的信息，<code>application-redis.properties</code>专门配置redis的信息，最终将两个配置文件合并到一个配置文件中。</p>
+<h3 id="properties">properties文件</h3>
+<p><code>application-mysql.properties</code></p>
+<pre lang="properties"><code class="language-properties md-fencescode"><span class="na">spring.datasource.username</span><span class="o">=</span><span class="s">root</span>
+<span class="na">spring.datasource.password</span><span class="o">=</span><span class="s">123456</span>
+</code></pre>
+<p><code>application-redis.properties</code></p>
+<pre lang="properties"><code class="language-properties md-fencescode"><span class="na">spring.data.redis.host</span><span class="o">=</span><span class="s">localhost</span>
+<span class="na">spring.data.redis.port</span><span class="o">=</span><span class="s">6379</span>
+</code></pre>
+<p><code>application.properties</code></p>
+<pre lang="properties"><code class="language-properties md-fencescode"><span class="na">spring.config.import</span><span class="o">=</span><span class="s">classpath:application-mysql.properties,classpath:application-redis.properties</span>
+</code></pre>
+<p>编写service测试，看看能否拿到配置信息：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.sb307externalconfig.service</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.beans.factory.annotation.Value</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Service</span><span class="p">;</span>
+
+<span class="nd">@Service</span><span class="p">(</span><span class="s">"userServiceMulti"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">UserServiceMulti</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Value</span><span class="p">(</span><span class="s">"${spring.datasource.username}"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">username</span><span class="p">;</span>
+<span class="w">    </span><span class="nd">@Value</span><span class="p">(</span><span class="s">"${spring.datasource.password}"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">password</span><span class="p">;</span>
+<span class="w">    </span><span class="nd">@Value</span><span class="p">(</span><span class="s">"${spring.data.redis.host}"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">host</span><span class="p">;</span>
+<span class="w">    </span><span class="nd">@Value</span><span class="p">(</span><span class="s">"${spring.data.redis.port}"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">port</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">printInfo</span><span class="p">(){</span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">str</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">String</span><span class="p">.</span><span class="na">join</span><span class="p">(</span><span class="s">","</span><span class="p">,</span><span class="w"> </span><span class="n">username</span><span class="p">,</span><span class="w"> </span><span class="n">password</span><span class="p">,</span><span class="w"> </span><span class="n">host</span><span class="p">,</span><span class="w"> </span><span class="n">port</span><span class="p">);</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">str</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>运行测试：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729662602259-3ebb69e9-600a-4b5e-9536-30814ce5d19d.png" width="297" title="" crop="0,0,1,1" id="u2aafb6be" class="ne-image"></p>
+<h3 id="yaml_4">yaml文件</h3>
+<p><code>application-mysql.yml</code></p>
+<pre lang="yaml"><code class="language-yaml md-fencescode"><span class="nt">spring</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">datasource</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">username</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">root</span>
+<span class="w">    </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">789789</span>
+</code></pre>
+<p><code>application-redis.yml</code></p>
+<pre lang="yaml"><code class="language-yaml md-fencescode"><span class="nt">spring</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">data</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">redis</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">host</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">localhost</span>
+<span class="w">      </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">6379</span>
+</code></pre>
+<p><code>application.yml</code></p>
+<pre lang="yaml"><code class="language-yaml md-fencescode"><span class="nt">spring</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">config</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">import</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">classpath:application-mysql.yml</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">classpath:application-redis.yml</span>
+</code></pre>
+<p>运行测试：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729663359961-e28ba636-6675-4e87-86a3-375859017754.png" width="279" title="" crop="0,0,1,1" id="uf3dbb91a" class="ne-image"></p>
+<hr />
+<h2 id="1-springboot">多环境切换<strong>知识点列表：</strong>1. <strong>springboot 支持多配置文件切换</strong></h2>
+<ol>
+<li><strong>例如有 3 个配置文件：</strong><code>**application-x.properties**</code><strong>、</strong><code>**application-y.properties**</code><strong>、</strong><code>**application-z.properties**</code></li>
+<li><strong>在 </strong><code>**application.properties**</code><strong>中配置 </strong><code>**spring.profiles.active=x**</code><strong>则自动启用</strong><code>**application-x.properties**</code><strong>配置。</strong></li>
+<li><strong>也可以通过命令行参数来指定启动哪个：--spring.profiles.active=x</strong></li>
+</ol>
+<p>在Spring Boot中，多环境切换是指在一个应用程序中支持多种运行环境配置的能力。这通常用于区分开发（development）、测试（testing）、预生产（staging）和生产（production）等不同阶段的环境。</p>
+<p>这种功能使得开发者能够在不同的环境中使用不同的配置，比如数据库连接信息、服务器端口、环境变量等，而不需要更改代码。这对于维护一个可移植且易于管理的应用程序非常重要。</p>
+<ol>
+<li>开发环境的配置文件名一般叫做：<code>application-dev.properties</code></li>
+</ol>
+<pre lang="properties"><code class="language-properties md-fencescode"><span class="na">spring.datasource.username</span><span class="o">=</span><span class="s">dev</span>
+<span class="na">spring.datasource.password</span><span class="o">=</span><span class="s">dev123</span>
+<span class="na">spring.datasource.url</span><span class="o">=</span><span class="s">jdbc:mysql://localhost:3306/dev</span>
+</code></pre>
+<ol>
+<li>测试环境的配置文件名一般叫做：<code>application-test.properties</code></li>
+</ol>
+<pre lang="properties"><code class="language-properties md-fencescode"><span class="na">spring.datasource.username</span><span class="o">=</span><span class="s">test</span>
+<span class="na">spring.datasource.password</span><span class="o">=</span><span class="s">test123</span>
+<span class="na">spring.datasource.url</span><span class="o">=</span><span class="s">jdbc:mysql://localhost:3306/test</span>
+</code></pre>
+<ol>
+<li>预生产环境的配置文件名一般叫做：<code>application-preprod.properties</code></li>
+</ol>
+<pre lang="properties"><code class="language-properties md-fencescode"><span class="na">spring.datasource.username</span><span class="o">=</span><span class="s">preprod</span>
+<span class="na">spring.datasource.password</span><span class="o">=</span><span class="s">preprod123</span>
+<span class="na">spring.datasource.url</span><span class="o">=</span><span class="s">jdbc:mysql://localhost:3306/preprod</span>
+</code></pre>
+<ol>
+<li>生产环境的配置文件名一般叫做：<code>application-prod.properties</code></li>
+</ol>
+<pre lang="properties"><code class="language-properties md-fencescode"><span class="na">spring.datasource.username</span><span class="o">=</span><span class="s">prod</span>
+<span class="na">spring.datasource.password</span><span class="o">=</span><span class="s">prod123</span>
+<span class="na">spring.datasource.url</span><span class="o">=</span><span class="s">jdbc:mysql://localhost:3306/prod</span>
+</code></pre>
+<p>如果你希望该项目使用生产环境的配置，你可以这样做：</p>
+<ul>
+<li>第一种方式：在<code>application.properties</code>文件中添加这个配置：<strong>spring.profiles.active=prod</strong></li>
+<li>第二种方式：在命令行参数上添加：**--spring.profiles.active=prod</li>
+</ul>
+<hr />
+<h2 id="bean">将配置绑定到bean</h2>
+<h3 id="bean_1">绑定简单bean</h3>
+<p><strong>知识点列表：</strong></p>
+<ol>
+<li><strong>使用 </strong><code>**@Component**</code><strong>+</strong><code>**@ConfigurationProperties(prefix = "app")**</code><strong>可以将配置文件中的配置一次性绑定到 Bean 上。</strong></li>
+<li><strong>如果没有前缀，</strong><code>**prefix**</code><strong>可以省略。</strong></li>
+<li><strong>绑定时，配置文件中的 key 需要和 Bean 的属性名对应上，并且给属性提供 setter 方法。</strong></li>
+<li><strong>bean 的属性需要是非静态的。</strong></li>
+</ol>
+<p>SpringBoot配置文件中的信息除了可以使用<code>@Value注解</code>读取之外，也可以将配置信息一次性赋值给Bean对象的属性。</p>
+<p>例如有这样的配置：</p>
+<p><code>application.yml</code></p>
+<pre lang="yaml"><code class="language-yaml md-fencescode"><span class="nt">app</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">jack</span>
+<span class="w">  </span><span class="nt">age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
+<span class="w">  </span><span class="nt">email</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">jack@123.com</span>
+</code></pre>
+<p>Bean需要这样定义：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.sb307externalconfig.bean</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.boot.context.properties.ConfigurationProperties</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Component</span><span class="p">;</span>
+
+<span class="nd">@Component</span>
+<span class="nd">@ConfigurationProperties</span><span class="p">(</span><span class="n">prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"app"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">AppBean</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Integer</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">email</span><span class="p">;</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"AppBean{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"name='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", age="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">age</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", email='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">email</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getName</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setName</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Integer</span><span class="w"> </span><span class="nf">getAge</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setAge</span><span class="p">(</span><span class="n">Integer</span><span class="w"> </span><span class="n">age</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">age</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getEmail</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">email</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setEmail</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">email</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">email</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">email</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>说明：</p>
+<ol>
+<li>被绑定的bean，需要使用<code>@ConfigurationProperties(prefix = "app")</code>注解进行标注，prefix用来指定前缀，哪个是前缀，如下图所示：</li>
+</ol>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729667789270-8c85788b-8b00-4d17-bbab-5f87b9a68103.png" width="302" title="" crop="0,0,1,1" id="u391dc507" class="ne-image"></p>
+<p>配置文件中的<code>name</code>、<code>age</code>、<code>email</code>要和bean对象的属性名<code>name</code>、<code>age</code>、<code>email</code>对应上。（属性名相同）</p>
+<p>并且bean中的所有属性都提供了<code>setter</code>方法。因为底层是通过<code>setter</code>方法给bean属性赋值的。</p>
+<ol>
+<li>注意：前缀 prefix 不是必须的，如果没有添加前缀，则从开始查找。</li>
+<li>这样的bean需要使用<code>@Component</code>注解进行标注，纳入IoC容器的管理。<code>@Component</code>注解负责创建Bean对象，<code>@ConfigurationProperties(prefix = "app")</code>注解负责给bean对象的属性赋值。</li>
+<li>bean的属性需要是<code>非static</code>的属性。</li>
+</ol>
+<p>编写测试程序，将bean对象输出，结果如下：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729668174305-f203b7f0-9ed2-435a-8c89-0f385cc6f50b.png" width="551" title="" crop="0,0,1,1" id="u7d23a56d" class="ne-image"></p>
+<h3 id="configuration">@Configuration注解</h3>
+<p><strong>知识点列表：</strong></p>
+<ol>
+<li><strong>如果是一个配置类的话，建议使用 </strong><code>**@Configuration**</code><strong>注解代替 </strong><code>**@Component**</code><strong>，语义更加明确。</strong></li>
+<li><strong>使用 </strong><code>**@Configuration**</code><strong>注解后，输出对象的地址是一个代理对象地址（使用@Component 不会生成代理对象），生成代理对象效率较低，可以添加 </strong><code>**proxyBeanMethods = false**</code><strong>属性不生成代理对象。</strong></li>
+<li><code>**proxyBeanMethods = false**</code><strong>和 </strong><code>**proxyBeanMethods = true**</code><strong>的区别：true：生成代理，虽然效率低，可以保证 bean 是单例。false：不生成代理，虽然效率高，不保证单例。</strong></li>
+</ol>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Configuration</span><span class="p">(</span><span class="n">proxyBeanMethods</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">MyConfig</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Bean</span>
+<span class="w">    </span><span class="n">A</span><span class="w"> </span><span class="nf">a</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">A</span><span class="p">();</span><span class="w"> </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Bean</span>
+<span class="w">    </span><span class="n">B</span><span class="w"> </span><span class="nf">b</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">A</span><span class="w"> </span><span class="n">a1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="p">();</span><span class="w">  </span><span class="c1">// 第1次调用</span>
+<span class="w">        </span><span class="n">A</span><span class="w"> </span><span class="n">a2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="p">();</span><span class="w">  </span><span class="c1">// 第2次调用</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">a1</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">a2</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">B</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+<span class="kd">class</span> <span class="nc">A</span><span class="w"> </span><span class="p">{}</span>
+<span class="kd">class</span> <span class="nc">B</span><span class="w"> </span><span class="p">{}</span>
+</code></pre>
+<p>以上操作中使用了<code>@Component注解</code>进行了标注，来纳入IoC容器的管理。也可以使用另外一个注解<code>@Configuration</code>，用这个注解将Bean标注为配置类。多数情况下我们会选择使用这个注解，因为该Bean对象的属性对应的就是配置文件中的配置信息，因此这个Bean我们也可以将其看做是一个配置类。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Configuration</span>
+<span class="nd">@ConfigurationProperties</span><span class="p">(</span><span class="n">prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"app"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">AppBean</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Integer</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">email</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">//setter and getter</span>
+<span class="p">}</span>
+</code></pre>
+<p>运行测试程序：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729671038234-ecf76053-a6d2-4100-8942-cf246e71397c.png" width="539" title="" crop="0,0,1,1" id="ub90abe6a" class="ne-image"></p>
+<p>我们把这个Bean对象的类名打印一下看看：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764859292118-89926acf-071e-4220-9193-463bf5c1567a.png" width="504.8" title="" crop="0,0,1,1" id="u82b66397" class="ne-image"></p>
+<p>可以发现底层实际上创建了<code>AppBean</code>的代理对象<code>AppBean$$SpringCGLIB</code>。</p>
+<p>生成代理对象会影响效率，这里我们不需要使用代理功能，可以通过以下配置来取消代理机制：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Configuration</span><span class="p">(</span><span class="n">proxyBeanMethods</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">)</span>
+<span class="nd">@ConfigurationProperties</span><span class="p">(</span><span class="n">prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"app"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">AppBean</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Integer</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">email</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">//setter and getter</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行结果如下：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764859318989-b191024f-a0ba-45ef-98bd-6456a84bf8a9.png" width="355.2" title="" crop="0,0,1,1" id="u93e8ac9c" class="ne-image"></p>
+<h3 id="bean_2">绑定嵌套bean</h3>
+<p><strong>知识点列表：</strong></p>
+<ol>
+<li><strong>Bean 中嵌套一个 Bean，也可以绑定配置信息。比如 User 对象中有 Address 属性。</strong></li>
+</ol>
+<p>当一个Bean中嵌套了一个Bean，这种情况下可以将配置信息绑定到该Bean上吗？当然可以。</p>
+<p>有这样的一个配置：</p>
+<pre lang="yaml"><code class="language-yaml md-fencescode"><span class="nt">app</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">jack</span>
+<span class="w">  </span><span class="nt">age</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">30</span>
+<span class="w">  </span><span class="nt">email</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">jack@123.com</span>
+<span class="w">  </span><span class="nt">address</span><span class="p">:</span><span class="w"> </span>
+<span class="w">    </span><span class="nt">city</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">BJ</span>
+<span class="w">    </span><span class="nt">street</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ChaoYang</span>
+<span class="w">    </span><span class="nt">zipcode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">123456</span>
+</code></pre>
+<p>需要编写这样的两个Bean：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.sb307externalconfig.bean</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.boot.context.properties.ConfigurationProperties</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.context.annotation.Configuration</span><span class="p">;</span>
+
+<span class="nd">@Configuration</span><span class="p">(</span><span class="n">proxyBeanMethods</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">)</span>
+<span class="nd">@ConfigurationProperties</span><span class="p">(</span><span class="n">prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"app"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">AppBean</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Integer</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">email</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Address</span><span class="w"> </span><span class="n">address</span><span class="p">;</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"AppBean{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"name='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", age="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">age</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", email='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">email</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", address="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">address</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Address</span><span class="w"> </span><span class="nf">getAddress</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">address</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setAddress</span><span class="p">(</span><span class="n">Address</span><span class="w"> </span><span class="n">address</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">address</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">address</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getName</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setName</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Integer</span><span class="w"> </span><span class="nf">getAge</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setAge</span><span class="p">(</span><span class="n">Integer</span><span class="w"> </span><span class="n">age</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">age</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getEmail</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">email</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setEmail</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">email</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">email</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">email</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.sb307externalconfig.bean</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Address</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">city</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">street</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">zipcode</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getCity</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">city</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setCity</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">city</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">city</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">city</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getStreet</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">street</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setStreet</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">street</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">street</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">street</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getZipcode</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">zipcode</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setZipcode</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">zipcode</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">zipcode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">zipcode</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"Address{"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"city='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">city</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", street='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">street</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">", zipcode='"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">zipcode</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">'\''</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="sc">'}'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>执行测试程序，结果如下：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764859348029-b1a2b1e9-a275-45fa-bb84-9fe4b1684dc1.png" width="908" title="" crop="0,0,1,1" id="uc1372835" class="ne-image"></p>
+<h3 id="enableconfigurationpropertiesconfigurationpropertiesscan"><strong>@EnableConfigurationProperties与@ConfigurationPropertiesScan知识点列表：</strong></h3>
+<ol>
+<li><strong>之前的代码是这样写的：<code>**@Component**</code></strong>+**<code>**@ConfigurationProperties(prefix = "app")**</code></li>
+<li><strong>或者是这样写的： </strong><code>**@Configuration**</code><strong>+</strong><code>**@ConfigurationProperties(prefix = "app")**</code></li>
+<li>
+<p><strong>有了以下这两个注解（任意一个都行，要求写到主入口类上），</strong><code>**@Component**</code><strong>和 </strong><code>**@Configuration**</code><strong>可以省略了：</strong></p>
+<ol>
+<li><strong>@EnableConfigurationProperties(Bean.class)</strong></li>
+<li><strong>@</strong>ConfigurationPropertiesScan(basePackages="")**将<code>AppBean</code>纳入IoC容器的管理，之前我们说了两种方式：第一种是使用<code>@Component</code>，第二种是使用<code>@Configuration</code>。SpringBoot其实还提供了另外两种方式：</li>
+</ol>
+</li>
+<li>
+<p>第一种：@EnableConfigurationProperties</p>
+</li>
+<li>第二种：@<strong>ConfigurationPropertiesScan这两个注解都是标注在SpringBoot主入口程序上的：</strong></li>
+</ol>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@EnableConfigurationProperties</span><span class="p">(</span><span class="n">AppBean</span><span class="p">.</span><span class="na">class</span><span class="p">)</span>
+<span class="nd">@SpringBootApplication</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Sb307ExternalConfigApplication</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">SpringApplication</span><span class="p">.</span><span class="na">run</span><span class="p">(</span><span class="n">Sb307ExternalConfigApplication</span><span class="p">.</span><span class="na">class</span><span class="p">,</span><span class="w"> </span><span class="n">args</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>或者</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@ConfigurationPropertiesScan</span><span class="p">(</span><span class="n">basePackages</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"com.jkweilai.sb307externalconfig.bean"</span><span class="p">)</span>
+<span class="nd">@SpringBootApplication</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Sb307ExternalConfigApplication</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">SpringApplication</span><span class="p">.</span><span class="na">run</span><span class="p">(</span><span class="n">Sb307ExternalConfigApplication</span><span class="p">.</span><span class="na">class</span><span class="p">,</span><span class="w"> </span><span class="n">args</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>运行测试程序，执行结果如下：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764859369700-e1ff53bb-cca8-4613-b8ac-50cf12bab692.png" width="892.8" title="" crop="0,0,1,1" id="ucf259988" class="ne-image"></p>
+<h3 id="beanmaplistarray">将配置赋值到Bean的Map/List/Array属性上**知识点列表：</h3>
+<ol>
+<li><strong>关键在于 </strong><code>**application.yml**</code><strong>中如何配置 Map/List/Array</strong></li>
+</ol>
+<p>```yaml</p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

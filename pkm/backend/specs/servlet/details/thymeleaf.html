@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>thymeleaf</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="thymeleaf">Thymeleaf</h1>
+<hr />
+<h2 id="_1">当前项目弊端</h2>
+<ol>
+<li><strong>代码耦合性高，难以维护</strong></li>
+</ol>
+<p>前端代码（HTML/CSS/JS）与后端Java逻辑混杂在同一个Servlet中，违反关注点分离（SoC）原则。修改前端时需要重新编译Servlet，调试困难；团队协作时前后端开发者互相干扰。</p>
+<ol>
+<li><strong>开发效率低</strong></li>
+</ol>
+<p>Java字符串拼接HTML（如<code>out.println("&lt;div&gt;...&lt;/div&gt;")</code>）极其繁琐且易错。</p>
+<ol>
+<li><strong>安全性风险</strong></li>
+</ol>
+<p><strong>XSS漏洞</strong>：手动拼接HTML容易遗漏转义导致 XSS 攻击。</p>
+<p><strong>XSS（Cross-Site Scripting）</strong>是一种攻击方式，黑客通过注入恶意脚本（通常是JavaScript）到网页中，使其在其他用户的浏览器里执行。<strong>后果</strong>：窃取用户Cookie、篡改页面内容、重定向到恶意网站等。</p>
+<p>假设有一个Servlet，接收用户输入的<code>name</code>并显示在页面上：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">String</span><span class="w"> </span><span class="n">userName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">request</span><span class="p">.</span><span class="na">getParameter</span><span class="p">(</span><span class="s">"name"</span><span class="p">);</span><span class="w"> </span><span class="c1">// 用户输入</span>
+<span class="n">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"&lt;div&gt;Welcome, "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">userName</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">"!&lt;/div&gt;"</span><span class="p">);</span>
+</code></pre>
+<p>如果用户输入的是：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="o">&lt;</span><span class="n">script</span><span class="o">&gt;</span><span class="n">alert</span><span class="p">(</span><span class="err">'</span><span class="n">XSS</span><span class="w"> </span><span class="n">Attack</span><span class="o">!</span><span class="err">'</span><span class="p">);</span><span class="o">&lt;/</span><span class="n">script</span><span class="o">&gt;</span>
+</code></pre>
+<p>最终生成的HTML会是：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="o">&lt;</span><span class="n">div</span><span class="o">&gt;</span><span class="n">Welcome</span><span class="p">,</span><span class="w"> </span><span class="o">&lt;</span><span class="n">script</span><span class="o">&gt;</span><span class="n">alert</span><span class="p">(</span><span class="err">'</span><span class="n">XSS</span><span class="w"> </span><span class="n">Attack</span><span class="o">!</span><span class="err">'</span><span class="p">);</span><span class="o">&lt;/</span><span class="n">script</span><span class="o">&gt;!&lt;/</span><span class="n">div</span><span class="o">&gt;</span>
+</code></pre>
+<p>浏览器会执行这段脚本，弹出一个警告框（实际攻击可能是窃取Cookie或跳转到恶意网站）。如何解决这个问题，可以手动转义。</p>
+<p>但手动转义容易遗漏，因此现代框架（如JSP、Thymeleaf、React、Vue）默认会自动转义。</p>
+<ol>
+<li>
+<p><strong>可测试性差</strong>：前端逻辑与后端深度耦合，无法独立测试。</p>
+</li>
+<li>
+<p><strong>多端适配困难</strong>：同一Servlet无法灵活响应Web/移动端（不同HTML结构或API格式）。</p>
+</li>
+</ol>
+<hr />
+<h2 id="thymeleaf_1">Thymeleaf 概述</h2>
+<p>官网地址：<a href="https://www.thymeleaf.org/">https://www.thymeleaf.org/</a></p>
+<p><strong>引用官网（2025 年 6 月）： Thymeleaf 3.1.3.RELEASE</strong> is the latest version. It requires <strong>Java SE 8</strong> or newer（翻译：目前最新发布版 3.1.3，要求 JDK 版本最低 8）</p>
+<p>Thymeleaf 是一个用于 Web 和独立环境的<strong>现代 Java 模板引擎</strong>，主要用于处理 HTML、XML、JavaScript 等文件，支持自然模板（允许静态原型直接作为模板使用）。它由<strong>Daniel Fernández</strong>领导的团队开发，最初于<strong>2011年</strong>发布，旨在替代 JSP，提供更优雅的模板解决方案。Thymeleaf 强调语法简洁、与 Spring 框架深度集成，常用于 Spring Boot 项目。目前（截至 2025 年 6 月）仍在积极维护，最新稳定版本为 3.1.3，社区活跃且持续更新。</p>
+<p><strong>Java模板引擎</strong>是一种用于动态生成文本（如HTML、XML、邮件内容等）的工具，它通过将<strong>静态模板文件</strong>和<strong>动态数据</strong>结合，生成最终的输出内容。</p>
+<p>现代开发中项目多数是前后端分离，Thymeleaf 这种模板技术市场份额在减少，为什么还要保留 Thymeleaf？</p>
+<ul>
+<li><strong>简单页面需求</strong>：对于管理后台、报表打印、静态内容页等<strong>无需复杂前端交互</strong>的场景，Thymeleaf直接生成HTML比搭建全套前后端分离项目更高效。</li>
+<li><strong>快速原型开发</strong>：初期验证阶段，用Thymeleaf快速渲染页面比协调前后端联调更省时。</li>
+<li><strong>SEO友好</strong>：搜索引擎直接抓取服务端渲染的HTML（前后端分离的SPA需额外SSR处理）。</li>
+<li><strong>支持混合模式</strong>：Thymeleaf允许在传统服务端渲染中逐步引入前端框架（如部分页面用Vue，其他仍用Thymeleaf），适合遗留系统改造。</li>
+<li><strong>邮件模板</strong>：动态生成HTML邮件内容时，模板引擎仍是标准方案。</li>
+<li><strong>PDF/Excel导出</strong>：通过模板生成结构化文档（如Apache POI + Thymeleaf）。</li>
+</ul>
+<hr />
+<h2 id="thymeleaf_2">Thymeleaf 处理流程</h2>
+<p>模板文件：</p>
+<pre lang="html"><code class="language-html md-fencescode"><span class="cm">&lt;!-- 模板文件 index.html --&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">p</span> <span class="na">th:text</span><span class="o">=</span><span class="s">"'Hello, ' + ${name}"</span><span class="p">&gt;</span>Hello, Guest<span class="p">&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</code></pre>
+<p>Thymeleaf 的处理步骤：</p>
+<ol>
+<li><strong>模板解析：解析 HTML，识别</strong><code>th:text</code><strong>表达式。</strong></li>
+<li><strong>表达式处理：计算表达式</strong><code>${name}</code><strong>（从 Servlet 作用域中获取值或从 Spring MVC 的 Model 中获取值）。</strong></li>
+<li><strong>渲染阶段：替换静态文本（</strong><code>Hello, Guest</code><strong>）为动态值（如</strong><code>Hello, Alice</code><strong>）。</strong></li>
+</ol>
+<p>提示：</p>
+<ol>
+<li>Thymeleaf 模板是合法的 HTML，可直接用浏览器打开预览。</li>
+<li>Thymeleaf 默认对所有表达式输出进行<strong>HTML 转义</strong>，有效防御 XSS。</li>
+<li>Thymeleaf<strong>不依赖 Servlet 容器</strong>，可以在非 Web 环境（如邮件模板）中使用。</li>
+<li>Thymeleaf<strong>无 Java 代码嵌入</strong>：所有逻辑通过属性（如<code>th:text</code>、<code>th:if</code>）实现。</li>
+</ol>
+<hr />
+<h2 id="servlet-thymeleaf">Servlet 中使用 Thymeleaf（不是很重要，随用随查就好）</h2>
+<h3 id="thymeleaf-jar">添加Thymeleaf 的 jar 包</h3>
+<p>jar 包从 apache 提供的 maven 中央仓库中下载，地址：<a href="https://repo.maven.apache.org/maven2/">https://repo.maven.apache.org/maven2/</a></p>
+<p><img alt="1749174515843-8891104e-437f-48da-b2e5-2e4de6255140.png" src="../assets/1749174515843-8891104e-437f-48da-b2e5-2e4de6255140.png" /></p>
+<p>将 jar 包拷贝 <code>WEB-INF/lib</code>目录下，并且只需要将 <code>thymeleaf-3.1.3.RELEASE.jar</code>右键添加到 classpath 中：</p>
+<p><img alt="1749174554024-065bf737-bacd-4658-89cc-5854bf7865b6.png" src="../assets/1749174554024-065bf737-bacd-4658-89cc-5854bf7865b6.png" /></p>
+<h3 id="_2">初始化模板引擎</h3>
+<p>写一个 ServletContextListener 监听器，在服务器启动阶段，初始化 Thymeleaf 的模板引擎：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.thymeleaf.listeners</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.ServletContext</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.ServletContextEvent</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.ServletContextListener</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.annotation.WebListener</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.thymeleaf.TemplateEngine</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.thymeleaf.templatemode.TemplateMode</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.thymeleaf.templateresolver.WebApplicationTemplateResolver</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.thymeleaf.web.servlet.JakartaServletWebApplication</span><span class="p">;</span>
+
+<span class="nd">@WebListener</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">ThymeleafInitializer</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">ServletContextListener</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">contextInitialized</span><span class="p">(</span><span class="n">ServletContextEvent</span><span class="w"> </span><span class="n">sce</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 获取ServletContext对象</span>
+<span class="w">        </span><span class="n">ServletContext</span><span class="w"> </span><span class="n">application</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">sce</span><span class="p">.</span><span class="na">getServletContext</span><span class="p">();</span>
+
+<span class="w">        </span><span class="c1">//【第一步】得到适配器</span>
+<span class="w">        </span><span class="c1">// 创建Thymeleaf与Servlet容器的桥梁对象（相当于一个适配器）</span>
+<span class="w">        </span><span class="n">JakartaServletWebApplication</span><span class="w"> </span><span class="n">jakartaServletWebApplication</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">JakartaServletWebApplication</span><span class="p">.</span><span class="na">buildApplication</span><span class="p">(</span><span class="n">application</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 创建模板解析器并关联到Servlet环境</span>
+<span class="w">        </span><span class="n">WebApplicationTemplateResolver</span><span class="w"> </span><span class="n">templateResolver</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">WebApplicationTemplateResolver</span><span class="p">(</span><span class="n">jakartaServletWebApplication</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 【第二步】适配器传给解析器</span>
+<span class="w">        </span><span class="c1">// 设置模板文件存放的基础路径</span>
+<span class="w">        </span><span class="n">templateResolver</span><span class="p">.</span><span class="na">setPrefix</span><span class="p">(</span><span class="s">"/WEB-INF/templates/"</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 设置模板文件的后缀名</span>
+<span class="w">        </span><span class="n">templateResolver</span><span class="p">.</span><span class="na">setSuffix</span><span class="p">(</span><span class="s">".html"</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 指定模板处理模式为HTML格式</span>
+<span class="w">        </span><span class="n">templateResolver</span><span class="p">.</span><span class="na">setTemplateMode</span><span class="p">(</span><span class="n">TemplateMode</span><span class="p">.</span><span class="na">HTML</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 禁用模板缓存（开发环境建议关闭）</span>
+<span class="w">        </span><span class="n">templateResolver</span><span class="p">.</span><span class="na">setCacheable</span><span class="p">(</span><span class="kc">false</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 【第三步】解析器给模板引擎</span>
+<span class="w">        </span><span class="c1">// 创建模板引擎</span>
+<span class="w">        </span><span class="n">TemplateEngine</span><span class="w"> </span><span class="n">templateEngine</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">TemplateEngine</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">// 模板引擎关联模板解析器</span>
+<span class="w">        </span><span class="n">templateEngine</span><span class="p">.</span><span class="na">setTemplateResolver</span><span class="p">(</span><span class="n">templateResolver</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 将Thymeleaf与Servlet容器的桥梁对象存储到应用域中</span>
+<span class="w">        </span><span class="n">application</span><span class="p">.</span><span class="na">setAttribute</span><span class="p">(</span><span class="s">"jakartaServletWebApplication"</span><span class="p">,</span><span class="w"> </span><span class="n">jakartaServletWebApplication</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 将模板引擎对象存储到应用域中</span>
+<span class="w">        </span><span class="n">application</span><span class="p">.</span><span class="na">setAttribute</span><span class="p">(</span><span class="s">"templateEngine"</span><span class="p">,</span><span class="w"> </span><span class="n">templateEngine</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="servlet">编写 Servlet</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.thymeleaf.servlets</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.ServletContext</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.ServletException</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.annotation.WebServlet</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.http.HttpServlet</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.http.HttpServletRequest</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jakarta.servlet.http.HttpServletResponse</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.thymeleaf.TemplateEngine</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.thymeleaf.context.WebContext</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.thymeleaf.web.servlet.JakartaServletWebApplication</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.io.IOException</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.time.LocalDateTime</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.time.format.DateTimeFormatter</span><span class="p">;</span>
+
+<span class="nd">@WebServlet</span><span class="p">(</span><span class="s">"/hello"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">HelloServlet</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">HttpServlet</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">protected</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">doGet</span><span class="p">(</span><span class="n">HttpServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">HttpServletResponse</span><span class="w"> </span><span class="n">response</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">ServletException</span><span class="p">,</span><span class="w"> </span><span class="n">IOException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 向request域中绑定数据</span>
+<span class="w">        </span><span class="n">request</span><span class="p">.</span><span class="na">setAttribute</span><span class="p">(</span><span class="s">"message"</span><span class="p">,</span><span class="w"> </span><span class="s">"Hello from Request Scope!"</span><span class="p">);</span>
+<span class="w">        </span><span class="n">request</span><span class="p">.</span><span class="na">setAttribute</span><span class="p">(</span><span class="s">"currentTime"</span><span class="p">,</span><span class="w"> </span><span class="n">LocalDateTime</span><span class="p">.</span><span class="na">now</span><span class="p">().</span><span class="na">format</span><span class="p">(</span><span class="n">DateTimeFormatter</span><span class="p">.</span><span class="na">ISO_LOCAL_DATE_TIME</span><span class="p">));</span>
+<span class="w">        </span><span class="n">request</span><span class="p">.</span><span class="na">setAttribute</span><span class="p">(</span><span class="s">"requestURI"</span><span class="p">,</span><span class="w"> </span><span class="n">request</span><span class="p">.</span><span class="na">getRequestURI</span><span class="p">());</span>
+
+<span class="w">        </span><span class="c1">// 交给模板引擎去处理</span>
+<span class="w">        </span><span class="n">response</span><span class="p">.</span><span class="na">setContentType</span><span class="p">(</span><span class="s">"text/html;charset=UTF-8"</span><span class="p">);</span>
+<span class="w">        </span><span class="n">ServletContext</span><span class="w"> </span><span class="n">application</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getServletContext</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">// 从上下文中获取Thymeleaf的Servlet适配器实例</span>
+<span class="w">        </span><span class="n">JakartaServletWebApplication</span><span class="w"> </span><span class="n">jakartaServletWebApplication</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">JakartaServletWebApplication</span><span class="p">)</span><span class="n">application</span><span class="p">.</span><span class="na">getAttribute</span><span class="p">(</span><span class="s">"jakartaServletWebApplication"</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 从上下文中获取Thymeleaf模板引擎实例</span>
+<span class="w">        </span><span class="n">TemplateEngine</span><span class="w"> </span><span class="n">templateEngine</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">TemplateEngine</span><span class="p">)</span><span class="w"> </span><span class="n">application</span><span class="p">.</span><span class="na">getAttribute</span><span class="p">(</span><span class="s">"templateEngine"</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 创建Thymeleaf上下文对象，包装当前请求/响应和语言环境</span>
+<span class="w">        </span><span class="n">WebContext</span><span class="w"> </span><span class="n">webContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">WebContext</span><span class="p">(</span><span class="n">jakartaServletWebApplication</span><span class="p">.</span><span class="na">buildExchange</span><span class="p">(</span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">response</span><span class="p">),</span><span class="w"> </span><span class="n">request</span><span class="p">.</span><span class="na">getLocale</span><span class="p">());</span>
+<span class="w">        </span><span class="c1">// 使用模板引擎渲染名为"hello"的模板，结果写入响应输出流</span>
+<span class="w">        </span><span class="n">templateEngine</span><span class="p">.</span><span class="na">process</span><span class="p">(</span><span class="s">"hello"</span><span class="p">,</span><span class="w"> </span><span class="n">webContext</span><span class="p">,</span><span class="w"> </span><span class="n">response</span><span class="p">.</span><span class="na">getWriter</span><span class="p">());</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="_3">创建模板文件</h3>
+<p>在<code>WEB-INF/templates/</code>下创建<code>hello.html</code>:</p>
+<pre lang="html"><code class="language-html md-fencescode"><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="cm">&lt;!--必须添加 th 命名空间--&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">xmlns:th</span><span class="o">=</span><span class="s">"http://www.thymeleaf.org"</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">"UTF-8"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>first thymeleaf<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+    <span class="cm">&lt;!-- 直接从request域获取数据 --&gt;</span>
+    <span class="p">&lt;</span><span class="nt">h1</span> <span class="na">th:text</span><span class="o">=</span><span class="s">"${message}"</span><span class="p">&gt;</span>Default Message<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>Current time: <span class="p">&lt;</span><span class="nt">span</span> <span class="na">th:text</span><span class="o">=</span><span class="s">"${currentTime}"</span><span class="p">&gt;&lt;/</span><span class="nt">span</span><span class="p">&gt;&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">p</span><span class="p">&gt;</span>Request URI: <span class="p">&lt;</span><span class="nt">span</span> <span class="na">th:text</span><span class="o">=</span><span class="s">"${requestURI}"</span><span class="p">&gt;&lt;/</span><span class="nt">span</span><span class="p">&gt;&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</code></pre>
+<h3 id="_4">部署和测试</h3>
+<ol>
+<li>部署到Servlet容器（如Tomcat）</li>
+<li>访问 <code>http://localhost:8080/thymeleaf/hello</code></li>
+</ol>
+<p><img alt="1749174930521-d81ae8ae-ac29-4aff-99ca-02d494a3dfc7.png" src="../assets/1749174930521-d81ae8ae-ac29-4aff-99ca-02d494a3dfc7.png" /></p>
+<h3 id="thymeleaf_3">thymeleaf 添加日志框架</h3>
+<p>thymeleaf 添加日志框架 <code>logback</code>。这样 thymeleaf 运行出错时会自动打印日志信息。便于调试。</p>
+<h4 id="logback-jar">添加 logback 的 jar 包</h4>
+<p>我们项目中已经存在 <code>slf4j-api-2.0.16.jar</code>。这个是日志门面，还需要一个具体的实现 slf4j 门面的日志框架，<code>logback</code>就是一个具体的实现。</p>
+<p>首先我们需要引入 logback 的 jar 包，放到 WEB-INF/lib 目录下：</p>
+<p><img alt="1749262730546-7dad2d21-8d4e-48c1-bb24-04d90c9fc46e.png" src="../assets/1749262730546-7dad2d21-8d4e-48c1-bb24-04d90c9fc46e.png" /></p>
+<h4 id="logback">添加 logback 日志框架的配置文件</h4>
+<p>在类的根路径下新建 <code>logback.xml</code>，然后将配置以下内容：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;configuration&gt;</span>
+<span class="w">    </span><span class="cm">&lt;!-- 只输出 ERROR 级别及以上的日志 --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;logger</span><span class="w"> </span><span class="na">name=</span><span class="s">"org.thymeleaf"</span><span class="w"> </span><span class="na">level=</span><span class="s">"ERROR"</span><span class="nt">/&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!-- 关闭 Thymeleaf 初始化 DEBUG 日志 --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;logger</span><span class="w"> </span><span class="na">name=</span><span class="s">"org.thymeleaf.TemplateEngine"</span><span class="w"> </span><span class="na">level=</span><span class="s">"INFO"</span><span class="nt">/&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!-- 控制台输出格式简化 --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;appender</span><span class="w"> </span><span class="na">name=</span><span class="s">"CONSOLE"</span><span class="w"> </span><span class="na">class=</span><span class="s">"ch.qos.logback.core.ConsoleAppender"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;encoder&gt;</span>
+<span class="w">            </span><span class="nt">&lt;pattern&gt;</span>%d{HH:mm:ss}<span class="w"> </span>[%thread]<span class="w"> </span>%-5level<span class="w"> </span>-<span class="w"> </span>%msg%n<span class="nt">&lt;/pattern&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/encoder&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/appender&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!-- 全局日志级别设为 WARN --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;root</span><span class="w"> </span><span class="na">level=</span><span class="s">"WARN"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;appender-ref</span><span class="w"> </span><span class="na">ref=</span><span class="s">"CONSOLE"</span><span class="nt">/&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/root&gt;</span>
+<span class="nt">&lt;/configuration&gt;</span>
+</code></pre>
+<hr />
+<h2 id="thymeleaf_4">Thymeleaf 的必要语法</h2>
+<h3 id="_5">基础模板结构（必须掌握）</h3>
+<pre lang="html"><code class="language-html md-fencescode"><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">xmlns:th</span><span class="o">=</span><span class="s">"http://www.thymeleaf.org"</span><span class="p">&gt;</span>  <span class="cm">&lt;!-- 启用Thymeleaf命名空间 --&gt;</span>
+<span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span> <span class="na">th:text</span><span class="o">=</span><span class="s">"${pageTitle}"</span><span class="p">&gt;</span>默认标题<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>  <span class="cm">&lt;!-- 静态默认值会被动态替换 --&gt;</span>
+<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+    <span class="cm">&lt;!-- 所有Thymeleaf属性以 th: 开头 --&gt;</span>
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</code></pre>
+<p>关键点：</p>
+<ul>
+<li><code>th:</code> 命名空间声明</li>
+<li>静态内容作为默认值（直接打开HTML文件可预览）</li>
+</ul>
+<h3 id="90">变量表达式（90%场景使用）</h3>
+<pre lang="html"><code class="language-html md-fencescode"><span class="p">&lt;</span><span class="nt">div</span> <span class="na">th:text</span><span class="o">=</span><span class="s">"${user.name}"</span><span class="p">&gt;</span>用户名默认值<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>  <span class="cm">&lt;!-- 即使是一段HTML代码，也只是当做普通文本处理，转义，防止XSS攻击 --&gt;</span>
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">th:utext</span><span class="o">=</span><span class="s">"${htmlContent}"</span><span class="p">&gt;</span>HTML内容<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>  <span class="cm">&lt;!-- 对HTML代码解释执行，不转义，存在XSS攻击风险，谨慎使用 --&gt;</span>
+</code></pre>
+<h3 id="ifunless">条件判断（if/unless）</h3>
+<p>和 <code>if/else</code>不一样。两个是独立的，没有关系。</p>
+<ul>
+<li>对于 <code>th:if</code>来说，为 <code>true</code>时显示元素。</li>
+<li>对于 <code>th:unless</code>来说，为 <code>false</code>时显示元素。</li>
+</ul>
+<pre lang="html"><code class="language-html md-fencescode"><span class="p">&lt;</span><span class="nt">div</span> <span class="na">th:if</span><span class="o">=</span><span class="s">"${user.isAdmin}"</span><span class="p">&gt;</span>管理员可见<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">th:unless</span><span class="o">=</span><span class="s">"${user.isGuest}"</span><span class="p">&gt;</span>非访客可见<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+</code></pre>
+<h3 id="if">关于 if 的小细节</h3>
+<p>有这样一个 VO（View Object：视图对象，负责专门在页面上展示数据的对象）UserVO，代码如下：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.thymeleaf.model.vo</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">UserVO</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">username</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Boolean</span><span class="w"> </span><span class="n">isAdmin</span><span class="p">;</span><span class="w"> </span><span class="c1">// 注意这个属性哈。</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">UserVO</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">UserVO</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">username</span><span class="p">,</span><span class="w"> </span><span class="n">Boolean</span><span class="w"> </span><span class="n">isAdmin</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">username</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">username</span><span class="p">;</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">isAdmin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">isAdmin</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getUsername</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">username</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setUsername</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">username</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">username</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">username</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Boolean</span><span class="w"> </span><span class="nf">getAdmin</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// isAdmin 属性生成的get方法不是getIsAdmin()，而是getAdmin()。</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">isAdmin</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setAdmin</span><span class="p">(</span><span class="n">Boolean</span><span class="w"> </span><span class="n">admin</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">isAdmin</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">admin</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>在 Servlet 当中创建 UserVO 对象，代码如下：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="n">UserVO</span><span class="w"> </span><span class="n">user</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">UserVO</span><span class="p">(</span><span class="s">"admin"</span><span class="p">,</span><span class="w"> </span><span class="kc">true</span><span class="p">);</span>
+<span class="n">request</span><span class="p">.</span><span class="na">setAttribute</span><span class="p">(</span><span class="s">"user"</span><span class="p">,</span><span class="w"> </span><span class="n">user</span><span class="p">);</span>
+</code></pre>
+<p>thymeleaf 的模板文件中是这样写的：</p>
+<pre lang="html"><code class="language-html md-fencescode"><span class="p">&lt;</span><span class="nt">div</span> <span class="na">th:if</span><span class="o">=</span><span class="s">"${user.isAdmin}"</span><span class="p">&gt;&lt;</span><span class="nt">span</span> <span class="na">th:text</span><span class="o">=</span><span class="s">"${user.username}"</span><span class="p">&gt;&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>是管理员<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+</code></pre>
+<p>测试时出现了以下异常：</p>
+<p><img alt="1749263606372-517035b4-42c5-4cb7-93b2-b60741623b97.png" src="../assets/1749263606372-517035b4-42c5-4cb7-93b2-b60741623b97.png" /></p>
+<p>这个问题是因为我们使用了 <code>${user.isAdmin}</code>，thymeleaf 底层会去找 <code>user</code>对象的 <code>getIsAdmin()</code>方法，但是这个方法不存在而导致的。针对这个问题，有多种解决方案，最直接的方式是将模板文件中的代码修改一下，修改为：</p>
+<pre lang="html"><code class="language-html md-fencescode"><span class="p">&lt;</span><span class="nt">div</span> <span class="na">th:if</span><span class="o">=</span><span class="s">"${user.admin}"</span><span class="p">&gt;&lt;</span><span class="nt">span</span> <span class="na">th:text</span><span class="o">=</span><span class="s">"${user.username}"</span><span class="p">&gt;&lt;/</span><span class="nt">span</span><span class="p">&gt;</span>是管理员<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+</code></pre>
+<p>这样就可以访问了。</p>
+<h3 id="_6">循环遍历（列表渲染）</h3>
+<pre lang="html"><code class="language-html md-fencescode"><span class="p">&lt;</span><span class="nt">ul</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">li</span> <span class="na">th:each</span><span class="o">=</span><span class="s">"item : ${items}"</span> <span class="na">th:text</span><span class="o">=</span><span class="s">"${item.name}"</span><span class="p">&gt;</span>商品示例<span class="p">&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">ul</span><span class="p">&gt;</span>
+</code></pre>
+<p>关键点：</p>
+<ul>
+<li><code>th:each="item : ${集合}"</code> 语法</li>
+<li>循环状态变量：</li>
+</ul>
+<pre lang="html"><code class="language-html md-fencescode"><span class="p">&lt;</span><span class="nt">li</span> <span class="na">th:each</span><span class="o">=</span><span class="s">"item,status : ${items}"</span> <span class="na">th:text</span><span class="o">=</span><span class="s">"|${status.index} ======== ${item.name}|"</span><span class="p">&gt;&lt;/</span><span class="nt">li</span><span class="p">&gt;</span>
+</code></pre>
+<p><strong>双竖线 |...| 的作用是定义文本字面量表达式（Literal Expressions），它是一种简化字符串拼接的语法。</strong></p>
+<p><strong>管道符内的内容会被视为一个整体，Thymeleaf 会自动将其拼接成一个字符串，无需手动加引号或 + 连接。</strong></p>
+<h3 id="url">链接与路径（URL生成）</h3>
+<pre lang="html"><code class="language-html md-fencescode"><span class="p">&lt;</span><span class="nt">a</span> <span class="na">th:href</span><span class="o">=</span><span class="s">"@{/user/details(id=${userId})}"</span><span class="p">&gt;</span>用户详情<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+</code></pre>
+<p>关键点：</p>
+<ul>
+<li><code>@{}</code> 自动生成上下文路径（避免硬编码）</li>
+<li>支持参数：<code>@{/path(param1=${val1}, param2=${val2})}</code></li>
+</ul>
+<h3 id="_7">表单绑定（重点！）</h3>
+<pre lang="html"><code class="language-html md-fencescode"><span class="p">&lt;</span><span class="nt">form</span> <span class="na">th:action</span><span class="o">=</span><span class="s">"@{/save}"</span> <span class="na">th:object</span><span class="o">=</span><span class="s">"${user}"</span> <span class="na">method</span><span class="o">=</span><span class="s">"post"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"text"</span> <span class="na">id</span><span class="o">=</span><span class="s">"username"</span> <span class="na">name</span><span class="o">=</span><span class="s">"username"</span> <span class="na">th:value</span><span class="o">=</span><span class="s">"*{username}"</span> <span class="na">placeholder</span><span class="o">=</span><span class="s">"用户名"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">input</span> <span class="na">type</span><span class="o">=</span><span class="s">"submit"</span> <span class="na">value</span><span class="o">=</span><span class="s">"保存"</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">form</span><span class="p">&gt;</span>
+</code></pre>
+<p>关键点：</p>
+<ul>
+<li><code>th:object</code> 绑定表单对象</li>
+<li><code>th:value="*{属性名}"</code></li>
+</ul>
+<h3 id="_8">片段复用（布局优化）</h3>
+<pre lang="html"><code class="language-html md-fencescode"><span class="cm">&lt;!-- 定义片段 --&gt;</span>
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">th:fragment</span><span class="o">=</span><span class="s">"header"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>公共头部<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+
+<span class="cm">&lt;!-- 引用片段 --&gt;</span>
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">th:replace</span><span class="o">=</span><span class="s">"~{::header}"</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>  <span class="cm">&lt;!-- header片段的定义如果在当前文件中的话，使用这种语法。 --&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">th:replace</span><span class="o">=</span><span class="s">"~{commons :: header}"</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>  <span class="cm">&lt;!-- 这种语法表示引入commons.html中定义的header片段。 --&gt;</span>
+</code></pre>
+<p>关键点：</p>
+<ul>
+<li><code>th:fragment</code> 定义可复用块</li>
+<li><code>th:replace</code> 直接替换当前标签</li>
+</ul>
+<h3 id="_9">实用工具函数（选学）</h3>
+<pre lang="html"><code class="language-html md-fencescode"><span class="p">&lt;</span><span class="nt">p</span> <span class="na">th:text</span><span class="o">=</span><span class="s">"${#strings.toUpperCase(user.name)}"</span><span class="p">&gt;&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>  <span class="cm">&lt;!-- 字符串大写 --&gt;</span>
+<span class="p">&lt;</span><span class="nt">p</span> <span class="na">th:text</span><span class="o">=</span><span class="s">"${#dates.format(now, 'yyyy-MM-dd')}"</span><span class="p">&gt;&lt;/</span><span class="nt">p</span><span class="p">&gt;</span>  <span class="cm">&lt;!-- 日期格式化 --&gt;</span>
+</code></pre>
+<p>工具类：</p>
+<ul>
+<li><code>#strings</code>、<code>#numbers</code>、<code>#dates</code>、<code>#lists</code>等。</li>
+</ul>
+<p>工具函数的具体使用，可以参考 thymeleaf 的官方帮助文档，按照以下步骤查找帮助：</p>
+<p>首页面点 <code>Docs</code>：</p>
+<p><img alt="1749430716157-1d8f43d8-9e79-4136-b1e6-be3953abcf07.png" src="../assets/1749430716157-1d8f43d8-9e79-4136-b1e6-be3953abcf07.png" /></p>
+<p><code>Read online</code>在线阅读，或者下载 <code>PDF</code>等：</p>
+<p><img alt="1749430945223-3d1a8798-23d4-4f32-8eb1-80a7ac8daa41.png" src="../assets/1749430945223-3d1a8798-23d4-4f32-8eb1-80a7ac8daa41.png" /></p>
+<p>在以下页面中搜索，例如搜索 <code>#strings</code>：</p>
+<p><img alt="1749431050737-fa8745a2-c4d9-4d12-9302-7482ddc465ee.png" src="../assets/1749431050737-fa8745a2-c4d9-4d12-9302-7482ddc465ee.png" /></p>
+<p><img alt="1749431076783-d9c2301a-559d-4349-8ef7-ccfea8df7775.png" src="../assets/1749431076783-d9c2301a-559d-4349-8ef7-ccfea8df7775.png" /></p>
+<hr />
+<h2 id="thymeleaf_5">Thymeleaf 变量查找顺序</h2>
+<p>当 <code>${message}</code>被解析时，Thymeleaf 会按以下顺序查找：</p>
+<ol>
+<li><code>WebContext</code><strong>显式设置的变量</strong>（<code>ctx.setVariable("message", "WebContext message")</code>）</li>
+<li><code>HttpServletRequest</code><strong>属性</strong>（<code>request.setAttribute("message", "request message")</code>）</li>
+</ol>
+<p>同名变量时，高优先级的会覆盖低优先级的。</p>
+<hr />
+<h2 id="thymeleaf_6">Thymeleaf 的其他取值</h2>
+<ol>
+<li><code>HttpSession</code><strong>属性</strong>（<code>session.setAttribute("message", "session message")</code>），从 session 中取值需要这样写：<code>${session.message}</code></li>
+<li><code>ServletContext</code><strong>全局属性</strong>（<code>servletContext.setAttribute("message", "application message")</code>），从 application 中取值需要这样写：<code>${application.message}</code></li>
+<li><strong>请求参数</strong>（<code>request.getParameter("message")</code>），从查询参数中取值需要这样写：<code>${param.message}</code></li>
+<li><code>th:with</code><strong>局部变量</strong>（仅限当前作用域）</li>
+</ol>
+<pre lang="html"><code class="language-html md-fencescode"><span class="p">&lt;</span><span class="nt">div</span> <span class="na">th:with</span><span class="o">=</span><span class="s">"message='Local Message'"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">span</span> <span class="na">th:text</span><span class="o">=</span><span class="s">"${message}"</span><span class="p">&gt;&lt;/</span><span class="nt">span</span><span class="p">&gt;</span> <span class="cm">&lt;!-- 输出 "Local Message" --&gt;</span>
+<span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+</code></pre>
+<hr />
+<h2 id="thymeleaf-javascript">Thymeleaf 的内联 JavaScript 语法</h2>
+<pre lang="html"><code class="language-html md-fencescode"><span class="cm">&lt;!-- script脚本中使用Thymeleaf语法需要添加在script标签上添加 th:inline="javascript" --&gt;</span>
+<span class="p">&lt;</span><span class="nt">script</span> <span class="na">th:inline</span><span class="o">=</span><span class="s">"javascript"</span><span class="p">&gt;</span>
+<span class="w">  </span><span class="c1">// Thymeleaf的内联JavaScript语法</span>
+<span class="w">  </span><span class="c1">// 也就是说：/*[[这里可以编写thymeleaf的语法]]*/</span>
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">contextPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="cm">/*[[@{/}]]*/</span><span class="w"> </span><span class="s2">""</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">function</span><span class="w"> </span><span class="nx">deleteByDeptno</span><span class="p">(</span><span class="nx">elt</span><span class="p">){</span>
+<span class="w">    </span><span class="kd">let</span><span class="w"> </span><span class="nx">deptno</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">elt</span><span class="p">.</span><span class="nx">getAttribute</span><span class="p">(</span><span class="s2">"data-deptno"</span><span class="p">);</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="nx">confirm</span><span class="p">(</span><span class="s2">"您确定删除数据吗？"</span><span class="p">)){</span>
+<span class="w">      </span><span class="nb">document</span><span class="p">.</span><span class="nx">location</span><span class="p">.</span><span class="nx">href</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">contextPath</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s2">"deleteByNo?deptno="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">deptno</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</code></pre>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

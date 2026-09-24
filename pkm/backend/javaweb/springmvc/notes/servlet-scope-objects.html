@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>servlet-scope-objects</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="servlet">Servlet中的三个域对象</h1>
+<hr />
+<h2 id="_1">回顾域对象</h2>
+<p>请求域：request</p>
+<p>会话域：session</p>
+<p>应用域：application</p>
+<p>三个域都有以下三个方法：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// 向域中存储数据</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">setAttribute</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="w"> </span><span class="n">obj</span><span class="p">);</span>
+
+<span class="c1">// 从域中读取数据</span>
+<span class="n">Object</span><span class="w"> </span><span class="nf">getAttribute</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">);</span>
+
+<span class="c1">// 删除域中的数据</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">removeAttribute</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">);</span>
+</code></pre>
+<p>主要是通过：setAttribute + getAttribute方法来完成在域中数据的传递和共享。</p>
+<p><strong>request</strong></p>
+<p>接口名：HttpServletRequest</p>
+<p>简称：request</p>
+<p>request对象代表了一次请求。一次请求一个request。</p>
+<p>使用请求域的业务场景：在A资源中通过转发的方式跳转到B资源，因为是转发，因此从A到B是一次请求，如果想让A资源和B资源共享同一个数据，可以将数据存储到request域中。</p>
+<p><strong>session</strong></p>
+<p>接口名：HttpSession</p>
+<p>简称：session</p>
+<p>session对象代表了一次会话。从打开浏览器开始访问，到最终浏览器关闭，这是一次完整的会话。每个会话session对象都对应一个JSESSIONID，而JSESSIONID生成后以cookie的方式存储在浏览器客户端。浏览器关闭，JSESSIONID失效，会话结束。</p>
+<p>使用会话域的业务场景：</p>
+<ol>
+<li>在A资源中通过重定向的方式跳转到B资源，因为是重定向，因此从A到B是两次请求，如果想让A资源和B资源共享同一个数据，可以将数据存储到session域中。</li>
+<li>登录成功后保存用户的登录状态。</li>
+</ol>
+<p><strong>application</strong></p>
+<p>接口名：ServletContext</p>
+<p>简称：application</p>
+<p>application对象代表了整个web应用，服务器启动时创建，服务器关闭时销毁。对于一个web应用来说，application对象只有一个。</p>
+<p>使用应用域的业务场景：记录网站的在线人数。</p>
+<hr />
+<h2 id="request">request域对象</h2>
+<p>在SpringMVC中，在request域中共享数据有以下几种方式：</p>
+<ol>
+<li>使用原生Servlet API方式。</li>
+<li>使用Model接口。</li>
+<li>使用Map接口。</li>
+<li>使用ModelMap类。</li>
+<li>使用ModelAndView类。</li>
+</ol>
+<h3 id="servlet-api">使用原生Servlet API方式</h3>
+<p>在Controller的方法上使用HttpServletRequest：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Controller</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">RequestScopeTestController</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@RequestMapping</span><span class="p">(</span><span class="s">"/testServletAPI"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">testServletAPI</span><span class="p">(</span><span class="n">HttpServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">){</span>
+<span class="w">        </span><span class="c1">// 向request域中存储数据</span>
+<span class="w">        </span><span class="n">request</span><span class="p">.</span><span class="na">setAttribute</span><span class="p">(</span><span class="s">"testRequestScope"</span><span class="p">,</span><span class="w"> </span><span class="s">"在SpringMVC中使用原生Servlet API实现request域数据共享"</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"view"</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>页面：</p>
+<pre lang="html"><code class="language-html md-fencescode"><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">lang</span><span class="o">=</span><span class="s">"en"</span> <span class="na">xmlns:th</span><span class="o">=</span><span class="s">"http://www.thymeleaf.org"</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">"UTF-8"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>view<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">div</span> <span class="na">th:text</span><span class="o">=</span><span class="s">"${testRequestScope}"</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</code></pre>
+<p>超链接：</p>
+<pre lang="html"><code class="language-html md-fencescode"><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">lang</span><span class="o">=</span><span class="s">"en"</span> <span class="na">xmlns:th</span><span class="o">=</span><span class="s">"http://www.thymeleaf.org"</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">"UTF-8"</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>index<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>Index Page<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">a</span> <span class="na">th:href</span><span class="o">=</span><span class="s">"@{/testServletAPI}"</span><span class="p">&gt;</span>在SpringMVC中使用原生Servlet API实现request域数据共享<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;</span><span class="nt">br</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</code></pre>
+<p>测试结果：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710747192867-9c718af0-41ad-4be9-8d48-c2ecdbd90789.png" width="489" title="" crop="0,0,1,1" id="u50ed1ef3" class="ne-image" style="font-size: 16px"></p>
+<p>这种方式当然可以，用SpringMVC框架，不建议使用原生Servlet API。</p>
+<h3 id="model">使用Model接口</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@RequestMapping</span><span class="p">(</span><span class="s">"/testModel"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">testModel</span><span class="p">(</span><span class="n">Model</span><span class="w"> </span><span class="n">model</span><span class="p">){</span>
+<span class="w">    </span><span class="c1">// 向request域中存储数据</span>
+<span class="w">    </span><span class="n">model</span><span class="p">.</span><span class="na">addAttribute</span><span class="p">(</span><span class="s">"testRequestScope"</span><span class="p">,</span><span class="w"> </span><span class="s">"在SpringMVC中使用Model接口实现request域数据共享"</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s">"view"</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="map">使用Map接口</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@RequestMapping</span><span class="p">(</span><span class="s">"/testMap"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">testMap</span><span class="p">(</span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">map</span><span class="p">){</span>
+<span class="w">    </span><span class="c1">// 向request域中存储数据</span>
+<span class="w">    </span><span class="n">map</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"testRequestScope"</span><span class="p">,</span><span class="w"> </span><span class="s">"在SpringMVC中使用Map接口实现request域数据共享"</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s">"view"</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="modelmap">使用ModelMap类</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@RequestMapping</span><span class="p">(</span><span class="s">"/testModelMap"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">testModelMap</span><span class="p">(</span><span class="n">ModelMap</span><span class="w"> </span><span class="n">modelMap</span><span class="p">){</span>
+<span class="w">    </span><span class="c1">// 向request域中存储数据</span>
+<span class="w">    </span><span class="n">modelMap</span><span class="p">.</span><span class="na">addAttribute</span><span class="p">(</span><span class="s">"testRequestScope"</span><span class="p">,</span><span class="w"> </span><span class="s">"在SpringMVC中使用ModelMap实现request域数据共享"</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s">"view"</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="modelmapmodelmap">Model、Map、ModelMap的关系</h3>
+<p>可以在以上Model、Map、ModelMap的测试程序中将其输出，看看输出什么：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710748328132-7ec71a48-8879-4758-824a-a9d669f1594a.png" width="845" title="" crop="0,0,1,1" id="u85bdc93d" class="ne-image" style="font-size: 16px"></p>
+<p>看不出来什么区别，从输出结果上可以看到都是一样的。</p>
+<p>可以将其运行时类名输出：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710748490407-0ab2044c-0261-498d-b55d-ce563afda27d.png" width="788" title="" crop="0,0,1,1" id="u0cb00398" class="ne-image" style="font-size: 16px"></p>
+<p>通过输出结果可以看出，无论是Model、Map还是ModelMap，底层实例化的对象都是：BindingAwareModelMap。</p>
+<p>可以查看BindingAwareModelMap的继承结构：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710748694354-caf9941e-9ce9-4215-bfe7-2d2a759ef206.png" width="511" title="" crop="0,0,1,1" id="u6b7fdd17" class="ne-image" style="font-size: 16px"></p>
+<p>通过继承结构可以看出：BindingAwareModelMap继承了ModelMap，而ModelMap又实现了Map接口。</p>
+<p>另外，请看以下源码：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710748884799-5bad9d0f-9926-4ef0-a29e-7f9e5d6bd383.png" width="757" title="" crop="0,0,1,1" id="ubf08d967" class="ne-image" style="font-size: 16px"></p>
+<p>可以看出ModelMap又实现了Model接口。因此表面上是采用了不同方式，底层本质上是相同的。</p>
+<p>SpringMVC之所以提供了这些方式，目的就是方便程序员的使用，提供了多样化的方式，可见它的重要性。</p>
+<h3 id="modelandview">使用ModelAndView类</h3>
+<p>在SpringMVC框架中为了更好的体现MVC架构模式，提供了一个类：ModelAndView。这个类的实例封装了Model和View。也就是说这个类既封装业务处理之后的数据，也体现了跳转到哪个视图。使用它也可以完成request域数据共享。</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@RequestMapping</span><span class="p">(</span><span class="s">"/testModelAndView"</span><span class="p">)</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">ModelAndView</span><span class="w"> </span><span class="nf">testModelAndView</span><span class="p">(){</span>
+<span class="w">    </span><span class="c1">// 创建“模型与视图对象”</span>
+<span class="w">    </span><span class="n">ModelAndView</span><span class="w"> </span><span class="n">modelAndView</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ModelAndView</span><span class="p">();</span>
+<span class="w">    </span><span class="c1">// 绑定数据</span>
+<span class="w">    </span><span class="n">modelAndView</span><span class="p">.</span><span class="na">addObject</span><span class="p">(</span><span class="s">"testRequestScope"</span><span class="p">,</span><span class="w"> </span><span class="s">"在SpringMVC中使用ModelAndView实现request域数据共享"</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">// 绑定视图</span>
+<span class="w">    </span><span class="n">modelAndView</span><span class="p">.</span><span class="na">setViewName</span><span class="p">(</span><span class="s">"view"</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">// 返回</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">modelAndView</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<p>这种方式需要注意的是：</p>
+<ol>
+<li>方法的返回值类型不是String，而是ModelAndView对象。</li>
+<li>ModelAndView不是出现在方法的参数位置，而是在方法体中new的。</li>
+<li>需要调用addObject向域中存储数据。</li>
+<li>需要调用setViewName设置视图的名字。</li>
+</ol>
+<h3 id="modelandview_1">ModelAndView源码分析</h3>
+<p>以上我们通过了五种方式完成了request域数据共享，包括：原生Servlet API，Model、Map、ModelMap、ModelAndView</p>
+<p>其中后四种：Model、Map、ModelMap、ModelAndView。这四种方式在底层DispatcherServlet调用我们的Controller之后，返回的对象都是ModelAndView，这个可以通过源码进行分析。</p>
+<p>在以上四种方式中，拿Model举例，添加断点进行调试：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710750710855-53e8ffdd-b563-453e-afb4-70648684e619.png" width="749" title="" crop="0,0,1,1" id="u579b6322" class="ne-image" style="font-size: 16px"></p>
+<p>启动服务器，发送请求，走到断点：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710750795816-555dfc56-ccf2-43b4-b516-a737336d1e4f.png" width="591" title="" crop="0,0,1,1" id="u38449060" class="ne-image" style="font-size: 16px"></p>
+<p>查看VM Stack信息：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764502506969-7d415950-4424-4c95-989c-02838aa265b8.png" width="604.8" title="" crop="0,0,1,1" id="u878d6b36" class="ne-image" style="font-size: 16px"></p>
+<p>查看DispatcherServlet的1089行，源码如下：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710750933440-8254f738-2716-4f56-8610-4814e6fdecbf.png" width="1123" title="" crop="0,0,1,1" id="u56c3d766" class="ne-image" style="font-size: 16px"></p>
+<p>可以看到这里，无论你使用哪种方式，最终都要返回一个ModelAndView对象。</p>
+<p>提醒：大家可以通过以下断点调试方式，采用一级一级返回，最终可以看到都会返回ModelAndView对象。</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710751055879-078ad592-a894-45fe-8d4d-1a74d9c8db79.png" width="357" title="" crop="0,0,1,1" id="u09e6abc5" class="ne-image" style="font-size: 16px"></p>
+<hr />
+<h2 id="session">session域对象</h2>
+<p>在SpringMVC中使用session域共享数据，实现方式有多种，其中比较常见的两种方式：</p>
+<ol>
+<li>使用原生Servlet API</li>
+<li>使用SessionAttributes注解</li>
+</ol>
+<h3 id="servlet-api_1">使用原生Servlet API</h3>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Controller</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">SessionScopeTestController</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@RequestMapping</span><span class="p">(</span><span class="s">"/testSessionScope1"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">testServletAPI</span><span class="p">(</span><span class="n">HttpSession</span><span class="w"> </span><span class="n">session</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 向会话域中存储数据</span>
+<span class="w">        </span><span class="n">session</span><span class="p">.</span><span class="na">setAttribute</span><span class="p">(</span><span class="s">"testSessionScope1"</span><span class="p">,</span><span class="w"> </span><span class="s">"使用原生Servlet API实现session域共享数据"</span><span class="p">);</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"view"</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="p">}</span>
+</code></pre>
+<p>视图页面：</p>
+<pre lang="html"><code class="language-html md-fencescode"><span class="p">&lt;</span><span class="nt">div</span> <span class="na">th:text</span><span class="o">=</span><span class="s">"${session.testSessionScope1}"</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+</code></pre>
+<p>超链接：</p>
+<pre lang="html"><code class="language-html md-fencescode"><span class="p">&lt;</span><span class="nt">a</span> <span class="na">th:href</span><span class="o">=</span><span class="s">"@{/testSessionScope1}"</span><span class="p">&gt;</span>在SpringMVC中使用原生Servlet API实现session域共享数据<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;</span><span class="nt">br</span><span class="p">&gt;</span>
+</code></pre>
+<h3 id="sessionattributes">使用SessionAttributes注解</h3>
+<p>使用SessionAttributes注解标注Controller：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Controller</span>
+<span class="nd">@SessionAttributes</span><span class="p">(</span><span class="n">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="s">"x"</span><span class="p">,</span><span class="w"> </span><span class="s">"y"</span><span class="p">})</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">SessionScopeTestController</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@RequestMapping</span><span class="p">(</span><span class="s">"/testSessionScope2"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">testSessionAttributes</span><span class="p">(</span><span class="n">ModelMap</span><span class="w"> </span><span class="n">modelMap</span><span class="p">){</span>
+<span class="w">        </span><span class="c1">// 向session域中存储数据</span>
+<span class="w">        </span><span class="n">modelMap</span><span class="p">.</span><span class="na">addAttribute</span><span class="p">(</span><span class="s">"x"</span><span class="p">,</span><span class="w"> </span><span class="s">"我是埃克斯"</span><span class="p">);</span>
+<span class="w">        </span><span class="n">modelMap</span><span class="p">.</span><span class="na">addAttribute</span><span class="p">(</span><span class="s">"y"</span><span class="p">,</span><span class="w"> </span><span class="s">"我是歪"</span><span class="p">);</span>
+
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"view"</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>注意：SessionAttributes注解使用在Controller类上。标注了当key是 x 或者 y 时，数据将被存储到会话session中。如果没有 SessionAttributes注解，默认存储到request域中。</p>
+<hr />
+<h2 id="application">application域对象</h2>
+<p>在SpringMVC实现application域数据共享，最常见的方案就是直接使用Servlet API了：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@Controller</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">ApplicationScopeTestController</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@RequestMapping</span><span class="p">(</span><span class="s">"/testApplicationScope"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">testApplicationScope</span><span class="p">(</span><span class="n">HttpServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">){</span>
+
+<span class="w">        </span><span class="c1">// 获取ServletContext对象</span>
+<span class="w">        </span><span class="n">ServletContext</span><span class="w"> </span><span class="n">application</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">request</span><span class="p">.</span><span class="na">getServletContext</span><span class="p">();</span>
+
+<span class="w">        </span><span class="c1">// 向应用域中存储数据</span>
+<span class="w">        </span><span class="n">application</span><span class="p">.</span><span class="na">setAttribute</span><span class="p">(</span><span class="s">"applicationScope"</span><span class="p">,</span><span class="w"> </span><span class="s">"我是应用域当中的一条数据"</span><span class="p">);</span>
+
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"view"</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>视图页面：</p>
+<pre lang="html"><code class="language-html md-fencescode"><span class="p">&lt;</span><span class="nt">div</span> <span class="na">th:text</span><span class="o">=</span><span class="s">"${application.applicationScope}"</span><span class="p">&gt;&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+</code></pre>
+<p>超链接：</p>
+<pre lang="html"><code class="language-html md-fencescode"><span class="p">&lt;</span><span class="nt">a</span> <span class="na">th:href</span><span class="o">=</span><span class="s">"@{/testApplicationScope}"</span><span class="p">&gt;</span>在SpringMVC中使用ServletAPI实现application域共享数据<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;&lt;</span><span class="nt">br</span><span class="p">&gt;</span>
+</code></pre>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

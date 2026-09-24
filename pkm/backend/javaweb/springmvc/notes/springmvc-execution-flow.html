@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>springmvc-execution-flow</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="springmvc">SpringMVC 执行流程</h1>
+<hr />
+<h2 id="springmvc_1">SpringMVC 九大核心角色</h2>
+<p><strong><em>*前端控制器（DispatcherServlet）</em></strong>*</p>
+<ul>
+<li><strong><em>*角色</em></strong><strong>*：中央调度器、总指挥</strong></li>
+<li><strong><em>*职责</em></strong><strong>*：接收所有请求，统一分发和协调</strong></li>
+</ul>
+<p><strong><em>*处理器映射器（HandlerMapping）</em></strong>*</p>
+<ul>
+<li><strong><em>*角色</em></strong><strong>*：路由导航员</strong></li>
+<li><strong><em>*职责</em></strong><strong>*：根据请求URL找到对应的处理器（建立URL→处理器的映射）</strong></li>
+</ul>
+<p><strong><em>*处理器执行链（HandlerExecutionChain）</em></strong>*</p>
+<ul>
+<li><strong><em>*角色</em></strong><strong>*：执行任务包</strong></li>
+<li><strong><em>*职责</em></strong><strong><em>：封装</em></strong><strong><em>处理器方法</em></strong><strong><em>*</em></strong>+<strong><em>*</em></strong><strong><em>拦截器集合</em></strong><strong>*，形成完整的执行单元</strong></li>
+</ul>
+<p><strong><em>*处理器（Handler）</em></strong>*</p>
+<ul>
+<li><strong><em>*角色</em></strong><strong>*：业务执行者（通常是Controller）</strong></li>
+<li><strong><em>*职责</em></strong><strong>*：执行业务逻辑，处理具体请求</strong></li>
+</ul>
+<p><strong><em>*处理器适配器（HandlerAdapter）</em></strong>*</p>
+<ul>
+<li><strong><em>*角色</em></strong><strong>*：万能转换器</strong></li>
+<li><strong><em>*职责</em></strong><strong>*：适配不同处理器类型，让DispatcherServlet能用统一方式调用它们</strong></li>
+</ul>
+<p><strong><em>*拦截器（Interceptor）</em></strong>*</p>
+<ul>
+<li><strong><em>*角色</em></strong><strong>*：AOP切面卫士</strong></li>
+<li><strong><em>*职责</em></strong><strong>*：在处理器前后插入通用逻辑（权限、日志等）</strong></li>
+</ul>
+<p><strong><em>*ModelAndView</em></strong>*</p>
+<ul>
+<li><strong><em>*角色</em></strong><strong>*：数据视图封装器</strong></li>
+<li><strong><em>*职责</em></strong><strong>*：携带业务数据（Model）+ 视图信息（View）</strong></li>
+</ul>
+<p><strong><em>*视图解析器（ViewResolver）</em></strong>*</p>
+<ul>
+<li><strong><em>*角色</em></strong><strong>*：视图定位器</strong></li>
+<li><strong><em>*职责</em></strong><strong>*：将逻辑视图名（如"home"）解析为具体视图对象（如home.jsp）</strong></li>
+</ul>
+<p><strong><em>*视图（View）</em></strong>*</p>
+<ul>
+<li><strong><em>*角色</em></strong><strong>*：页面渲染器</strong></li>
+<li><strong><em>*职责</em></strong><strong>*：最终渲染HTML/JSON等响应内容</strong></li>
+</ul>
+<hr />
+<h2 id="_1">从源码角度看执行流程</h2>
+<p>以下是核心代码：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">DispatcherServlet</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">FrameworkServlet</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">protected</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">doDispatch</span><span class="p">(</span><span class="n">HttpServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">HttpServletResponse</span><span class="w"> </span><span class="n">response</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 根据请求对象获取处理器执行链</span>
+<span class="w">        </span><span class="c1">// 处理器执行链中封装了：处理器方法 和 拦截器集合</span>
+<span class="w">        </span><span class="n">HandlerExecutionChain</span><span class="w"> </span><span class="n">mappedHandler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getHandler</span><span class="p">(</span><span class="n">processedRequest</span><span class="p">);</span><span class="w"> </span><span class="c1">// 该方法底层调用了处理器映射器（根据请求路径找到对应处理器方法）</span>
+
+<span class="w">        </span><span class="c1">// 通过处理器执行链获取处理器</span>
+<span class="w">        </span><span class="c1">// 根据处理器获取适合的处理器适配器</span>
+<span class="w">        </span><span class="c1">// 为什么需要一个处理器适配器？</span>
+<span class="w">        </span><span class="c1">// 因为处理器类型多样（Controller、HttpRequestHandler等），适配器模式让DispatcherServlet能用统一方式调用它们。</span>
+<span class="w">        </span><span class="n">HandlerAdapter</span><span class="w"> </span><span class="n">ha</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getHandlerAdapter</span><span class="p">(</span><span class="n">mappedHandler</span><span class="p">.</span><span class="na">getHandler</span><span class="p">());</span>
+
+<span class="w">        </span><span class="c1">// 顺序执行所有拦截器中的 preHandle 方法</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">mappedHandler</span><span class="p">.</span><span class="na">applyPreHandle</span><span class="p">(</span><span class="n">processedRequest</span><span class="p">,</span><span class="w"> </span><span class="n">response</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="c1">// 通过处理器适配器调用处理器方法</span>
+<span class="w">        </span><span class="c1">// 在调用处理器方法之前会进行数据绑定，将表单提交的数据绑定到处理器方法上。（底层是通过WebDataBinder完成的）</span>
+<span class="w">        </span><span class="c1">// 如果有@RequestBody注解，则数据绑定的过程中会使用到消息转换器：HttpMessageConverter</span>
+<span class="w">        </span><span class="c1">// 结束后返回ModelAndView对象</span>
+<span class="w">        </span><span class="n">mv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ha</span><span class="p">.</span><span class="na">handle</span><span class="p">(</span><span class="n">processedRequest</span><span class="p">,</span><span class="w"> </span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">mappedHandler</span><span class="p">.</span><span class="na">getHandler</span><span class="p">());</span>
+
+<span class="w">        </span><span class="c1">//  逆序执行所有拦截器中的 postHandle 方法</span>
+<span class="w">        </span><span class="n">mappedHandler</span><span class="p">.</span><span class="na">applyPostHandle</span><span class="p">(</span><span class="n">processedRequest</span><span class="p">,</span><span class="w"> </span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">mv</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 处理分发结果（在这个方法中完成了响应）</span>
+<span class="w">        </span><span class="n">processDispatchResult</span><span class="p">(</span><span class="n">processedRequest</span><span class="p">,</span><span class="w"> </span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="n">mappedHandler</span><span class="p">,</span><span class="w"> </span><span class="n">mv</span><span class="p">,</span><span class="w"> </span><span class="n">dispatchException</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="c1">// 根据每一次的请求对象来获取处理器执行链对象</span>
+<span class="w">    </span><span class="c1">// 底层就是通过处理器映射器找到处理器方法，并将处理器方法（HandlerMethod）和拦截器集合封装为处理器执行链对象。</span>
+<span class="w">    </span><span class="kd">protected</span><span class="w"> </span><span class="n">HandlerExecutionChain</span><span class="w"> </span><span class="nf">getHandler</span><span class="p">(</span><span class="n">HttpServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="na">handlerMappings</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">HandlerMapping</span><span class="w"> </span><span class="n">mapping</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="na">handlerMappings</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="n">HandlerExecutionChain</span><span class="w"> </span><span class="n">handler</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">mapping</span><span class="p">.</span><span class="na">getHandler</span><span class="p">(</span><span class="n">request</span><span class="p">);</span>
+<span class="w">                </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">handler</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                    </span><span class="k">return</span><span class="w"> </span><span class="n">handler</span><span class="p">;</span>
+<span class="w">                </span><span class="p">}</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">processDispatchResult</span><span class="p">(</span><span class="n">HttpServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">HttpServletResponse</span><span class="w"> </span><span class="n">response</span><span class="p">,</span>
+<span class="w">            </span><span class="nd">@Nullable</span><span class="w"> </span><span class="n">HandlerExecutionChain</span><span class="w"> </span><span class="n">mappedHandler</span><span class="p">,</span><span class="w"> </span><span class="nd">@Nullable</span><span class="w"> </span><span class="n">ModelAndView</span><span class="w"> </span><span class="n">mv</span><span class="p">,</span>
+<span class="w">            </span><span class="nd">@Nullable</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="n">exception</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 渲染</span>
+<span class="w">        </span><span class="n">render</span><span class="p">(</span><span class="n">mv</span><span class="p">,</span><span class="w"> </span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">response</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 渲染完毕后，调用该请求对应的所有拦截器的 afterCompletion方法。</span>
+<span class="w">        </span><span class="n">mappedHandler</span><span class="p">.</span><span class="na">triggerAfterCompletion</span><span class="p">(</span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="kc">null</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">protected</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">render</span><span class="p">(</span><span class="n">ModelAndView</span><span class="w"> </span><span class="n">mv</span><span class="p">,</span><span class="w"> </span><span class="n">HttpServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">HttpServletResponse</span><span class="w"> </span><span class="n">response</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 通过视图解析器返回视图对象</span>
+<span class="w">        </span><span class="n">view</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">resolveViewName</span><span class="p">(</span><span class="n">viewName</span><span class="p">,</span><span class="w"> </span><span class="n">mv</span><span class="p">.</span><span class="na">getModelInternal</span><span class="p">(),</span><span class="w"> </span><span class="n">locale</span><span class="p">,</span><span class="w"> </span><span class="n">request</span><span class="p">);</span>
+<span class="w">        </span><span class="c1">// 真正的渲染视图</span>
+<span class="w">        </span><span class="n">view</span><span class="p">.</span><span class="na">render</span><span class="p">(</span><span class="n">mv</span><span class="p">.</span><span class="na">getModelInternal</span><span class="p">(),</span><span class="w"> </span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">response</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">protected</span><span class="w"> </span><span class="n">View</span><span class="w"> </span><span class="nf">resolveViewName</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">viewName</span><span class="p">,</span><span class="w"> </span><span class="nd">@Nullable</span><span class="w"> </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">model</span><span class="p">,</span>
+<span class="w">            </span><span class="n">Locale</span><span class="w"> </span><span class="n">locale</span><span class="p">,</span><span class="w"> </span><span class="n">HttpServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 通过视图解析器返回视图对象</span>
+<span class="w">        </span><span class="n">View</span><span class="w"> </span><span class="n">view</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">viewResolver</span><span class="p">.</span><span class="na">resolveViewName</span><span class="p">(</span><span class="n">viewName</span><span class="p">,</span><span class="w"> </span><span class="n">locale</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">ViewResolver</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">View</span><span class="w"> </span><span class="nf">resolveViewName</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">viewName</span><span class="p">,</span><span class="w"> </span><span class="n">Locale</span><span class="w"> </span><span class="n">locale</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">View</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">render</span><span class="p">(</span><span class="nd">@Nullable</span><span class="w"> </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="o">?&gt;</span><span class="w"> </span><span class="n">model</span><span class="p">,</span><span class="w"> </span><span class="n">HttpServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">HttpServletResponse</span><span class="w"> </span><span class="n">response</span><span class="p">)</span>
+<span class="w">            </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<hr />
+<h2 id="_2">从画图角度看执行流程</h2>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711943505835-476f954e-ba6c-4a78-b16b-683524e25520.png" width="1508" title="" crop="0,0,1,1" id="u96674032" class="ne-image" style="font-size: 16px"></p>
+<p><strong>SpringMVC 执行流程文字性的描述：</strong></p>
+<ol>
+<li><strong>用户发送请求到</strong><strong><em>*前端控制器（DispatcherServlet）</em></strong>*</li>
+<li><strong>控制器调用</strong><strong><em>*</em></strong><em>doDispatch()</em><strong><em>*</em></strong><strong>方法进行统一分发</strong></li>
+<li><strong>通过</strong><strong><em>*处理器映射器（HandlerMapping）</em></strong><strong><em>*</em></strong>查找对应的<strong><em>*</em>*处理器执行链（HandlerExecutionChain）</strong>**</li>
+<li><strong>执行链包含：</strong><strong><em>*处理器方法（HandlerMethod）</em></strong><strong><em>*</em></strong>+<strong><em>*</em></strong><strong><em>拦截器列表（Interceptors）</em></strong>*</li>
+<li><strong>根据</strong><strong><em>*处理器类型</em></strong><strong><em>获取对应的</em></strong><strong><em>处理器适配器（HandlerAdapter）</em></strong>*</li>
+<li><strong><em>*顺序执行</em></strong><strong><em>所有拦截器的</em></strong><strong><em>*</em></strong>preHandle()<strong><em>*</em></strong><strong>*方法</strong></li>
+<li><strong>适配器调用处理器的目标方法执行业务逻辑</strong></li>
+<li><strong>处理器返回</strong><strong><em>*逻辑视图名</em></strong><strong>*给适配器</strong></li>
+<li><strong>适配器封装成</strong><strong><em>*</em></strong><em>ModelAndView</em><strong><em>*</em></strong><strong>返回给前端控制器</strong></li>
+<li><strong><em>*逆序执行</em></strong><strong><em>拦截器的</em></strong><strong><em>*</em></strong>postHandle()<strong><em>*</em></strong><strong>*方法</strong></li>
+<li><strong>前端控制器调用</strong><strong><em>*视图解析器（ViewResolver）</em></strong><strong>*解析视图（View）</strong></li>
+<li><strong>视图(View)进行渲染并返回响应</strong></li>
+<li><strong><em>*逆序执行</em></strong><strong><em>拦截器的</em></strong><strong><em>afterCompletion()</em></strong><strong>*方法（无论成功失败都会执行）</strong></li>
+</ol>
+<hr />
+<h2 id="_3">处理器映射器和处理器适配器的创建时机</h2>
+<p>先搞明白核心类的继承关系：</p>
+<p><strong>DispatcherServlet</strong> extends <strong>FrameworkServlet</strong> extends <strong>HttpServletBean</strong> extends <strong>HttpServlet</strong> extends <strong>GenericServlet</strong> implements <strong>Servlet</strong></p>
+<p>服务器启动阶段完成了：</p>
+<ol>
+<li>初始化Spring上下文，也就是创建所有的bean，让IoC容器将其管理起来。</li>
+<li>初始化SpringMVC相关的对象：处理器映射器，处理器适配器等。。。</li>
+</ol>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711945073073-1466293a-37a5-4e04-a628-00225ec9ad8f.png" width="1035" title="" crop="0,0,1,1" id="u358e4869" class="ne-image" style="font-size: 16px"></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711945189838-6546c84c-23c9-479d-b2df-893851fdb912.png" width="842" title="" crop="0,0,1,1" id="u1c451def" class="ne-image" style="font-size: 16px"></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711945264590-8b563ba5-bf2a-4e27-8695-9a0ee2577f2a.png" width="1280" title="" crop="0,0,1,1" id="udcc03fa7" class="ne-image" style="font-size: 16px"></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711945298853-016466d1-3882-461f-8ac5-296983a67d24.png" width="1348" title="" crop="0,0,1,1" id="ufef5ee9d" class="ne-image" style="font-size: 16px"></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711945338150-b4f14a20-cc75-4915-9651-51acbffcd872.png" width="805" title="" crop="0,0,1,1" id="u3f47fae4" class="ne-image" style="font-size: 16px"></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711945352375-01882059-ab91-4668-a595-eb83ca01344c.png" width="815" title="" crop="0,0,1,1" id="u935e0db6" class="ne-image" style="font-size: 16px"></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711945371377-87ac618e-495f-4fe9-92c4-50a1f2c199d8.png" width="757" title="" crop="0,0,1,1" id="u63c8bc73" class="ne-image" style="font-size: 16px"></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711945408231-6e96abeb-ceff-480e-9f2c-72bfa2a5d419.png" width="748" title="" crop="0,0,1,1" id="u9d958078" class="ne-image" style="font-size: 16px"></p>
+<hr />
+<h2 id="_4">常见面试题</h2>
+<p><strong><em>*Q：处理器映射器和适配器什么时候创建？</em></strong>*</p>
+<p><strong>在Spring容器启动时，DispatcherServlet初始化阶段创建的。具体是在</strong><code>**initStrategies()**</code><strong>方法中，通过</strong><code>**initHandlerMappings()**</code><strong>和</strong><code>**initHandlerAdapters()**</code><strong>方法从Spring容器中获取所有相关Bean，并按优先级排序后缓存在DispatcherServlet中。这样请求到来时就能直接使用，不需要每次请求都重新创建。</strong></p>
+<hr />
+<p><strong><em>*Q：请你描述一下 SpringMVC 的执行流程？</em></strong>*</p>
+<ol>
+<li><strong>用户发送请求到</strong><strong><em>*前端控制器（DispatcherServlet）</em></strong>*</li>
+<li><strong>控制器调用</strong><strong><em>*</em></strong><em>doDispatch()</em><strong><em>*</em></strong><strong>方法进行统一分发</strong></li>
+<li><strong>通过</strong><strong><em>*处理器映射器（HandlerMapping）</em></strong><strong><em>*</em></strong>查找对应的<strong><em>*</em>*处理器执行链（HandlerExecutionChain）</strong>**</li>
+<li><strong>执行链包含：</strong><strong><em>*处理器方法（HandlerMethod）</em></strong><strong><em>*</em></strong>+<strong><em>*</em></strong><strong><em>拦截器列表（Interceptors）</em></strong>*</li>
+<li><strong>根据处理器类型获取对应的</strong><strong><em>*处理器适配器（HandlerAdapter）</em></strong>*</li>
+<li><strong><em>*顺序执行</em></strong><strong><em>所有拦截器的</em></strong><strong><em>*</em></strong>preHandle()<strong><em>*</em></strong><strong>*方法</strong></li>
+<li><strong>适配器调用处理器的目标方法执行业务逻辑</strong></li>
+<li><strong>处理器返回</strong><strong><em>*逻辑视图名</em></strong><strong>*给适配器</strong></li>
+<li><strong>适配器封装成</strong><strong><em>*</em></strong><em>ModelAndView</em><strong><em>*</em></strong><strong>返回给前端控制器</strong></li>
+<li><strong><em>*逆序执行</em></strong><strong><em>拦截器的</em></strong><strong><em>*</em></strong>postHandle()<strong><em>*</em></strong><strong>*方法</strong></li>
+<li><strong>前端控制器调用</strong><strong><em>*视图解析器（ViewResolver）</em></strong><strong><em>*</em></strong>解析视图**</li>
+<li><strong>视图进行渲染并返回响应</strong></li>
+<li><strong><em>*逆序执行</em></strong><strong><em>拦截器的</em></strong><strong><em>afterCompletion()</em></strong><strong>*方法（抛异常了也会执行）</strong></li>
+</ol>
+<hr />
+<p><strong><em>*Q：DispatcherServlet的作用？</em></strong><strong><em>*</em></strong>它是Spring MVC的总指挥，负责请求分发、协调各组件工作。**</p>
+<hr />
+<p><strong><em>*Q：为什么需要HandlerAdapter？</em></strong><strong><em>*</em></strong>因为处理器类型多样（Controller、HttpRequestHandler等），适配器模式让DispatcherServlet能用统一方式调用它们。**</p>
+<hr />
+<p><strong><em>*Q：拦截器三个方法的执行时机？</em></strong><strong><em>*</em></strong>preHandle在处理器前，postHandle在处理器后但视图渲染前，afterCompletion在视图渲染后。**</p>
+<hr />
+<p><strong><em>*Q：过滤器和拦截器在流程中的位置？</em></strong><strong><em>*</em></strong>过滤器在最外层（Tomcat层面），然后才进入Spring MVC的DispatcherServlet → 拦截器 → 处理器。**</p>
+<hr />
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

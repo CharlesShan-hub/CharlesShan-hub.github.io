@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>spring-security-quick-start</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="spring-security">Spring Security 快速入门</h1>
+<div class="toc">
+<ul>
+<li><a href="#spring-security">Spring Security 快速入门</a><ul>
+<li><a href="#1-overview">1. Overview</a></li>
+<li><a href="#2-authentication">2. authentication (身份认证)</a><ul>
+<li><a href="#spring-boot">创建 Spring Boot 项目</a></li>
+<li><a href="#spring-security_1">Spring Security 帮我们做了什么</a></li>
+</ul>
+</li>
+<li><a href="#spring-security_2">Spring Security 的底层原理</a><ul>
+<li><a href="#filter-chain">核心架构：过滤器链(Filter Chain)</a></li>
+<li><a href="#delegatingfilterproxy">核心过滤器 DelegatingFilterProxy</a></li>
+<li><a href="#filterchainproxy">过滤器链的 代理管理器 FilterChainProxy</a></li>
+<li><a href="#securityfilterchain">过滤器链 SecurityFilterChain</a></li>
+<li><a href="#security">总结 Security 底层实现原理</a></li>
+</ul>
+</li>
+<li><a href="#_1">默认过滤器链</a><ul>
+<li><a href="#_2">配置日志</a></li>
+<li><a href="#_3">断点调试</a></li>
+<li><a href="#16">16 个过滤器简单说明</a></li>
+</ul>
+</li>
+<li><a href="#securityproperties">SecurityProperties</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<h2 id="1-overview">1. Overview</h2>
+<ol>
+<li>官方文档： <a href="https://docs.spring.io/spring-security/reference/index.html">https://docs.spring.io/spring-security/reference/index.html</a></li>
+<li>官方代码示例： <a href="https://github.com/spring-projects/spring-security-samples/tree/main">https://github.com/spring-projects/spring-security-samples/tree/main</a></li>
+<li>主要内容：认证 + 授权<ol>
+<li>身份认证：身份认证是验证 <code>谁正在访问系统资源</code>，判断用户是否为合法用户。认证用户的常见方式是要求用户输入用户名和密码。</li>
+<li>授权：用户进行身份认证后，系统会控制 <code>谁能访问哪些资源</code>，这个过程叫做授权。用户无法访问没有权限的资源。</li>
+</ol>
+</li>
+<li>记住几个单词<ol>
+<li><code>authenticate</code> ：动词，认证。（登录的动作）</li>
+<li><code>authentication</code> ：名词，凭证。（登录成功得到的入场券，凭证中含有权限列表 ）</li>
+<li><code>authority</code> ：名词，权限。</li>
+<li><code>authorize</code> ：动词，授权。</li>
+</ol>
+</li>
+</ol>
+<h2 id="2-authentication">2. authentication (身份认证)</h2>
+<p>本案例，创建了一个最简单的springboot项目，设置了一个接口，不引入安全相关的依赖的时候，可以随便访问；如果加入了安全相关的依赖，访问受保护的资源，界面会弹出Spring Security内置的登陆界面，退出登录也会弹出内置的登出界面。</p>
+<h3 id="spring-boot">创建 Spring Boot 项目</h3>
+<ul>
+<li>创建 Spring Boot 项目，项目名为：<code>spring-security-demo</code></li>
+<li>JDK 版本采用：<code>21</code></li>
+<li>创建项目过程中选择这些依赖：<code>web</code>、<code>security</code>、<code>thymeleaf</code></li>
+<li>在<code>application.yaml</code>创建默认账号密码（不指定的话用户名是user，密码随机生成）</li>
+</ul>
+<pre lang="yaml"><code class="language-yaml md-fencescode"><span class="nt">spring</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">security</span><span class="p">:</span>
+<span class="w">        </span><span class="nt">user</span><span class="p">:</span>
+<span class="w">            </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">admin</span>
+<span class="w">            </span><span class="nt">password</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">123456</span>
+</code></pre>
+<ul>
+<li>创建 IndexController</li>
+</ul>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.jkweilai.spring.security.demo.controller</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.stereotype.Controller</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.springframework.web.bind.annotation.GetMapping</span><span class="p">;</span>
+
+<span class="nd">@Controller</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">IndexController</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="nd">@GetMapping</span><span class="p">(</span><span class="s">"/"</span><span class="p">)</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">index</span><span class="p">(){</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"home"</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<ul>
+<li>创建 home.html：在 <code>templates</code> 目录下新建 <code>home.html</code></li>
+</ul>
+<pre lang="html"><code class="language-html md-fencescode"><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="p">&lt;</span><span class="nt">html</span> <span class="na">lang</span><span class="o">=</span><span class="s">"en"</span> <span class="na">xmlns:th</span><span class="o">=</span><span class="s">"https://www.thymeleaf.org"</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">head</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">meta</span> <span class="na">charset</span><span class="o">=</span><span class="s">"UTF-8"</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">title</span><span class="p">&gt;</span>这是一个受Spring Security保护的资源<span class="p">&lt;/</span><span class="nt">title</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">head</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>你好，Spring Security！<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+<span class="cm">&lt;!-- 注意:Spring Security中自动为我们提供了 /logout 请求的默认处理流程--&gt;</span>
+<span class="p">&lt;</span><span class="nt">a</span> <span class="na">th:href</span><span class="o">=</span><span class="s">"@{/logout}"</span><span class="p">&gt;</span>退出系统<span class="p">&lt;/</span><span class="nt">a</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">body</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">html</span><span class="p">&gt;</span>
+</code></pre>
+<ul>
+<li>启动项目测试</li>
+</ul>
+<p>访问地址：<a href="http://localhost:8080/">http://localhost: 8080/</a>，浏览器自动跳转到登录页面：<a href="http://localhost:8080/login">http://localhost: 8080/login</a></p>
+<p><strong>Spring Security 默认提供了一个用户：</strong> <code>user</code></p>
+<p>密码在启动项目时的控制台上可以查看，如下图所示：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1758891473687-e95e00f3-e8b8-42d2-b9fc-b64fa114a65f.png" width="865.3333333333334" title="" crop="0,0,1,1" id="u92ff864f" class="ne-image" style="font-size: 16px"></p>
+<p>输入用户名和密码之后，点击 <code>Sign in</code>，登录成功，**才会执行受保护的 ** <code>IndexController</code>，最终跳转到 <code>home.html</code>，如下图：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1758891544329-8598fecb-0b23-4355-a986-0edb2a65d6d6.png" width="395.3333333333333" title="" crop="0,0,1,1" id="ue791eb1c" class="ne-image" style="font-size: 16px"></p>
+<p>点击退出系统时，会自动跳转到提示页面：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1758891604109-2496bcdb-29ff-4450-9c21-2b4e4321f55d.png" width="360.6666666666667" title="" crop="0,0,1,1" id="uc82cad9b" class="ne-image" style="font-size: 16px"></p>
+<p>点击 <code>Log Out</code> 后退出系统：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1758891634303-2b58a95c-7fbc-4ce6-8dee-6e1bff0c015a.png" width="370.6666666666667" title="" crop="0,0,1,1" id="u0ed70ec7" class="ne-image" style="font-size: 16px"></p>
+<h3 id="spring-security_1">Spring Security 帮我们做了什么</h3>
+<ol>
+<li>
+<p><strong>保护应用程序 URL，要求对应用程序的任何交互进行身份验证</strong>
+<strong>只要你项目中引入 SpringSecurity 的依赖</strong>。 Spring Security 默认会把你整个网站的所有页面和接口都“锁起来”。任何人想访问，都必须先登录（证明自己是合法用户）。除了少数几个默认的端点（如 /login, /error），其他所有请求路径默认都需要认证。你可以通过配置来改变哪些路径需要认证，哪些可以公开访问。</p>
+</li>
+<li>
+<p><strong>程序启动时生成一个默认用户：user</strong></p>
+</li>
+</ol>
+<p>为了方便你第一次启动项目就能登录测试，Spring Security 会自动创建一个临时账户，用户名就叫 user。只要你没有在配置文件（如 application.properties）中指定自己的用户名和密码，这个默认用户就会被创建。</p>
+<ol>
+<li><strong>生成一个默认的随机密码，并将此密码记录在控制台上</strong></li>
+</ol>
+<p>每次启动应用密码都会变，所以你必须在程序启动时，去 IDE 的控制台日志里找到它才能登录。</p>
+<ol>
+<li><strong>生成默认的登录表单，提供了基于表单的登录，以及注销流程</strong></li>
+</ol>
+<p>它自动给你做了一个非常简单的登录页面（你访问任何受保护的页面都会跳转到这个页面）和一个处理退出的功能。你不需要自己写这两个页面的 HTML 代码。它帮你把“用户输入用户名密码提交登录”和“用户点击退出”这一整套逻辑都做好了。你只需要用就行了。</p>
+<ol>
+<li><strong>对于 Web 请求，重定向到登录页面；对于服务请求，返回 401 未经授权</strong></li>
+</ol>
+<p>Web 请求：比如你在浏览器里直接输入网站地址。如果没登录，它会友好地跳转到登录页面，让你去登录。</p>
+<p>服务请求：比如前端 JavaScript 用 Ajax 调用一个后端 API 接口。如果没登录，它不会返回一个 HTML 登录页面（因为前端程序看不懂），而是直接返回一个标准的 HTTP 401 状态码，告诉前端“你未经授权，请先认证”。</p>
+<ol>
+<li><strong>防止 CSRF 攻击（跨站请求伪造攻击）（</strong> 默认开启 <strong>）</strong></li>
+</ol>
+<p><strong>CSRF 攻击：</strong></p>
+<ol>
+<li>你登录了网银系统，网银系统给你颁发了令牌，令牌存储在浏览器的 cookie 中。</li>
+<li>你没有关闭浏览器，在同一个浏览器中，你浏览了其他网站，黑客诱导你点击了某个链接。</li>
+<li>这个链接自动向网银发起转账请求，只要请求路径是网银系统的路径，那么请求路径关联的 Cookie 就会自动提交，这是浏览器的默认行为。</li>
+<li>因为网银收到了合法 Cookie，网银会认为这是合法的请求，完成向黑客账户的转账。</li>
+</ol>
+<p><strong>Spring Security 的做法</strong>：</p>
+<ol>
+<li>它会为 <strong>每个表单</strong> 生成一个唯一的、随机的“令牌”（Token）。</li>
+<li>当提交表单时，必须把这个令牌也一起提交上来。服务器会验证令牌是否正确。</li>
+</ol>
+<p><strong>核心原理：</strong></p>
+<ol>
+<li><strong>Cookie</strong>：浏览器自动带，黑客能用</li>
+<li><strong>Spring Security 为表单生成的 Token</strong>：藏在表单里，每次不同，黑客拿不到（<strong>同源策略保护</strong>）</li>
+<li><strong>提供了多种安全机制来防御会话相关的攻击（</strong> HttpOnly 默认开启, Secure 非默认开启 <strong>）</strong></li>
+</ol>
+<p><strong>安全的 Cookie 标志</strong>：它会在你的登录凭证 Cookie 上设置 HttpOnly 和 Secure 属性。HttpOnly 能防止 JavaScript 窃取 Cookie，Secure 要求 Cookie 只能在 HTTPS 连接下传输。</p>
+<ol>
+<li><strong>写入 Strict-Transport-Security 以确保 HTTPS（</strong> 非默认开启的 <strong>）</strong></li>
+</ol>
+<p>Spring Security 默认是不开启自动写入 Strict-Transport-Security 到响应头的。如果我们在 Spring Security 框架中开启了自动写入 Strict-Transport-Security 到响应头。用户通过 HTTPS 成功访问网站一次，浏览器就会记住 "此站点必须使用 HTTPS" 的规则，后续所有访问（包括 HTTP 链接）都会自动升级为 HTTPS 请求。</p>
+<ol>
+<li><strong>写入 X-Content-Type-Options 以处理嗅探攻击（</strong> 默认开启 <strong>）</strong></li>
+</ol>
+<p>有些浏览器很“热心”，会主动猜测服务器返回内容的类型（比如一个文本文件，浏览器可能会猜它是 HTML 或 JavaScript）。这就有安全风险，攻击者可能利用这个特性执行恶意代码。</p>
+<p><strong>Spring Security 的做法</strong>：通过设置 <code>X-Content-Type-Options: nosniff</code> 这个响应头，直接命令浏览器：“别瞎猜！我说这个文件是什么类型，它就是什么类型。” 这样就关闭了浏览器的内容类型猜测行为。</p>
+<ol>
+<li><strong>写入 Cache Control 头来保护经过身份验证的资源（</strong> 默认开启 <strong>）</strong></li>
+</ol>
+<p>登录后的一些敏感页面 <strong>可能被浏览器或中间代理服务器缓存下来</strong>。Spring Security 默认会对这些需要认证的请求加上 <code>Cache-Control</code> 头，告诉浏览器和缓存服务器“不要缓存这个页面的内容”。</p>
+<ol>
+<li><strong>写入 X-Frame-Options 以处理</strong> 点击劫持 <strong>攻击（</strong> 默认开启 <strong>）</strong></li>
+</ol>
+<p><strong>点击劫持</strong> 就是攻击者把一个透明的、你已登录的网站（如邮箱）用 <code>&lt;iframe&gt;</code> 嵌入到他的恶意网页上，然后诱骗你去点击网页上的某个按钮（比如“抽大奖”），实际上你点的是邮箱里的“删除所有邮件”按钮。</p>
+<ol>
+<li>你先正常登录了 126（有 Cookie）</li>
+<li>你不关浏览器，点开黑客发给你的链接（比如抽奖活动）</li>
+<li>黑客的网页里 <strong>偷偷藏了一个透明的 126 iframe</strong></li>
+<li>你点 "抽奖" 按钮，实际点的是 iframe 里 126 的 "删除邮件" 按钮</li>
+</ol>
+<p><strong>Spring Security 的做法</strong>：通过设置 <code>X-Frame-Options: DENY</code> 这个响应头，告诉浏览器：“不允许任何网站用 iframe 把我嵌入进去。” 这样就从根本上防止了这种攻击。</p>
+<h2 id="spring-security_2">Spring Security 的底层原理</h2>
+<p><strong>官方文档：</strong> <a href="https://docs.spring.io/spring-security/reference/servlet/architecture.html"><strong>https://docs.spring.io/spring-security/reference/servlet/architecture.html</strong></a></p>
+<p>Spring Security 底层的原理是使用传统的 <strong>Servlet 过滤器</strong> 完成的。</p>
+<h3 id="filter-chain">核心架构：过滤器链(Filter Chain)</h3>
+<p><img src="assets/filterchain.png" title="null" crop="0,0,1,1" id="ue5q4" class="ne-image" style="font-size: 16px"></p>
+<p>Spring Security 的本质就是一个精心编排的过滤器链，每个过滤器负责特定的安全任务：</p>
+<pre lang="plain"><code class="language-plain md-fencescode">// 简化版的过滤器链顺序
+HttpServletRequest
+    ↓
+→ SecurityContextPersistenceFilter (恢复SecurityContext，作用：避免每次请求都重新认证)
+→ WebAsyncManagerIntegrationFilter (集成异步管理，解决异步请求中如何访问SecurityContext)
+→ HeaderWriterFilter (写入安全头，如HSTS、X-Frame-Options)
+→ CorsFilter (处理跨域)
+→ CsrfFilter (CSRF防护)
+→ LogoutFilter (处理注销：如果请求是 /logout 则执行注销逻辑)
+→ UsernamePasswordAuthenticationFilter (如果请求是 /login 则执行登录认证)
+→ AuthorizationFilter (授权检查)
+→ ... 其他自定义过滤器 ...
+→ 你的业务Controller
+    ↓
+HttpServletResponse
+</code></pre>
+<p><strong>一个过滤器，一个安全任务，排队执行，就像工厂的流水线一样，每个过滤器只负责自己的 "工序"。</strong></p>
+<p><strong>这种设计的好处：</strong></p>
+<ol>
+<li><strong>单一职责</strong>：每个过滤器只做一件事，代码清晰</li>
+<li><strong>灵活组合</strong>：可以根据需要启用/禁用特定过滤器</li>
+<li><strong>可插拔</strong>：可以自定义过滤器插入到链中任意位置</li>
+<li><strong>灵活控制顺序</strong>：过滤器的执行顺序很关键（比如先认证后授权）</li>
+</ol>
+<h3 id="delegatingfilterproxy">核心过滤器 DelegatingFilterProxy</h3>
+<p>DelegatingFilterProxy：</p>
+<ol>
+<li>它本身是一个过滤器，<strong>完全符合 Servlet 规范的过滤器</strong></li>
+<li>它的作用是：负责 <strong>“委托”</strong> 任务的过滤器。</li>
+<li>它是 <code>**Spring 框架**</code> 提供的，<code>Spring Security</code> 中使用了它。</li>
+<li>它在 Servlet 容器和 Spring 容器之间建立一个桥梁。</li>
+<li>它将 <strong>后续 Filter 对象的生命周期</strong> 交给 Spring 管理，<strong>Servlet 容器不再管理</strong>。</li>
+</ol>
+<p>DelegatingFilterProxy 本身不是 Spring Bean，由 Servlet 容器直接实例化和管理的。</p>
+<p><img src="assets/delegatingfilterproxy.png" title="null" crop="0,0,1,1" id="kQHzf" class="ne-image" style="font-size: 16px"></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1758779076411-2c38102d-6014-4123-8296-e003c1f06342.png" width="213.33333333333334" title="" crop="0,0,1,1" id="u5f63c6f9" class="ne-image" style="font-size: 16px"></p>
+<h3 id="filterchainproxy">过滤器链的 <strong>代理管理器</strong> FilterChainProxy</h3>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1758779110765-8c1eeacc-78d7-4e09-a0ab-17e0a870fab6.png" width="437.3333333333333" title="" crop="0,0,1,1" id="r8RBy" class="ne-image" style="font-size: 16px"></p>
+<ol>
+<li>DelegatingFilterProxy 将任务委托给了 Spring 应用程序上下文中的 <code>FilterChainProxy</code> 类型的 Bean。</li>
+<li>它不是一个普通的过滤器，它是 Spring Security 自动创建的、非常复杂的 <strong>过滤器链的代理管理器。</strong></li>
+</ol>
+<p><strong>FilterChainProxy 的两大核心职责：</strong></p>
+<p><strong>路由选择（Routing）</strong></p>
+<ul>
+<li>根据请求的 URL 路径、参数等特征选择一个最匹配的 <code>SecurityFilterChain</code></li>
+</ul>
+<p><strong>链式执行（Chained Execution）</strong></p>
+<ul>
+<li>获取选中过滤器链中的所有 Filter</li>
+<li>按配置顺序依次调用每个 Filter 的 <code>doFilter()</code> 方法</li>
+<li>确保整个安全过滤流程的完整执行</li>
+</ul>
+<p><strong>总结 ** <code>FilterChainProxy</code> </strong>的作用是：**</p>
+<ul>
+<li>作为 <code>Spring Security</code> 的统一入口，<code>FilterChainProxy</code> <strong>根据 URL</strong> <strong>路由</strong> 到对应的 ** 安全过滤器链 ** 上，然后将这个安全过滤器链上所有的 Filter 按照配置顺序调用一遍。</li>
+</ul>
+<p><img src="https://cdn.nlark.com/yuque/0/2026/png/21376908/1770782598241-ff825215-a1d2-4571-9225-208bfffb0253.png" width="522.7999877929688" title="" crop="0,0,1,1" id="lXFiK" class="ne-image" style="font-size: 16px"></p>
+<h3 id="securityfilterchain">过滤器链 SecurityFilterChain</h3>
+<p><code>FilterChainProxy</code> 根据请求的 URL 找到对应的 <code>SecurityFilterChain</code>，通过 <code>SecurityFilterChain</code> 中的 <code>getFilters()</code> 方法获取一个过滤器列表 <code>List&lt;Filter&gt;</code>，然后执行 <code>List&lt;Filter&gt;</code> 中每一个 <code>Filter</code> 的 <code>doFilter()</code> 方法。</p>
+<p><img src="assets/securityfilterchain.png" title="null" crop="0,0,1,1" id="kIkGV" class="ne-image" style="font-size: 16px"></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1758779129742-5f7ee14e-60b7-4b6d-8e8c-ed0eead8a9f5.png" width="457.3333333333333" title="" crop="0,0,1,1" id="uc57635a7" class="ne-image" style="font-size: 16px"></p>
+<p><strong>番外篇</strong>：原理深入（可以选择理解）：<code>Spring Security</code> 中的安全过滤器链上的每一个过滤器都是符合 Servlet 规范的吗？</p>
+<p>答案是：不完全是！ Spring Security 过滤器链上的过滤器 <strong>不全是</strong> 标准的 Servlet Filter。（有的是，有的不是）</p>
+<p>那它底层是怎么执行每一个过滤器的呢？底层是通过它 <code>VirtualFilterChain</code> 实现的，源码如下：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kd">class</span> <span class="nc">VirtualFilterChain</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">FilterChain</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">FilterChain</span><span class="w"> </span><span class="n">originalChain</span><span class="p">;</span><span class="w">          </span><span class="c1">// 原生 Servlet 过滤器链</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">List</span><span class="o">&lt;</span><span class="n">Filter</span><span class="o">&gt;</span><span class="w"> </span><span class="n">additionalFilters</span><span class="p">;</span><span class="w">     </span><span class="c1">// Spring Security 的过滤器列表</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">size</span><span class="p">;</span><span class="w">                           </span><span class="c1">// 过滤器数量</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">currentPosition</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w">                  </span><span class="c1">// 当前执行位置</span>
+
+<span class="w">    </span><span class="c1">// 构造函数：传入原生链和 Security 过滤器</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="nf">VirtualFilterChain</span><span class="p">(</span><span class="n">FilterChain</span><span class="w"> </span><span class="n">chain</span><span class="p">,</span><span class="w"> </span><span class="n">List</span><span class="o">&lt;</span><span class="n">Filter</span><span class="o">&gt;</span><span class="w"> </span><span class="n">additionalFilters</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">originalChain</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">chain</span><span class="p">;</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">additionalFilters</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">additionalFilters</span><span class="p">;</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">additionalFilters</span><span class="p">.</span><span class="na">size</span><span class="p">();</span><span class="w">         </span><span class="c1">// 缓存大小</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">doFilter</span><span class="p">(</span><span class="n">ServletRequest</span><span class="w"> </span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">ServletResponse</span><span class="w"> </span><span class="n">response</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">IOException</span><span class="p">,</span><span class="w"> </span><span class="n">ServletException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 1. 如果 Security 过滤器都执行完了 → 执行原生链</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="na">currentPosition</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="na">size</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">this</span><span class="p">.</span><span class="na">originalChain</span><span class="p">.</span><span class="na">doFilter</span><span class="p">(</span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">response</span><span class="p">);</span>
+<span class="w">            </span><span class="k">return</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="c1">// 2. 执行下一个 Security 过滤器</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">currentPosition</span><span class="o">++</span><span class="p">;</span>
+<span class="w">        </span><span class="n">Filter</span><span class="w"> </span><span class="n">nextFilter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="na">additionalFilters</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="na">currentPosition</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+
+<span class="w">        </span><span class="c1">// 日志：正在执行第几个过滤器</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">logger</span><span class="p">.</span><span class="na">isTraceEnabled</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">nextFilter</span><span class="p">.</span><span class="na">getClass</span><span class="p">().</span><span class="na">getSimpleName</span><span class="p">();</span>
+<span class="w">            </span><span class="n">logger</span><span class="p">.</span><span class="na">trace</span><span class="p">(</span><span class="n">LogMessage</span><span class="p">.</span><span class="na">format</span><span class="p">(</span><span class="s">"Invoking %s (%d/%d)"</span><span class="p">,</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="na">currentPosition</span><span class="p">,</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="na">size</span><span class="p">));</span>
+<span class="w">        </span><span class="p">}</span>
+
+<span class="w">        </span><span class="c1">// 关键：执行过滤器，并传入 this（让过滤器能调用链的下一个）</span>
+<span class="w">        </span><span class="n">nextFilter</span><span class="p">.</span><span class="na">doFilter</span><span class="p">(</span><span class="n">request</span><span class="p">,</span><span class="w"> </span><span class="n">response</span><span class="p">,</span><span class="w"> </span><span class="k">this</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p><img src="assets/multi-securityfilterchain-17016804731631.png" title="null" crop="0,0,1,1" id="kjS33" class="ne-image" style="font-size: 16px"></p>
+<h3 id="security">总结 Security 底层实现原理</h3>
+<p><code>Security</code> 工作流程如下：</p>
+<pre lang="plain"><code class="language-plain md-fencescode">HTTP请求
+    ↓
+DelegatingFilterProxy (委托代理)
+    ↓
+FilterChainProxy (过滤器链代理) ← 选择匹配的过滤器链
+    ↓
+[SecurityFilterChain1] 或 [SecurityFilterChain2] 或 ... (具体的过滤器链)
+    ↓  
+[Filter1, Filter2, Filter3, ...] (具体的过滤器序列)
+    ↓
+业务Servlet
+</code></pre>
+<h2 id="_1">默认过滤器链</h2>
+<p><code>Spring Security</code> 默认只提供了 <strong>一条安全过滤器链</strong>，通过 <strong>配置日志</strong> 或 <strong>断点调试</strong> 都可以查看这个 <strong>默认的过滤器链</strong>。</p>
+<p><code>Spring Security</code> 的版本迭代非常快，不同的版本查看效果不同，当前文档中的版本号是：<strong>6.5.5</strong></p>
+<h3 id="_2">配置日志</h3>
+<p>在 <code>application.properties</code> 中添加以下配置（<strong>实际开发中要去掉，要不然打印日志太多</strong>）：</p>
+<pre lang="yaml"><code class="language-yaml md-fencescode"><span class="l l-Scalar l-Scalar-Plain">logging.level.org.springframework.security=DEBUG</span>
+<span class="l l-Scalar l-Scalar-Plain">logging.level.org.springframework.security.web.FilterChainProxy=TRACE</span>
+<span class="l l-Scalar l-Scalar-Plain">logging.level.org.springframework.security.config=DEBUG</span>
+</code></pre>
+<p>然后启动服务器，<strong>复制密码</strong>，清空控制台，访问首页：<a href="http://localhost:8080/">http://localhost: 8080/</a>，查看控制台信息如下（部分截图）：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1759029451564-41210e49-31aa-4f0d-afea-2a69f288f75d.png" width="726" title="" crop="0,0,1,1" id="uc923deec" class="ne-image" style="font-size: 16px"></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1759029484975-af6bf40a-5791-4f36-9018-b520bbc2d355.png" width="690" title="" crop="0,0,1,1" id="u7585af2c" class="ne-image" style="font-size: 16px"></p>
+<p>通过日志信息可以看到 <code>Spring Security</code> 默认提供的安全过滤器链是 <strong>16 个过滤器</strong>。</p>
+<p>另外，可以看到当发送的请求是：<code>GET /</code> 的时候，<code>Invoking</code> 了 <code>16</code> 个过滤器，这说明这 16 个过滤器都被调用了。</p>
+<p>但这里需要注意的是：有的过滤器很快就执行结束了，并不会执行过滤器的核心逻辑。</p>
+<p>例如 <code>LogoutFilter</code> 虽然被调用了，但由于请求路径不是 <code>/logout</code>，因此 <code>LogoutFilter</code> 会立即执行结束，因此大家不需要担心效率问题。</p>
+<p><strong>另外，</strong> 为什么有的请求是执行一个完整的过滤器链，有的则执行部分过滤器链，这个可以提前了解一下：这就是 Spring Security 的 <strong>过滤器链短路机制</strong> - 当某个过滤器能够完全处理请求时（<strong>白话文：经过某个过滤器时请求就处理完了。没必要再往下走了</strong>），后续过滤器不再执行。</p>
+<p>控制台中有这样一段日志，我们可以来解析一下这部分日志，初步了解一下这个安全框架：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1759029985294-18bef568-83a8-4544-87dd-cc98f7cbbe21.png" width="1355" title="" crop="0,0,1,1" id="u745b36bd" class="ne-image" style="font-size: 16px"></p>
+<h3 id="_3">断点调试</h3>
+<p>通过断点调试的方式，也可以看到。找到 <code>DefaultSecurityFilterChain</code> 类，在下图位置添加断点：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1759030220943-f36e4a18-54d2-478a-b24c-00da10b31c78.png" width="1247" title="" crop="0,0,1,1" id="u498e890e" class="ne-image" style="font-size: 16px"></p>
+<p>直接启动项目，启动项目的时候自动就会走到这个断点上，可以清楚的看到默认有 16 个过滤器，如下图：</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1759030275483-fcddcd24-1350-4304-ab4e-cadc38c170e9.png" width="1015" title="" crop="0,0,1,1" id="u8a3575cf" class="ne-image" style="font-size: 16px"></p>
+<h3 id="16">16 个过滤器简单说明</h3>
+<p>::: info
+1. DisableEncodeUrlFilter - 禁用 URL 编码
+2. WebAsyncManagerIntegrationFilter - 异步请求支持
+3. SecurityContextHolderFilter - 安全上下文管理
+4. HeaderWriterFilter - HTTP 头信息处理
+5. CsrfFilter - CSRF 防护
+6. LogoutFilter - 退出登录处理
+7. UsernamePasswordAuthenticationFilter - 表单登录认证
+8. DefaultResourcesFilter - 默认资源处理
+9. DefaultLoginPageGeneratingFilter - 默认登录页生成
+10. DefaultLogoutPageGeneratingFilter - 默认退出页生成
+11. BasicAuthenticationFilter - HTTP 基本认证
+12. RequestCacheAwareFilter - 请求缓存
+13. SecurityContextHolderAwareRequestFilter - 请求包装
+14. AnonymousAuthenticationFilter - 匿名用户认证
+15. ExceptionTranslationFilter - 异常转换
+16. AuthorizationFilter - 授权检查</p>
+<p>:::</p>
+<h2 id="securityproperties">SecurityProperties</h2>
+<p>默认情况下 <code>Spring Security</code> 将初始的用户名和密码存到了 <code>SecurityProperties</code> 类中。这个类中有一个静态内部类 <code>User</code>，配置了默认的用户名（name = "user"）和密码（password = uuid）</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2026/png/21376908/1770784452156-925620f4-bb99-498e-ba02-aa7cf9ccede9.png" width="563.2" title="" crop="0,0,1,1" id="u8f7886f2" class="ne-image" style="font-size: 16px"></p>
+<p>我们也可以将用户名、密码配置在 SpringBoot 的配置文件中：在 application.properties 中配置自定义用户名和密码</p>
+<p><img src="https://cdn.nlark.com/yuque/0/2026/png/21376908/1770784483444-b9c2ea23-1de2-4f53-ab95-cc9e4ab8aad5.png" width="408" title="" crop="0,0,1,1" id="u34c09cd2" class="ne-image" style="font-size: 16px"></p>
+<p><img src="https://cdn.nlark.com/yuque/0/2026/png/21376908/1770784499814-101c756e-76ca-4616-a142-7a60341c5a25.png" width="506.4" title="" crop="0,0,1,1" id="u61c9011b" class="ne-image" style="font-size: 16px"></p>
+<pre lang="properties"><code class="language-properties md-fencescode"><span class="na">spring.security.user.name</span><span class="o">=</span><span class="s">user</span>
+<span class="na">spring.security.user.password</span><span class="o">=</span><span class="s">123</span>
+</code></pre>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

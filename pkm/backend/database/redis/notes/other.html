@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>other</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="redis">Redis 的其他类型（扩展）</h1>
+<p>我们已经学习了 string、list、hash、set、zset。其实 Redis 有 9 个类型。剩下的 4 个分别是：<strong>Bitmaps、HyperLogLog、Geospatial、Stream。</strong></p>
+<p>对于 string、list、hash、set、zset、bitmaps，Geospatial 来说，本质上最终底层存储的都是字符串，只不过具体存储时的数据结构不同。</p>
+<p>但对于HyperLogLog、Stream 来说，底层则不再是字符串了。</p>
+<h2 id="bitmaps">Bitmaps（位图）</h2>
+<p>你可以把它看做底层是一个二进制位数组。也就是说直接存的是二进制形式。但 type 命令的执行结果显示 string。</p>
+<p>Bitmaps 是 String 的一种特殊用法——把每个字节的8个位分别用作布尔标记，这样内存效率极高，比如1亿用户在线状态只需约12MB。</p>
+<h3 id="_1">相关命令</h3>
+<pre><code class="md-fencescode"># 设置指定偏移量的位值（0或1）
+# value只能是0或1，不能是其他值。
+# offset是偏移量，表示第几个二进制位。偏移量从0开始。
+SETBIT key offset value
+
+# 例如
+setbit a 0 1
+setbit a 1 0
+setbit a 2 1
+setbit a 3 0
+
+# 执行以上4条命令后，实际上这个a键存储的value底层对应这样一个二进制：00000101
+</code></pre>
+<pre><code class="md-fencescode"># 获取指定偏移量的位值
+GETBIT key offset
+
+# 例如
+getbit a 3   # 获取第4个二进制位
+</code></pre>
+<pre><code class="md-fencescode"># 统计指定范围内位值为1的数量
+BITCOUNT key [start end]
+
+# 例如
+bitcount a   # 统计所有 bit位 为1的数量
+bitcount a 0 4 # 统计前5个bit位中1个数量
+</code></pre>
+<h3 id="_2">实际应用</h3>
+<p><strong>用户画像：</strong></p>
+<pre><code class="md-fencescode"># 32位特征标记（一个整数搞定）
+位0: 性别男(1)/女(0)
+位1: 是否VIP
+位2: 是否学生
+位3: 是否新用户
+位4-7: 年龄段（0000-1111）
+位8-15: 兴趣标签（8个）
+位16-31: 行为特征（16个）
+</code></pre>
+<p><strong>状态标记：</strong></p>
+<pre><code class="md-fencescode"># 用户特征标记（每个特征一个位）
+SETBIT user:flags:1001 0 1  # 位0=VIP
+SETBIT user:flags:1001 1 1  # 位1=实名
+SETBIT user:flags:1001 2 0  # 位2=未绑卡
+SETBIT user:flags:1001 3 1  # 位3=已付费
+
+# 检查是否为VIP
+GETBIT user:flags:1001 0
+</code></pre>
+<h3 id="bitmaps_1">Bitmaps 的优缺点</h3>
+<p><strong>优点：</strong>
+1. <strong>速度快</strong>
+2. <strong>省空间</strong></p>
+<p><strong>缺点：</strong>
+1. 在需要存储具体值的场景下是不适用的。仅适用于两种状态的表示。
+2. Bitmaps 本质上就是一个超长的开关阵列，每个位置只能是 开(1) 或 关(0)。</p>
+<h2 id="hyperloglog">HyperLogLog</h2>
+<p>HyperLogLog 的核心作用：用极小空间（~12KB）估算海量数据中不重复元素的个数，接受微小误差（~1%），换取巨大内存节省。</p>
+<p>可以把 HyperLogLog 理解为：统计海量唯一值的“模糊计数器”，用固定 12KB 内存换取约 0.81% 的误差，适合“只关心数量不关心细节”的场景。</p>
+<p><strong>原理简述：</strong>​ 通过观察“哈希值尾部连续 0 的最大长度”来估算数据规模。</p>
+<h3 id="uv">应用场景：UV 统计</h3>
+<ul>
+<li><strong>UV 统计</strong>：UV = 独立访客数（Unique Visitors）。UV 就是“有多少个不同的人来过”，一个人来 100 次也只算 1 次。</li>
+<li><strong>PV 统计</strong>：PV = 页面浏览量（Page Views）。PV 就是“页面被打开的总次数”，刷新一次页面就 +1。</li>
+</ul>
+<p><strong>示例：</strong></p>
+<ul>
+<li>PV = 10+5+3+1 = 19 次（总访问量）</li>
+<li>UV = 4 人（A、B、C、D 四个不同的人）</li>
+</ul>
+<p><strong>PV 的统计很简单，使用单个计数器即可完成：</strong></p>
+<pre><code class="md-fencescode"># 按天统计
+INCR pv:20240101      # 2024年1月1日PV
+INCR pv:20240102      # 第二天
+
+# 查看某天PV
+GET pv:20240101
+</code></pre>
+<h3 id="hyperloglog_1">HyperLogLog 原理详解</h3>
+<p>想象一下，你是一位马戏团的经理，你的任务是<strong>在表演散场后，快速估算今天来了多少位不同的观众（UV）</strong>，但你不能去数每个人的票，因为那样太慢了。</p>
+<p><strong>第一步：观察一个神奇的现象</strong></p>
+<p>你发现，表演结束后，观众会陆续从一个大帐篷里走出来。帐篷有 <strong>10 个出口</strong>（编号 0-9），而且观众<strong>完全随机</strong>地选择从哪个出口离开。</p>
+<p>你站在 <strong>1 号出口</strong>观察，然后注意到一个有趣的现象：</p>
+<ol>
+<li>如果今天只来了 <strong>1 位</strong>观众，他有 1/10 的概率从 1 号口出来。如果他真的从 1 号口出来了，这没什么特别的。</li>
+<li>如果今天来了 <strong>10 位</strong>观众，那么至少有一位从 1 号口出来的概率就很大了。</li>
+<li>如果今天来了 <strong>100 位</strong>观众，你可能会看到很多人从 1 号口涌出。</li>
+<li><strong>但是</strong>，你发现了一个更聪明的办法：你不再数有多少人从 1 号口出来，而是记录一个<strong>特殊数据</strong>：从 1 号口出来的<strong>观众中，他们的“票号”末尾有多少个连续的 0</strong>。</li>
+</ol>
+<p><strong>第二步：收集“特殊数据”</strong></p>
+<p>假设每个观众的票上都有一个唯一的、随机的二进制编号（比如由哈希函数生成）。</p>
+<p>你规定：只看从 1 号口出来的观众，记录他们票号<strong>末尾连续 0 的最大个数</strong>。</p>
+<ul>
+<li>观众A票号是 <code>...1000</code>（末尾 3 个 0）。你记录下来：<strong>当前最大连续 0 = 3</strong>。</li>
+<li>观众B票号是 <code>...0100</code>（末尾 2 个 0）。最大值还是 3。</li>
+<li>观众C票号是 <code>...0001</code>（末尾 0 个 0）。最大值还是 3。</li>
+<li>观众D票号是 <code>...0000 0000</code>（末尾 8 个 0！）。<strong>哇！</strong>​ 你更新记录：<strong>当前最大连续 0 = 8</strong>。</li>
+</ul>
+<p><strong>关键洞察：</strong></p>
+<ul>
+<li>要碰到一个末尾有 8 个 0 的票号，概率是非常低的（大约 1/2^8 = 1/256）。</li>
+<li>除非……有<strong>足够多</strong>的观众从 1 号口经过，使得这种低概率事件有机会发生！</li>
+<li><strong>所以，“最大连续 0 的个数”这个数字（记为 k），间接反映了从 1 号口经过的观众数量。</strong>​ 数量越多，k 值可能越大。</li>
+<li>具体估算公式是：<code>从 1 号口出来的人数 ≈ 2^k</code>。比如 k=8，估算人数就是 256。</li>
+</ul>
+<p><strong>第三步：解决单一出口的误差问题（引入多桶）</strong></p>
+<p>但只靠 1 号口的数据很不准。如果今天大部分观众碰巧都走了其他出口，1 号口的估算就会严重偏低。</p>
+<p>怎么办？<strong>动用所有出口！</strong></p>
+<p>你派 10 个助手，每人守一个出口（0-9 号），都用同样的方法记录各自出口的“<strong>最大连续 0 个数</strong>”。</p>
+<p>表演结束，你收集到 10 个数据：</p>
+<p><code>[3, 5, 4, 8, 2, 4, 3, 6, 5, 4]</code></p>
+<p>现在你有 10 个独立的估算样本了。如果直接平均，还是会受极端值（比如那个 8）影响。HyperLogLog 采用的方法是：</p>
+<ol>
+<li>对每个出口的数据，先用公式 <code>2^k</code>估算从该出口出来的人数。</li>
+<li>然后取它们的<strong>调和平均数</strong>（一种平均方式，能削弱极大值的影响）。</li>
+<li>再乘以一个根据桶数（这里是 10）确定的修正常数。</li>
+</ol>
+<p>最终，你就能得出一个对<strong>总观众数</strong>相对准确的估算。</p>
+<h3 id="_3">总结</h3>
+<ol>
+<li><strong>目标</strong>：快速估算海量数据中有多少<strong>不重复</strong>的元素（UV）。</li>
+<li><strong>核心魔法</strong>：给每个用户 ID 算一个“随机哈希值”，看作他的“随机票号”。</li>
+<li><strong>关键观察</strong>：哈希值<strong>前缀或末尾的特定模式</strong>（比如连续 0 的个数）出现的概率是固定的。样本越多，越有可能观察到这种罕见的模式。</li>
+<li><strong>分桶平均</strong>：为了避免偶然性，把数据分到多个“桶”里分别观察，然后用调和平均数汇总所有桶的观察结果，得出最终估算值。</li>
+</ol>
+<p><strong>HyperLogLog 的精髓：</strong></p>
+<blockquote>
+<p>用概率统计中一个低概率事件的“是否发生”，来倒推样本的“规模有多大”。</p>
+</blockquote>
+<p>它不存储每个用户 ID，只存储那些“罕见模式”的计数器，因此占用内存<strong>极小</strong>（通常只要几 KB），就能估算上亿的 UV，虽有微小误差（约 1-2%），但对于大数据场景完全可接受。</p>
+<p><strong>类比：</strong>​ 你想知道湖里有多少条鱼，不用把鱼都捞上来数，而是通过“钓到一条特别罕见的珍稀鱼”这件事来推断——钓到它，说明你可能已经钓了非常多次了，从而反推出鱼的总量大概有多少。</p>
+<h2 id="stream">Stream 流</h2>
+<p>Stream 是 Redis 的消息队列，可以让你像微信聊天一样收发消息记录。</p>
+<ul>
+<li>就像：有人往群里发消息（XADD），其他人可以查看历史消息（XRANGE）或实时接收新消息（XREAD）。</li>
+<li>实际开发中，我们一般会使用消息队列中间件来实现消息队列。</li>
+</ul>
+<h2 id="geospatial">Geospatial</h2>
+<p>“地图钉上的计算器”</p>
+<ul>
+<li><strong>地图钉</strong>：用来存储地理位置（经纬度坐标），就像在地图上扎钉子做标记。</li>
+<li><strong>计算器</strong>：能对这些坐标进行快速计算，比如“找出我周围 5 公里内所有的钉子”，并算出它们离我多远。</li>
+</ul>
+<p>**注意：​ Redis 的 Geospatial 类型底层是使用 ZSet 实现的（不是一种全新的类型，是基于 zset 实现的语法糖）。</p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
