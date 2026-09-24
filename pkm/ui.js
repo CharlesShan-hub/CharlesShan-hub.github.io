@@ -106,6 +106,16 @@
     // 首页（站点根 index.html）时链接一律新标签页打开，不打断首页音乐播放
     var isHome = /index\.html$/.test(curRel) || curRel.replace(/\/$/, "").split("/").length === 1;
     var box = panel.querySelector(".nav-tree");
+
+    // 目录折叠状态持久化（localStorage，key 按目录 rel 记录）
+    var navKey = "pkm-nav-collapsed";
+    var userCollapsed = {};
+    var navFirst = true;
+    try {
+      var navRaw = localStorage.getItem(navKey);
+      if (navRaw) { userCollapsed = JSON.parse(navRaw) || {}; }
+      navFirst = navRaw === null;
+    } catch (e) {}
     fetch(SITE_TREE)
       .then(function (r) { return r.json(); })
       .then(function (root) {
@@ -115,7 +125,8 @@
           return;
         }
         (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
-        expandActive(box);
+        // 首次使用（无折叠记录）时展开当前文件所在路径，之后尊重用户折叠状态
+        if (navFirst) expandActive(box);
       })
       .catch(function () {
         box.innerHTML = '<li class="nav-empty">文件树加载失败</li>';
@@ -123,12 +134,16 @@
     function buildNode(node, depth) {
       var li = document.createElement("li");
       if (node.type === "dir") {
-        li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+        // 折叠状态：用户记录优先，无记录时非顶层目录默认折叠
+        var collapsed = (node.rel in userCollapsed) ? userCollapsed[node.rel] : depth > 0;
+        li.className = "nav-dir" + (collapsed ? " collapsed" : "");
         var label = document.createElement("span");
         label.className = "nav-dir-label";
         label.textContent = node.name;
         label.addEventListener("click", function () {
           li.classList.toggle("collapsed");
+          userCollapsed[node.rel] = li.classList.contains("collapsed");
+          try { localStorage.setItem(navKey, JSON.stringify(userCollapsed)); } catch (e) {}
         });
         li.appendChild(label);
         var ul = document.createElement("ul");
@@ -241,6 +256,95 @@
     };
     window.addEventListener("scroll", updateActive, { passive: true });
     updateActive();
+  })();
+
+  /* ===== 全站搜索 ===== */
+  (function () {
+    var btn = document.createElement("button");
+    btn.id = "search-btn"; btn.type = "button";
+    btn.setAttribute("aria-label", "搜索"); btn.setAttribute("title", "搜索");
+    btn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M10 4a6 6 0 1 0 0 12 6 6 0 0 0 0-12zm-8 6a8 8 0 1 1 14.3 5l3.4 3.4-1.4 1.4-3.4-3.4A8 8 0 0 1 2 10z"/></svg>';
+    var panel = document.createElement("div");
+    panel.id = "search-panel";
+    var input = document.createElement("input");
+    input.className = "search-input"; input.type = "text";
+    input.setAttribute("placeholder", "搜索笔记..."); input.setAttribute("autocomplete", "off");
+    var list = document.createElement("div");
+    panel.appendChild(input);
+    panel.appendChild(list);
+    document.body.appendChild(btn);
+    document.body.appendChild(panel);
+
+    refreshPanelTheme();
+    window.addEventListener("pkm-theme-applied", refreshPanelTheme);
+
+    var base = SITE_TREE.replace(/site-tree\.json$/, "");
+    var root = null;
+    var query = "";
+
+    var render = function () {
+      var q = query.trim().toLowerCase();
+      list.innerHTML = "";
+      if (!q || !root) return;
+      var hits = [];
+      var walk = function (node, path) {
+        if (node.type === "file") {
+          if (node.name.toLowerCase().indexOf(q) > -1) {
+            hits.push({ rel: node.rel, name: node.name, path: path });
+          }
+        } else {
+          var p2 = path ? path + "/" + node.name : node.name;
+          (node.children || []).forEach(function (c) { walk(c, p2); });
+        }
+      };
+      (root.children || []).forEach(function (c) { walk(c, ""); });
+      if (!hits.length) {
+        list.innerHTML = '<div class="search-empty">没有匹配的笔记</div>';
+        return;
+      }
+      hits.slice(0, 30).forEach(function (h) {
+        var row = document.createElement("div");
+        row.className = "search-result";
+        var name = document.createElement("div");
+        name.className = "search-name";
+        name.textContent = h.name;
+        var path = document.createElement("div");
+        path.className = "search-path";
+        path.textContent = h.path;
+        row.appendChild(name);
+        row.appendChild(path);
+        row.addEventListener("click", function () { window.open(base + h.rel, "_blank"); });
+        list.appendChild(row);
+      });
+    };
+
+    var toggle = function (show) {
+      var open = (show !== undefined) ? show : !panel.classList.contains("open");
+      panel.classList.toggle("open", open);
+      btn.classList.toggle("open", open);
+      if (open) { input.focus(); }
+    };
+    btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+    document.addEventListener("click", function (e) {
+      if (panel.classList.contains("open") &&
+          !panel.contains(e.target) && e.target !== btn) toggle(false);
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") toggle(false);
+    });
+    input.addEventListener("input", function () { query = input.value; render(); });
+    input.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        var first = list.querySelector(".search-result");
+        if (first) first.click();
+      }
+    });
+
+    fetch(SITE_TREE)
+      .then(function (r) { return r.json(); })
+      .then(function (t) { root = t; render(); })
+      .catch(function () {});
   })();
 
   /* ===== 图片双击放大 ===== */
