@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASN1_教程_第3天_约束和模块化</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="asn1-3">ASN.1 教程 - 第3天：约束和模块化</h1>
+<h2 id="_1">🎯 学习目标</h2>
+<ul>
+<li>掌握5种常见的数据约束方法</li>
+<li>学会模块化设计和代码组织</li>
+<li>理解类型继承和FROM约束</li>
+<li>能设计可维护的大型ASN.1项目结构</li>
+</ul>
+<h2 id="2-3">⏰ 建议时间：2-3小时</h2>
+<h2 id="_2">📖 课程大纲</h2>
+<h3 id="60">一、数据约束详解（60分钟）</h3>
+<h4 id="11">1.1 为什么需要约束？</h4>
+<p><strong>约束的作用</strong>：
+1. <strong>数据验证</strong>：确保数据符合业务规则
+2. <strong>安全性</strong>：防止无效或恶意数据
+3. <strong>性能优化</strong>：提前知道数据范围
+4. <strong>文档化</strong>：约束即文档</p>
+<p><strong>约束分类</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>约束类型</th>
+<th>语法</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>值范围约束</td>
+<td><code>(min..max)</code></td>
+<td>限制数值范围</td>
+</tr>
+<tr>
+<td>大小约束</td>
+<td><code>(SIZE (min..max))</code></td>
+<td>限制字符串/数组大小</td>
+</tr>
+<tr>
+<td>枚举约束</td>
+<td><code>ENUMERATED {...}</code></td>
+<td>限制为特定值集合</td>
+</tr>
+<tr>
+<td>模式约束</td>
+<td><code>(PATTERN "...")</code></td>
+<td>正则表达式验证</td>
+</tr>
+<tr>
+<td>FROM约束</td>
+<td><code>FROM Type</code></td>
+<td>类型继承/子集</td>
+</tr>
+</tbody>
+</table>
+<h4 id="12">1.2 值范围约束</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 1. 整数范围</span>
+<span class="n n-Type">Age</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">150</span><span class="p">)</span>
+<span class="n n-Type">Port</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">65535</span><span class="p">)</span>
+<span class="n n-Type">Percentage</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">100</span><span class="p">)</span>
+
+<span class="c1">-- 2. 实数范围（REAL类型）</span>
+<span class="n n-Type">Temperature</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">REAL</span><span class="w"> </span><span class="p">(</span><span class="o">-</span><span class="mf">273.15</span><span class="o">..</span><span class="mf">1000.0</span><span class="p">)</span>
+<span class="n n-Type">Score</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">REAL</span><span class="w"> </span><span class="p">(</span><span class="mf">0.0</span><span class="o">..</span><span class="mf">100.0</span><span class="p">)</span>
+
+<span class="c1">-- 3. 枚举值范围</span>
+<span class="n n-Type">Priority</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">low</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">medium</span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">5</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">high</span><span class="p">(</span><span class="mi">6</span><span class="o">..</span><span class="mi">10</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">-- 4. 特殊值</span>
+<span class="n n-Type">PositiveInt</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="kc">MAX</span><span class="p">)</span><span class="w">      </span><span class="c1">-- 非负整数</span>
+<span class="n n-Type">NonZeroInt</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="kc">MIN</span><span class="o">..-</span><span class="mi">1</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="mi">1</span><span class="o">..</span><span class="kc">MAX</span><span class="p">)</span><span class="w">  </span><span class="c1">-- 非零整数</span>
+
+<span class="c1">-- 5. 复杂范围</span>
+<span class="n n-Type">RGBValue</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">255</span><span class="p">)</span><span class="w">        </span><span class="c1">-- 8位颜色值</span>
+<span class="n n-Type">Year</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">1900</span><span class="o">..</span><span class="mi">2100</span><span class="p">)</span><span class="w">        </span><span class="c1">-- 合理年份</span>
+</code></pre>
+<p><strong>边界情况处理</strong>：</p>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 包含边界</span>
+<span class="n n-Type">Inclusive</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">100</span><span class="p">)</span><span class="w">       </span><span class="c1">-- 包含0和100</span>
+
+<span class="c1">-- 排除边界（使用注释说明）</span>
+<span class="n n-Type">Exclusive</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">99</span><span class="p">)</span><span class="w">        </span><span class="c1">-- 实际1-98，但编码为1..99</span>
+
+<span class="c1">-- 半开区间（需要特殊处理）</span>
+<span class="n n-Type">HalfOpen</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="err">&lt;</span><span class="mi">100</span><span class="p">)</span><span class="w">       </span><span class="c1">-- 0-99，但ASN.1不支持&lt;符号</span>
+</code></pre>
+<h4 id="13">1.3 大小约束</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 1. 字符串大小</span>
+<span class="n n-Type">Username</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">3</span><span class="o">..</span><span class="mi">20</span><span class="p">))</span>
+<span class="n n-Type">Password</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">OCTET STRING</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">8</span><span class="o">..</span><span class="mi">32</span><span class="p">))</span>
+<span class="n n-Type">Email</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">UTF8String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">5</span><span class="o">..</span><span class="mi">254</span><span class="p">))</span>
+
+<span class="c1">-- 2. 固定大小</span>
+<span class="n n-Type">MACAddress</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">OCTET STRING</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">6</span><span class="p">))</span><span class="w">      </span><span class="c1">-- 固定6字节</span>
+<span class="n n-Type">UUID</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">OCTET STRING</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">16</span><span class="p">))</span><span class="w">           </span><span class="c1">-- 固定16字节</span>
+<span class="n n-Type">IPv4</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">OCTET STRING</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">4</span><span class="p">))</span><span class="w">            </span><span class="c1">-- 固定4字节</span>
+
+<span class="c1">-- 3. 数组大小</span>
+<span class="n n-Type">PhoneNumbers</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">5</span><span class="p">))</span><span class="w">  </span><span class="c1">-- 最多5个号码</span>
+<span class="n n-Type">Tags</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SET OF</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">10</span><span class="p">))</span><span class="w">              </span><span class="c1">-- 最多10个标签</span>
+
+<span class="c1">-- 4. 嵌套大小约束</span>
+<span class="n n-Type">UserProfile</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">name</span><span class="w">        </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="o">..</span><span class="mi">50</span><span class="p">)),</span>
+<span class="w">    </span><span class="nv">bio</span><span class="w">         </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">500</span><span class="p">))</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">skills</span><span class="w">      </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">20</span><span class="p">))</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">10</span><span class="p">))</span>
+<span class="w">    </span><span class="c1">-- 技能名称1-20字符，最多10个技能</span>
+<span class="p">}</span>
+</code></pre>
+<h4 id="14">1.4 枚举约束</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 1. 基本枚举</span>
+<span class="n n-Type">Color</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">red</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">green</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">blue</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">yellow</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">-- 2. 带描述的枚举</span>
+<span class="n n-Type">HttpStatus</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">ok</span><span class="p">(</span><span class="mi">200</span><span class="p">),</span><span class="w">                </span><span class="c1">-- 成功</span>
+<span class="w">    </span><span class="nv">badRequest</span><span class="p">(</span><span class="mi">400</span><span class="p">),</span><span class="w">        </span><span class="c1">-- 客户端错误</span>
+<span class="w">    </span><span class="nv">unauthorized</span><span class="p">(</span><span class="mi">401</span><span class="p">),</span><span class="w">      </span><span class="c1">-- 未授权</span>
+<span class="w">    </span><span class="nv">notFound</span><span class="p">(</span><span class="mi">404</span><span class="p">),</span><span class="w">          </span><span class="c1">-- 未找到</span>
+<span class="w">    </span><span class="nv">serverError</span><span class="p">(</span><span class="mi">500</span><span class="p">)</span><span class="w">        </span><span class="c1">-- 服务器错误</span>
+<span class="p">}</span>
+
+<span class="c1">-- 3. 非连续枚举</span>
+<span class="n n-Type">ErrorCode</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">success</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">invalidInput</span><span class="p">(</span><span class="mi">1001</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">networkError</span><span class="p">(</span><span class="mi">1002</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">databaseError</span><span class="p">(</span><span class="mi">2001</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">permissionDenied</span><span class="p">(</span><span class="mi">3001</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">-- 4. 扩展枚举（预留值）</span>
+<span class="n n-Type">DeviceType</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">smartphone</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">tablet</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">laptop</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">desktop</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+<span class="w">    </span><span class="o">...</span><span class="w">  </span><span class="c1">-- 扩展点，未来可以添加</span>
+<span class="p">}</span>
+
+<span class="c1">-- 5. 枚举别名</span>
+<span class="n n-Type">TrafficLight</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">stop</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">caution</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">go</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">-- 使用别名</span>
+<span class="n n-Type">LightState</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="n n-Type">TrafficLight</span>
+</code></pre>
+<h4 id="15">1.5 模式约束（正则表达式）</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 1. 邮箱验证</span>
+<span class="n n-Type">EmailStrict</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"</span><span class="p">)</span>
+
+<span class="c1">-- 2. 电话号码</span>
+<span class="n n-Type">PhoneNumberCN</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"1[3-9]\\d{9}"</span><span class="p">)</span>
+<span class="n n-Type">PhoneNumberUS</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"\\d{3}-\\d{3}-\\d{4}"</span><span class="p">)</span>
+
+<span class="c1">-- 3. 日期格式</span>
+<span class="n n-Type">DateISO</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"\\d{4}-\\d{2}-\\d{2}"</span><span class="p">)</span>
+<span class="n n-Type">TimeISO</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"\\d{2}:\\d{2}:\\d{2}"</span><span class="p">)</span>
+
+<span class="c1">-- 4. URL验证</span>
+<span class="n n-Type">HttpURL</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"https?://[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}(?:/[^\\s]*)?"</span><span class="p">)</span>
+<span class="n n-Type">SecureURL</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"https://[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}(?:/[^\\s]*)?"</span><span class="p">)</span>
+
+<span class="c1">-- 5. 用户名规则</span>
+<span class="n n-Type">UsernameRule</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"[a-zA-Z][a-zA-Z0-9_]{2,19}"</span><span class="p">)</span>
+
+<span class="c1">-- 6. 密码强度</span>
+<span class="n n-Type">PasswordStrong</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&amp;])[A-Za-z\\d@$!%*?&amp;]{8,}"</span><span class="p">)</span>
+
+<span class="c1">-- 7. IP地址</span>
+<span class="n n-Type">IPv4Address</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}"</span><span class="p">)</span>
+<span class="n n-Type">IPv6Address</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}"</span><span class="p">)</span>
+</code></pre>
+<h4 id="16-from">1.6 FROM约束（类型继承）</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 1. 基本FROM约束</span>
+<span class="n n-Type">BaseType</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">100</span><span class="p">)</span>
+
+<span class="c1">-- 子类型继承父类型的约束</span>
+<span class="n n-Type">SmallRange</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="n n-Type">BaseType</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">10</span><span class="p">)</span><span class="w">      </span><span class="c1">-- 进一步约束</span>
+<span class="n n-Type">LargeRange</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="n n-Type">BaseType</span><span class="w"> </span><span class="p">(</span><span class="mi">90</span><span class="o">..</span><span class="mi">100</span><span class="p">)</span><span class="w">    </span><span class="c1">-- 另一个子集</span>
+
+<span class="c1">-- 2. 字符串继承</span>
+<span class="n n-Type">BaseString</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">100</span><span class="p">))</span>
+
+<span class="n n-Type">ShortString</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="n n-Type">BaseString</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">20</span><span class="p">))</span>
+<span class="n n-Type">LongString</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="n n-Type">BaseString</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">50</span><span class="o">..</span><span class="mi">100</span><span class="p">))</span>
+
+<span class="c1">-- 3. 枚举继承</span>
+<span class="n n-Type">BaseEnum</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">option1</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">option2</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">option3</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">option4</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="n n-Type">SubEnum</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="n n-Type">BaseEnum</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">2</span><span class="p">)</span><span class="w">  </span><span class="c1">-- 只允许0,1,2</span>
+
+<span class="c1">-- 4. 复杂类型继承</span>
+<span class="n n-Type">BasePerson</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">name</span><span class="w">    </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">age</span><span class="w">     </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">150</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">-- 错误：不能直接继承SEQUENCE</span>
+<span class="c1">-- Student ::= BasePerson (name (SIZE (2..20)))</span>
+
+<span class="c1">-- 正确：使用新的SEQUENCE并引用</span>
+<span class="n n-Type">Student</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">base</span><span class="w">    </span><span class="n n-Type">BasePerson</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">grade</span><span class="w">   </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">12</span><span class="p">)</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="60_1">二、模块化设计（60分钟）</h3>
+<h4 id="21">2.1 为什么需要模块化？</h4>
+<p><strong>模块化的好处</strong>：
+1. <strong>可维护性</strong>：修改一处不影响其他
+2. <strong>复用性</strong>：通用模块多处使用
+3. <strong>团队协作</strong>：不同团队负责不同模块
+4. <strong>编译优化</strong>：只编译修改的模块</p>
+<h4 id="22">2.2 模块基本语法</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 模块定义</span>
+<span class="n n-Type">ModuleName</span><span class="w"> </span><span class="k">DEFINITIONS</span>
+<span class="w">    </span><span class="k">AUTOMATIC</span><span class="w"> </span><span class="k">TAGS</span><span class="w">  </span><span class="c1">-- 可选：自动生成标签</span>
+<span class="w">    </span><span class="k">EXTENSIBILITY</span><span class="w"> </span><span class="k">IMPLIED</span><span class="w">  </span><span class="c1">-- 可选：允许扩展</span>
+<span class="w">    </span><span class="o">::=</span><span class="w"> </span><span class="k">BEGIN</span>
+
+<span class="w">    </span><span class="c1">-- 类型定义</span>
+<span class="w">    </span><span class="n n-Type">Type1</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">INTEGER</span>
+<span class="w">    </span><span class="n n-Type">Type2</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">IA5String</span>
+
+<span class="w">    </span><span class="c1">-- 值定义</span>
+<span class="w">    </span><span class="nv">constant1</span><span class="w"> </span><span class="n n-Type">Type1</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="mi">100</span>
+<span class="w">    </span><span class="nv">constant2</span><span class="w"> </span><span class="n n-Type">Type2</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="s">"hello"</span>
+
+<span class="w">    </span><span class="c1">-- 导入导出</span>
+<span class="w">    </span><span class="o o-Namespace">EXPORTS</span><span class="w"> </span><span class="n n-Type">Type1</span><span class="p">,</span><span class="w"> </span><span class="nv">constant1</span><span class="err">;</span>
+<span class="w">    </span><span class="o o-Namespace">IMPORTS</span><span class="w"> </span><span class="n n-Type">Type3</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n n-Type">OtherModule</span><span class="err">;</span>
+
+<span class="k">END</span>
+</code></pre>
+<h4 id="23">2.3 实战：三层架构模块设计</h4>
+<h5 id="231-baseasn1">2.3.1 基础层模块（base.asn1）</h5>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 文件：base.asn1</span>
+<span class="c1">-- 描述：基础数据类型和常量</span>
+<span class="n n-Type">BaseModule</span><span class="w"> </span><span class="k">DEFINITIONS</span><span class="w"> </span><span class="k">AUTOMATIC</span><span class="w"> </span><span class="k">TAGS</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="k">BEGIN</span>
+
+<span class="c1">-- ====== 导出声明 ======</span>
+<span class="o o-Namespace">EXPORTS</span>
+<span class="w">    </span><span class="c1">-- 基础类型</span>
+<span class="w">    </span><span class="n n-Type">ID</span><span class="p">,</span><span class="w"> </span><span class="n n-Type">Name</span><span class="p">,</span><span class="w"> </span><span class="n n-Type">Description</span><span class="p">,</span><span class="w"> </span><span class="n n-Type">Timestamp</span><span class="p">,</span>
+<span class="w">    </span><span class="c1">-- 状态类型</span>
+<span class="w">    </span><span class="n n-Type">Status</span><span class="p">,</span><span class="w"> </span><span class="n n-Type">Priority</span><span class="p">,</span>
+<span class="w">    </span><span class="c1">-- 常量</span>
+<span class="w">    </span><span class="err">MAX_NAME_</span><span class="n n-Type">LENGTH</span><span class="p">,</span><span class="w"> </span><span class="err">MAX_DESC_</span><span class="n n-Type">LENGTH</span><span class="err">;</span>
+
+<span class="c1">-- ====== 基础类型 ======</span>
+
+<span class="c1">-- ID类型（各种ID的基础）</span>
+<span class="n n-Type">ID</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="kc">MAX</span><span class="p">)</span><span class="w">  </span><span class="c1">-- 正整型ID</span>
+
+<span class="c1">-- 名称类型</span>
+<span class="n n-Type">Name</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="err">MAX_NAME_</span><span class="n n-Type">LENGTH</span><span class="p">))</span>
+
+<span class="c1">-- 描述类型</span>
+<span class="n n-Type">Description</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="err">MAX_DESC_</span><span class="n n-Type">LENGTH</span><span class="p">))</span>
+
+<span class="c1">-- 时间戳</span>
+<span class="n n-Type">Timestamp</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">GeneralizedTime</span>
+
+<span class="c1">-- ====== 状态类型 ======</span>
+
+<span class="c1">-- 通用状态</span>
+<span class="n n-Type">Status</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">active</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">inactive</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">pending</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">deleted</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">archived</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">-- 优先级</span>
+<span class="n n-Type">Priority</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">low</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">medium</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">high</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">critical</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">-- ====== 常量定义 ======</span>
+<span class="err">MAX_NAME_</span><span class="n n-Type">LENGTH</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="mi">100</span>
+<span class="err">MAX_DESC_</span><span class="n n-Type">LENGTH</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="mi">1000</span>
+<span class="err">DEFAULT_PAGE_</span><span class="kd">SIZE</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="mi">20</span>
+<span class="err">MAX_PAGE_</span><span class="kd">SIZE</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="mi">100</span>
+
+<span class="c1">-- ====== 工具函数注释 ======</span>
+<span class="c1">-- 注意：ASN.1不支持函数，这里用注释说明用途</span>
+
+<span class="k">END</span>
+</code></pre>
+<h5 id="232-domainasn1">2.3.2 领域层模块（domain.asn1）</h5>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 文件：domain.asn1</span>
+<span class="c1">-- 描述：业务领域模型</span>
+<span class="n n-Type">DomainModule</span><span class="w"> </span><span class="k">DEFINITIONS</span><span class="w"> </span><span class="k">AUTOMATIC</span><span class="w"> </span><span class="k">TAGS</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="k">BEGIN</span>
+
+<span class="c1">-- ====== 导入声明 ======</span>
+<span class="o o-Namespace">IMPORTS</span>
+<span class="w">    </span><span class="n n-Type">ID</span><span class="p">,</span><span class="w"> </span><span class="n n-Type">Name</span><span class="p">,</span><span class="w"> </span><span class="n n-Type">Description</span><span class="p">,</span><span class="w"> </span><span class="n n-Type">Timestamp</span><span class="p">,</span><span class="w"> </span><span class="n n-Type">Status</span><span class="p">,</span><span class="w"> </span><span class="n n-Type">Priority</span><span class="p">,</span>
+<span class="w">    </span><span class="err">MAX_NAME_</span><span class="n n-Type">LENGTH</span><span class="p">,</span><span class="w"> </span><span class="err">MAX_DESC_</span><span class="n n-Type">LENGTH</span>
+<span class="w">    </span><span class="k">FROM</span><span class="w"> </span><span class="n n-Type">BaseModule</span><span class="err">;</span>
+
+<span class="c1">-- ====== 用户模块 ======</span>
+
+<span class="c1">-- 用户角色</span>
+<span class="n n-Type">UserRole</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">guest</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">user</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">moderator</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">admin</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">superAdmin</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">-- 用户信息</span>
+<span class="n n-Type">User</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">userId</span><span class="w">      </span><span class="n n-Type">ID</span><span class="p">,</span><span class="w">                    </span><span class="c1">-- 用户ID</span>
+<span class="w">    </span><span class="nv">username</span><span class="w">    </span><span class="n n-Type">Name</span><span class="p">,</span><span class="w">                  </span><span class="c1">-- 用户名</span>
+<span class="w">    </span><span class="nv">email</span><span class="w">       </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">password</span><span class="w">    </span><span class="kt">OCTET STRING</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">32</span><span class="p">)),</span><span class="w">  </span><span class="c1">-- 密码哈希</span>
+<span class="w">    </span><span class="nv">role</span><span class="w">        </span><span class="n n-Type">UserRole</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="nv">user</span><span class="p">,</span><span class="w"> </span><span class="c1">-- 角色</span>
+<span class="w">    </span><span class="nv">status</span><span class="w">      </span><span class="n n-Type">Status</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="nv">active</span><span class="p">,</span><span class="w"> </span><span class="c1">-- 状态</span>
+<span class="w">    </span><span class="nv">createdAt</span><span class="w">   </span><span class="n n-Type">Timestamp</span><span class="p">,</span><span class="w">             </span><span class="c1">-- 创建时间</span>
+<span class="w">    </span><span class="nv">lastLogin</span><span class="w">   </span><span class="n n-Type">Timestamp</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span><span class="w">    </span><span class="c1">-- 最后登录</span>
+<span class="w">    </span><span class="nv">profile</span><span class="w">     </span><span class="n n-Type">UserProfile</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="w">   </span><span class="c1">-- 扩展信息</span>
+<span class="p">}</span>
+
+<span class="c1">-- 用户配置文件</span>
+<span class="n n-Type">UserProfile</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">fullName</span><span class="w">    </span><span class="n n-Type">Name</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">avatar</span><span class="w">      </span><span class="kt">OCTET STRING</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 头像二进制</span>
+<span class="w">    </span><span class="nv">bio</span><span class="w">         </span><span class="n n-Type">Description</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">settings</span><span class="w">    </span><span class="n n-Type">UserSettings</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="c1">-- 用户设置</span>
+<span class="n n-Type">UserSettings</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">theme</span><span class="w">       </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="s">"light"</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">language</span><span class="w">    </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="s">"zh-CN"</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">notifications</span><span class="w"> </span><span class="kt">BOOLEAN</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="kc">TRUE</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">privacyLevel</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">3</span><span class="p">)</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="mi">1</span>
+<span class="p">}</span>
+
+<span class="c1">-- ====== 产品模块 ======</span>
+
+<span class="c1">-- 产品分类</span>
+<span class="n n-Type">ProductCategory</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">electronics</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">clothing</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">books</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">food</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">other</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">-- 产品信息</span>
+<span class="n n-Type">Product</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">productId</span><span class="w">   </span><span class="n n-Type">ID</span><span class="p">,</span><span class="w">                    </span><span class="c1">-- 产品ID</span>
+<span class="w">    </span><span class="nv">name</span><span class="w">        </span><span class="n n-Type">Name</span><span class="p">,</span><span class="w">                  </span><span class="c1">-- 产品名称</span>
+<span class="w">    </span><span class="nv">category</span><span class="w">    </span><span class="n n-Type">ProductCategory</span><span class="p">,</span><span class="w">       </span><span class="c1">-- 分类</span>
+<span class="w">    </span><span class="nv">price</span><span class="w">       </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="kc">MAX</span><span class="p">),</span><span class="w">      </span><span class="c1">-- 价格（分）</span>
+<span class="w">    </span><span class="nv">stock</span><span class="w">       </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="kc">MAX</span><span class="p">),</span><span class="w">      </span><span class="c1">-- 库存</span>
+<span class="w">    </span><span class="nv">description</span><span class="w"> </span><span class="n n-Type">Description</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 描述</span>
+<span class="w">    </span><span class="nv">images</span><span class="w">      </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="kt">OCTET STRING</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 图片</span>
+<span class="w">    </span><span class="nv">status</span><span class="w">      </span><span class="n n-Type">Status</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="nv">active</span><span class="p">,</span><span class="w"> </span><span class="c1">-- 状态</span>
+<span class="w">    </span><span class="nv">createdAt</span><span class="w">   </span><span class="n n-Type">Timestamp</span><span class="p">,</span><span class="w">             </span><span class="c1">-- 创建时间</span>
+<span class="w">    </span><span class="nv">updatedAt</span><span class="w">   </span><span class="n n-Type">Timestamp</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="w">     </span><span class="c1">-- 更新时间</span>
+<span class="p">}</span>
+
+<span class="c1">-- ====== 订单模块 ======</span>
+
+<span class="c1">-- 订单状态</span>
+<span class="n n-Type">OrderStatus</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">pending</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span><span class="w">      </span><span class="c1">-- 待支付</span>
+<span class="w">    </span><span class="nv">paid</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w">         </span><span class="c1">-- 已支付</span>
+<span class="w">    </span><span class="nv">shipped</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span><span class="w">      </span><span class="c1">-- 已发货</span>
+<span class="w">    </span><span class="nv">delivered</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span><span class="w">    </span><span class="c1">-- 已送达</span>
+<span class="w">    </span><span class="nv">canceled</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span><span class="w">     </span><span class="c1">-- 已取消</span>
+<span class="w">    </span><span class="nv">refunded</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="w">      </span><span class="c1">-- 已退款</span>
+<span class="p">}</span>
+
+<span class="c1">-- 订单项</span>
+<span class="n n-Type">OrderItem</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">productId</span><span class="w">   </span><span class="n n-Type">ID</span><span class="p">,</span><span class="w">                    </span><span class="c1">-- 产品ID</span>
+<span class="w">    </span><span class="nv">quantity</span><span class="w">    </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="kc">MAX</span><span class="p">),</span><span class="w">      </span><span class="c1">-- 数量</span>
+<span class="w">    </span><span class="nv">unitPrice</span><span class="w">   </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="kc">MAX</span><span class="p">),</span><span class="w">      </span><span class="c1">-- 单价</span>
+<span class="w">    </span><span class="nv">subtotal</span><span class="w">    </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="kc">MAX</span><span class="p">)</span><span class="w">       </span><span class="c1">-- 小计</span>
+<span class="p">}</span>
+
+<span class="c1">-- 订单信息</span>
+<span class="n n-Type">Order</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">orderId</span><span class="w">     </span><span class="n n-Type">ID</span><span class="p">,</span><span class="w">                    </span><span class="c1">-- 订单ID</span>
+<span class="w">    </span><span class="nv">userId</span><span class="w">      </span><span class="n n-Type">ID</span><span class="p">,</span><span class="w">                    </span><span class="c1">-- 用户ID</span>
+<span class="w">    </span><span class="nv">items</span><span class="w">       </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="n n-Type">OrderItem</span><span class="p">,</span><span class="w"> </span><span class="c1">-- 订单项</span>
+<span class="w">    </span><span class="nv">totalAmount</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="kc">MAX</span><span class="p">),</span><span class="w">      </span><span class="c1">-- 总金额</span>
+<span class="w">    </span><span class="nv">status</span><span class="w">      </span><span class="n n-Type">OrderStatus</span><span class="p">,</span><span class="w">           </span><span class="c1">-- 状态</span>
+<span class="w">    </span><span class="nv">shippingAddress</span><span class="w"> </span><span class="n n-Type">Address</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 收货地址</span>
+<span class="w">    </span><span class="nv">createdAt</span><span class="w">   </span><span class="n n-Type">Timestamp</span><span class="p">,</span><span class="w">             </span><span class="c1">-- 创建时间</span>
+<span class="w">    </span><span class="nv">updatedAt</span><span class="w">   </span><span class="n n-Type">Timestamp</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="w">     </span><span class="c1">-- 更新时间</span>
+<span class="p">}</span>
+
+<span class="c1">-- 地址信息</span>
+<span class="n n-Type">Address</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">country</span><span class="w">     </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="p">)),</span><span class="w">       </span><span class="c1">-- 国家代码</span>
+<span class="w">    </span><span class="nv">province</span><span class="w">    </span><span class="n n-Type">Name</span><span class="p">,</span><span class="w">                       </span><span class="c1">-- 省份</span>
+<span class="w">    </span><span class="nv">city</span><span class="w">        </span><span class="n n-Type">Name</span><span class="p">,</span><span class="w">                       </span><span class="c1">-- 城市</span>
+<span class="w">    </span><span class="nv">district</span><span class="w">    </span><span class="n n-Type">Name</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span><span class="w">              </span><span class="c1">-- 区县</span>
+<span class="w">    </span><span class="nv">street</span><span class="w">      </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">200</span><span class="p">)),</span><span class="w">  </span><span class="c1">-- 街道</span>
+<span class="w">    </span><span class="nv">zipCode</span><span class="w">     </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">6</span><span class="p">)),</span><span class="w">       </span><span class="c1">-- 邮编</span>
+<span class="w">    </span><span class="nv">recipient</span><span class="w">   </span><span class="n n-Type">Name</span><span class="p">,</span><span class="w">                       </span><span class="c1">-- 收件人</span>
+<span class="w">    </span><span class="nv">phone</span><span class="w">       </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"1[3-9]\\d{9}"</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="k">END</span>
+</code></pre>
+<h5 id="233-apiasn1">2.3.3 应用层模块（api.asn1）</h5>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 文件：api.asn1</span>
+<span class="c1">-- 描述：API接口定义</span>
+<span class="n n-Type">ApiModule</span><span class="w"> </span><span class="k">DEFINITIONS</span><span class="w"> </span><span class="k">AUTOMATIC</span><span class="w"> </span><span class="k">TAGS</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="k">BEGIN</span>
+
+<span class="c1">-- ====== 导入声明 ======</span>
+<span class="o o-Namespace">IMPORTS</span>
+<span class="w">    </span><span class="n n-Type">ID</span><span class="p">,</span><span class="w"> </span><span class="n n-Type">Name</span><span class="p">,</span><span class="w"> </span><span class="n n-Type">Status</span><span class="p">,</span><span class="w"> </span><span class="n n-Type">Priority</span><span class="p">,</span><span class="w"> </span><span class="n n-Type">Timestamp</span>
+<span class="w">    </span><span class="k">FROM</span><span class="w"> </span><span class="n n-Type">BaseModule</span><span class="err">;</span>
+
+<span class="o o-Namespace">IMPORTS</span>
+<span class="w">    </span><span class="n n-Type">User</span><span class="p">,</span><span class="w"> </span><span class="n n-Type">Product</span><span class="p">,</span><span class="w"> </span><span class="n n-Type">Order</span><span class="p">,</span><span class="w"> </span><span class="n n-Type">OrderStatus</span><span class="p">,</span><span class="w"> </span><span class="n n-Type">Address</span>
+<span class="w">    </span><span class="k">FROM</span><span class="w"> </span><span class="n n-Type">DomainModule</span><span class="err">;</span>
+
+<span class="c1">-- ====== 通用响应结构 ======</span>
+
+<span class="c1">-- API响应状态</span>
+<span class="n n-Type">ApiStatus</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">success</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">error</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">warning</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">unauthorized</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">notFound</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">-- 错误信息</span>
+<span class="n n-Type">ErrorInfo</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">code</span><span class="w">        </span><span class="kt">INTEGER</span><span class="p">,</span><span class="w">        </span><span class="c1">-- 错误代码</span>
+<span class="w">    </span><span class="nv">message</span><span class="w">     </span><span class="kt">IA5String</span><span class="p">,</span><span class="w">      </span><span class="c1">-- 错误消息</span>
+<span class="w">    </span><span class="nv">details</span><span class="w">     </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 详细说明</span>
+<span class="w">    </span><span class="nv">timestamp</span><span class="w">   </span><span class="n n-Type">Timestamp</span><span class="w">       </span><span class="c1">-- 发生时间</span>
+<span class="p">}</span>
+
+<span class="c1">-- 分页信息</span>
+<span class="n n-Type">Pagination</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">page</span><span class="w">        </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="kc">MAX</span><span class="p">),</span><span class="w">  </span><span class="c1">-- 当前页码</span>
+<span class="w">    </span><span class="nv">pageSize</span><span class="w">    </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">100</span><span class="p">),</span><span class="w">  </span><span class="c1">-- 每页大小</span>
+<span class="w">    </span><span class="nv">totalPages</span><span class="w">  </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="kc">MAX</span><span class="p">),</span><span class="w">  </span><span class="c1">-- 总页数</span>
+<span class="w">    </span><span class="nv">totalItems</span><span class="w">  </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="kc">MAX</span><span class="p">)</span><span class="w">   </span><span class="c1">-- 总条数</span>
+<span class="p">}</span>
+
+<span class="c1">-- 通用响应</span>
+<span class="n n-Type">ApiResponse</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">status</span><span class="w">      </span><span class="n n-Type">ApiStatus</span><span class="p">,</span><span class="w">      </span><span class="c1">-- 响应状态</span>
+<span class="w">    </span><span class="nv">data</span><span class="w">        </span><span class="kd">CHOICE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nv">successData</span><span class="w"> </span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="kt">OCTET STRING</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 成功数据</span>
+<span class="w">        </span><span class="nv">errorInfo</span><span class="w">   </span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">ErrorInfo</span><span class="w">      </span><span class="c1">-- 错误信息</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nv">pagination</span><span class="w">  </span><span class="n n-Type">Pagination</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 分页信息</span>
+<span class="w">    </span><span class="nv">serverTime</span><span class="w">  </span><span class="n n-Type">Timestamp</span><span class="w">      </span><span class="c1">-- 服务器时间</span>
+<span class="p">}</span>
+
+<span class="c1">-- ====== 用户API ======</span>
+
+<span class="c1">-- 登录请求</span>
+<span class="n n-Type">LoginRequest</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">username</span><span class="w">    </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">password</span><span class="w">    </span><span class="kt">OCTET STRING</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">deviceId</span><span class="w">    </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="c1">-- 登录响应</span>
+<span class="n n-Type">LoginResponse</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">token</span><span class="w">       </span><span class="kt">OCTET STRING</span><span class="p">,</span><span class="w">   </span><span class="c1">-- JWT令牌</span>
+<span class="w">    </span><span class="nv">user</span><span class="w">        </span><span class="n n-Type">User</span><span class="p">,</span><span class="w">           </span><span class="c1">-- 用户信息</span>
+<span class="w">    </span><span class="nv">expiresAt</span><span class="w">   </span><span class="n n-Type">Timestamp</span><span class="w">       </span><span class="c1">-- 过期时间</span>
+<span class="p">}</span>
+
+<span class="c1">-- 用户查询请求</span>
+<span class="n n-Type">UserQueryRequest</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">userId</span><span class="w">      </span><span class="n n-Type">ID</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">username</span><span class="w">    </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">role</span><span class="w">        </span><span class="n n-Type">UserRole</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">status</span><span class="w">      </span><span class="n n-Type">Status</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">page</span><span class="w">        </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">pageSize</span><span class="w">    </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="mi">20</span>
+<span class="p">}</span>
+
+<span class="c1">-- 用户查询响应</span>
+<span class="n n-Type">UserQueryResponse</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">users</span><span class="w">       </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="n n-Type">User</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">pagination</span><span class="w">  </span><span class="n n-Type">Pagination</span>
+<span class="p">}</span>
+
+<span class="c1">-- ====== 产品API ======</span>
+
+<span class="c1">-- 产品查询请求</span>
+<span class="n n-Type">ProductQueryRequest</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">productId</span><span class="w">   </span><span class="n n-Type">ID</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">name</span><span class="w">        </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">category</span><span class="w">    </span><span class="n n-Type">ProductCategory</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">minPrice</span><span class="w">    </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">maxPrice</span><span class="w">    </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">inStock</span><span class="w">     </span><span class="kt">BOOLEAN</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">page</span><span class="w">        </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">pageSize</span><span class="w">    </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="mi">20</span>
+<span class="p">}</span>
+
+<span class="c1">-- 产品查询响应</span>
+<span class="n n-Type">ProductQueryResponse</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">products</span><span class="w">    </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="n n-Type">Product</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">pagination</span><span class="w">  </span><span class="n n-Type">Pagination</span>
+<span class="p">}</span>
+
+<span class="c1">-- ====== 订单API ======</span>
+
+<span class="c1">-- 创建订单请求</span>
+<span class="n n-Type">CreateOrderRequest</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">userId</span><span class="w">      </span><span class="n n-Type">ID</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">items</span><span class="w">       </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="n n-Type">OrderItem</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">shippingAddress</span><span class="w"> </span><span class="n n-Type">Address</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">notes</span><span class="w">       </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="c1">-- 订单状态更新请求</span>
+<span class="n n-Type">UpdateOrderStatusRequest</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">orderId</span><span class="w">     </span><span class="n n-Type">ID</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">newStatus</span><span class="w">   </span><span class="n n-Type">OrderStatus</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">reason</span><span class="w">      </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="c1">-- 订单查询请求</span>
+<span class="n n-Type">OrderQueryRequest</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">orderId</span><span class="w">     </span><span class="n n-Type">ID</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">userId</span><span class="w">      </span><span class="n n-Type">ID</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">status</span><span class="w">      </span><span class="n n-Type">OrderStatus</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">startDate</span><span class="w">   </span><span class="n n-Type">Timestamp</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">endDate</span><span class="w">     </span><span class="n n-Type">Timestamp</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">page</span><span class="w">        </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">pageSize</span><span class="w">    </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="mi">20</span>
+<span class="p">}</span>
+
+<span class="c1">-- 订单查询响应</span>
+<span class="n n-Type">OrderQueryResponse</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">orders</span><span class="w">      </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="n n-Type">Order</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">pagination</span><span class="w">  </span><span class="n n-Type">Pagination</span>
+<span class="p">}</span>
+
+<span class="c1">-- ====== 消息类型 ======</span>
+
+<span class="c1">-- API消息封装</span>
+<span class="n n-Type">ApiMessage</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">CHOICE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">loginReq</span><span class="w">        </span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">LoginRequest</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">loginResp</span><span class="w">       </span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">LoginResponse</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">userQueryReq</span><span class="w">    </span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">UserQueryRequest</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">userQueryResp</span><span class="w">   </span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">UserQueryResponse</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">productQueryReq</span><span class="w"> </span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">ProductQueryRequest</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">productQueryResp</span><span class="w"> </span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">ProductQueryResponse</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">createOrderReq</span><span class="w">  </span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">CreateOrderRequest</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">updateOrderReq</span><span class="w">  </span><span class="p">[</span><span class="mi">7</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">UpdateOrderStatusRequest</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">orderQueryReq</span><span class="w">   </span><span class="p">[</span><span class="mi">8</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">OrderQueryRequest</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">orderQueryResp</span><span class="w">  </span><span class="p">[</span><span class="mi">9</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">OrderQueryResponse</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">errorResp</span><span class="w">       </span><span class="p">[</span><span class="mi">10</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">ErrorInfo</span>
+<span class="p">}</span>
+
+<span class="k">END</span>
+</code></pre>
+<h4 id="24">2.4 模块化最佳实践</h4>
+<p><strong>实践1：分层架构</strong></p>
+<pre><code class="md-fencescode">project/
+├── base/          # 基础类型
+│   ├── types.asn1
+│   └── constants.asn1
+├── domain/        # 领域模型
+│   ├── user.asn1
+│   ├── product.asn1
+│   └── order.asn1
+├── api/           # 接口定义
+│   ├── request.asn1
+│   └── response.asn1
+└── protocol/      # 协议定义
+    ├── message.asn1
+    └── encoding.asn1
+</code></pre>
+<p><strong>实践2：命名约定</strong>
+- 模块名：<code>业务域_用途</code>，如<code>UserModule</code>
+- 类型名：大驼峰，如<code>UserProfile</code>
+- 常量名：全大写+下划线，如<code>MAX_LENGTH</code>
+- 文件名：小写+下划线，如<code>user_profile.asn1</code></p>
+<p><strong>实践3：依赖管理</strong>
+- 单向依赖：下层不依赖上层
+- 循环依赖：严格禁止
+- 显式导入：明确列出需要的类型</p>
+<h3 id="30">三、约束组合与验证（30分钟）</h3>
+<h4 id="31">3.1 多重约束</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 1. 范围和大小组合</span>
+<span class="n n-Type">StrictString</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">100</span><span class="p">))</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"[a-zA-Z][a-zA-Z0-9_]*"</span><span class="p">)</span>
+
+<span class="c1">-- 2. FROM + 其他约束</span>
+<span class="n n-Type">BaseRange</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">1000</span><span class="p">)</span>
+<span class="n n-Type">StrictRange</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="n n-Type">BaseRange</span><span class="w"> </span><span class="p">(</span><span class="mi">100</span><span class="o">..</span><span class="mi">200</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="k">FROM</span><span class="w"> </span><span class="n n-Type">ODD-VALUES</span><span class="p">)</span><span class="w">  </span><span class="c1">-- 100-200的奇数</span>
+
+<span class="c1">-- 3. 数组元素约束</span>
+<span class="n n-Type">StrictArray</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">50</span><span class="p">))</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">10</span><span class="p">))</span>
+<span class="c1">-- 每个字符串1-50字符，数组长度1-10</span>
+
+<span class="c1">-- 4. 嵌套约束</span>
+<span class="n n-Type">ComplexStruct</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">id</span><span class="w">      </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">10000</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">name</span><span class="w">    </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">2</span><span class="o">..</span><span class="mi">50</span><span class="p">))</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"[a-zA-Z][a-zA-Z ]*"</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">scores</span><span class="w">  </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">100</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">10</span><span class="p">)),</span>
+<span class="w">    </span><span class="nv">tags</span><span class="w">    </span><span class="kd">SET OF</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">20</span><span class="p">))</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">5</span><span class="p">))</span>
+<span class="p">}</span>
+</code></pre>
+<h4 id="32">3.2 约束验证时机</h4>
+<table>
+<thead>
+<tr>
+<th>验证阶段</th>
+<th>验证内容</th>
+<th>工具/方法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>编译时</strong></td>
+<td>语法检查、类型检查</td>
+<td>ASN.1编译器</td>
+</tr>
+<tr>
+<td><strong>编码时</strong></td>
+<td>值范围、大小约束</td>
+<td>编码库</td>
+</tr>
+<tr>
+<td><strong>运行时</strong></td>
+<td>业务逻辑约束</td>
+<td>应用代码</td>
+</tr>
+<tr>
+<td><strong>传输时</strong></td>
+<td>数据完整性</td>
+<td>协议验证</td>
+</tr>
+</tbody>
+</table>
+<h4 id="33">3.3 约束错误处理</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 在API响应中包含约束验证错误</span>
+<span class="n n-Type">ValidationError</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">field</span><span class="w">       </span><span class="kt">IA5String</span><span class="p">,</span><span class="w">      </span><span class="c1">-- 字段名</span>
+<span class="w">    </span><span class="nv">value</span><span class="w">       </span><span class="kt">IA5String</span><span class="p">,</span><span class="w">      </span><span class="c1">-- 原始值</span>
+<span class="w">    </span><span class="nv">constraint</span><span class="w">  </span><span class="kt">IA5String</span><span class="p">,</span><span class="w">      </span><span class="c1">-- 约束条件</span>
+<span class="w">    </span><span class="nv">message</span><span class="w">     </span><span class="kt">IA5String</span><span class="w">       </span><span class="c1">-- 错误信息</span>
+<span class="p">}</span>
+
+<span class="n n-Type">ValidationResult</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">isValid</span><span class="w">     </span><span class="kt">BOOLEAN</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">errors</span><span class="w">      </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="n n-Type">ValidationError</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="_3">四、今日练习</h3>
+<h4 id="1">练习1：设计车辆管理系统约束</h4>
+<p>创建<code>Vehicle.asn1</code>，为以下类型添加约束：
+1. <code>Vehicle</code>：车牌号（正则验证）、VIN码（17位）、生产年份（1900-今年）
+2. <code>Driver</code>：驾驶证号（规则验证）、年龄（18-70）、驾龄（0-50）
+3. <code>Trip</code>：里程（0-10000公里）、油耗（0-100L/100km）、时间范围
+4. 添加复合约束：重型货车需要A照，客车需要B照</p>
+<h4 id="2">练习2：模块重构</h4>
+<p>将第2天的<code>EmployeeModule</code>重构为三层结构：
+1. <code>base_employee.asn1</code>：基础类型和常量
+2. <code>domain_employee.asn1</code>：员工、部门、薪资等模型
+3. <code>api_employee.asn1</code>：HR系统API接口</p>
+<p>要求：支持导入导出，避免循环依赖。</p>
+<h4 id="3">练习3：约束优化</h4>
+<p>优化<code>NetworkProtocol</code>模块：
+1. 添加消息大小限制（最大1MB）
+2. 添加频率限制（每秒最多100条）
+3. 添加内容安全约束（禁止特定关键词）
+4. 设计约束验证报告格式</p>
+<h3 id="_4">五、学习要点总结</h3>
+<table>
+<thead>
+<tr>
+<th>主题</th>
+<th>关键技能</th>
+<th>应用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>值范围约束</strong></td>
+<td><code>(min..max)</code></td>
+<td>年龄、端口号、百分比</td>
+</tr>
+<tr>
+<td><strong>大小约束</strong></td>
+<td><code>(SIZE (...))</code></td>
+<td>用户名、密码、数组长度</td>
+</tr>
+<tr>
+<td><strong>模式约束</strong></td>
+<td><code>(PATTERN "...")</code></td>
+<td>邮箱、电话、URL验证</td>
+</tr>
+<tr>
+<td><strong>FROM约束</strong></td>
+<td><code>FROM Type</code></td>
+<td>类型继承、子集定义</td>
+</tr>
+<tr>
+<td><strong>模块导入</strong></td>
+<td><code>IMPORTS ... FROM</code></td>
+<td>代码复用、依赖管理</td>
+</tr>
+<tr>
+<td><strong>模块导出</strong></td>
+<td><code>EXPORTS ...</code></td>
+<td>接口暴露、封装</td>
+</tr>
+<tr>
+<td><strong>分层设计</strong></td>
+<td>基础/领域/应用层</td>
+<td>大型项目架构</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_5">六、今日成就检查</h3>
+<p>✅ <strong>完成标志</strong>：
+- [ ] 能为数值类型添加合理的范围约束
+- [ ] 能使用正则表达式验证字符串格式
+- [ ] 能设计三层模块化架构
+- [ ] 理解IMPORTS和EXPORTS的作用
+- [ ] 能回答：FROM约束和子类型有什么区别？</p>
+<h3 id="_6">七、常见问题与解决</h3>
+<p><strong>Q1：约束太多影响性能怎么办？</strong>
+- 编译时约束：由编译器检查，不影响运行时
+- 编码时约束：轻量级检查（如范围）
+- 业务约束：放在应用层，按需检查</p>
+<p><strong>Q2：如何设计可扩展的枚举？</strong></p>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 使用...表示可扩展</span>
+<span class="n n-Type">DeviceType</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">smartphone</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">tablet</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="w">    </span><span class="o">...</span><span class="w">  </span><span class="c1">-- 未来可以添加新设备</span>
+<span class="p">}</span>
+
+<span class="c1">-- 解码时处理未知值</span>
+<span class="c1">-- 保留一些值用于扩展</span>
+<span class="n n-Type">ErrorCode</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">knownError</span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">999</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">reserved</span><span class="p">(</span><span class="mi">1000</span><span class="o">..</span><span class="mi">1999</span><span class="p">),</span><span class="w">  </span><span class="c1">-- 保留给未来使用</span>
+<span class="w">    </span><span class="nv">customError</span><span class="p">(</span><span class="mi">2000</span><span class="o">..</span><span class="kc">MAX</span><span class="p">)</span><span class="w"> </span><span class="c1">-- 用户自定义错误</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>Q3：模块循环依赖如何解决？</strong>
+1. 提取公共类型到基础模块
+2. 使用接口（CHOICE）而不是具体类型
+3. 重新设计领域划分
+4. 使用前向声明（谨慎使用）</p>
+<h3 id="_7">八、明日预告</h3>
+<p><strong>第4天：标签和编码</strong>
+- 标签系统深度解析：UNIVERSAL/APPLICATION/PRIVATE
+- 编码规则对比：BER vs DER vs PER vs XER
+- IMPLICIT和EXPLICIT的区别与应用
+- 实际编码示例和优化技巧</p>
+<hr />
+<h2 id="_8">💡 设计原则总结</h2>
+<ol>
+<li><strong>约束即文档</strong>：好的约束减少沟通成本</li>
+<li><strong>最小权限原则</strong>：只给必要的访问权限</li>
+<li><strong>明确接口</strong>：EXPORTS定义清晰接口</li>
+<li><strong>单向依赖</strong>：避免循环依赖</li>
+<li><strong>渐进式复杂</strong>：从简单开始，逐步添加约束</li>
+</ol>
+<h2 id="_9">🚀 快速参考</h2>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 今日核心语法</span>
+<span class="mi">1</span><span class="p">.</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">100</span><span class="p">)</span><span class="w">                    </span><span class="c1">-- 值范围</span>
+<span class="mi">2</span><span class="p">.</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">50</span><span class="p">))</span><span class="w">             </span><span class="c1">-- 大小约束</span>
+<span class="mi">3</span><span class="p">.</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"..."</span><span class="p">)</span><span class="w">                      </span><span class="c1">-- 模式约束</span>
+<span class="mi">4</span><span class="p">.</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n n-Type">BaseType</span><span class="w"> </span><span class="p">(</span><span class="nv">subrange</span><span class="p">)</span><span class="w">             </span><span class="c1">-- 类型继承</span>
+<span class="mi">5</span><span class="p">.</span><span class="w"> </span><span class="o o-Namespace">IMPORTS</span><span class="w"> </span><span class="o">...</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n n-Type">Module</span><span class="w">             </span><span class="c1">-- 导入</span>
+<span class="mi">6</span><span class="p">.</span><span class="w"> </span><span class="o o-Namespace">EXPORTS</span><span class="w"> </span><span class="n n-Type">Type1</span><span class="p">,</span><span class="w"> </span><span class="n n-Type">Type2</span><span class="err">;</span><span class="w">               </span><span class="c1">-- 导出</span>
+<span class="mi">7</span><span class="p">.</span><span class="w"> </span><span class="n n-Type">Module</span><span class="w"> </span><span class="k">DEFINITIONS</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="k">BEGIN</span><span class="w"> </span><span class="o">...</span><span class="w"> </span><span class="k">END</span><span class="w"> </span><span class="c1">-- 模块定义</span>
+</code></pre>
+<p><strong>记住</strong>：约束不是限制，而是保障。好的约束设计能让代码更健壮，减少运行时错误。明天我们将学习数据如何被编码和传输！</p>
+<hr />
+<p><em>模块化设计时，画一张依赖关系图，确保没有循环依赖和过度耦合。</em></p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

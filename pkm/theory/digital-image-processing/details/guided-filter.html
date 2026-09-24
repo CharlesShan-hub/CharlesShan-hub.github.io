@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>guided-filter</title>
+<link id="theme-css" rel="stylesheet" href="../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="_1">引导滤波</h1>
+<hr />
+<h2 id="_2">资料</h2>
+<ul>
+<li>官网（现在没了）：https://kaiminghe.github.io/eccv10/index.html</li>
+<li>copy的github：https://github.com/accessify/guided-filter</li>
+<li>论文翻译：https://blog.csdn.net/studyeboy/article/details/121137028</li>
+<li>wiki：https://en.wikipedia.org/wiki/Guided_filter</li>
+<li>大佬笔记：https://www.zhihu.com/question/26949096/answer/2910776043</li>
+<li>推荐阅读：<a href="https://blog.csdn.net/magic_shuang/article/details/123729987">引导滤波原理</a></li>
+</ul>
+<hr />
+<h2 id="_3">原理</h2>
+<p>引导滤波（Guided Filter）的核心思想是<strong>利用一张引导图（Guidance Image）来指导对输入图像的滤波过程</strong>。它假设输出图像在局部窗口内是引导图的线性变换，从而在平滑噪声的同时，能更好地保持引导图所提供的边缘结构。</p>
+<p><strong>核心公式</strong>（对于像素点 <em>i</em>）：
+$$q_i = a_k I_i + b_k, \quad \forall i \in \omega_k$$
+其中：
+- $q_i$ 是输出图像在像素 <em>i</em> 的值。
+- $I_i$ 是引导图像在像素 <em>i</em> 的值。
+- $a_k$ 和 $b_k$ 是在以像素 <em>k</em> 为中心的局部窗口 $\omega_k$ 内计算出的线性系数。</p>
+<p><strong>系数求解</strong>：
+通过最小化窗口内的代价函数（输出与输入的差异，并加入对系数 $a_k$ 的正则化）来求解 $a_k$ 和 $b_k$：
+$$E(a_k, b_k) = \sum_{i \in \omega_k} \left( (a_k I_i + b_k - p_i)^2 + \epsilon a_k^2 \right)$$
+其中 $p_i$ 是输入图像，$\epsilon$ 是防止 $a_k$ 过大的正则化参数。</p>
+<p><strong>实际计算步骤</strong>（简化）：
+1.  计算窗口内 $I$ 和 $p$ 的均值、方差、协方差。
+2.  根据公式求出每个窗口的 $a_k$ 和 $b_k$。
+3.  由于像素 <em>i</em> 会被多个窗口覆盖，最终取其对应所有窗口系数的均值作为该像素的 $a_i$ 和 $b_i$。
+4.  最终输出 $q_i = a_i I_i + b_i$。</p>
+<p><strong>关键特性</strong>：
+- <strong>边缘保持</strong>：在边缘处，$I$ 变化大，$a_k$ 较大，$b_k$ 较小，输出 $q$ 会跟随引导图 $I$ 的变化，从而保留边缘。
+- <strong>平滑区域</strong>：在平坦区域，$I$ 变化小，$a_k$ 趋近于0，$b_k$ 趋近于 $\bar{p}$，输出近似为输入的平均值，起到平滑作用。
+- <strong>非迭代、速度快</strong>：只需几次均值滤波（盒滤波）即可实现，计算效率高。</p>
+<hr />
+<h2 id="_4">效果展示</h2>
+<ul>
+<li>第一列：理想引导 (Original Guidance / Ideal Case)<ul>
+<li>机制 ：使用 无噪声的原始可见光图像 作为引导。</li>
+<li>分析 ：这是去噪性能的 理论上限 。由于引导图完美包含了所有真实的边缘和纹理信息，滤波器能精准地区分噪声与细节。</li>
+<li>结果 ：第三行的误差图几乎全黑，表明去噪最彻底，且边缘细节保留最完美，无结构丢失。</li>
+</ul>
+</li>
+<li>第二列：跨模态引导 (IR Guidance / Cross-modal Case)<ul>
+<li>机制 ：使用同一场景的<strong>红外图像（Infrared）</strong>作为引导。</li>
+<li>分析 ：模拟多模态图像处理场景。红外图像提供了互补的结构信息（如热源目标的轮廓），但也缺失了可见光特有的纹理细节。</li>
+<li>结果 ：去噪效果较好，但出现了独特的<strong>结构迁移（Structure Transfer）</strong>现象。仔细观察误差图，可见部分红外图像特有的边缘被“强行”保留到了结果中，而可见光独有的纹理因红外引导图的平坦而被抹平。</li>
+</ul>
+</li>
+<li>第三列：双边滤波引导 (Bilateral Guidance / Realistic Case)<ul>
+<li>机制 ：先对噪声图进行<strong>双边滤波（Bilateral Filter）</strong>预处理，将其输出作为引导图。</li>
+<li>分析 ：这是一种实用的单幅图像增强策略。相比直接使用噪声图，双边滤波预先去除了大部分高频噪声并保留了主要边缘，从而提供了更可靠的结构指引。</li>
+<li>结果 ：误差显著低于自引导（第四列），在去噪能力和细节保持之间取得了良好的平衡。</li>
+</ul>
+</li>
+<li>第四列：自引导 (Self-Guidance / Baseline Case)<ul>
+<li>机制 ：直接使用 含噪输入图像本身 作为引导图。</li>
+<li>分析 ：这是引导滤波的最基础用法。由于引导图本身含有噪声，计算出的线性系数会受到干扰，难以在平滑区域和边缘之间做出完美划分。</li>
+<li>结果 ：误差图最亮，表明残留噪声最多，且在边缘附近容易产生模糊或光晕（Halo）效应。
+<img alt="guided" src="../assets/guided.png" /></li>
+</ul>
+</li>
+</ul>
+<pre lang="python"><code class="language-python md-fencescode"><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">data</span><span class="p">,</span> <span class="n">img_as_float</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skimage.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">random_noise</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skimage.restoration</span><span class="w"> </span><span class="kn">import</span> <span class="n">denoise_bilateral</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">uniform_filter</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cslib.metrics.fusion</span><span class="w"> </span><span class="kn">import</span> <span class="n">ir</span><span class="p">,</span><span class="n">vis</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cslib.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">to_numpy</span>
+
+<span class="n">ir</span> <span class="o">=</span> <span class="n">to_numpy</span><span class="p">(</span><span class="n">ir</span><span class="p">)</span>
+<span class="n">vis</span> <span class="o">=</span> <span class="n">to_numpy</span><span class="p">(</span><span class="n">vis</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">guided_filter</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">eps</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""</span>
+<span class="sd">    引导滤波器 (Guided Filter) 实现</span>
+<span class="sd">    参数:</span>
+<span class="sd">    I: 引导图像 (Guidance Image) - 应该是归一化到 [0, 1] 的浮点数图像</span>
+<span class="sd">    p: 输入图像 (Input Image) - 应该是归一化到 [0, 1] 的浮点数图像</span>
+<span class="sd">    r: 滤波半径 (Radius)</span>
+<span class="sd">    eps: 正则化参数 (Regularization parameter)</span>
+<span class="sd">    返回:</span>
+<span class="sd">    q: 滤波后的输出图像</span>
+<span class="sd">    """</span>
+
+    <span class="c1"># 均值滤波函数 (使用 scipy.ndimage.uniform_filter)</span>
+    <span class="c1"># uniform_filter 的 size 参数如果是标量，则各个维度都一样，即 size=2*r+1</span>
+    <span class="n">w_size</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">r</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="c1"># 计算均值</span>
+    <span class="n">mean_I</span> <span class="o">=</span> <span class="n">uniform_filter</span><span class="p">(</span><span class="n">I</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">w_size</span><span class="p">)</span>
+    <span class="n">mean_p</span> <span class="o">=</span> <span class="n">uniform_filter</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">w_size</span><span class="p">)</span>
+    <span class="n">mean_Ip</span> <span class="o">=</span> <span class="n">uniform_filter</span><span class="p">(</span><span class="n">I</span> <span class="o">*</span> <span class="n">p</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">w_size</span><span class="p">)</span>
+
+    <span class="c1"># 协方差 cov(I, p) = E(Ip) - E(I)E(p)</span>
+    <span class="n">cov_Ip</span> <span class="o">=</span> <span class="n">mean_Ip</span> <span class="o">-</span> <span class="n">mean_I</span> <span class="o">*</span> <span class="n">mean_p</span>
+    <span class="n">mean_II</span> <span class="o">=</span> <span class="n">uniform_filter</span><span class="p">(</span><span class="n">I</span> <span class="o">*</span> <span class="n">I</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">w_size</span><span class="p">)</span>
+    <span class="n">var_I</span> <span class="o">=</span> <span class="n">mean_II</span> <span class="o">-</span> <span class="n">mean_I</span> <span class="o">*</span> <span class="n">mean_I</span>
+
+    <span class="c1"># 线性系数 a 和 b</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">cov_Ip</span> <span class="o">/</span> <span class="p">(</span><span class="n">var_I</span> <span class="o">+</span> <span class="n">eps</span><span class="p">)</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">mean_p</span> <span class="o">-</span> <span class="n">a</span> <span class="o">*</span> <span class="n">mean_I</span>
+
+    <span class="c1"># 计算均值 a 和 b</span>
+    <span class="n">mean_a</span> <span class="o">=</span> <span class="n">uniform_filter</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">w_size</span><span class="p">)</span>
+    <span class="n">mean_b</span> <span class="o">=</span> <span class="n">uniform_filter</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">w_size</span><span class="p">)</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">mean_a</span> <span class="o">*</span> <span class="n">I</span> <span class="o">+</span> <span class="n">mean_b</span>
+    <span class="k">return</span> <span class="n">q</span>
+
+<span class="c1"># 1. 加载图像并转换为浮点数 [0, 1]</span>
+<span class="c1"># original_img = img_as_float(data.camera())</span>
+<span class="n">original_img</span> <span class="o">=</span> <span class="n">vis</span> <span class="c1"># 使用 vis 作为原图</span>
+
+<span class="c1"># 2. 添加噪声</span>
+<span class="n">noisy_img</span> <span class="o">=</span> <span class="n">random_noise</span><span class="p">(</span><span class="n">original_img</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">'gaussian'</span><span class="p">,</span> <span class="n">var</span><span class="o">=</span><span class="mf">0.002</span><span class="p">)</span>
+
+<span class="c1"># 3. 准备引导图</span>
+<span class="c1"># 引导图1：原始无噪声图 (Ideal case)</span>
+<span class="n">guidance_1</span> <span class="o">=</span> <span class="n">original_img</span>
+
+<span class="c1"># 引导图2：红外图像 (Cross-modal case)</span>
+<span class="n">guidance_2</span> <span class="o">=</span> <span class="n">ir</span>
+
+<span class="c1"># 引导图3：双边滤波后的图 (More realistic case)</span>
+<span class="c1"># sigma_color: 值域标准差, sigma_spatial: 空间标准差</span>
+<span class="c1"># 噪声方差 var=0.01，即标准差 sigma=0.1。</span>
+<span class="c1"># 应该设置 sigma_color &gt;= 噪声标准差，这里设为 0.15 左右效果会好很多。</span>
+<span class="n">guidance_3</span> <span class="o">=</span> <span class="n">denoise_bilateral</span><span class="p">(</span><span class="n">noisy_img</span><span class="p">,</span> <span class="n">sigma_color</span><span class="o">=</span><span class="mf">0.12</span><span class="p">,</span> <span class="n">sigma_spatial</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">channel_axis</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+<span class="c1"># 引导图4：噪声图本身 (Self-guided, most common/simple case)</span>
+<span class="n">guidance_4</span> <span class="o">=</span> <span class="n">noisy_img</span>
+
+<span class="c1"># 4. 引导滤波</span>
+<span class="n">radius</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">epsilon</span> <span class="o">=</span> <span class="mf">1e-2</span> <span class="o">**</span> <span class="mi">2</span> <span class="c1"># (0.01)^2</span>
+
+<span class="c1"># 使用原图作为引导</span>
+<span class="n">filtered_1</span> <span class="o">=</span> <span class="n">guided_filter</span><span class="p">(</span><span class="n">guidance_1</span><span class="p">,</span> <span class="n">noisy_img</span><span class="p">,</span> <span class="n">radius</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">)</span>
+
+<span class="c1"># 使用红外图作为引导</span>
+<span class="n">filtered_2</span> <span class="o">=</span> <span class="n">guided_filter</span><span class="p">(</span><span class="n">guidance_2</span><span class="p">,</span> <span class="n">noisy_img</span><span class="p">,</span> <span class="n">radius</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">)</span>
+
+<span class="c1"># 使用双边滤波图作为引导</span>
+<span class="n">filtered_3</span> <span class="o">=</span> <span class="n">guided_filter</span><span class="p">(</span><span class="n">guidance_3</span><span class="p">,</span> <span class="n">noisy_img</span><span class="p">,</span> <span class="n">radius</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">)</span>
+
+<span class="c1"># 使用噪声图本身作为引导</span>
+<span class="n">filtered_4</span> <span class="o">=</span> <span class="n">guided_filter</span><span class="p">(</span><span class="n">guidance_4</span><span class="p">,</span> <span class="n">noisy_img</span><span class="p">,</span> <span class="n">radius</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">)</span>
+
+<span class="c1"># 5. 可视化结果对比</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">15</span><span class="p">))</span>
+
+<span class="c1"># 第一行：引导图</span>
+<span class="n">ax_row1</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">ax_row1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">guidance_1</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'gray'</span><span class="p">)</span>
+<span class="n">ax_row1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'Guidance 1: Original (Vis)</span><span class="se">\n</span><span class="s1">(Ideal Reference)'</span><span class="p">)</span>
+<span class="n">ax_row1</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">'off'</span><span class="p">)</span>
+<span class="n">ax_row1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">guidance_2</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'gray'</span><span class="p">)</span>
+<span class="n">ax_row1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'Guidance 2: Infrared (IR)</span><span class="se">\n</span><span class="s1">(Cross-modal)'</span><span class="p">)</span>
+<span class="n">ax_row1</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">'off'</span><span class="p">)</span>
+<span class="n">ax_row1</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">guidance_3</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'gray'</span><span class="p">)</span>
+<span class="n">ax_row1</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Guidance 3: Bilateral Filtered</span><span class="se">\n</span><span class="s1">($\sigma_s$=20, $\sigma_c$=0.12)'</span><span class="p">)</span>
+<span class="n">ax_row1</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">'off'</span><span class="p">)</span>
+<span class="n">ax_row1</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">guidance_4</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'gray'</span><span class="p">)</span>
+<span class="n">ax_row1</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'Guidance 4: Noisy Image</span><span class="se">\n</span><span class="s1">(Self-guided)'</span><span class="p">)</span>
+<span class="n">ax_row1</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">'off'</span><span class="p">)</span>
+
+<span class="c1"># 第二行：滤波结果</span>
+<span class="n">ax_row2</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="c1"># 显示原图引导的结果</span>
+<span class="n">ax_row2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">filtered_1</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'gray'</span><span class="p">)</span>
+<span class="n">ax_row2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Result with Original Guidance</span><span class="se">\n</span><span class="s1">(r=</span><span class="si">{</span><span class="n">radius</span><span class="si">}</span><span class="s1">, $\epsilon$=</span><span class="si">{</span><span class="n">epsilon</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">)'</span><span class="p">)</span>
+<span class="n">ax_row2</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">'off'</span><span class="p">)</span>
+
+<span class="c1"># 显示红外图引导的结果</span>
+<span class="n">ax_row2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">filtered_2</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'gray'</span><span class="p">)</span>
+<span class="n">ax_row2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Result with IR Guidance</span><span class="se">\n</span><span class="s1">(r=</span><span class="si">{</span><span class="n">radius</span><span class="si">}</span><span class="s1">, $\epsilon$=</span><span class="si">{</span><span class="n">epsilon</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">)'</span><span class="p">)</span>
+<span class="n">ax_row2</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">'off'</span><span class="p">)</span>
+
+<span class="c1"># 显示双边滤波引导的结果</span>
+<span class="n">ax_row2</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">filtered_3</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'gray'</span><span class="p">)</span>
+<span class="n">ax_row2</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Result with Bilateral Guidance</span><span class="se">\n</span><span class="s1">(r=</span><span class="si">{</span><span class="n">radius</span><span class="si">}</span><span class="s1">, $\epsilon$=</span><span class="si">{</span><span class="n">epsilon</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">)'</span><span class="p">)</span>
+<span class="n">ax_row2</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">'off'</span><span class="p">)</span>
+
+<span class="c1"># 显示噪声图引导的结果</span>
+<span class="n">ax_row2</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">filtered_4</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'gray'</span><span class="p">)</span>
+<span class="n">ax_row2</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Result with Self-Guidance</span><span class="se">\n</span><span class="s1">(r=</span><span class="si">{</span><span class="n">radius</span><span class="si">}</span><span class="s1">, $\epsilon$=</span><span class="si">{</span><span class="n">epsilon</span><span class="si">:</span><span class="s1">.0e</span><span class="si">}</span><span class="s1">)'</span><span class="p">)</span>
+<span class="n">ax_row2</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">'off'</span><span class="p">)</span>
+
+<span class="c1"># 第三行：与原图的差异（残差/误差）</span>
+<span class="n">ax_row3</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+<span class="c1"># 结果1与原图差异</span>
+<span class="n">diff1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">filtered_1</span> <span class="o">-</span> <span class="n">original_img</span><span class="p">)</span>
+<span class="n">im_diff1</span> <span class="o">=</span> <span class="n">ax_row3</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">diff1</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'inferno'</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="n">ax_row3</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'Error: Result 1 vs Original</span><span class="se">\n</span><span class="s1">(Ideal Guidance)'</span><span class="p">)</span>
+<span class="n">ax_row3</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">'off'</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im_diff1</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax_row3</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">fraction</span><span class="o">=</span><span class="mf">0.046</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mf">0.04</span><span class="p">)</span>
+
+<span class="c1"># 结果2与原图差异</span>
+<span class="n">diff2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">filtered_2</span> <span class="o">-</span> <span class="n">original_img</span><span class="p">)</span>
+<span class="n">im_diff2</span> <span class="o">=</span> <span class="n">ax_row3</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">diff2</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'inferno'</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="n">ax_row3</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'Error: Result 2 vs Original</span><span class="se">\n</span><span class="s1">(IR Guidance)'</span><span class="p">)</span>
+<span class="n">ax_row3</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">'off'</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im_diff2</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax_row3</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">fraction</span><span class="o">=</span><span class="mf">0.046</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mf">0.04</span><span class="p">)</span>
+
+<span class="c1"># 结果3与原图差异</span>
+<span class="n">diff3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">filtered_3</span> <span class="o">-</span> <span class="n">original_img</span><span class="p">)</span>
+<span class="n">im_diff3</span> <span class="o">=</span> <span class="n">ax_row3</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">diff3</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'inferno'</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="n">ax_row3</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'Error: Result 3 vs Original</span><span class="se">\n</span><span class="s1">(Bilateral Guidance)'</span><span class="p">)</span>
+<span class="n">ax_row3</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">'off'</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im_diff3</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax_row3</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">fraction</span><span class="o">=</span><span class="mf">0.046</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mf">0.04</span><span class="p">)</span>
+
+<span class="c1"># 结果4与原图差异</span>
+<span class="n">diff4</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">filtered_4</span> <span class="o">-</span> <span class="n">original_img</span><span class="p">)</span>
+<span class="n">im_diff4</span> <span class="o">=</span> <span class="n">ax_row3</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">diff4</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'inferno'</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<span class="n">ax_row3</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'Error: Result 4 vs Original</span><span class="se">\n</span><span class="s1">(Self-Guidance)'</span><span class="p">)</span>
+<span class="n">ax_row3</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">'off'</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">im_diff4</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax_row3</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">fraction</span><span class="o">=</span><span class="mf">0.046</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mf">0.04</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">'Guided Filter Comparison: Impact of Guidance Image Quality'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">(</span><span class="n">rect</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.96</span><span class="p">])</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

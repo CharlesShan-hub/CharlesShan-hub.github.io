@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>part6</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="iec-61850-part-6-scl-dna">IEC 61850 Part 6 解读：SCL 配置语言——系统的 DNA</h1>
+<blockquote>
+<p><strong>对应文件</strong>：<code>860[1].6.pdf</code><br />
+<strong>正式标题</strong>：IEC 61850-6 — Configuration Description Language for Communication in Electrical Substations Related to IEDs（变电站 IED 通信配置描述语言）<br />
+<strong>页数</strong>：约 150 页（最厚的部分之一）<br />
+<strong>定位</strong>：SCL（Substation Configuration Language）的完整语法规范</p>
+</blockquote>
+<hr />
+<h2 id="_1">一、这一章在说什么？</h2>
+<p>SCL 是 IEC 61850 的<strong>配置语言</strong>，基于 XML 格式。它把变电站的所有信息——一次系统拓扑、IED 能力、通信参数、数据流——都描述在一个（或一组）文件里。</p>
+<p><strong>一句话理解</strong>：SCL 文件就是变电站自动化系统的"DNA"，包含了构建和配置整个系统所需的全部遗传信息。</p>
+<hr />
+<h2 id="scl">二、SCL 的五种文件类型</h2>
+<p>Part 6 定义了五种 SCL 文件，每种有不同的用途和生命周期：</p>
+<pre><code class="md-fencescode">┌─────────────────────────────────────────────────────────────────┐
+│                        SCL 文件类型                              │
+├─────────┬───────────────────────────────────────────────────────┤
+│  SSD    │ System Specification Description（系统规格描述）       │
+│         │ • 描述变电站一次系统（主接线、电压等级、间隔）          │
+│         │ • 由系统集成商创建                                     │
+│         │ • 不包含 IED 具体信息                                  │
+├─────────┼───────────────────────────────────────────────────────┤
+│  ICD    │ IED Capability Description（IED 能力描述）             │
+│         │ • 描述单个 IED 的能力（有什么 LN、支持什么服务）        │
+│         │ • 由设备厂商提供                                       │
+│         │ • 是设备的&quot;产品说明书&quot;                                 │
+├─────────┼───────────────────────────────────────────────────────┤
+│  SCD    │ Substation Configuration Description（系统配置描述）   │
+│         │ • 完整的系统配置（SSD + 所有 ICD + 通信配置）           │
+│         │ • 由系统集成商创建                                     │
+│         │ • 是项目的&quot;总设计图&quot;                                   │
+├─────────┼───────────────────────────────────────────────────────┤
+│  CID    │ Configured IED Description（已配置 IED 描述）          │
+│         │ • 单个 IED 的实例化配置                                │
+│         │ • 从 SCD 导出，下载到 IED                              │
+│         │ • 是设备的&quot;身份证&quot;                                     │
+├─────────┼───────────────────────────────────────────────────────┤
+│  IID    │ Instantiated IED Description（实例化 IED 描述）        │
+│         │ • 工程实例化的 IED 配置                                │
+│         │ • 用于 IED 之间的配置交换                              │
+│         │ • 较少使用                                             │
+└─────────┴───────────────────────────────────────────────────────┘
+</code></pre>
+<hr />
+<h2 id="scl_1">三、SCL 文件的结构</h2>
+<p>所有 SCL 文件都遵循相同的 XML Schema，根元素是 <code>&lt;SCL&gt;</code>：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cp">&lt;?xml version="1.0" encoding="UTF-8"?&gt;</span>
+<span class="nt">&lt;SCL</span><span class="w"> </span><span class="na">xmlns=</span><span class="s">"http://www.iec.ch/61850/2003/SCL"</span><span class="w"> </span><span class="na">version=</span><span class="s">"2007"</span><span class="w"> </span><span class="na">revision=</span><span class="s">"B"</span><span class="nt">&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!-- 1. 头部信息 --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;Header</span><span class="w"> </span><span class="na">id=</span><span class="s">"Project_Example"</span><span class="w"> </span><span class="na">version=</span><span class="s">"1.0"</span><span class="w"> </span><span class="na">revision=</span><span class="s">"1.0"</span><span class="nt">/&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!-- 2. 变电站一次系统描述（SSD/SCD 有，ICD 没有）--&gt;</span>
+<span class="w">    </span><span class="nt">&lt;Substation</span><span class="w"> </span><span class="na">name=</span><span class="s">"Sub1"</span><span class="nt">&gt;</span>
+<span class="w">        </span>...
+<span class="w">    </span><span class="nt">&lt;/Substation&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!-- 3. IED 描述（ICD/SCD/CID 有）--&gt;</span>
+<span class="w">    </span><span class="nt">&lt;IED</span><span class="w"> </span><span class="na">name=</span><span class="s">"IED1"</span><span class="w"> </span><span class="na">type=</span><span class="s">"ProtectionRelay"</span><span class="w"> </span><span class="na">manufacturer=</span><span class="s">"ABC"</span><span class="nt">&gt;</span>
+<span class="w">        </span>...
+<span class="w">    </span><span class="nt">&lt;/IED&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!-- 4. 通信系统配置（SCD/CID 有）--&gt;</span>
+<span class="w">    </span><span class="nt">&lt;Communication&gt;</span>
+<span class="w">        </span>...
+<span class="w">    </span><span class="nt">&lt;/Communication&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!-- 5. 数据类型模板（ICD 有，SCD/CID 引用）--&gt;</span>
+<span class="w">    </span><span class="nt">&lt;DataTypeTemplates&gt;</span>
+<span class="w">        </span>...
+<span class="w">    </span><span class="nt">&lt;/DataTypeTemplates&gt;</span>
+
+<span class="nt">&lt;/SCL&gt;</span>
+</code></pre>
+<hr />
+<h2 id="substation">四、Substation 部分：一次系统拓扑</h2>
+<p><code>&lt;Substation&gt;</code> 描述变电站的物理结构：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;Substation</span><span class="w"> </span><span class="na">name=</span><span class="s">"500kV_Substation"</span><span class="w"> </span><span class="na">desc=</span><span class="s">"某变电站"</span><span class="nt">&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!-- 电压等级 --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;VoltageLevel</span><span class="w"> </span><span class="na">name=</span><span class="s">"VL500"</span><span class="w"> </span><span class="na">nomFreq=</span><span class="s">"50"</span><span class="w"> </span><span class="na">numPhases=</span><span class="s">"3"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Voltage</span><span class="w"> </span><span class="na">unit=</span><span class="s">"V"</span><span class="w"> </span><span class="na">multiplier=</span><span class="s">"k"</span><span class="nt">&gt;</span>500<span class="nt">&lt;/Voltage&gt;</span>
+
+<span class="w">        </span><span class="cm">&lt;!-- 间隔（Bay）：变电站的功能单元 --&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Bay</span><span class="w"> </span><span class="na">name=</span><span class="s">"Bay_Line1"</span><span class="w"> </span><span class="na">desc=</span><span class="s">"出线间隔1"</span><span class="nt">&gt;</span>
+
+<span class="w">            </span><span class="cm">&lt;!-- 导体（ConductingEquipment）：断路器、隔离开关等 --&gt;</span>
+<span class="w">            </span><span class="nt">&lt;ConductingEquipment</span><span class="w"> </span><span class="na">name=</span><span class="s">"CB1"</span><span class="w"> </span><span class="na">type=</span><span class="s">"CBR"</span><span class="nt">&gt;</span>
+<span class="w">                </span><span class="nt">&lt;Terminal</span><span class="w"> </span><span class="na">name=</span><span class="s">"T1"</span><span class="w"> </span><span class="na">connectivityNode=</span><span class="s">"VL500/Bay_Line1/Node1"</span><span class="nt">/&gt;</span>
+<span class="w">                </span><span class="nt">&lt;Terminal</span><span class="w"> </span><span class="na">name=</span><span class="s">"T2"</span><span class="w"> </span><span class="na">connectivityNode=</span><span class="s">"VL500/Bay_Line1/Node2"</span><span class="nt">/&gt;</span>
+<span class="w">            </span><span class="nt">&lt;/ConductingEquipment&gt;</span>
+
+<span class="w">            </span><span class="nt">&lt;ConductingEquipment</span><span class="w"> </span><span class="na">name=</span><span class="s">"DS1"</span><span class="w"> </span><span class="na">type=</span><span class="s">"DIS"</span><span class="nt">&gt;</span>
+<span class="w">                </span><span class="nt">&lt;Terminal</span><span class="w"> </span><span class="na">name=</span><span class="s">"T1"</span><span class="w"> </span><span class="na">connectivityNode=</span><span class="s">"VL500/Bay_Line1/Node2"</span><span class="nt">/&gt;</span>
+<span class="w">                </span><span class="nt">&lt;Terminal</span><span class="w"> </span><span class="na">name=</span><span class="s">"T2"</span><span class="w"> </span><span class="na">connectivityNode=</span><span class="s">"VL500/Bay_Line1/Node3"</span><span class="nt">/&gt;</span>
+<span class="w">            </span><span class="nt">&lt;/ConductingEquipment&gt;</span>
+
+<span class="w">            </span><span class="cm">&lt;!-- 连接节点 --&gt;</span>
+<span class="w">            </span><span class="nt">&lt;ConnectivityNode</span><span class="w"> </span><span class="na">name=</span><span class="s">"Node1"</span><span class="w"> </span><span class="na">pathName=</span><span class="s">"VL500/Bay_Line1/Node1"</span><span class="nt">/&gt;</span>
+<span class="w">            </span><span class="nt">&lt;ConnectivityNode</span><span class="w"> </span><span class="na">name=</span><span class="s">"Node2"</span><span class="w"> </span><span class="na">pathName=</span><span class="s">"VL500/Bay_Line1/Node2"</span><span class="nt">/&gt;</span>
+<span class="w">            </span><span class="nt">&lt;ConnectivityNode</span><span class="w"> </span><span class="na">name=</span><span class="s">"Node3"</span><span class="w"> </span><span class="na">pathName=</span><span class="s">"VL500/Bay_Line1/Node3"</span><span class="nt">/&gt;</span>
+
+<span class="w">        </span><span class="nt">&lt;/Bay&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;/VoltageLevel&gt;</span>
+
+<span class="nt">&lt;/Substation&gt;</span>
+</code></pre>
+<p><strong>关键概念</strong>：
+- <strong>VoltageLevel</strong>：电压等级（500kV、220kV、110kV...）
+- <strong>Bay</strong>：间隔，变电站的功能单元（一条出线、一台变压器对应一个间隔）
+- <strong>ConductingEquipment</strong>：一次设备（CBR=断路器、DIS=隔离开关、CTR=电流互感器...）
+- <strong>ConnectivityNode</strong>：连接点，描述设备之间的电气连接关系</p>
+<hr />
+<h2 id="ied">五、IED 部分：智能设备描述</h2>
+<p><code>&lt;IED&gt;</code> 是 SCL 的核心，描述智能设备的所有信息：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;IED</span><span class="w"> </span><span class="na">name=</span><span class="s">"PROT_Line1"</span><span class="w"> </span><span class="na">type=</span><span class="s">"LineProtection"</span><span class="w"> </span><span class="na">manufacturer=</span><span class="s">"SIEMENS"</span><span class="w"> </span>
+<span class="w">     </span><span class="na">configVersion=</span><span class="s">"1.0"</span><span class="w"> </span><span class="na">originalSclVersion=</span><span class="s">"2007"</span><span class="w"> </span><span class="na">originalSclRevision=</span><span class="s">"B"</span><span class="nt">&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!-- 服务配置：这个 IED 支持哪些服务 --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;Services&gt;</span>
+<span class="w">        </span><span class="nt">&lt;DynAssociation</span><span class="w"> </span><span class="na">max=</span><span class="s">"10"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;DynDataSet</span><span class="w"> </span><span class="na">max=</span><span class="s">"20"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;ConfDataSet</span><span class="w"> </span><span class="na">max=</span><span class="s">"20"</span><span class="w"> </span><span class="na">maxAttributes=</span><span class="s">"100"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;ConfReportControl</span><span class="w"> </span><span class="na">max=</span><span class="s">"10"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;ConfLogControl</span><span class="w"> </span><span class="na">max=</span><span class="s">"5"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;FileHandling/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;TimeSyncProt</span><span class="w"> </span><span class="na">sntp=</span><span class="s">"true"</span><span class="w"> </span><span class="na">ptp=</span><span class="s">"true"</span><span class="nt">/&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/Services&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!-- 访问点：IED 的通信接口 --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;AccessPoint</span><span class="w"> </span><span class="na">name=</span><span class="s">"S1"</span><span class="nt">&gt;</span>
+
+<span class="w">        </span><span class="cm">&lt;!-- 服务器：提供数据和服务 --&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Server&gt;</span>
+
+<span class="w">            </span><span class="cm">&lt;!-- 逻辑设备（LD）：功能分区 --&gt;</span>
+<span class="w">            </span><span class="nt">&lt;LDevice</span><span class="w"> </span><span class="na">inst=</span><span class="s">"LD0"</span><span class="w"> </span><span class="na">desc=</span><span class="s">"公用 LD"</span><span class="nt">&gt;</span>
+
+<span class="w">                </span><span class="cm">&lt;!-- 逻辑节点（LN）：具体功能 --&gt;</span>
+<span class="w">                </span><span class="nt">&lt;LN0</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"LLN0"</span><span class="w"> </span><span class="na">inst=</span><span class="s">""</span><span class="w"> </span><span class="na">lnType=</span><span class="s">"LLN0_1"</span><span class="nt">&gt;</span>
+<span class="w">                    </span><span class="cm">&lt;!-- 数据集：一组数据的集合 --&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;DataSet</span><span class="w"> </span><span class="na">name=</span><span class="s">"dsMeasurements"</span><span class="nt">&gt;</span>
+<span class="w">                        </span><span class="nt">&lt;FCDA</span><span class="w"> </span><span class="na">ldInst=</span><span class="s">"LD0"</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"MMXU"</span><span class="w"> </span><span class="na">lnInst=</span><span class="s">"1"</span><span class="w"> </span>
+<span class="w">                              </span><span class="na">doName=</span><span class="s">"PhV"</span><span class="w"> </span><span class="na">daName=</span><span class="s">"phsA"</span><span class="w"> </span><span class="na">fc=</span><span class="s">"MX"</span><span class="nt">/&gt;</span>
+<span class="w">                        </span><span class="nt">&lt;FCDA</span><span class="w"> </span><span class="na">ldInst=</span><span class="s">"LD0"</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"MMXU"</span><span class="w"> </span><span class="na">lnInst=</span><span class="s">"1"</span><span class="w"> </span>
+<span class="w">                              </span><span class="na">doName=</span><span class="s">"PhV"</span><span class="w"> </span><span class="na">daName=</span><span class="s">"phsB"</span><span class="w"> </span><span class="na">fc=</span><span class="s">"MX"</span><span class="nt">/&gt;</span>
+<span class="w">                        </span><span class="nt">&lt;FCDA</span><span class="w"> </span><span class="na">ldInst=</span><span class="s">"LD0"</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"MMXU"</span><span class="w"> </span><span class="na">lnInst=</span><span class="s">"1"</span><span class="w"> </span>
+<span class="w">                              </span><span class="na">doName=</span><span class="s">"PhV"</span><span class="w"> </span><span class="na">daName=</span><span class="s">"phsC"</span><span class="w"> </span><span class="na">fc=</span><span class="s">"MX"</span><span class="nt">/&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;/DataSet&gt;</span>
+
+<span class="w">                    </span><span class="cm">&lt;!-- 报告控制块：定义如何主动上报数据 --&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;ReportControl</span><span class="w"> </span><span class="na">name=</span><span class="s">"URCB_Meas"</span><span class="w"> </span><span class="na">datSet=</span><span class="s">"dsMeasurements"</span><span class="w"> </span>
+<span class="w">                                   </span><span class="na">confRev=</span><span class="s">"1"</span><span class="w"> </span><span class="na">buffered=</span><span class="s">"false"</span><span class="w"> </span>
+<span class="w">                                   </span><span class="na">rptID=</span><span class="s">"Measurements"</span><span class="nt">&gt;</span>
+<span class="w">                        </span><span class="nt">&lt;TrgOps</span><span class="w"> </span><span class="na">dchg=</span><span class="s">"true"</span><span class="w"> </span><span class="na">qchg=</span><span class="s">"true"</span><span class="nt">/&gt;</span>
+<span class="w">                        </span><span class="nt">&lt;OptFields</span><span class="w"> </span><span class="na">seqNum=</span><span class="s">"true"</span><span class="w"> </span><span class="na">timeStamp=</span><span class="s">"true"</span><span class="nt">/&gt;</span>
+<span class="w">                        </span><span class="nt">&lt;RptEnabled</span><span class="w"> </span><span class="na">max=</span><span class="s">"5"</span><span class="nt">/&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;/ReportControl&gt;</span>
+<span class="w">                </span><span class="nt">&lt;/LN0&gt;</span>
+
+<span class="w">                </span><span class="cm">&lt;!-- 测量逻辑节点 --&gt;</span>
+<span class="w">                </span><span class="nt">&lt;LN</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"MMXU"</span><span class="w"> </span><span class="na">inst=</span><span class="s">"1"</span><span class="w"> </span><span class="na">lnType=</span><span class="s">"MMXU_1"</span><span class="w"> </span><span class="na">prefix=</span><span class="s">""</span><span class="nt">&gt;</span>
+<span class="w">                    </span><span class="cm">&lt;!-- 数据对象实例 --&gt;</span>
+<span class="w">                </span><span class="nt">&lt;/LN&gt;</span>
+
+<span class="w">                </span><span class="cm">&lt;!-- 断路器控制逻辑节点 --&gt;</span>
+<span class="w">                </span><span class="nt">&lt;LN</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"XCBR"</span><span class="w"> </span><span class="na">inst=</span><span class="s">"1"</span><span class="w"> </span><span class="na">lnType=</span><span class="s">"XCBR_1"</span><span class="nt">/&gt;</span>
+
+<span class="w">            </span><span class="nt">&lt;/LDevice&gt;</span>
+
+<span class="w">            </span><span class="nt">&lt;LDevice</span><span class="w"> </span><span class="na">inst=</span><span class="s">"PROT"</span><span class="w"> </span><span class="na">desc=</span><span class="s">"保护 LD"</span><span class="nt">&gt;</span>
+<span class="w">                </span><span class="nt">&lt;LN0</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"LLN0"</span><span class="w"> </span><span class="na">inst=</span><span class="s">""</span><span class="w"> </span><span class="na">lnType=</span><span class="s">"LLN0_PROT"</span><span class="nt">/&gt;</span>
+<span class="w">                </span><span class="nt">&lt;LN</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"PDIS"</span><span class="w"> </span><span class="na">inst=</span><span class="s">"1"</span><span class="w"> </span><span class="na">lnType=</span><span class="s">"PDIS_1"</span><span class="nt">/&gt;</span>
+<span class="w">                </span><span class="nt">&lt;LN</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"PTOC"</span><span class="w"> </span><span class="na">inst=</span><span class="s">"1"</span><span class="w"> </span><span class="na">lnType=</span><span class="s">"PTOC_1"</span><span class="nt">/&gt;</span>
+<span class="w">            </span><span class="nt">&lt;/LDevice&gt;</span>
+
+<span class="w">        </span><span class="nt">&lt;/Server&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;/AccessPoint&gt;</span>
+
+<span class="nt">&lt;/IED&gt;</span>
+</code></pre>
+<p><strong>关键概念</strong>：
+- <strong>AccessPoint</strong>：访问点，IED 的通信接口（一个 IED 可以有多个）
+- <strong>LDevice</strong>：逻辑设备，功能分区（LD0=公用、PROT=保护、CTRL=控制...）
+- <strong>LN/LN0</strong>：逻辑节点，具体功能（LLN0=每个 LD 的公用节点、MMXU=测量、XCBR=断路器...）
+- <strong>DataSet</strong>：数据集，一组功能相关数据的集合
+- <strong>ReportControl</strong>：报告控制块，定义数据如何主动上报</p>
+<hr />
+<h2 id="communication">六、Communication 部分：通信配置</h2>
+<p><code>&lt;Communication&gt;</code> 描述整个系统的通信参数：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;Communication&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!-- 子网：按功能或区域划分 --&gt;</span>
+<span class="w">    </span><span class="nt">&lt;SubNetwork</span><span class="w"> </span><span class="na">name=</span><span class="s">"StationBus"</span><span class="w"> </span><span class="na">type=</span><span class="s">"8-MMS"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;BitRate</span><span class="w"> </span><span class="na">unit=</span><span class="s">"b/s"</span><span class="w"> </span><span class="na">multiplier=</span><span class="s">"M"</span><span class="nt">&gt;</span>100<span class="nt">&lt;/BitRate&gt;</span>
+
+<span class="w">        </span><span class="cm">&lt;!-- 连接到子网的 IED --&gt;</span>
+<span class="w">        </span><span class="nt">&lt;ConnectedAP</span><span class="w"> </span><span class="na">iedName=</span><span class="s">"PROT_Line1"</span><span class="w"> </span><span class="na">apName=</span><span class="s">"S1"</span><span class="nt">&gt;</span>
+<span class="w">            </span><span class="cm">&lt;!-- IP 地址 --&gt;</span>
+<span class="w">            </span><span class="nt">&lt;Address&gt;</span>
+<span class="w">                </span><span class="nt">&lt;P</span><span class="w"> </span><span class="na">type=</span><span class="s">"IP"</span><span class="nt">&gt;</span>192.168.1.10<span class="nt">&lt;/P&gt;</span>
+<span class="w">                </span><span class="nt">&lt;P</span><span class="w"> </span><span class="na">type=</span><span class="s">"IP-SUBNET"</span><span class="nt">&gt;</span>255.255.255.0<span class="nt">&lt;/P&gt;</span>
+<span class="w">                </span><span class="nt">&lt;P</span><span class="w"> </span><span class="na">type=</span><span class="s">"IP-GATEWAY"</span><span class="nt">&gt;</span>192.168.1.1<span class="nt">&lt;/P&gt;</span>
+<span class="w">            </span><span class="nt">&lt;/Address&gt;</span>
+
+<span class="w">            </span><span class="cm">&lt;!-- GOOSE 配置 --&gt;</span>
+<span class="w">            </span><span class="nt">&lt;GSE</span><span class="w"> </span><span class="na">ldInst=</span><span class="s">"LD0"</span><span class="w"> </span><span class="na">cbName=</span><span class="s">"GOOSE_CB"</span><span class="nt">&gt;</span>
+<span class="w">                </span><span class="nt">&lt;Address&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;P</span><span class="w"> </span><span class="na">type=</span><span class="s">"MAC-Address"</span><span class="nt">&gt;</span>01-0C-CD-01-00-10<span class="nt">&lt;/P&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;P</span><span class="w"> </span><span class="na">type=</span><span class="s">"VLAN-ID"</span><span class="nt">&gt;</span>100<span class="nt">&lt;/P&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;P</span><span class="w"> </span><span class="na">type=</span><span class="s">"VLAN-PRIORITY"</span><span class="nt">&gt;</span>4<span class="nt">&lt;/P&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;P</span><span class="w"> </span><span class="na">type=</span><span class="s">"APPID"</span><span class="nt">&gt;</span>0x1000<span class="nt">&lt;/P&gt;</span>
+<span class="w">                </span><span class="nt">&lt;/Address&gt;</span>
+<span class="w">                </span><span class="nt">&lt;MinTime</span><span class="w"> </span><span class="na">unit=</span><span class="s">"s"</span><span class="w"> </span><span class="na">multiplier=</span><span class="s">"m"</span><span class="nt">&gt;</span>4<span class="nt">&lt;/MinTime&gt;</span>
+<span class="w">                </span><span class="nt">&lt;MaxTime</span><span class="w"> </span><span class="na">unit=</span><span class="s">"s"</span><span class="w"> </span><span class="na">multiplier=</span><span class="s">"m"</span><span class="nt">&gt;</span>1000<span class="nt">&lt;/MaxTime&gt;</span>
+<span class="w">            </span><span class="nt">&lt;/GSE&gt;</span>
+
+<span class="w">            </span><span class="cm">&lt;!-- SV 采样值配置 --&gt;</span>
+<span class="w">            </span><span class="nt">&lt;SMV</span><span class="w"> </span><span class="na">ldInst=</span><span class="s">"LD0"</span><span class="w"> </span><span class="na">cbName=</span><span class="s">"SV_CB"</span><span class="nt">&gt;</span>
+<span class="w">                </span><span class="nt">&lt;Address&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;P</span><span class="w"> </span><span class="na">type=</span><span class="s">"MAC-Address"</span><span class="nt">&gt;</span>01-0C-CD-04-00-10<span class="nt">&lt;/P&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;P</span><span class="w"> </span><span class="na">type=</span><span class="s">"VLAN-ID"</span><span class="nt">&gt;</span>200<span class="nt">&lt;/P&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;P</span><span class="w"> </span><span class="na">type=</span><span class="s">"VLAN-PRIORITY"</span><span class="nt">&gt;</span>4<span class="nt">&lt;/P&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;P</span><span class="w"> </span><span class="na">type=</span><span class="s">"APPID"</span><span class="nt">&gt;</span>0x4000<span class="nt">&lt;/P&gt;</span>
+<span class="w">                </span><span class="nt">&lt;/Address&gt;</span>
+<span class="w">            </span><span class="nt">&lt;/SMV&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/ConnectedAP&gt;</span>
+
+<span class="w">        </span><span class="nt">&lt;ConnectedAP</span><span class="w"> </span><span class="na">iedName=</span><span class="s">"MU_Line1"</span><span class="w"> </span><span class="na">apName=</span><span class="s">"S1"</span><span class="nt">&gt;</span>
+<span class="w">            </span><span class="nt">&lt;Address&gt;</span>
+<span class="w">                </span><span class="nt">&lt;P</span><span class="w"> </span><span class="na">type=</span><span class="s">"IP"</span><span class="nt">&gt;</span>192.168.1.20<span class="nt">&lt;/P&gt;</span>
+<span class="w">                </span><span class="nt">&lt;P</span><span class="w"> </span><span class="na">type=</span><span class="s">"IP-SUBNET"</span><span class="nt">&gt;</span>255.255.255.0<span class="nt">&lt;/P&gt;</span>
+<span class="w">            </span><span class="nt">&lt;/Address&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/ConnectedAP&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;/SubNetwork&gt;</span>
+
+<span class="nt">&lt;/Communication&gt;</span>
+</code></pre>
+<p><strong>关键概念</strong>：
+- <strong>SubNetwork</strong>：子网，可以按功能划分（站控网、过程网）
+- <strong>ConnectedAP</strong>：连接访问点，IED 到子网的连接
+- <strong>GSE</strong>：Generic Substation Event，GOOSE 的通信配置
+- <strong>SMV</strong>：Sampled Value，SV 的通信配置
+- <strong>MAC-Address</strong>：GOOSE/SV 使用组播 MAC 地址（01-0C-CD-01-xx-xx 是 GOOSE，01-0C-CD-04-xx-xx 是 SV）</p>
+<hr />
+<h2 id="datatypetemplates">七、DataTypeTemplates 部分：数据类型模板</h2>
+<p><code>&lt;DataTypeTemplates&gt;</code> 定义所有 LN、DO、DA 的类型模板：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;DataTypeTemplates&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!-- 逻辑节点类型（LNodeType）--&gt;</span>
+<span class="w">    </span><span class="nt">&lt;LNodeType</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"MMXU"</span><span class="w"> </span><span class="na">id=</span><span class="s">"MMXU_1"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="cm">&lt;!-- 数据对象（DO）--&gt;</span>
+<span class="w">        </span><span class="nt">&lt;DO</span><span class="w"> </span><span class="na">name=</span><span class="s">"PhV"</span><span class="w"> </span><span class="na">type=</span><span class="s">"WYE"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;DO</span><span class="w"> </span><span class="na">name=</span><span class="s">"A"</span><span class="w"> </span><span class="na">type=</span><span class="s">"WYE"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;DO</span><span class="w"> </span><span class="na">name=</span><span class="s">"TotW"</span><span class="w"> </span><span class="na">type=</span><span class="s">"MV"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;DO</span><span class="w"> </span><span class="na">name=</span><span class="s">"TotVAr"</span><span class="w"> </span><span class="na">type=</span><span class="s">"MV"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;DO</span><span class="w"> </span><span class="na">name=</span><span class="s">"Hz"</span><span class="w"> </span><span class="na">type=</span><span class="s">"MV"</span><span class="nt">/&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/LNodeType&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!-- 数据对象类型（DOType）--&gt;</span>
+<span class="w">    </span><span class="nt">&lt;DOType</span><span class="w"> </span><span class="na">cdc=</span><span class="s">"WYE"</span><span class="w"> </span><span class="na">id=</span><span class="s">"WYE"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="cm">&lt;!-- 数据属性（DA）--&gt;</span>
+<span class="w">        </span><span class="nt">&lt;DA</span><span class="w"> </span><span class="na">name=</span><span class="s">"phsA"</span><span class="w"> </span><span class="na">type=</span><span class="s">"CMV"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;DA</span><span class="w"> </span><span class="na">name=</span><span class="s">"phsB"</span><span class="w"> </span><span class="na">type=</span><span class="s">"CMV"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;DA</span><span class="w"> </span><span class="na">name=</span><span class="s">"phsC"</span><span class="w"> </span><span class="na">type=</span><span class="s">"CMV"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;DA</span><span class="w"> </span><span class="na">name=</span><span class="s">"neut"</span><span class="w"> </span><span class="na">type=</span><span class="s">"CMV"</span><span class="nt">/&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/DOType&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!-- 公共数据类（DAType）--&gt;</span>
+<span class="w">    </span><span class="nt">&lt;DAType</span><span class="w"> </span><span class="na">id=</span><span class="s">"CMV"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;BDA</span><span class="w"> </span><span class="na">name=</span><span class="s">"cVal"</span><span class="w"> </span><span class="na">type=</span><span class="s">"Vector"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;BDA</span><span class="w"> </span><span class="na">name=</span><span class="s">"q"</span><span class="w"> </span><span class="na">type=</span><span class="s">"Quality"</span><span class="nt">/&gt;</span>
+<span class="w">        </span><span class="nt">&lt;BDA</span><span class="w"> </span><span class="na">name=</span><span class="s">"t"</span><span class="w"> </span><span class="na">type=</span><span class="s">"Timestamp"</span><span class="nt">/&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/DAType&gt;</span>
+
+<span class="w">    </span><span class="cm">&lt;!-- 基本数据属性类型（EnumType/BDA）--&gt;</span>
+<span class="w">    </span><span class="nt">&lt;EnumType</span><span class="w"> </span><span class="na">id=</span><span class="s">"BehaviourMode"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;EnumVal</span><span class="w"> </span><span class="na">ord=</span><span class="s">"1"</span><span class="nt">&gt;</span>on<span class="nt">&lt;/EnumVal&gt;</span>
+<span class="w">        </span><span class="nt">&lt;EnumVal</span><span class="w"> </span><span class="na">ord=</span><span class="s">"2"</span><span class="nt">&gt;</span>blocked<span class="nt">&lt;/EnumVal&gt;</span>
+<span class="w">        </span><span class="nt">&lt;EnumVal</span><span class="w"> </span><span class="na">ord=</span><span class="s">"3"</span><span class="nt">&gt;</span>test<span class="nt">&lt;/EnumVal&gt;</span>
+<span class="w">        </span><span class="nt">&lt;EnumVal</span><span class="w"> </span><span class="na">ord=</span><span class="s">"4"</span><span class="nt">&gt;</span>test/blocked<span class="nt">&lt;/EnumVal&gt;</span>
+<span class="w">        </span><span class="nt">&lt;EnumVal</span><span class="w"> </span><span class="na">ord=</span><span class="s">"5"</span><span class="nt">&gt;</span>off<span class="nt">&lt;/EnumVal&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/EnumType&gt;</span>
+
+<span class="nt">&lt;/DataTypeTemplates&gt;</span>
+</code></pre>
+<p><strong>关键概念</strong>：
+- <strong>LNodeType</strong>：逻辑节点类型，定义 LN 包含哪些 DO
+- <strong>DOType</strong>：数据对象类型，定义 DO 包含哪些 DA
+- <strong>DAType</strong>：数据属性类型，定义 DA 的结构
+- <strong>EnumType</strong>：枚举类型，定义状态值的含义</p>
+<hr />
+<h2 id="scl_2">八、SCL 文件的工作流程</h2>
+<pre><code class="md-fencescode">阶段1: 厂商提供 ICD
+    │
+    ▼
+&lt;IED name=&quot;TEMPLATE&quot;&gt;      ← 模板化 IED，name=&quot;TEMPLATE&quot;
+    &lt;Services&gt;...&lt;/Services&gt;   ← 支持的服务
+    &lt;DataTypeTemplates&gt;...&lt;/DataTypeTemplates&gt;  ← 数据类型定义
+&lt;/IED&gt;
+
+阶段2: 集成商创建 SCD
+    │
+    ▼
+&lt;Substation&gt;...&lt;/Substation&gt;   ← 添加一次系统拓扑
+&lt;IED name=&quot;IED1&quot; ...&gt;          ← 实例化 IED，指定 name、IP
+&lt;Communication&gt;...&lt;/Communication&gt;  ← 配置通信参数
+
+阶段3: 导出 CID 下载到设备
+    │
+    ▼
+&lt;IED name=&quot;IED1&quot; ...&gt;          ← 只保留该 IED 的配置
+    &lt;Communication&gt;...&lt;/Communication&gt;  ← 只保留相关通信配置
+</code></pre>
+<hr />
+<h2 id="_2">九、与汽车诊断配置的对比</h2>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>IEC 61850 SCL</th>
+<th>汽车 ODX/A2L</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>格式</td>
+<td>XML（标准化）</td>
+<td>XML/二进制（厂商实现不一）</td>
+</tr>
+<tr>
+<td>描述范围</td>
+<td>整个系统 + 单个设备</td>
+<td>单个 ECU</td>
+</tr>
+<tr>
+<td>系统拓扑</td>
+<td>完整支持（Substation/Bay）</td>
+<td>不支持</td>
+</tr>
+<tr>
+<td>通信配置</td>
+<td>完整支持（IP、MAC、VLAN）</td>
+<td>有限支持</td>
+</tr>
+<tr>
+<td>数据模型</td>
+<td>面向对象（LN/DO/DA）</td>
+<td>面向信号（Signal/Message）</td>
+</tr>
+<tr>
+<td>工具生态</td>
+<td>成熟（多种商业工具）</td>
+<td>分散（各厂商自有工具）</td>
+</tr>
+<tr>
+<td>标准化程度</td>
+<td>高（强制 Schema）</td>
+<td>中（格式标准，内容私有）</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键区别</strong>：
+- SCL 是<strong>系统级</strong>配置，强调多设备集成
+- ODX 是<strong>设备级</strong>配置，强调单设备诊断能力</p>
+<hr />
+<h2 id="scl_3">十、实用技巧：如何阅读 SCL 文件</h2>
+<h3 id="1-header">技巧1：先看 Header</h3>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;Header</span><span class="w"> </span><span class="na">id=</span><span class="s">"Project_X"</span><span class="w"> </span><span class="na">version=</span><span class="s">"1.0"</span><span class="w"> </span><span class="na">revision=</span><span class="s">"2"</span><span class="nt">/&gt;</span>
+</code></pre>
+<ul>
+<li>version：大版本（结构变化）</li>
+<li>revision：小修订（内容更新）</li>
+</ul>
+<h3 id="2">技巧2：用工具验证</h3>
+<p>使用 SCL 验证工具检查文件是否符合 Schema：
+- OMICRON IEDScout
+- Siemens SICAM TOOLBOX
+- 开源：openSCD</p>
+<h3 id="3">技巧3：理解命名规则</h3>
+<pre><code class="md-fencescode">对象引用：IED1/LD0/MMXU1.PhV.phsA.cVal.mag.f
+         │    │   │     │   │   │   │   └─ 浮点值
+         │    │   │     │   │   │   └─ 幅值
+         │    │   │     │   │   └─ 复数值
+         │    │   │     │   └─ A相
+         │    │   │     └─ 相电压
+         │    │   └─ 测量逻辑节点实例1
+         │    └─ 逻辑设备实例0
+         └─ IED 名称
+</code></pre>
+<hr />
+<h2 id="_3">十一、总结</h2>
+<p>Part 6 是 IEC 61850 最实用的部分之一：</p>
+<ol>
+<li><strong>SCL 是系统的 DNA</strong>——所有配置信息都在 XML 里</li>
+<li><strong>五种文件各司其职</strong>——SSD/ICD/SCD/CID/IID 形成完整工作流</li>
+<li><strong>结构清晰分层</strong>——Substation → IED → LD → LN → DO → DA</li>
+<li><strong>通信配置完整</strong>——IP、MAC、VLAN、APPID 一网打尽</li>
+<li><strong>工具支持成熟</strong>——可以用工具导入导出、验证、比较</li>
+</ol>
+<p><strong>一句话记忆</strong>：</p>
+<blockquote>
+<p>SCL = 变电站的"配置语言"，XML 格式，描述一切，驱动一切。</p>
+</blockquote>
+<hr />
+<h2 id="_4">下一步阅读建议</h2>
+<p>理解了 SCL 的结构，就可以：
+- 打开项目里的 <code>sample-model.icd</code> 文件对照阅读
+- 研究 <code>iec61850bean</code> 的 <code>SclParser</code> 类，看代码如何解析 SCL
+- 尝试修改 SCL 文件，观察系统行为变化</p>
+<p>下一步建议阅读：
+- <strong>Part 7-1</strong>：信息模型的设计原则——为什么 SCL 要这样设计
+- <strong>Part 8-1</strong>：MMS 映射——SCL 里的配置如何变成实际的 MMS 报文</p>
+<hr />
+<p><em>文档系列：IEC 61850 标准解读 | Part 6/13 | 生成于 2026-04-08</em></p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

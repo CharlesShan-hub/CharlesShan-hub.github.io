@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>控制器的功能和工作原理</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="_1">控制器的功能和工作原理</h1>
+<p>2022.08.28</p>
+<div class="toc">
+<ul>
+<li><a href="#_1">控制器的功能和工作原理</a><ul>
+<li><a href="#_2">硬布线控制器</a><ul>
+<li><a href="#_3">硬布线控制单元图</a></li>
+<li><a href="#_4">硬布线控制器的时序系统及微操作</a></li>
+<li><a href="#cpu">CPU 的控制方式</a></li>
+<li><a href="#_5">硬布线拉制单元设计步骤</a></li>
+</ul>
+</li>
+<li><a href="#_6">微程序控制器</a><ul>
+<li><a href="#_7">微程序控制的基本概念</a></li>
+<li><a href="#_8">微程序控制器组成和工作过程</a></li>
+<li><a href="#_9">微指令的编码方式</a></li>
+<li><a href="#_10">微指令的格式</a></li>
+<li><a href="#_11">微程序控制单元的设计步聚</a></li>
+<li><a href="#_12">动态微程序设计和毫微程序设计</a></li>
+<li><a href="#_13">硬布线和微程序拉制器的特点</a></li>
+</ul>
+</li>
+<li><a href="#_14">例题</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<h2 id="_2">硬布线控制器</h2>
+<p>硬布线控制器有复杂的组合逻辑门电路和一些触发器组成，又称组合逻辑控制器。</p>
+<h3 id="_3">硬布线控制单元图</h3>
+<p><u>指令的操作码</u>是决定控制单元发出不同操作命令（控制信号）的关键。为了简化控制单元(CU）的逻辑，将指令的<u>操作码译码和节拍发生器</u>从 CU <u>分离</u>出来，便可得到简化的控制单元图。</p>
+<p><img alt="截屏2022-08-26 下午10.36.15" src="resources/硬布线1.png" /></p>
+<p>CU 的<u>输入信号来源</u>如下：</p>
+<ol>
+<li>经指令译码器<strong>译码产生的指令信息</strong>。现行指令的操作码决定了不同指令在执行周期所需完成的不同操作，因此指令的操作码字段是控制单元的输入信号，它与时钟配合产生不同的控制信号。</li>
+<li>时序系统产生的机器周期信号和<strong>节拍信号</strong>。为了使控制单元按一定的先后顺序一定的节奏发出各个控制信号，控制单元必须受时钟控制，即一个时钟脉冲使控制单元发送一个操作命令，或发送一组需要同时执行的操作命令。</li>
+<li>来自执行单元的<strong>反馈信息</strong>即<strong>标志</strong>。控制单元有时需依赖 CPU 当前所处的状态产生控制信号，如BAN 指令，控制单元要根据上条指令的结果是否为负来产生不同的控制信号。</li>
+</ol>
+<p>上图中，节拍发生器产生各机器周期中的节拍信号，使不同的微操作命令 Ci(控制信号）按时间的先后发出。个别指令的操作不仅受操作码控制，还受状态标志控制，因此 CU的输入来自操作码译码电路 DD、节拍发生器及状态标志，其输出到 CPU 内部或外部控制总线上。</p>
+<p>注意：控制单元还接收来自<strong>系统总线</strong>（控制总线）的控制信号，如中断请求、DMA 请求。</p>
+<blockquote>
+<p>小结：</p>
+<ol>
+<li><strong>操作码</strong>是关键</li>
+<li><strong>操作码译码</strong>和<strong>节拍发生器</strong>从CU分离</li>
+<li>输入信号：<strong>译码产生的指令信息</strong>，<strong>节拍信号</strong>，<strong>执行单元的反馈信息</strong>，<strong>来自系统总线(控制总线)的信号</strong></li>
+</ol>
+</blockquote>
+<h3 id="_4">硬布线控制器的时序系统及微操作</h3>
+<ol>
+<li>
+<p><strong>时钟周期</strong>。用时钟信号控制节拍发生器，可以产生节拍，每个节拍的宽度正好对应一个时钟周期。在每个节拍内机器可完成<u>一个或几个需同时执行</u>的操作。</p>
+</li>
+<li>
+<p><strong>机器周期</strong>。机器周期可视为所有指令执行过程中的一个基准时间。不同指令的操作不同，指令周期也不同。<u>访问一次存储器的时间是固定的，因此通常以存取周期作为基准时间</u>，即内存中读取一个指令字的最短时间作为机器周期。在存储字长等于指令字长的
+   前提下，取指周期也可视为机器周期。</p>
+</li>
+</ol>
+<p><u>在一个机器周期里可完成若干微操作</u>，每个微操作都需一定的时间，可用时钟信号来控制产生每个微操作命令。</p>
+<ol>
+<li>
+<p><strong>指令周期</strong>。指令周期详见 <a href="指令执行过程.html">5.2.1节</a></p>
+</li>
+<li>
+<p><strong>微操作命令分析</strong>。控制单元具有发出各种操作命令（控制信号）序列的功能。这些命令与指令有关，而且必须按一定次序发出，才能使机器有序地工作。执行程序的过程中，对于不同的指令，控制单元需发出各种不同的微操作命令。一条指令分为了个工作周期：取指周期、间指周期和执行周期。下面分析各个子周期的微操作命令。</p>
+</li>
+<li>
+<p><strong>取指周期的微操作命令</strong>。（无论是什么指令，取指周期都需有下列微操作命令）</p>
+</li>
+</ol>
+<p><code>PC-&gt;MAR</code>, 现行指令地址-&gt;MAR
+   <code>1-&gt;R</code>, 命令存储器读
+   <code>M(MAR)-&gt;MDR</code>, 现行指令从存储器中读至 MDR
+   <code>MDR-&gt;IR</code>, 现行指令-&gt;IR
+   <code>OP(IR)-&gt;CU</code>, 指令的操作码-&gt;CU 译码
+   <code>(PC) + 1-&gt;PC</code>, 形成下一条指令的地址</p>
+<ol>
+<li>
+<p><strong>间址周期的微操作命令</strong>。间址周期完成取操作数地址的任务，具体微操作命令如下：
+   <code>Ad(IR)-&gt;MAR</code>, 将指令字中的地址码(形式地址)-&gt;MAR
+   <code>1-&gt;R</code>, 命令存储器读
+   <code>M(MAR)-&gt;MDR</code>, 将有效地址从存储器读至 MDR</p>
+</li>
+<li>
+<p><strong>执行周期的微操作命令</strong>。执行周期的微操作命令视不同指令而定。</p>
+</li>
+<li>
+<p><strong>非访存指令</strong>
+      <code>CLA</code>, 清 ACC, $0\to ACC$
+      <code>COM</code>, 取反, $\overline{ACC}\to ACC$
+      <code>SHR</code>, 算术右移, $L(ACC)\to R(ACC_0), ACC\to ACC_0$
+      <code>CSL</code>, 循环左移, $R(ACC)\to L(ACC), ACC_0\to ACC_n$
+      <code>STP</code>,  停机指令, $0\to G$</p>
+</li>
+<li><strong>访存指令</strong>
+      <code>ADD X</code>, 加法指令
+      Ad(IR)-&gt;MAR, 1-&gt; R
+      M(MAR)-&gt;MDR
+      (ACC) + (MDR)-&gt;ACC
+      <code>STA X</code>, 存数指令
+      Ad(IR)-&gt;MAR, 1-&gt;W
+      ACC-&gt;MDR
+      MDR-&gt;M(MAR)
+      <code>LDA X</code>, 取数指令
+      Ad(IR)-&gt;MAR, 1-&gt;R
+      M(MAR)-&gt;MDR
+      MDR-&gt;ACC</li>
+<li><strong>转移指令</strong>
+      <code>JVP X</code>, 无条件转移
+      Ad(IR)-&gt;PC
+      <code>BAN X</code>,条件转移（负则转）
+      $A_0\cdot Ad(IR) + \overline{A_0} \cdot(PC)\to PC$</li>
+</ol>
+<h3 id="cpu">CPU 的控制方式</h3>
+<p>控制单元控制一条指令执行的过程，实质上是依次执行一个确定的微操作序列的过程。由于不同指令所对应的微操作数及复杂程度不同，因此每条指令和每个微操作所需的执行时间也不同。主要有以下3种控制方式。</p>
+<ol>
+<li><strong>同步控制方式</strong>。<u>所谓同步控制方式，是指系统有一个统一的时钟，所有的控制信号均来自这个统一的时钟信号</u>。通常以<u>最长的微操作序列</u>和最烦琐的微操作作为标准，采取完全统一的、具有相同时间间隔和相同数目的节拍作为机器周期来运行不同的指令，同步控制方式的优点是控制电路简单，缺点是运行速度慢。</li>
+<li><strong>异步控制方式</strong>。异步控制方式不存在基准时标信号，<u>各部件按自身固有的速度工作</u>，通过<u>应答方式</u>进行联络。异步控制方式的优点是运行速度快，缺点是控制电路比较复杂。</li>
+<li><strong>联合控制方式</strong>。联合控制方式是介于同步、异步之间的一种折中。这种方式对各种不同的指令的微操作实行大部分采用同步控制、小部分采用异步控制的办法。</li>
+</ol>
+<h3 id="_5">硬布线拉制单元设计步骤</h3>
+<p>硬布线控制单元设计步骤包括：</p>
+<ol>
+<li><strong>列出微操作命令的操作时间表</strong>。先根据微操作节拍安排，列出微操作命令的操作时间表。操作时间表中包括各个机器周期、节拍下的每条指令完成的微操作控制信号。</li>
+</ol>
+<p>下表列出了 CLA、COM、SHR 等10条机器指令微操作命令的操作时间表。表中 FE、IND 和EX为CPU 工作周期标志，T0～T2，为节拍，<u>I为间址标志</u>，在取指周期的T2时刻，若测得 I=1，则 IND 触发器置“1”，标志进入间址周期：若I=0，则EX 触发器置“1”，标志进入执行周期。同理，在间址周期的T2，时刻，若测得 IND=0（表示一次间接寻址），则EX 触发器置“1”，进入执行周期，若测得 IND=1（表示多次间接寻址），则继续间接寻址。在执行周期的 T2时刻，CPU 要向所有中断源发中断查询信号，若检测到有中断请求并满足响应条件，则 INT 触发器置“1”，标志进入中断周期。表中未列出 INT 触发器置“1” 的操作和中断周期的微操作。表中第一行对应 10 条指令的操作码，代表不同的指令。若某指令有表中所列出的微操作命令，其对应的单元格内为 1。</p>
+<ol>
+<li><strong>进行微操作信号综合</strong>。在列出微操作时间表后，即可对它们进行综合分析、归类，根据微操作时间表可写出各微操作控制信号的逻辑表达式并进行适当的简化。表达式一般包括下列因素：
+   <code>徹操作控制信号 = 机器周期^节拍^脉冲^操作码^机器状态条件</code>。根据下表便可列出每个微操作命令的初始逻辑表达式，经化简、整理可获得能用现有门电路实现的微操作命令逻辑表达式。</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">周<br />期</th>
+<th style="text-align: center;">节<br />拍</th>
+<th style="text-align: center;">条<br />件</th>
+<th style="text-align: center;">信<br />号</th>
+<th style="text-align: center;">C<br />L<br />A</th>
+<th style="text-align: center;">C<br />O<br />M</th>
+<th style="text-align: center;">S<br />H<br />R</th>
+<th style="text-align: center;">C<br />S<br />L</th>
+<th style="text-align: center;">S<br />T<br />P</th>
+<th style="text-align: center;">A<br />D<br />D</th>
+<th style="text-align: center;">S<br />T<br />A</th>
+<th style="text-align: center;">L<br />D<br />A</th>
+<th style="text-align: center;">J<br />M<br />P</th>
+<th style="text-align: center;">B<br />A<br />N</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">FE</td>
+<td style="text-align: center;">T0</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>PC-&gt;MAR</code></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>1-&gt;R</code></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">T1</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>M(MAR)-&gt;MDR</code></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>(PC)+1-&gt;PC</code></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">T2</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>MDR-&gt;IR</code></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>OP(IR)-&gt;ID</code></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">$I$</td>
+<td style="text-align: center;"><code>1-&gt;IND</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">$\overline{I}$</td>
+<td style="text-align: center;"><code>1-&gt;EX</code></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: center;">IND</td>
+<td style="text-align: center;">T0</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>Ad(IR)-&gt;MAR</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>1-&gt;R</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">T1</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>M(MAR)-&gt;MDR</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">T2</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>MDR-&gt;Ad(IR)</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">$\overline{IND}$</td>
+<td style="text-align: center;"><code>1-&gt;EX</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: center;">EX</td>
+<td style="text-align: center;">T0</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>Ad(IR)-&gt;MAR</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>1-&gt;R</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>1-&gt;W</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">T1</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>M(MAR)-&gt;MDR</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>AC-&gt;MDR</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">T2</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>(AC)+(MDR)-&gt;AC</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>MDR-&gt;M(MAR)</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>MDR-&gt;AC</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>0-&gt;AC</code></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">$\overline{AC}\to AC$</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>L(AC)-&gt;R(AC)</code><br /><code>AC0不变</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">$\rho^{-1}(AC)$</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>Ad(IR)-&gt;PC</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">$A_0$</td>
+<td style="text-align: center;"><code>Ad(IR)-&gt;PC</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"><code>0-&gt;G</code></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+</tbody>
+</table>
+<p>然后根据每个节拍的命令的逻辑表达式画出微操作命令的逻辑图。</p>
+<p><img alt="截屏2022-08-27 下午10.37.17" src="resources/微操作命令的逻辑图.png" /></p>
+<h2 id="_6">微程序控制器</h2>
+<p><strong>微程序控制器</strong>采用<strong>存储逻辑</strong>实现，也就是把微操作信号代码化，使每条机器指令转化成为一段微程序并存入一个专门的存储器（控制存储器）中，微操作控制信号由微指令产生。</p>
+<h3 id="_7">微程序控制的基本概念</h3>
+<p>微程序设计思想就是将每条机器指令编写成一个微程序，每个微程序包含若干微指令，每条微指令对应一个或几个微操作命令。这些微程序可以存到一个控制存储器中，用寻址用户程序机器指令的办法来寻址每个微程序中的微指令。目前，大多数计算机都采用微程序设计技术。</p>
+<p><img alt="一堆微" src="../指令系统/resources/一堆微.png" /></p>
+<p>微程序设计技术涉及的基本术语如下：</p>
+<ol>
+<li><strong>微命令与微操作</strong>。一条机器指令可以分解成一个微操作序列，这些<u>微操作</u>是计算机中<u>最基本的、不可再分解</u>的操作。在微程序控制的计算机中，将控制部件向执行部件发出的各种控制命令称为<u>微命令</u>，它是<u>构成控制序列的最小单位</u>。例如，打开或关闭某个控制门的电位信号、某个寄存器的打入脉冲等。<u>微命令和微操作是一一对应</u>的。微命令是微操作的控制信号，微操作是微命令的执行过程。</li>
+</ol>
+<p>微命令有相容性和互斥性之分。相容性微命令是指那些可以同时产生、共同完成某一些微操作的微命令；而互斥性微命令是指在机器中不允许同时出现的微命令。相容和互斥都是相对的，一个微命令可以和一些微命令相容，和另一些微命令互斥。</p>
+<p>注意：在组合逻辑控制器中也存在微命令与微操作这两个概念，它们并非只是微程序控制器的专有概念。</p>
+<ol>
+<li>
+<p><strong>微指令与微周期</strong>。微指令是若干微命令的集合。存放微指令的控制存储器的单元地址称为微地址。一条微指令通常至少包含两大部分信息</p>
+</li>
+<li>
+<p><strong>操作控制字段</strong>，又称微操作码字段，用于产生某一步操作所需的各种操作控制信号。</p>
+</li>
+<li>
+<p><strong>顺序控制字段</strong>，又称微地址码字段，用于控制产生下一条要执行的微指令地址。微周期通常指从控制存储器中读取一条微指令并执行相应的微操作所需的时间。</p>
+</li>
+<li>
+<p><strong>主存储器与控制存储器</strong>。主存储器用于存放程序和数据，在CPU 外部，用RAM 实现：控制存储器（CM）用于存放微程序，在CPU 内部，用ROM实现。注意，<u>控制存储器（CM）不是按内容访问，是按地址访问</u>！</p>
+</li>
+<li>
+<p><strong>程序与微程序</strong>。程序是指令的有序集合，用于完成特定的功能：微程序是微指令的有序集合，一条指令的功能由一段微程序来实现。</p>
+</li>
+</ol>
+<p><strong>微程序和程序</strong>是两个不同的概念。微程序是由微指令组成的，用于描述机器指令。微程序实际上是机器指令的实时解释器，是由计算机设计者事先编制好并存放在控制存储器中的般不提供给用户。对于程序员来说，计算机系统中微程序的结构和功能是透明的，无须知道而程序最终由机器指令组成，是由软件设计人员事先编制好并存放在主存或辅存中的。</p>
+<blockquote>
+<p>概念总结</p>
+<ol>
+<li>【机器指令】对应【微程序】</li>
+<li>【微程序】由【微操作】(执行过程)构成，每个微操作对应一个【微命令】(控制信号)</li>
+<li>【微指令】由【微操作】构成</li>
+</ol>
+</blockquote>
+<p>读者应注意区分以下寄存器：</p>
+<ol>
+<li><strong>地址寄存器（MAR）</strong>。用于存放<u>主存的</u>读/写地址</li>
+<li><strong>微地址寄存器（CMAR）</strong>。用于存放<u>控制存储器</u>的读/写微指令的地址。</li>
+<li><strong>指令寄存器（IR）</strong>。用于存放从主存中读出的指令。</li>
+<li><strong>微指令寄存器（CMDR 或uIR）</strong>。用于存放从控制存储器中读出的微指令。</li>
+</ol>
+<h3 id="_8">微程序控制器组成和工作过程</h3>
+<ol>
+<li>
+<p>微程序控制器的基本组成
+   下图所示为一个微程序控制器的基本结构，主要画出了微程序控制器比组合逻辑控制器多出的部件，包括</p>
+</li>
+<li>
+<p><strong>控制存储器</strong>。它是微程序控制器的核心部件，用于存放各指令对应的微程序，控制存储器可用只读存储器 ROM 构成。</p>
+</li>
+<li><strong>微指令寄存器</strong>。用于存放从 CM 中取出的微指令，它的位数同微指令字长相等。</li>
+<li><strong>微地址形成部件</strong>。用于产生初始微地址和后继微地址，以保证微指令的连续执行。</li>
+<li><strong>微地址寄存器</strong>。接收微地址形成部件送来的微地址，为在 CM 中读取微指令作准备。</li>
+</ol>
+<p><img alt="截屏2022-08-28 下午12.09.16" src="resources/为程序控制器的基本结构.png" /></p>
+<ol>
+<li>微程序控制器的工作过程</li>
+</ol>
+<p>微程序控制器的工作过程实际上就是在微程序控制器的控制下计算机执行机器指令的过程
+   这个过程可以描述如下：</p>
+<ol>
+<li>执行<strong>取微指令</strong>公共操作。具体的执行是：在机器开始运行时，自动将取指微程序的入口地址送入 CMAR，并从 CM 中读出相应的微指令送入 CMDR。取指微程序的入口地址一般为CM 的 <u>0号单元</u>，当取指微程序执行完后，从主存中取出的机器指令就已存入指令寄存器中</li>
+<li>由机器指令的操作码字段通过微地址形成部件产生该机器指令所对应的<strong>微程序的入口地址</strong>，并送入 CMAR。</li>
+<li>从CM中逐条取出对应的微指令并<strong>执行</strong>．</li>
+<li>执行完对应于一条机器指令的一个微程序后，又回到取指微程序的入口地址，继续第①步，以完成取下一条机器指令的公共操作。</li>
+</ol>
+<p>以上是一条机器指令的执行过程，如此周而复始，直到整个程序执行完毕。</p>
+<ol>
+<li>微程序和机器指令</li>
+</ol>
+<p>通常，一条机器指令对应一个微程序。由于任何一条机器指令的取指令操作都是相同的，因此可将取指令操作的微命令统一编成一个微程序，这个微程序只负责将指令从主存单元中取出并送至指令寄存器。</p>
+<p>此外，<u>也可编出对应间址周期的微程序和中断周期的微程序</u>。这样，控制存储器中的微程
+   序个数应为机器指令数再加上对应取指、间址和中断周期等共用的微程序数。</p>
+<p>注意：<strong>若指令系统中具有n种机器指令，则控制存储器中的微程序数至少是n+1（1为公共的取指微程序）</strong></p>
+<h3 id="_9">微指令的编码方式</h3>
+<p><strong>微指令的编码方式</strong>又称<strong>微指令的控制方式</strong>，是指如何对微指令的控制字段进行编码，以形成控制信号。编码的目标是在保证速度的情况下，尽量缩短微指令字长。</p>
+<ol>
+<li><strong>直接编码（直接控制）方式</strong>
+   微指令的直接编码方式如图所示。直接编码法<strong>无须进行译码</strong>，微指令的<strong>微命令字段中每位都代表一个微命令</strong>。设计微指令时，选用或不选用某个微命令，只要将表示该微命令的对应位设置成1或。即可。每个微命令对应并控制数据通路中的一个微操作。这种编码的优点是简单、直观，执行速度快，操作并行性好：缺点是微指令字长过长，n个微命令就要求微指令的操作宇段有n位，造成控制存储器容量极大。</li>
+</ol>
+<p><img alt="截屏2022-08-28 下午12.13.19" src="resources/直接控制方式.png" /></p>
+<ol>
+<li><strong>字段直接编码方式</strong>
+   将微指令的微命令字段分成若干小字段，把<strong>互斥性微命令组合在同一字段</strong>中，把相容性微命令组合在不同字段中，每个字段独立编码，每种编码代表一个微命令且各宇段编码含义单独定义，与其他字段无关，这就是字段直接编码方式，如图 5.13所示。</li>
+</ol>
+<p><img alt="截屏2022-08-28 下午12.15.07" src="resources/字段直接编码.png" /></p>
+<p>这种方式可以缩短微指令字长，但因为要通过译码电路后再发出微命令，因此比直接编码方式慢。
+   微命令字段分段的原则：</p>
+<p>① 互斥性微命令分在同一段内，相容性微命令分在不同段内。
+   ② 每个小段中包含的信息位不能太多，否则将增加译码线路的复杂性和译码时间。
+   ③ 一般每个小段还要留出一个状态，表示本字段不发出任何微命令。因此，当某字段的长度为3位时，最多只能表示7个互斥的微命令，道常用000 表示不操作</p>
+<ol>
+<li>
+<p><strong>字段间接编码方式</strong>
+   <u>一个字段的某些徽命令需由另一个字段中的某些微命令来解释</u>，由于不是靠字段直接译码发出的微命令，因此称为字段间接编码，又称隐式编码。这种方式可进一步缩短微指令字长，但因削弱了微指令的并行控制能力，因此通常作为字段直接编码方式的一种辅助手段。</p>
+</li>
+<li>
+<p><strong>微指令的地址形成方式</strong></p>
+</li>
+</ol>
+<p><strong>后继微地址</strong>的形成主要有以下两大基本类型</p>
+<ol>
+<li><strong>直接由微指令的下地址字段指出</strong>。微指令格式中设置一个下地址字段，由微指令的下地址字段直接指出后继微指令的地址，这种方式又称<strong>断定方式</strong>。</li>
+<li><strong>根据机器指令的操作码形成</strong>。机器指令取至指令寄存器后，微指令的地址由操作码经微地址形成部件形成。</li>
+</ol>
+<p>实际上，微指令序列地址的形成方式还有以下几种：</p>
+<ol>
+<li>增量计数器法，即<code>(CMAR)+ 1-&gt;CMAR</code>，适用于后继微指令的地址连续的情况。</li>
+<li>根据各种标志决定微指令分支转移的地址。</li>
+<li>通过测试网络形成。</li>
+<li>由硬件直接产生微程序入口地址。</li>
+</ol>
+<p>电源加电后，第一条微指令的地址可由专门的硬件电路产生，也可由外部直接向 CMAR 输入微指令的地址，这个地址即为取指周期微程序的入口地址。</p>
+<h3 id="_10">微指令的格式</h3>
+<p>微指令格式与微指令的编码方式有关，通常分水平型微指令和垂直型微指令两种</p>
+<ol>
+<li><strong>水平型徽指令</strong>。从编码方式看，直接编码、字段直接编码、宇段间接编码和混合编码都属于水平型微指令。水平型微指令的基本指令格式如图，指令宇中的一位对应控制信号，有输出时为1，否则为0。一条水平型微指令定义并执行几种并行的基本操作。</li>
+</ol>
+<p>水平型微指令的优点是微程序短，执行速度快；缺点是微指令长，编写微程序较麻烦。</p>
+<p><img alt="截屏2022-08-28 下午1.22.22" src="resources/水平型微指令.png" /></p>
+<ol>
+<li><strong>垂直型微指令</strong>。垂直型微指令的特点是采用类似机器指令操作码的方式，在微指令中设置微操作码字段，采用微操作码编译法，由微操作码规定微指令的功能，其基本的指令格式如图。一条垂直型微指令只能定义并执行一种基本操作。</li>
+</ol>
+<p>垂直型微指令格式的优点是微指令短、简单、规整，便于编写微程序；缺点是微程序长，执行速度慢，工作效率低。</p>
+<p><img alt="截屏2022-08-28 下午1.23.44" src="resources/垂直型微指令.png" /></p>
+<ol>
+<li>
+<p><strong>混合型微指令</strong>。在垂直型的基础上增加一些不太复杂的并行操作。微指令较短，仍便于编写；微程序也不长，执行速度加快．</p>
+</li>
+<li>
+<p><strong>水平型微指令和垂直型微指令的比较</strong>如下：
+   ①水平型微指令并行操作能力强、效率高、灵活性强：垂直型微指令则较差。
+   ② 水平型微指令执行一条指令的时间短：垂直型微指令执行的时间长。
+   ③ 由水平型微指令解释指令的微程序，具有微指令字较长但微程序短的特点：垂直型微指令则与之相反，其微指令字较短而微程序长。
+   ④水平型微指令用户难以等握，而垂直型微指令与指令比较相似，相对容易学握。</p>
+</li>
+</ol>
+<h3 id="_11">微程序控制单元的设计步聚</h3>
+<p>微程序控制单元设计的主要任务是编写各条机器指令所对应的微程序。具体的设计步骤如下：</p>
+<ol>
+<li><strong>写出对应机器指令的微操作命令及节拍安排</strong>。无论是组合逻辑设计还是微程序设计，对应相同的 CPU 结构，两种控制单元的微操作命会和节拍安排都是极相似的。如微程序控制单元在取指阶段发出的微操作命令及节拍安排如下：</li>
+</ol>
+<pre lang="c"><code class="language-c md-fencescode"><span class="c1">//T0</span>
+<span class="n">PC</span><span class="o">-&gt;</span><span class="n">MAR</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="o">-&gt;</span><span class="n">R</span>
+<span class="c1">//T1</span>
+<span class="n">M</span><span class="p">(</span><span class="n">MAR</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">MDR</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="n">PC</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="o">-&gt;</span><span class="n">PC</span>
+<span class="c1">//T2</span>
+<span class="n">MDR</span><span class="o">-&gt;</span><span class="n">IR</span><span class="p">,</span><span class="w"> </span><span class="n">OPCIR</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">微地址形成部件</span>
+</code></pre>
+<p>与硬布线控制单元相比，只在 <u>T2 节拍内的微操作命令</u>不同。微程序控制单元在T2节拍内要将指令的操作码送至微地址形成部件，即 <code>OP(IR)-&gt;微地址形成部件</code>，以形成该条机器指令的微程序首地址。而硬布线控制单元在T2节拍内要将指令的揀作码送至指令译码器，以控制CU 发出相应的微命令，即 <code>OP(IR)-ID</code>。</p>
+<p>若把一个节拍 T内的微操作安排在一条微指令中完成，上述微操作对应 3条微指令。但由于微程序控制的所有控制信号都来自微指令，而微指令又存在控制存储器中，因此欲完成上述这些微操作，必须先将微指令从控制存储器中读出，即必须先给出这些微指令的地址。在取指微程序中，除第一条微指令外，其余微指令的地址：均由上一条微指令的下地址字段直接给出，因此上述每条微指令都需增加一个将微指令下地址字段送至 CMAR 的微操作，记为 <code>Ad(CMDR)-&gt;CMAR</code>。取指微程序的最后一条微指令，其后继微指令的地址是由微地址形成部件形成的，即<code>微地址形成部作-&gt;CMAR</code>。为了反映该地址与操作码有关，因此记为 <code>OP(IR)-&gt;微地址形成部件-&gt;CMAR</code>。</p>
+<p>综上所述，考虑到需要形成后继微指令地址，上述分析的取指操作共需6条微指令完成：</p>
+<pre lang="C"><code class="language-C md-fencescode"><span class="c1">//T0</span>
+<span class="n">PC</span><span class="o">-&gt;</span><span class="n">MAR</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="o">-&gt;</span><span class="n">R</span>
+<span class="c1">//【T1多的】</span>
+<span class="n">Ad</span><span class="p">(</span><span class="n">CMDR</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">CMAR</span>
+<span class="c1">//T2</span>
+<span class="n">M</span><span class="p">(</span><span class="n">MAR</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">MDR</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="n">PC</span><span class="p">)</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="o">-&gt;</span><span class="n">PC</span>
+<span class="c1">//【T3多的】</span>
+<span class="n">Ad</span><span class="p">(</span><span class="n">CMDR</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">CMAR</span>
+<span class="c1">//T4</span>
+<span class="n">MDR</span><span class="o">-&gt;</span><span class="n">IR</span>
+<span class="c1">//【T5多的】</span>
+<span class="n">OPC</span><span class="p">(</span><span class="n">IR</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">微地址形成部件</span><span class="o">-&gt;</span><span class="n">CMAR</span>
+</code></pre>
+<p>执行阶段的微操作命令及节拍安排，分配原则类似。与硬布线控制单元微操作命令的节拍安排相比，多了将下一条微指令地址送至CMAR 的微操作命令，即 <code>Ad(CMDR)-&gt;CMAR</code>。其余的微操作命令与硬布线控制单元相同。</p>
+<p>注意：这里为了理解，应将微指令和机器指令相联系，因为每执行完一条微指令后要得到下一条微指令的地址。</p>
+<blockquote>
+<p>背诵总结</p>
+<p>取指周期多了两句话:</p>
+<p><code>Ad(CMDR)-&gt;CMAR</code></p>
+<p><code>OP(IR)-&gt;CMAR</code></p>
+<p>执行周期多了一句话:</p>
+<p><code>Ad(CMDR)-&gt;CMAR</code></p>
+</blockquote>
+<ol>
+<li><strong>确定微指令格式</strong>。微指令格式包括微指令的编码方式、后继微指令地址的形成方式和微指令字长等。根据微操作个数决定采用何种编码方式，以确定微指令的操作控制字段的位数。由微指令数确定微指令的顺序控制字段的位数。最后按操作控制字段位数和顺序控制字段位数就可确定微指令宁长。</li>
+<li><strong>编写微指令码点</strong>。根据操作控制字段每位代表的微操作命令，编写每条微指令的码点。</li>
+</ol>
+<h3 id="_12">动态微程序设计和毫微程序设计</h3>
+<ol>
+<li><strong>动态微程序设计</strong>。在一台微程序控制的计算机中，假如能根据用户的要求改变微程序，则这台机器就具有动态微程序设计功能。动态微程序的设计需要可写控制寄布器的支持，否则难以改变微程序的内容。<u>实现动态微程序设计可采用可擦除可编程只读存储器 (EPROM)</u>。</li>
+<li><strong>毫微程序设计</strong>。在普通的微程序计算机中，从主存取出的每条指令是由放在控制存储器中的微程序来解释执行的，通过控制线对硬件进行直接控制。若硬件不由微程序直接控制，而是通过存放在第二级控制存储器中的毫微程序来解释的，这个第二级控制存储器就称为亮微存储器，直接控制硬件的是毫微微指令。</li>
+</ol>
+<h3 id="_13">硬布线和微程序拉制器的特点</h3>
+<ol>
+<li><strong>硬布线控制器的特点</strong>。硬布线控制器的优点是由于控制器的速度取决于电路延迟，所以速度快；缺点是由于将控制部件视为发门产生固定时序控州信号的逻辑电路，所以把用圾少元件和取得最高速度作为设计目标，一旦设计完成，就不可能通过其他额外修改添加新功能,</li>
+<li><strong>微程序控制器的特点</strong>。微程序控制器的优点是同组合巡银控制器相比，微程序控制器具有规整性、灵活性、可维护性等一系列优点：缺点是由于微程序控制器采用了存储程序原理，所以每条指令都要从控制存储器中取一次，影响速度。</li>
+</ol>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;"></th>
+<th style="text-align: center;">微程序控制器</th>
+<th style="text-align: center;">硬布线控制器</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">工作原理</td>
+<td style="text-align: center;">控制信号以微程序形式存在控制存储器</td>
+<td style="text-align: center;">组合逻辑电路</td>
+</tr>
+<tr>
+<td style="text-align: center;">执行速度</td>
+<td style="text-align: center;">慢</td>
+<td style="text-align: center;">快</td>
+</tr>
+<tr>
+<td style="text-align: center;">规整型</td>
+<td style="text-align: center;">较规整</td>
+<td style="text-align: center;">繁琐、不规整</td>
+</tr>
+<tr>
+<td style="text-align: center;">应用场合</td>
+<td style="text-align: center;">CISC CPU</td>
+<td style="text-align: center;">RICS CPU</td>
+</tr>
+<tr>
+<td style="text-align: center;">易扩充性</td>
+<td style="text-align: center;">易扩充修改</td>
+<td style="text-align: center;">困难</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_14">例题</h2>
+<ol>
+<li>取指令操作（ ）
+   A.受到上一条指令的操作码控制
+   B.受到当前指令的操作码控制
+   C.受到下一条指令的操作码控制
+   D.是控制器固有的功能，不需要在操作码控制下进行</li>
+</ol>
+<p>【答案】：A-&gt;D。取指令阶段完成的任务是将现行指令从主存中取出并送至指令寄存器，这个操作是公共的操作，是每条指令都要进行的，与具体的指令无关，所以不需要操作码的控制。</p>
+<ol>
+<li>在组合逻辑控制器中，微操作控制信号的形成主要与（ ）信号有关。
+   A.指令操作码和地址码
+   B.指令译码信号和时钟
+   C.操作码和条件码
+   D.状态信息和条件</li>
+</ol>
+<p>【答案】：B</p>
+<ol>
+<li>在微程序控制器中，形成微程序入口地址的是（ ）。
+   A. 机器指令的地址码字段
+   B. 微指令的微地址码宇段
+   C.机器指令的操作码字段
+   D.微指令的微操作码字段</li>
+</ol>
+<p>【答案】：B-&gt;C</p>
+<ol>
+<li>下列不属于微指令结构设计所追求目标的是（ ）。
+   A.提高微程序的执行速度
+   B.提供微程序设计的灵活性
+   C.缩短微指令的长度
+   D.增大控制存储器的容量</li>
+</ol>
+<p>【答案】：A-&gt;D</p>
+<ol>
+<li>微程序控制器的速度比硬布线控制器慢，主要是因为（ ）。
+   A.增加了从磁盛存储器读取微指令的时间
+   B.增加了从主存读取微指令的时间
+   C.增加了从指令安存器读取微指令的时间
+   D.增加了从控制存储器读取微指令的时间</li>
+</ol>
+<p>【答案】：D</p>
+<ol>
+<li>微程序控制存储器属于（ ）的一部分。
+   A.主存
+   B.外存
+   C.CPU
+   D.缓存</li>
+</ol>
+<p>【答案】：C</p>
+<ol>
+<li>以下说法中，正确的是（ ）
+   A. 采用微程序控制器是为了提高速度
+   B. 控制存储器由高速 RAM 电路组成
+   C. 微指令计数器决定指令执行顺序
+   D. 一条微指令存放在控制器的一个控制存储器单元中</li>
+</ol>
+<p>【答案】：B-&gt;D</p>
+<ol>
+<li>硬布线控制器与微程序控制器相比，（ ）。
+   A.硬布线控制器的时序系统比较简单
+   B. 微程序控制器的时序系统比较简单
+   C.两者的时序系统复杂程度相同
+   D.可能是硬布线控制器的时序系统比较简单，也可能是微程序控制器的时序系统比较简单</li>
+</ol>
+<p>【答案】：C-&gt;<strong>B</strong></p>
+<ol>
+<li>在微程序控制器中，控制部件向执行部件发出的某个控制信号称为（ ）。
+   A.微程序
+   B.徹指令
+   C.微操作
+   D.微命令</li>
+</ol>
+<p>【答案】：B-&gt;D</p>
+<ol>
+<li>
+<p>在微程序控制器中，机器指令与微指令的关系是（ ）。
+    A. 每条机器指令由一条微指令来执行
+    B. 每条机器指令由若干微指令组成的徹程序来解释执行
+    C. 若干机器指令组成的程序可由一个微程序来执行
+    D. 每条机器指令由若干微程序执行</p>
+<p>【答案】：B</p>
+</li>
+<li>
+<p>微指今格式分为水平型和重直型，水平型微指令的位数（），用它编写的微程序()
+    A.较少
+    B.较多
+    C.较长
+    D.较短</p>
+<p>【答案】：B,D</p>
+</li>
+<li>
+<p>水平型微指令与重直型微指令相比，（）.
+    A. 前者一次只能完成一个基本操作
+    B. 后者一次只能完成一个基本操作
+    C.两者都是一次只能完成一个基本操作
+    D.两者都能一次完成多个基本操作</p>
+<p>【答案】：B</p>
+</li>
+<li>
+<p>某带中断的计算机指会系统共有101 种操作，采用微程序控制方式时，控制存储器中相应最少有（）个微程序。
+    A. 101
+    B. 102
+    C. 103
+    D. 104</p>
+<p>【答案】：C</p>
+</li>
+<li>
+<p>兼容性微命令指几个微命令( )。
+    A.可以同时出现 B.可以相继出现
+    C.可以相互代替 D.可以相处容错</p>
+<p>【答案】：A</p>
+</li>
+<li>
+<p>在微程序控制方式中，以下说法正确的是( )。
+    1.采用微程序控制器的处理器称为微处理器
+    2.每条机器指令由一段微程序来解释执行
+    3.在微指令的编码中，效率最低的是直接编码方式
+    4.水平型微指令能充分利用数据通路的并行结构
+    A. 1,2
+    B. 2,4
+    C. 1,3
+    D. 3,4</p>
+<p>【答案】：A-&gt;B。微处理器是相对于一些大型处理器而言的，与微程序控制器没有必然联系。不管是采用微程序控制器，还是采用硬布线控制器，微机的 CPU 都是微处理器，I错误。微程序的设计思想就是将每条机器指令编写成一个微程序，每个微程序包含若干条微指令，每条微指令对应一个或几个微操作命令，II正确。直接编码方式中每位代表一个微命令，不需要译码，因此执行效率最高，只是这种方式会使得微指令的位数大大增加，III错误。一条水平型微指令能定义并执行几种并行的基本操作，因此能够更充分利用数据通路的并行结构，IV正确。</p>
+</li>
+<li>
+<p>下列说法中，正确的是( )。
+    I.微程序控制方式和硬布线方式相比较，前者可以使指令的执行速度更快
+    II.若来用微程序控制方式，则可用uPC 取代PC
+    III. 控制存储器可以用ROM 实现
+    IV.指令周期也称CPU 周期
+    A. I III
+    B. II、 III
+    C. 只有III
+    D. I. III. IV</p>
+<p>【答案】：C</p>
+</li>
+<li>
+<p>通常情况下，一个微程序的周期对应一个（ ）
+    A.指令周期
+    B.主频周期
+    C.机器周期
+    D.工作周期</p>
+<p>【答案】：C-&gt;A。一条微指令包含一组实现一定操作功能的微命令。许多条微指令组成的序列构成微程序，微程序则完成对应指令的解释执行。在采用微程序控制器的 CPU 中，<strong>一条指令对应一𠆤微程序</strong>，一个微程序由许多微指令构成，一条微指令会发出很多不同的微命令。</p>
+</li>
+<li>
+<p>下列部件中属于控制部件的是（）。
+    I.指令寄存器 II.操作控制器 III.程序计数器 IV.状态条件寄存器
+    A. I、II、IV
+    B. I. II. III
+    C.I、II、IV
+    D. I、II、III、IV</p>
+<p>【答案】：D-&gt;B，CPU 控制器主要由三个部件组成：指令寄存器、程序计数器和操作控制器。状态条件寄存器通常属于运算器的部件，保存由算术指令和逻辑指令运行或测试的结果建立的各种条件码内容，如运算结果进位标志(C、运算结果溢出标志(V）等</p>
+</li>
+<li>
+<p>下列部件中属于执行部件的是（ ）</p>
+<p>1.控制器 2.存储器 3.运算器 4.外围设备
+A. 1，3，4
+B. 2，3，4
+C. 2，4
+D. 1，2，3，4</p>
+<p>【答案】：C-&gt;B，一合数字计算机基本上可以划分为两大部分：控制部件和执行部件。控制器就是控制部件，而运算器、存储器、外围设备相对控制器来说就是执行部件。</p>
+</li>
+<li>
+<p>【2009统考真题】相对于微程序控制器，硬布线控制器的特点是（ ）.
+    A. 指令执行速度慢，指令功能的修改和扩展容易
+    B. 指令执行速度慢，指令功能的修政和扩展难
+    C. 指令执行速度快，指令功能的修政和扩展容易
+    D. 指令执行速度快，指令功能的修改和扩展难</p>
+<p>【答案】：D</p>
+</li>
+<li>
+<p>【2012统考真题】某计算机的控制器来用微程序控制方式，微指令中的操作控制字段采用宇段直接编码法，共有33 个微命令，构成5个互斥类，分别包含7、3、12、5和6个微命令，则操作控制宇段至少有（ )。
+    A. 5位
+    B. 6位
+    C. 15位
+    D. 33位</p>
+<p>【答案】：3+2+4+3+3=15, C</p>
+</li>
+<li>
+<p>【2014 统考真题】某计算机来用微程序控制器，共有32 条指令，公共的取指令微程序包含2 条微指令，各指令对应的微程序乎均由 4 条微指令组成，采用断定法（下地址字段法）确定下条微指令地址，则微指令中下地址字段的位数至少是( )。
+    A. 5
+    B. 6
+    C. 8
+    D. 9</p>
+<p>【答案】：32*4+2=2+2^7-&gt;8bits，C</p>
+</li>
+<li>
+<p>【2017 统考真题】下列关于主存储器（MM）和控制存储器（CS）的叙述，错误的是( )。
+    A.MM在CPU外，CS在CPU内
+    B.MM按地址访问，CS按内容访问
+    C.MM 存储指令和数据，CS 存储微指令
+    D.MM用RAM和ROM 实现，CS 用 ROM 实现</p>
+<p>【答案】：D-&gt;B。主存储器就是我们通常所说的主存，它在CPU 外，用于存储指令和数据，由 RAM 和 ROM实现。控制存储器用来存放实现指令系统的所有微指令，是一种只读型存储器，机器运行时只读不写，在CPU 的控制器内。<u>CS 按照微指令的地址访问</u>，所以 B错误。</p>
+</li>
+<li>
+<p>【2019统考真题】下列有关处理器时钟脉冲信号的叙述中，错误的是（ ）。
+    A. 时钟脉冲信号由机器脉冲源发出的脉冲信号经整形和分频后形成
+    B. 时钟脉冲信号的宽度称为时钟周期，时钟周期的倒数为机器主频
+    C. 时钟周期以相邻状态单元问组合逻輯电路的最大延迟为基准确定
+    D. 处理器总是在每来一个时钟脉冲信号时就开始执行一条新的指令</p>
+<p>【答案】：D</p>
+</li>
+<li>
+<p>【2019 統考真题】某指令功能为 <code>R[r2]&lt;-R[r1]+ M[R[r0]]</code>，其两个源操作数分别来用寄存器、寄存器间接寻址方式。对于下列给定部件，该指令在取数及执行过程中需要用到的是（ ）。
+    I. 通用寄存器组(GPRs)
+    II. 算术逻辑单元 (ALU)
+    III. 存储器(Memory)
+    IV. 指令译码器（ID）
+    A. 仅I、II
+    B. 仅I、II、III
+    C. 仅II、III、IV
+    D. I. III, IV</p>
+<p>【答案】：B</p>
+</li>
+<li>
+<p>【2021 统考真题】下列寄存器中，汇编语言程序员可见的是（）.
+    I.指今寄存器
+    II.微指令寄存器
+    III. 基址寄存器
+    IV. 标志/状态寄存器
+    A仅I，II
+    B. 仅I，IV
+    C.仅II、IV
+    D. 仅 III. IV</p>
+<p>【答案】：D</p>
+</li>
+</ol>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

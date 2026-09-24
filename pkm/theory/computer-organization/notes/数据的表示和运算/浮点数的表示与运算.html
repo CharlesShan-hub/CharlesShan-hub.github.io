@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>浮点数的表示与运算</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="_1">浮点数的表示与运算</h1>
+<p>2022.08.31</p>
+<div class="toc">
+<ul>
+<li><a href="#_1">浮点数的表示与运算</a><ul>
+<li><a href="#_2">浮点数的表示</a><ul>
+<li><a href="#_3">浮点数的表示格式</a></li>
+<li><a href="#_4">浮点数的表示范围</a></li>
+<li><a href="#_5">浮点数的规格化</a></li>
+<li><a href="#ieee754">IEEE754标准</a></li>
+<li><a href="#_6">定点、浮点表示的区别</a></li>
+</ul>
+</li>
+<li><a href="#_7">浮点数的加减运算</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<blockquote>
+<p>视频推荐：</p>
+<ol>
+<li><a href="https://www.bilibili.com/video/BV1km4y1d7bJ">十分钟搞定期末与考研常考的普通浮点数与IEEE754浮点数</a></li>
+<li><img alt="浮点数小结" src="resources/浮点数小结.png" /></li>
+</ol>
+</blockquote>
+<h2 id="_2">浮点数的表示</h2>
+<h3 id="_3">浮点数的表示格式</h3>
+<p>$$
+N = (-1)^S\cdot M\cdot R^E
+$$</p>
+<ul>
+<li>S: 代表N的符号，0正1负</li>
+<li>M: <strong>尾数</strong>，<strong>原码</strong>。二进制定点小数</li>
+<li>E: <strong>阶码/指数</strong>，<strong>移码</strong>。二进制定点整数</li>
+<li>R: <strong>基数(隐含)</strong>，可以是2、4、16</li>
+</ul>
+<p>32位浮点数格式（基数默认为2）：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">数符(0)</th>
+<th style="text-align: center;">阶码(1-7)</th>
+<th style="text-align: center;">尾数(8-31)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">共1位</td>
+<td style="text-align: center;">移码，偏执值为64，共7位</td>
+<td style="text-align: center;">原码，共24位</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_4">浮点数的表示范围</h3>
+<p>正数（0.1xxxx）：最大值0.1111···1，最小值0.<strong>1</strong>00···0，范围$0\cup[2^{-1}\cdot 2^{-128},(1-2^{-24})\cdot 2^{127}]$</p>
+<p>负数（1.1xxxx）：最小值1.1111···1，最大值1.<strong>1</strong>00···0，范围$[-(1-2^{-24})\cdot 2^{127}    ,-2^{-1}\cdot 2^{-128}]\cup 0$</p>
+<p><strong>上溢：进行中断处理</strong></p>
+<p><strong>下溢：当作0处理</strong></p>
+<p><img alt="img" src="resources/浮点数表示范围.jpeg" /></p>
+<blockquote>
+<p>注意⚠️：</p>
+<ol>
+<li>
+<p>正数尾数最小值，负数尾数最大值，需要是x.<strong>1</strong>xxxxx！（基数为2时）</p>
+</li>
+<li>
+<p>注意负数的上溢下溢范围！</p>
+</li>
+</ol>
+</blockquote>
+<h3 id="_5">浮点数的规格化</h3>
+<p>左规：出现 $\pm$ 0.000···0时，尾数左移n位，阶码减n</p>
+<p>右规：尾数有效位进位到小数点前边，尾数右移1位，阶码加1</p>
+<p><strong>基数为2时，原码规格化形式的尾数最高位是1</strong></p>
+<p><strong>基数为4时，原码规格化形式的尾数最高两位不全为0</strong></p>
+<ul>
+<li>若浮点数的尾数用补码表示，则下列( )中的尾数是规格化数形式。</li>
+</ul>
+<p>A.1.11000</p>
+<p>B.0.01110</p>
+<p>C.0.01010</p>
+<p>D.1.00010</p>
+<p>【答案】：D</p>
+<ul>
+<li>浮点数的基数为4，尾数用原码表示，则以下( )是规格化的数。</li>
+</ul>
+<p>A.1.001101</p>
+<p>B.0.001101</p>
+<p>C.1.011011</p>
+<p>D.0.000010</p>
+<p>【答案】：C</p>
+<ul>
+<li>什么是浮点数的溢出？什么情况下发生上溢出？什么情况下发生下溢出？</li>
+</ul>
+<p>①<strong>阶码上溢出</strong>。一个正指数超过了最大允许值时，浮点数发生上溢出（即向<strong>∞方向溢出</strong>)。若结果是正数，则发生正上溢出（有的机器把值置为+∞）；若结果是负数，则发生负上溢出（有的机器把值置为-∞）。这种情况为<strong>软件故障</strong>，通常要引入<strong>溢出故障</strong>处理程序来处理。</p>
+<p>②<strong>阶码下溢出</strong>。一个负指数比最小允许值还小时，浮点数发生下溢出。一般机器把下溢出</p>
+<p>时的值置为0(<strong>+0或-0</strong>)。<strong>不发生溢出故障</strong>。</p>
+<p>③<strong>尾数溢出</strong>。当尾数最高有效位有进位时，发生尾数溢出。此时，<strong>进行“右规”操作</strong>：尾数右移一位，阶码加1，直到尾数不溢出为止。此时，只要阶码不发生上溢出，浮点数就不会溢出。</p>
+<p>④<strong>非规格化尾数</strong>。当数值部分高位不是一个有效值时（如原码时为0或补码时与符号位相同)，尾数为非规格化形式。此时，<strong>进行“左规”操作</strong>：尾数左移一位，阶码减1，直到尾数为规格化形式为止。</p>
+<h3 id="ieee754">IEEE754标准</h3>
+<p><img alt="img" src="resources/IEEE754.jpeg" /></p>
+<p>阶码：原码数值+偏执值</p>
+<p>尾数：带隐藏位的原码</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>数符</th>
+<th>阶码</th>
+<th>尾数数值</th>
+<th>总位数</th>
+<th>偏执值</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>短浮点数</td>
+<td>1</td>
+<td>8</td>
+<td>23</td>
+<td>32</td>
+<td>7FH(<strong>127</strong>)</td>
+</tr>
+<tr>
+<td>长浮点数</td>
+<td>1</td>
+<td>11</td>
+<td>52</td>
+<td>64</td>
+<td>3FFH(<strong>1023</strong>)</td>
+</tr>
+<tr>
+<td>临时浮点数</td>
+<td>1</td>
+<td>15</td>
+<td>64</td>
+<td>80</td>
+<td>3FFFH(<strong>16383</strong>)</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>记忆方案：</p>
+<p>Float 32 -&gt; 8 + (1+23)，（和前边的浮点数一样，只不过有了隐含位）</p>
+<p>Double 64 -&gt; 11 + 52 + 1, <strong>“一生一世我爱你”</strong></p>
+<p>临时浮点数 80 -&gt; (1+15) + 64</p>
+<p>8 11 15，<strong>“八十一是我，王氏一是你”</strong></p>
+<p>23 52 64</p>
+<p>注意⚠️：</p>
+<p>这里的偏执值是 $2^k-1$ ，和普通的移码不一样！（普通的移码没有减1！）</p>
+</blockquote>
+<p>$$
+(-1)^S\cdot 1.M \cdot 2^{E-127}\
+(-1)^S\cdot 1.M \cdot 2^{E-1023}\
+(-1)^S\cdot 1.M \cdot 2^{E-16383}
+$$</p>
+<p><img alt="img" src="https://image-static.segmentfault.com/200/100/2001004343-5d8604a39c224_fix732" /></p>
+<p>小结：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">内容</th>
+<th style="text-align: center;">阶码</th>
+<th style="text-align: center;">尾数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">浮点数</td>
+<td style="text-align: center;">原码+偏置值$2^n$</td>
+<td style="text-align: center;">原码（0.1abcd,保存1abcd）</td>
+</tr>
+<tr>
+<td style="text-align: center;">IEEE 754</td>
+<td style="text-align: center;">原码+偏置值$2^n-1$</td>
+<td style="text-align: center;">原码（带隐藏位:1.abcd,保存abcd）</td>
+</tr>
+</tbody>
+</table>
+<p>例题：</p>
+<ul>
+<li>【例题】在IEEE754标准规定的64位浮点数格式中，符号位为1位，阶码为11位，尾数为52位，则它所能表示的最小规格化负数为( )</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">符号位(1)</th>
+<th style="text-align: center;">阶码(11)</th>
+<th style="text-align: center;">尾数(52)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">11111111110</td>
+<td style="text-align: center;">111...1111</td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">阶码全1代表无穷</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">阶码尾数全0代表0</td>
+<td style="text-align: center;"></td>
+</tr>
+</tbody>
+</table>
+<p>$$
+  \begin{align}
+  &amp;-1.111...111(52个1)\cdot 2^{111,1111,1110(10个0)-1023(偏执值)}\
+  &amp;= -(2-2^{-52})\cdot 2^{2046-1023=1023}
+  \end{align}
+  $$</p>
+<p>⚠️<strong>注意隐藏位是小数点前哦</strong>～，就是说IEEE754的标准形式的尾数是<strong>1</strong>.xxxx，然后小数点前的1隐藏，但是前边的普通浮点数的标准形式是0.<strong>1</strong>xxxx，1不隐藏！</p>
+<ul>
+<li>【例题】现有一计算机字长32位(D31~D0),数符位是第31位。</li>
+</ul>
+<p>对于二进制10001111111011111100000000000000，</p>
+<p>1)表示一个补码整数，其十进制值是多少？
+  $$
+  \begin{align}
+  &amp;1111,0000,0001,0000,0100,0000,0000,0000_补\
+  =&amp;1000,1111,1110,1111,1100,0000,0000,0000_原\
+  =&amp;-(2^{20}-2^{14}+2^{28}-2^{21})
+  \end{align}
+  $$
+  2)表示一个无符号整数，其十进制值是多少？
+  $$
+  \begin{align}
+  &amp;1000_{31:28},1111_{27:24},1110_{23:20},1111_{19:16},1100_{15:12},0000_{11:8},0000_{7:4},0000_{3:0}\
+  =&amp;2^{20}-2^{14}+2^{28}-2^{21}+2^{31}
+  \end{align}
+  $$
+  3)表示一个IEEE754标准的单精度浮点数，其值是多少？
+  $$
+  \begin{align}
+  &amp;1,0001 1111,1101 1111 1000 0000 0000 000\
+  =&amp;-2^{31-127}\cdot 1.110111111\
+  =&amp;-2^{-96}\cdot (2-2^{-3}-2^{-9})
+  \end{align}
+  $$</p>
+<ul>
+<li>【例题】假定变量i是一个32位的int型整数，f和d分别为float型（32位)和double型(64位)实数。X、Y、Z是float型(32位)或double型(32位)实数.分析各布尔表达式，说明结果是否在任何情况下都是“true”。</li>
+</ul>
+<p>1)i=(int)((double)i)</p>
+<p>是的</p>
+<p>2)f=(float)((int)f)</p>
+<p>不是</p>
+<p>3)f=(float)((double)f)</p>
+<p>是的</p>
+<p>4)d=(double)((float)d)</p>
+<p>不是</p>
+<ul>
+<li>【例题】已知两个实数x=-68,y=-8.25,它们在C语言中定义为float型变量，分别存放在寄存器A和B中。另外，还有两个寄存器C和D。A、B、C、D都是32位的寄存器。请问（要求用十六进制表示二进制序列）：</li>
+</ul>
+<p>1) 寄存器A和B中的内容分别是什么？</p>
+<p>$$
+  \begin{align}
+  &amp;-68\
+  =&amp;-1000100H\cdot2^{0}\
+  =&amp;-1.000100H\cdot2^{6}\
+  =&amp;1,1000 0101(6+127),0001\
+  =&amp;C2880000
+  \end{align}
+  $$</p>
+<p>$$
+  \begin{align}
+  &amp;-8.25\
+  =&amp;-1000.01H\cdot2^{0}\
+  =&amp;-1.00001H\cdot2^{3}\
+  =&amp;1,1000 0010(3+127),00001\
+  =&amp;C1040000
+  \end{align}
+  $$</p>
+<p>2)X和Y相加后的结果存放在C寄存器中，寄存器C中的内容是什么？
+$$
+  \begin{align}
+  &amp;-(1.000100H\cdot2^{6}+1.00001H\cdot2^{3})\
+  =&amp;-(1.000100H\cdot2^{6}+0.00100001H\cdot2^{6})\
+  =&amp;-(1.00110001H\cdot2^{6})\
+  =&amp;1,1000 0101(6+127),00110001\
+  =&amp;C2988000
+  \end{align}
+$$
+  3)X和Y相减后的结果存放在D寄存器中，寄存器D中的内容是什么？
+$$
+  \begin{align}
+  &amp;1.00001H\cdot2^{3}-1.000100H\cdot2^{6}\
+  =&amp;0.00100001H\cdot2^{6}-1.000100H\cdot2^{6}\
+  =&amp;-(1.00010000H\cdot2^{6}-0.00100001H\cdot2^{6})\
+  =&amp;-(0.11101111H\cdot2^{6})\
+  =&amp;-(1.1101111H\cdot2^{5})\
+  =&amp;1,1000 0100(5+127),1101111\
+  =&amp;C26F0000
+  \end{align}
+$$</p>
+<ul>
+<li>【2017统考真题】已知$f(n)=\sum_{i=0}^{n}2^i=2^{n+1}-1=11...1B$，计算f(n)的C语言函数f1如下：</li>
+</ul>
+<pre lang="c"><code class="language-c md-fencescode"><span class="kt">int</span><span class="w"> </span><span class="nf">f1</span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="n">n</span><span class="p">){</span>
+<span class="w">  </span><span class="kt">int</span><span class="w"> </span><span class="n">sum</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">power</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
+<span class="w">  </span><span class="k">for</span><span class="p">(</span><span class="kt">unsigned</span><span class="w"> </span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span><span class="n">i</span><span class="o">&lt;</span><span class="n">n</span><span class="mi">-1</span><span class="p">;</span><span class="n">i</span><span class="o">++</span><span class="p">){</span>
+<span class="w">    </span><span class="n">power</span><span class="w"> </span><span class="o">*=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span>
+<span class="w">    </span><span class="n">sum</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">power</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">sum</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<p>将f1中的int都改为float,可得到计算f(n)的另一个函数f2。假设unsigned和int型数据都占32位，float采用IEEE754单精度标准。请回答下列问题：</p>
+<p>1)当n=0时，f1会出现死循环，为什么？若将f1中的变量i和n都定义为int型，则f1是否还会出现死循环？为什么？</p>
+<p>【答案】：因为n=0时，n=0000..000，n为无符号数，n-1=111...111，变成了最大的数。改成int就不会了，因为int可以表示负数。</p>
+<p>2)f1(23)和f2(23)的返回值是否相等？机器数各是什么（用十六进制表示)？</p>
+<p>【答案】</p>
+<p>f1(23): 0000,0000,1111,1111,1111,1111,1111,1111（24个1）</p>
+<p>f1(23): $00FFFFFFH$</p>
+<p>f2(23): 0,10010110(23+127=149=128+16+4+2),11111111111111111111111(23个1)</p>
+<p>f2(23): $4B7FFFFFH$</p>
+<p>3)f1(24)和f2(24)的返回值分别为33554431和33554432.0，为什么不相等？</p>
+<p>【答案】</p>
+<p>f1(23): 0000,0001,1111,1111,1111,1111,1111,1111（25个1）</p>
+<p>f1(23): $00FFFFFFH$</p>
+<p>f2(23): 0,10010110(24+127=149=128+16+4+2+1),11111111111111111111111(24个1)</p>
+<p><strong>尾数只有23位，需要舍入一位，这里是入</strong></p>
+<p>f2(23): 0,10010110(25+127=149=128+16+8),0</p>
+<p>4)f(31)=$2^{32}-1$,而f1(31)的返回值却为-1，为什么？若使f1(n)的返回值与f(n)相等，则最大的n是多少？</p>
+<p>【答案】</p>
+<p>f1(31) = 111..111(32个1)</p>
+<p>计算机采用补码存储int，兑换成原码是1,000..0001，代表-1</p>
+<p>最大的n是<strong>30</strong></p>
+<p>5)f2(127)的机器数为7F800000H,对应的值是什么？若使f2(n)的结果不溢出，则最大的n是多少？若使f2(n)的结果精确（无舍入），则最大的n是多少？</p>
+<p>【答案】
+  $$
+  \begin{align}
+  &amp;7F800000\
+  =&amp;0111,1111,1000,0\
+  =&amp;+\infty
+  \end{align}
+  $$
+  1.111..1111小数点后23个1。一共24个1，n最大为23</p>
+<h3 id="_6">定点、浮点表示的区别</h3>
+<p>(1)数值的表示范围</p>
+<p>若定点数和浮点数的字长相同，则浮点表示法所能表示的数值范围远大于定点表示法。</p>
+<p>(2)精度</p>
+<p>对于字长相同的定点数和浮点数来说，浮点数虽然扩大了数的表示范围，但精度降低了。</p>
+<p>(3)数的运算</p>
+<p>浮点数包括阶码和尾数两部分，运算时不仅要做尾数的运算，还要做阶码的运算，而且运算结果要求规格化，所以浮点运算比定点运算复杂。</p>
+<p>(4)溢出问题</p>
+<p>在定点运算中，当运算结果超出数的表示范围时，发生溢出；浮点运算中，运算结果超出尾数表示范围却不一定溢出，只有规格化后阶码超出所能表示的范围时，才发生溢出。</p>
+<h2 id="_7">浮点数的加减运算</h2>
+<ol>
+<li>对阶</li>
+</ol>
+<p>对阶的目的是使两个操作数的小数点位置对齐，即使得两个数的阶码相等。为此，先求阶差，然后以<strong>小阶向大阶看齐的原则</strong>，将阶码小的尾数右移一位（基数为2），阶加1，直到两个数的阶码相等为止。尾数右移时，舍弃掉有效位会产生误差，影响精度。</p>
+<ol>
+<li>尾数求和</li>
+</ol>
+<p>将对阶后的尾数按定点数加（减）运算规则运算。运算后的尾数不一定是规格化的，因此，浮点数的加减运算需要进一步进行规格化处理。</p>
+<ol>
+<li>规格化</li>
+</ol>
+<p>IEEE754规格化尾数的形式为<strong>±1.×...×</strong>。尾数相加减后会得到各种可能结果，例如：</p>
+<p>1.×...×+1.×...×=±1×,×...×</p>
+<p>1.×...×-1.×...×=±0.0...01×...×</p>
+<p>1)右规：当结果为±1×.×…×时，需要进行右规。尾数右移一位，阶码加1。尾数右移时，最高位1被移到小数点前一位作为隐藏位，最后一位移出时，要考虑舍入。</p>
+<p>2)左规：当结果为士0.0…01×…×时，需要进行左规。尾数每左移一位，阶码减1。.可能需要左规多次，直到将第一位1移到小数点左边。</p>
+<p>注意：①左规一次相当于乘2，右规一次相当于除2；②需要右归时，只需进行一次</p>
+<ol>
+<li>舍入</li>
+</ol>
+<p>在对阶和尾数右规时，可能会对尾数进行右移，为保证运算精度，一般将低位移出的两位保留下来，参加中间过程的运算，最后将运算结果进行舍入，还原表示成IEEE754格式。</p>
+<p>常见的舍入方法有：<strong>0舍1入法</strong>、<strong>恒置1法</strong>和<strong>截断法（恒舍法）</strong>。</p>
+<ol>
+<li><strong>0含1入法</strong>：类似于十进制的“四合五入”法。运算结果保留位的最高数位为0，则舍去；最高数位为1，则在尾数的末尾+1。这样可能有导致溢出，需要再次右归。</li>
+<li><strong>恒置1法</strong>：只要因移位而丢失的位中有1，就把尾数末位置1，而不管原来是0，还是1</li>
+<li>
+<p><strong>截断法</strong>：直接截取所需位数，丢弃后面的所有位，这种舍入处理最简单。</p>
+</li>
+<li>
+<p>溢出判断</p>
+</li>
+</ol>
+<p>在尾数规格化和尾数舍入时，可能会对阶码执行加/减运算。因此，必须考虑指数溢出的问题。若一个正指数超过了最大允许值（127或1023)，则发生指数上溢，产生异常。若一个负指数超过了最小允许值(-149或-1074)，则发生指数下溢，通常把结果按机器零处理。</p>
+<p>1)右规和尾数舍入。数值很大的尾数舍入时，可能因为末位加1而发生尾数溢出，此时需要通过右规来调整尾数和阶。右规时阶加1，导致阶增大，因此需要判断是否发生了指数上溢。当调整前的阶码为11111110时，加1后，会变成11111111而发生指数上溢。</p>
+<p>2)左规。左规时阶减1，导致阶减小，因此需要判断是否发生了指数下溢。其判断规则与指数上溢类似，左规一次，阶码减1，然后判断阶码是否为全0来确定是否指数下溢。由此可见，浮点数的溢出并不是以尾数溢出来判断的，尾数溢出可以通过右规操作得到纠正。运算结果是否溢出主要看结果的指数是否发生了上溢，因此是由指数上溢来判断的。</p>
+<p>注意：某些题目可能会<strong>指定尾数或阶码采用补码</strong>表示。通常采用<strong>双符号位</strong>，当尾数求和结果溢出（如尾数为10.×…×或01.××…×）时，需右规一次；当结果出现00.0××…×或11.1××…×时，需要左规，直到尾数变为00.1××…×或11.0××…×。</p>
+<ol>
+<li>
+<p>例题</p>
+</li>
+<li>
+<p>【例题】下列关于对阶操作说法正确的是()。</p>
+<p>A. 在浮点加减运算的对阶操作中，若阶码减小，则尾数左移</p>
+<p>B. 在浮点加减运算的对阶操作中，若阶码增大，则尾数右移；若阶码减小，则尾数左移</p>
+<p>C. 在浮点加减运算的对阶操作中，若阶码增大，则尾数右移</p>
+<p>D. 以上都不对</p>
+<p>答案：C。⚠️这道题说的是浮点数对阶操作中！小阶向大阶对齐</p>
+</li>
+<li>
+<p>【例题】设浮点数共12位。其中阶码含1位阶符共4位，以2为底，补码表示；尾数含1位数符共8位，补码表示，规格化。则该浮点数所能表示的最大正数是()。</p>
+<p>答案：$2^7\cdot(1-2^{-7})=2^7-1$。⚠️只有IEEE754才有隐藏位呢！阶码最大：$2^3-1=7$；尾数最大：$0.1111111=1-2^{-7}$</p>
+</li>
+<li>
+<p>【例题】采用规格化的浮点数最主要是为了(D)。</p>
+<p>A.增加数据的表示范围.</p>
+<p>B.方便浮点运算</p>
+<p>C.防止运算时数据溢出</p>
+<p>D.增加数据的表示精度</p>
+</li>
+<li>
+<p>【例题】下列关于舍入的说法，正确的是()。</p>
+<p>Ⅰ.不仅仅只有浮点数需要舍入，定点数在运算时也可能要舍入</p>
+<p>Ⅱ.在浮点数舍入中，只有左规格化时可能要舍入</p>
+<p>Ⅲ.在浮点数舍入中，只有右规格化时可能要舍入</p>
+<p>Ⅳ.在浮点数舍入中，左、右规格化均可能要舍入</p>
+<p>V.舍入不一定产生误差</p>
+<p>答案：只有V：只有浮点数有舍入的概念。舍入的两种情况：对阶&amp;规格化</p>
+</li>
+<li>
+<p>【2009统考真题】浮点数加、减运算过程一般包括对阶、尾数运算、规格化、舍入和判断溢出等步骤。设浮点数的阶码和尾数均采用补码表示，且位数分别为5和7（均含2位符号位)。若有两个数X=2^7×29/32 和Y=2^5x5/8，则用浮,点加法计算X+Y的最终结果（）。
+     A. 00111 1100010 
+     B. 00111 0100010
+     C. 01000 0010001 
+     D. 发生溢出
+     答案：D
+     $$
+     \begin{align}
+     X&amp;=2^7\times 29/32\
+     Y&amp;=2^5\times 5/8=2^7\times 5/32\
+     X+Y&amp;=2^7\times 34/32=0,00111,溢出(2^5不够用了)
+     \end{align}
+     $$</p>
+</li>
+<li>
+<p>【2011统考真题】float型数据通常用IEEE754单精度格式表示。若编译器将float型变量x分配在一个32位浮点寄存器FR1中，且X=-8.25,则FR1的内容是（)。</p>
+<p>A.C1040000H</p>
+<p>B.C2420000H</p>
+<p>C.C1840000H</p>
+<p>D.C1C20000H</p>
+<p>答案：A。⚠️要化成1.xxx才是规格化！不是0.1xxx。。
+ $$
+ \begin{align}
+ &amp;-8.25\
+ &amp;=[1][阶码][8.25]\
+ &amp;=[1][阶码][1000.01]\
+ &amp;=[1][127+3][1.00001]\
+ &amp;=[1][10000010][00001]\
+ &amp;=1100|0001|0000|0100|...\
+ &amp;=C1040000H
+ \end{align}
+ $$</p>
+</li>
+<li>
+<p>【2012统考真题】float类型（IEEE754单精度浮点数）能表示的最大整数是？</p>
+<p>答案：⚠️阶码全是1，尾数全是零的时候代表正负无穷！代表普通的数字需要阶码&lt;全是1的情况
+ $$
+ \begin{align}
+ &amp;0[11111110][1111...111]\
+ \to&amp;11111110=254-127=127\
+ \to&amp;2^{127}\cdot 1.111...111\
+ &amp;=2^{127}\cdot(2-2^{-23})\
+ &amp;=2^{128}-2^{104}
+ \end{align}
+ $$</p>
+</li>
+<li>
+<p>【2013统考真题】某数采用IEEE754单精度浮点数格式表示为C6400000H,该数的值是：</p>
+<p>答案：
+ $$
+ \begin{align}
+ &amp;C6400000\
+ &amp;=1100,0110,0100,0000,0000,0000,0000,0000\
+ &amp;=-2^{10001100_B-127}\cdot 1.10000000000000000000000_B\
+ &amp;=-1.5\cdot2^{13}
+ \end{align}
+ $$</p>
+</li>
+<li>
+<p>【2014统考真题】float型数据常用IEEE754单精度浮点格式表示。假设两个float型变量x和y分别存放在32位寄存器f1和f2中，若(f1)=CC90 0000H,(f2)=B0C0 0000H,则x和y之间的关系为()。</p>
+<p>A.x&lt;y且符号相同</p>
+<p>B.x&lt;y且符号不同</p>
+<p>C.x&gt;y且符号相同</p>
+<p>D.x&gt;y且符号不同
+ $$
+ CC900000H\
+ 1100 1100 1001 0000 0000 0000 0000 0000\
+ -2^{26}\cdot 1.125\
+ B0C00000H\
+ 1011 0000 1001 0000 0000 0000 0000 0000\
+ -2^{-30}\cdot 1.125\
+ $$
+ 答案：A</p>
+</li>
+<li>
+<p>【2015统考真题】下列有关浮点数加减运算的叙述中，正确的是( )。</p>
+<p>I.对阶操作不会引起阶码上溢或下溢
+ Ⅱ.右规和尾数舍入都可能引起阶码上溢
+ Ⅲ.左规时可能引起阶码下溢
+ IV.尾数溢出时结果不一定溢出</p>
+<p>A.仅Ⅱ、III</p>
+<p>B.仅I、Ⅱ、IV</p>
+<p>C.仅I、Ⅲ、IV</p>
+<p>D.I、Ⅱ、Ⅲ、IV</p>
+<p>答案：对阶是较小的阶码对齐至较大的阶码，I正确。右规和尾数舍入过程，阶码加1而可能上</p>
+<p>溢，Ⅱ正确，同理IⅡ也正确。尾数溢出时可能仅产生误差，结果不一定溢出，V正确。D</p>
+</li>
+<li>
+<p>【2018统考真题】IEEE754单精度浮点格式表示的数中，最小的规格化正数是( )。</p>
+<p>A.$1.0×2^{-126}$</p>
+<p>B.$1.0×2^{-127}$</p>
+<p>C.$1.0×2^{-128}$</p>
+<p>D.$1.0×2^{-149}$</p>
+<p>答案：A</p>
+<p>阶码:$00000001 = 1-127 = -126$</p>
+</li>
+<li>
+<p>【2020统考真题】已知带符号整数用<strong>补码</strong>表示，float型数据用<strong>IEEE754</strong>标准表示，假</p>
+<p>定变量x的类型只可能是int或float,当x的机器数为C8000000H时，x的值可能是()</p>
+<p>A.$-7×2^{27}$</p>
+<p>B.$-2^{16}$</p>
+<p>C.$2^{17}$</p>
+<p>D.$25×2^{27}$</p>
+<p>答案：A
+ $$
+ \begin{align}
+ &amp;C8000000_{int}\
+ =&amp;1100 1000 0000 0000 0000 0000 0000 0000_{补码}\
+ =&amp;1011 1000 0000 0000 0000 0000 0000 0000_{原码}\
+ =&amp;- 7 \cdot 2^{27}\
+ =&amp;C8000000_{float}\
+ =&amp;1100 1000 0000 0000 0000 0000 0000 0000\
+ =&amp;1,1001 0000,0\
+ =&amp;-2^{17}
+ \end{align}
+ $$</p>
+</li>
+<li>
+<p>【2021统考真题】下列数值中，不能用IEEE754浮点格式精确表示的是()。</p>
+<p>A.1.2</p>
+<p>B.1.25</p>
+<p>C.2.0</p>
+<p>D.2.5</p>
+<p>答案：A</p>
+</li>
+</ol>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

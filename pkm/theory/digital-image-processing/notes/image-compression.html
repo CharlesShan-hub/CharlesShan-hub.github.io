@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>image-compression</title>
+<link id="theme-css" rel="stylesheet" href="../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="image-compression">Image Compression</h1>
+<hr />
+<h2 id="overview">Overview</h2>
+<hr />
+<h2 id="_1">熵编码</h2>
+<blockquote>
+<p>熵编码或统计编码属于无损编码，给出现概率较大的符号赋予一个短码字，给出现概率较小的符号赋予一个长码字，从而使最终的平均码长很小。主要的熵编码方法包括哈夫曼编码、香农编码、算术编码等。</p>
+</blockquote>
+<h3 id="_2">哈夫曼编码</h3>
+<p>扫描各种颜色的像素出现的概率，然后按照概率大小组成哈夫曼编码。（个人感觉意义不大）
+<a href="../details/huffman.html">huffman</a></p>
+<figure><img src="../../.gitbook/assets/image (106).png" alt="" width="563"><figcaption></figcaption></figure>
+
+<h3 id="_3">算术编码</h3>
+<blockquote>
+<p>个人觉得也意义不大，跳过吧</p>
+</blockquote>
+<details>
+
+<summary>解释</summary>
+
+算术编码的算法思想如下。
+
+1. 对一组信源符号按照符号的概率从大到小排序，将\[0,1)设为当前分析区间。按信源符号的概率序列在当前分析区间划分比例间隔。
+2. 检索“输入消息序列”​，锁定当前消息符号（初次检索的话就是第一个消息符号）​。找到当前符号在当前分析区间的比例间隔，将此间隔作为新的当前分析区间，并把当前分析区间的起点（即左端点）指示的数“补加”到编码输出数里。当前消息符号指针后移。
+3. 仍然按照信源符号的概率序列在当前分析区间划分比例间隔。然后重复第二步，直到“输入消息序列”检索完毕为止。
+4. 最后的编码输出数就是编码好的数据。
+
+在算术编码中需要注意3个问题。
+
+1. 由于实际计算机的精度不可能无限长，运算中出现溢出是一个明显的问题，但多数计算机都有16位，32位或者64位的精度，因此这个问题可以使用比例缩放方法解决。
+2. 算术编码器对整个消息只产生一个码字，这个码字是在间隔\[0,1)中的一个实数，因此译码器在接收到表示这个实数的所有位之前不能进行译码。
+3. 算术编码是一种对错误很敏感的编码方法，如果有一位发生错误，就会导致整个消息译错。
+
+算术编码可以是静态的或者是自适应的。在静态算术编码中，信源符号的概率是固定的。在自适应算术编码中，信源符号的概率根据编码时符号出现的频率动态地修改，在编码期间估算信源符号概率的过程叫作建模。需要开发动态算术编码的原因是事前知道精确的信源概率是很难的，而且不切实际。当压缩消息时，不能期待一个算术编码器获得最大的效率，所能做的最有效的方法是在编码过程中估算概率。因此，动态建模就成为确定编码器压缩效率的关键。
+
+</details>
+
+<h3 id="rle">RLE编码</h3>
+<blockquote>
+<p>比较简单，也可以略</p>
+</blockquote>
+<p>行程长度编码（Run- Length Encoding，RLE）压缩算法是Windows系统中使用的一种图像文件压缩方法</p>
+<p>例如：RRRRRGGBBBBBB -&gt; 5R2G6B</p>
+<h3 id="lzw">LZW编码</h3>
+<blockquote>
+<p>wiki[1], 各种版本的 LZW 实现[2], geeksforgeeks[3]</p>
+</blockquote>
+<ul>
+<li>数据流（CharStream）​：对象（文本文件的数据序列）</li>
+<li>编码流（CodeStream）：输出对象（经过压缩运算的编码数据）​</li>
+<li>编译表（String Table）​：编译表不是事先创建好的，而是根据原始文件数据动态创建的</li>
+<li>LZW压缩算法的基本原理：提取原始文本文件数据中的不同字符，基于这些字符创建一个编译表，然后用编译表中的字符的索引替代原始文本文件数据中的相应字符，减少原始数据大小。</li>
+</ul>
+<p><img alt="image (23).png" src="../assets/image (23).png" /></p>
+<figure><img src="../../.gitbook/assets/image (23).png" alt=""><figcaption><p>[4] encoding <a href="https://www.bilibili.com/video/BV1rp4y117WB">https://www.bilibili.com/video/BV1rp4y117WB</a></p></figcaption></figure>
+
+<p><img alt="image (24).png" src="../assets/image (24).png" /></p>
+<figure><img src="../../.gitbook/assets/image (24).png" alt=""><figcaption><p>[5] <a href="https://www.bilibili.com/video/BV15p4y1C71G">https://www.bilibili.com/video/BV15p4y1C71G</a></p></figcaption></figure>
+
+<p>详细过程感觉并不好记，使用时随时翻阅资料吧</p>
+<hr />
+<h2 id="_4">预测编码</h2>
+<blockquote>
+<p>基于图像数据的空间或时间冗余特性，用相邻的已知像素（或像素块）预测当前像素（或像素块）的取值，然后再对预测误差进行量化和编码，包括脉冲编码调制（PCM）​、差分脉冲编码调制（DPCM）等。</p>
+</blockquote>
+<h3 id="dm">DM 编码</h3>
+<ul>
+<li>wiki[6]：<a href="https://en.wikipedia.org/wiki/Delta_modulation">https://en.wikipedia.org/wiki/Delta_modulation</a></li>
+<li>精髓是用变换来保存序列。</li>
+<li>做法是用上行和下行两种信号模拟一个连续信号，把连续信号转换成离散。</li>
+<li>需要用过采样，即以比奈奎斯特速率高几倍的速率对模拟信号采样。</li>
+<li>DM 是 DPCM 的最简单形式。</li>
+</ul>
+<p><img alt="image (25).png" src="../assets/image (25).png" /></p>
+<figure><img src="../../.gitbook/assets/image (25).png" alt=""><figcaption></figcaption></figure>
+
+<details>
+
+<summary>Demo</summary>
+
+比如对\[33, 35, 34, 36, 35]进行编码，步长为 4.5
+
+![image (26).png](../assets/image (26).png)
+<img src="../../.gitbook/assets/image (26).png" alt="" data-size="original">
+
+结果就是\[33, 1, 0, 1, 0]，其中 33 代表初始的位置，1 代表上升，0 代表下降。
+
+</details>
+
+<h3 id="dpcm">DPCM 编码</h3>
+<ul>
+<li>wiki[7]：<a href="https://en.wikipedia.org/wiki/Differential_pulse-code_modulation">https://en.wikipedia.org/wiki/Differential_pulse-code_modulation</a></li>
+<li>精髓也是用变化代替绝对值。</li>
+<li>这个变化是用某个像素的一边（下例是 左，左上，上三个方向）来预测这个像素。然后用预测值与本像素相减，得到误差。</li>
+<li>这个误差会经过量化，这一步引入了误差，也达到了压缩的目的。</li>
+</ul>
+<p><img alt="image (27).png" src="../assets/image (27).png" /></p>
+<figure><img src="../../.gitbook/assets/image (27).png" alt=""><figcaption></figcaption></figure>
+
+<details>
+
+<summary>Demo</summary>
+
+
+<pre lang="python"><code class="language-python md-fencescode"><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">data</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">transform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">quantize_error</span><span class="p">(</span><span class="n">error</span><span class="p">,</span><span class="n">level</span><span class="p">):</span>
+    <span class="nb">max</span><span class="o">=</span><span class="mi">255</span>
+    <span class="nb">min</span><span class="o">=-</span><span class="mi">255</span>
+    <span class="n">q</span><span class="o">=</span><span class="p">(</span><span class="nb">max</span><span class="o">-</span><span class="nb">min</span><span class="p">)</span><span class="o">/</span><span class="n">level</span>
+    <span class="n">i</span><span class="o">=</span><span class="mi">1</span>
+    <span class="k">while</span><span class="p">(</span><span class="n">error</span><span class="o">&gt;=</span><span class="nb">min</span><span class="o">+</span><span class="n">q</span><span class="o">*</span><span class="n">i</span><span class="p">):</span>
+        <span class="n">i</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span>
+    <span class="n">quantized_error</span><span class="o">=</span><span class="nb">min</span><span class="o">+</span><span class="n">q</span><span class="o">*</span><span class="p">(</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">+</span><span class="n">q</span><span class="o">/</span><span class="mi">2</span>
+    <span class="k">return</span>  <span class="n">quantized_error</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">DPCM_encoder</span><span class="p">(</span><span class="n">img</span><span class="p">,</span><span class="n">level</span><span class="p">):</span>
+    <span class="n">N</span><span class="o">=</span><span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">predictor</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">N</span><span class="p">,</span><span class="n">N</span><span class="p">))</span>
+    <span class="n">quantized_error</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">N</span><span class="p">,</span><span class="n">N</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">j</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                    <span class="n">predicted</span><span class="o">=</span><span class="mi">0</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">predicted</span><span class="o">=</span><span class="mf">0.95</span><span class="o">*</span><span class="n">predictor</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span><span class="n">predicted</span><span class="o">=</span><span class="mf">0.95</span><span class="o">*</span><span class="n">predictor</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">+</span><span class="mf">0.95</span><span class="o">*</span><span class="n">predictor</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mf">0.95</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="n">predictor</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">error</span><span class="o">=</span><span class="n">img</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">-</span><span class="n">predicted</span>
+            <span class="n">quantized_error</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">=</span><span class="n">quantize_error</span><span class="p">(</span><span class="n">error</span><span class="p">,</span><span class="n">level</span><span class="p">)</span>
+            <span class="n">predictor</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">=</span><span class="n">predicted</span><span class="o">+</span><span class="n">quantized_error</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span><span class="p">,</span><span class="n">N</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="n">predicted</span> <span class="o">=</span> <span class="mf">0.95</span> <span class="o">*</span> <span class="n">predictor</span><span class="p">[</span><span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span><span class="n">predicted</span><span class="o">=</span><span class="mf">0.95</span><span class="o">*</span><span class="n">predictor</span><span class="p">[</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">i</span><span class="p">]</span><span class="o">+</span><span class="mf">0.95</span><span class="o">*</span><span class="n">predictor</span><span class="p">[</span><span class="n">j</span><span class="p">,</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mf">0.95</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="n">predictor</span><span class="p">[</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">error</span><span class="o">=</span><span class="n">img</span><span class="p">[</span><span class="n">j</span><span class="p">,</span><span class="n">i</span><span class="p">]</span><span class="o">-</span><span class="n">predicted</span>
+            <span class="n">quantized_error</span><span class="p">[</span><span class="n">j</span><span class="p">,</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="n">quantize_error</span><span class="p">(</span><span class="n">error</span><span class="p">,</span><span class="n">level</span><span class="p">)</span>
+            <span class="n">predictor</span><span class="p">[</span><span class="n">j</span><span class="p">,</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="n">predicted</span><span class="o">+</span><span class="n">quantized_error</span><span class="p">[</span><span class="n">j</span><span class="p">,</span><span class="n">i</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">quantized_error</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">DPCM_decoder</span><span class="p">(</span><span class="n">error</span><span class="p">):</span>
+    <span class="n">N</span><span class="o">=</span><span class="n">error</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">img</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">N</span><span class="p">,</span><span class="n">N</span><span class="p">))</span>
+    <span class="n">predictor</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">N</span><span class="p">,</span><span class="n">N</span><span class="p">))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">j</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                    <span class="n">predicted</span><span class="o">=</span><span class="mi">0</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">predicted</span><span class="o">=</span><span class="mf">0.95</span><span class="o">*</span><span class="n">predictor</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+             <span class="n">predicted</span><span class="o">=</span><span class="mf">0.95</span><span class="o">*</span><span class="n">predictor</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">+</span><span class="mf">0.95</span><span class="o">*</span><span class="n">predictor</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mf">0.95</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="n">predictor</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">j</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">img</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">=</span><span class="n">predicted</span><span class="o">+</span><span class="n">error</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">predictor</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span><span class="o">=</span><span class="n">predicted</span><span class="o">+</span><span class="n">error</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">img</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">'__main__'</span><span class="p">:</span>
+    <span class="n">levels</span><span class="o">=</span><span class="mi">32</span>
+    <span class="n">img</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">coffee</span><span class="p">()</span>
+    <span class="n">img</span><span class="o">=</span><span class="n">transform</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">img</span><span class="p">,(</span><span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">3</span><span class="p">),</span> <span class="n">preserve_range</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Original"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="o">/</span><span class="mf">255.0</span><span class="p">)</span>
+    <span class="n">img_r</span><span class="o">=</span><span class="n">img</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">encoded_img_r</span><span class="o">=</span><span class="n">DPCM_encoder</span><span class="p">(</span><span class="n">img_r</span><span class="p">,</span><span class="n">levels</span><span class="p">)</span>
+    <span class="n">decoded_img_r</span><span class="o">=</span><span class="n">DPCM_decoder</span><span class="p">(</span><span class="n">encoded_img_r</span><span class="p">)</span>
+    <span class="n">decoded_img_r</span><span class="o">=</span><span class="n">decoded_img_r</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">decoded_img_r</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">decoded_img_r</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">img_g</span> <span class="o">=</span> <span class="n">img</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">encoded_img_g</span> <span class="o">=</span> <span class="n">DPCM_encoder</span><span class="p">(</span><span class="n">img_g</span><span class="p">,</span> <span class="n">levels</span><span class="p">)</span>
+    <span class="n">decoded_img_g</span> <span class="o">=</span> <span class="n">DPCM_decoder</span><span class="p">(</span><span class="n">encoded_img_g</span><span class="p">)</span>
+    <span class="n">decoded_img_g</span> <span class="o">=</span> <span class="n">decoded_img_g</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">decoded_img_g</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">decoded_img_g</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">img_b</span> <span class="o">=</span> <span class="n">img</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">2</span><span class="p">]</span>
+    <span class="n">encoded_img_b</span> <span class="o">=</span> <span class="n">DPCM_encoder</span><span class="p">(</span><span class="n">img_b</span><span class="p">,</span> <span class="n">levels</span><span class="p">)</span>
+    <span class="n">decoded_img_b</span> <span class="o">=</span> <span class="n">DPCM_decoder</span><span class="p">(</span><span class="n">encoded_img_b</span><span class="p">)</span>
+    <span class="n">decoded_img_b</span> <span class="o">=</span> <span class="n">decoded_img_b</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">decoded_img_b</span><span class="o">.</span> <span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">decoded_img_b</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">decoded_img</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">decoded_img_r</span><span class="p">,</span><span class="n">decoded_img_g</span><span class="p">,</span> <span class="n">decoded_img_b</span><span class="p">],</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Reconstructed"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">decoded_img</span><span class="o">/</span><span class="mf">255.0</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Error"</span><span class="p">)</span>
+    <span class="n">error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">((</span><span class="n">img</span><span class="o">-</span><span class="n">decoded_img</span><span class="p">))</span>
+    <span class="n">error</span><span class="o">/=</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">error</span><span class="o">*</span><span class="mi">4</span><span class="p">,</span><span class="n">vmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+
+
+</details>
+
+<hr />
+<h2 id="_5">变换编码</h2>
+<blockquote>
+<p>将空域上的图像变换到另一变换域上，变换后图像的大部分能量只集中到少数几个变换系数上，采用适当的量化和熵编码就可以有效地压缩图像。</p>
+<p>典型的准最佳变换有DCT（离散余弦变换）​、DFT（离散傅里叶变换）​、WHT（Walsh Hadama变换）​、HrT（Haar变换）等。</p>
+</blockquote>
+<h3 id="k-l">K-L 变换</h3>
+<ul>
+<li>K-L 变换又称 Hotelling 变换，特征向量变换或主分量方法（这个就是主成分分析法吧。。）</li>
+</ul>
+<p>步骤1：读取图片，将图片信息以8x8图像方块合成一个向量，将整张图片分割成一个n*64的矩阵A。</p>
+<p>步骤2：计算向量数据矩阵A的协方差矩阵（64x64）。</p>
+<p>步骤3：对协方差矩阵进行特征分解，并按特征值大小排列特征向量D。</p>
+<p>步骤4：计算AD，得到kl变换矩阵K。</p>
+<p>步骤5：将矩阵K的后m列置为0。</p>
+<p>步骤6：通过K*D^T得新矩阵A，并将其重新还原图像。</p>
+<p><img alt="image (107).png" src="../assets/image (107).png" /></p>
+<figure><img src="../../.gitbook/assets/image (107).png" alt=""><figcaption></figcaption></figure>
+
+<details>
+
+<summary>Demo[8]</summary>
+
+
+<pre lang="python"><code class="language-python md-fencescode"><span class="kn">import</span><span class="w"> </span><span class="nn">cv2</span>  
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>  
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">skimage.data</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">data</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">img2vec</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">blocksize</span><span class="p">):</span>
+    <span class="n">image_w</span><span class="p">,</span> <span class="n">image_h</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">shape</span>
+    <span class="c1"># 图像方块数据转换为向量</span>
+    <span class="n">img_block_vec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">int</span><span class="p">(</span><span class="n">image_w</span><span class="o">*</span><span class="n">image_h</span><span class="o">/</span><span class="n">blocksize</span><span class="o">/</span><span class="n">blocksize</span><span class="p">),</span> <span class="n">blocksize</span><span class="o">*</span><span class="n">blocksize</span><span class="p">))</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">blocksize</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">blocksize</span><span class="p">):</span>
+            <span class="n">block</span> <span class="o">=</span> <span class="n">image</span><span class="p">[</span><span class="n">r</span><span class="p">:</span><span class="n">r</span><span class="o">+</span><span class="n">blocksize</span><span class="p">,</span><span class="n">c</span><span class="p">:</span><span class="n">c</span><span class="o">+</span><span class="n">blocksize</span><span class="p">]</span>
+            <span class="n">block</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">blocksize</span><span class="o">*</span><span class="n">blocksize</span><span class="p">))</span>
+            <span class="n">img_block_vec</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">block</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">img_block_vec</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">vec2img</span><span class="p">(</span><span class="n">vectors</span><span class="p">,</span> <span class="n">blocksize</span><span class="p">):</span>
+    <span class="c1"># 向量数据转换为图像</span>
+    <span class="n">img_kl</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">new_w</span><span class="p">,</span> <span class="n">new_h</span><span class="p">))</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">img_kl</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">blocksize</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">img_kl</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">blocksize</span><span class="p">):</span>
+            <span class="n">block</span> <span class="o">=</span> <span class="n">vectors</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">block</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">block</span><span class="p">,</span> <span class="p">(</span><span class="n">blocksize</span><span class="p">,</span> <span class="n">blocksize</span><span class="p">))</span>
+            <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">img_kl</span><span class="p">[</span><span class="n">r</span><span class="p">:</span><span class="n">r</span><span class="o">+</span><span class="n">blocksize</span><span class="p">,</span><span class="n">c</span><span class="p">:</span><span class="n">c</span><span class="o">+</span><span class="n">blocksize</span><span class="p">]</span> <span class="o">=</span> <span class="n">block</span>
+    <span class="k">return</span> <span class="n">img_kl</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">kl_transform</span><span class="p">(</span><span class="n">vectors</span><span class="p">,</span> <span class="n">principal_n</span><span class="p">):</span>
+    <span class="c1"># 计算协方差矩阵和特征</span>
+    <span class="n">cov_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cov</span><span class="p">(</span><span class="n">vectors</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">fvec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eig</span><span class="p">(</span><span class="n">cov_matrix</span><span class="p">)</span>    <span class="c1"># 输出的特征值默认降序排列</span>
+    <span class="n">img_kl_block_vec</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">vectors</span><span class="p">,</span> <span class="n">fvec</span><span class="p">)</span>
+    <span class="c1"># 压缩，将非前N个主成分置为0</span>
+    <span class="n">img_kl_block_vec</span><span class="p">[:,</span><span class="n">principal_n</span><span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">img_kl_block_vec</span><span class="p">,</span> <span class="n">fvec</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="c1"># filename = '3.png'</span>
+    <span class="n">blocksize</span> <span class="o">=</span> <span class="mi">8</span>           <span class="c1"># 像素块</span>
+    <span class="n">principal_n1</span> <span class="o">=</span> <span class="mi">16</span>       <span class="c1"># 贡献度高的前N个特征值个数</span>
+    <span class="n">principal_n2</span> <span class="o">=</span> <span class="mi">8</span>       <span class="c1"># 贡献度高的前N个特征值个数</span>
+    <span class="n">principal_n3</span> <span class="o">=</span> <span class="mi">4</span>       <span class="c1"># 贡献度高的前N个特征值个数</span>
+
+    <span class="c1"># 读取图片</span>
+    <span class="c1"># img = cv2.imread(filename)</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">astronaut</span><span class="p">()</span>
+    <span class="c1"># img = np.array(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY))   #灰度化处理</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_RGB2GRAY</span><span class="p">))</span>   <span class="c1">#灰度化处理</span>
+
+    <span class="c1"># 图像大小设置为blocksize倍数</span>
+    <span class="n">image_w</span><span class="p">,</span> <span class="n">image_h</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">new_w</span><span class="p">,</span> <span class="n">new_h</span> <span class="o">=</span> <span class="n">image_w</span><span class="o">//</span><span class="n">blocksize</span><span class="o">*</span><span class="n">blocksize</span><span class="p">,</span> <span class="n">image_h</span><span class="o">//</span><span class="n">blocksize</span><span class="o">*</span><span class="n">blocksize</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="p">(</span><span class="n">new_h</span><span class="p">,</span> <span class="n">new_w</span><span class="p">))</span>
+    <span class="n">vec</span> <span class="o">=</span> <span class="n">img2vec</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">blocksize</span><span class="p">)</span>
+    <span class="n">kl1</span> <span class="o">=</span> <span class="n">vec2img</span><span class="p">(</span><span class="n">kl_transform</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">principal_n1</span><span class="p">),</span> <span class="n">blocksize</span><span class="p">)</span>
+    <span class="n">kl2</span> <span class="o">=</span> <span class="n">vec2img</span><span class="p">(</span><span class="n">kl_transform</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">principal_n2</span><span class="p">),</span> <span class="n">blocksize</span><span class="p">)</span>
+    <span class="n">kl3</span> <span class="o">=</span> <span class="n">vec2img</span><span class="p">(</span><span class="n">kl_transform</span><span class="p">(</span><span class="n">vec</span><span class="p">,</span> <span class="n">principal_n3</span><span class="p">),</span> <span class="n">blocksize</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="s1">'gray'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">kl1</span><span class="p">,</span> <span class="s1">'gray'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">kl2</span><span class="p">,</span> <span class="s1">'gray'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">kl3</span><span class="p">,</span> <span class="s1">'gray'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+
+
+</details>
+
+<h3 id="dct">DCT 变换</h3>
+<p>发送者首先将输入图像分解为8×8或16×16的块，然后再对每个图像块进行二维DCT，接着对DCT系数进行量化、编码和传输。</p>
+<p>接收者通过对量化的DCT系数进行解码，并对每个图像块进行二维DCT逆变换。</p>
+<p>最后将操作完成后所有的块拼接起来构成一幅单一的图像。</p>
+<p>对于一般的图像而言，大多数DCT系数值都接近0，所以去掉这些系数不会对重建图像的质量产生较大的影响。因此，利用DCT进行图像压缩确实可以节约大量的存储空间。</p>
+<p>DCT：</p>
+<p>$$
+F(u,v) = \frac{2}{N} C(u)C(v) \sum_{x=0}^{N-1}\sum_{y=0}^{N-1} \cos\left[\frac{\pi(2x+1)u}{2N}\right] f(x,y)\cos\left[\frac{\pi(2y+1)v}{2N}\right]
+$$</p>
+<p>iDCT：</p>
+<p>$$
+f(x,y) = \frac{2}{N} \sum_{u=0}^{N-1}\sum_{v=0}^{N-1} C(u)C(v) \cos\left[\frac{\pi(2x+1)u}{2N}\right] F(u,v)\cos\left[\frac{\pi(2y+1)v}{2N}\right]
+$$</p>
+<p>$$
+C(u), C(v) = \begin{cases} \frac{1}{\sqrt{2}} &amp; u, v = 0 \ 1 &amp; \text{其他} \end{cases}
+$$</p>
+<p><img alt="image (108).png" src="../assets/image (108).png" /></p>
+<figure><img src="../../.gitbook/assets/image (108).png" alt=""><figcaption></figcaption></figure>
+
+<details>
+
+<summary>Demo</summary>
+
+
+<pre lang="python"><code class="language-python md-fencescode"><span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">cos</span><span class="p">,</span> <span class="n">pi</span><span class="p">,</span> <span class="n">sqrt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">skimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">data</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">dct_2d</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">numberCoefficients</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="n">nc</span> <span class="o">=</span> <span class="n">numberCoefficients</span>
+    <span class="n">height</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">width</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">imageRow</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">image</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">imageCol</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">image</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">height</span><span class="p">):</span>
+        <span class="n">imageRow</span><span class="p">[</span><span class="n">h</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">dct_1d</span><span class="p">(</span><span class="n">image</span><span class="p">[</span><span class="n">h</span><span class="p">,</span> <span class="p">:],</span> <span class="n">nc</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">width</span><span class="p">):</span>
+        <span class="n">imageCol</span><span class="p">[:,</span> <span class="n">w</span><span class="p">]</span> <span class="o">=</span> <span class="n">dct_1d</span><span class="p">(</span><span class="n">imageRow</span><span class="p">[:,</span> <span class="n">w</span><span class="p">],</span> <span class="n">nc</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">imageCol</span>
+<span class="c1"># def dct_1d(image, numberCoefficients=0):</span>
+<span class="c1">#     nc = numberCoefficients</span>
+<span class="c1">#     n = len(image)</span>
+<span class="c1">#     newImage = np.zeros_like(image).astype(float)</span>
+<span class="c1">#     for k in range(n):</span>
+<span class="c1">#         sum = 0</span>
+<span class="c1">#         for i in range(n):</span>
+<span class="c1">#             sum += image[i] * cos(2 * pi * k / (2.0 * n) * i +  (k * pi) / (2.0 * n))</span>
+<span class="c1">#         ck = sqrt(0.5) if k == 0 else 1</span>
+<span class="c1">#         newImage[k] = sqrt(2.0 / n) * ck * sum</span>
+<span class="c1">#     if nc &gt; 0:</span>
+<span class="c1">#         newImage.sort()</span>
+<span class="c1">#         for i in range(nc, n):</span>
+<span class="c1">#             newImage[i] = 0</span>
+<span class="c1">#     return newImage</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">dct_1d</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">numberCoefficients</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="n">nc</span> <span class="o">=</span> <span class="n">numberCoefficients</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">newImage</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">image</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="nb">sum</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="nb">sum</span> <span class="o">+=</span> <span class="n">image</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">pi</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">k</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">n</span><span class="p">))</span>
+        <span class="n">ck</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span> <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">1</span>
+        <span class="n">newImage</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">/</span> <span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="n">ck</span> <span class="o">*</span> <span class="nb">sum</span>
+    <span class="k">if</span> <span class="n">nc</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">nc</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">:</span>
+        <span class="n">newImage</span><span class="p">[</span><span class="n">nc</span><span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Zero out coefficients after nc</span>
+    <span class="k">return</span> <span class="n">newImage</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">idct_2d</span><span class="p">(</span><span class="n">image</span><span class="p">):</span>
+    <span class="n">height</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">width</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">imageRow</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">image</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">imageCol</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">image</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">h</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">height</span><span class="p">):</span>
+        <span class="n">imageRow</span><span class="p">[</span><span class="n">h</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">idct_1d</span><span class="p">(</span><span class="n">image</span><span class="p">[</span><span class="n">h</span><span class="p">,</span> <span class="p">:])</span>
+    <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">width</span><span class="p">):</span>
+        <span class="n">imageCol</span><span class="p">[:,</span> <span class="n">w</span><span class="p">]</span> <span class="o">=</span> <span class="n">idct_1d</span><span class="p">(</span><span class="n">imageRow</span><span class="p">[:,</span> <span class="n">w</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">imageCol</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">idct_1d</span><span class="p">(</span><span class="n">image</span><span class="p">):</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">newImage</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">image</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="nb">sum</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="n">ck</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span> <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">1</span>
+            <span class="nb">sum</span> <span class="o">+=</span> <span class="n">ck</span> <span class="o">*</span> <span class="n">image</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">*</span> <span class="n">k</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span> <span class="o">*</span>  <span class="n">i</span> <span class="o">+</span> <span class="p">(</span><span class="n">k</span> <span class="o">*</span> <span class="n">pi</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">n</span><span class="p">))</span>
+        <span class="n">newImage</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">/</span> <span class="n">n</span><span class="p">)</span> <span class="o">*</span> <span class="nb">sum</span>
+    <span class="k">return</span> <span class="n">newImage</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">'__main__'</span><span class="p">:</span>
+    <span class="n">image</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">coffee</span><span class="p">()[::</span><span class="mi">8</span><span class="p">,::</span><span class="mi">8</span><span class="p">,:]</span><span class="o">/</span><span class="mf">255.0</span>
+    <span class="n">imgResult1</span> <span class="o">=</span> <span class="n">dct_2d</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+    <span class="n">imgResult2</span> <span class="o">=</span> <span class="n">dct_2d</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
+    <span class="n">idct_img1</span> <span class="o">=</span> <span class="n">idct_2d</span><span class="p">(</span><span class="n">imgResult1</span><span class="p">)</span>
+    <span class="n">idct_img2</span> <span class="o">=</span> <span class="n">idct_2d</span><span class="p">(</span><span class="n">imgResult2</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Origin"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Freq Domain"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">imgResult1</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Coefficient=10"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">idct_img1</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s2">"Coefficient=20"</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">idct_img2</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+
+
+</details>
+
+<hr />
+<h2 id="_6">混合编码</h2>
+<blockquote>
+<p>混合编码是综合了熵编码、变换编码或预测编码的编码方法，如JPEG标准和MPEG标准。</p>
+</blockquote>
+<h3 id="jpeg">JPEG</h3>
+<ol>
+<li>先把整个图像分解成多个8×8的图像块</li>
+<li>8×8的图像块经过DCT后，低频分量都集中在左上角，高频分量则分布在右下角。</li>
+<li>使用量化操作去掉高频分量，量化操作就是将某一个值除以量化表中的对应值。</li>
+</ol>
+<p><img alt="image (109).png" src="../assets/image (109).png" /></p>
+<figure><img src="../../.gitbook/assets/image (109).png" alt=""><figcaption></figcaption></figure>
+
+<ol>
+<li>采用之字型（zig-zag）顺序进行行程编码（对每一个 8x8 的块进行一次zig-zag）</li>
+</ol>
+<p><img alt="image (110).png" src="../assets/image (110).png" /></p>
+<figure><img src="../../.gitbook/assets/image (110).png" alt=""><figcaption></figcaption></figure>
+
+<ol>
+<li>得到DC码字和AC行程码字后，为了进一步提高压缩比，再进行熵编码，可采用哈夫曼编码。</li>
+</ol>
+<hr />
+<h2 id="reference">Reference</h2>
+<p>[1] <a href="https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Welch">https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Welch</a></p>
+<p>[2] <a href="https://rosettacode.org/wiki/LZW_compression">https://rosettacode.org/wiki/LZW_compression</a></p>
+<p>[3] <a href="https://www.geeksforgeeks.org/lzw-lempel-ziv-welch-compression-technique/">https://www.geeksforgeeks.org/lzw-lempel-ziv-welch-compression-technique/</a></p>
+<p>[4] <a href="https://www.bilibili.com/video/BV1rp4y117WB">https://www.bilibili.com/video/BV1rp4y117WB</a></p>
+<p>[5] <a href="https://www.bilibili.com/video/BV15p4y1C71G">https://www.bilibili.com/video/BV15p4y1C71G</a></p>
+<p>[6] <a href="https://en.wikipedia.org/wiki/Delta_modulation">https://en.wikipedia.org/wiki/Delta_modulation</a></p>
+<p>[7] <a href="https://en.wikipedia.org/wiki/Differential_pulse-code_modulation">https://en.wikipedia.org/wiki/Differential_pulse-code_modulation</a></p>
+<p>[8] <a href="https://blog.csdn.net/gmynebula/article/details/134887145">https://blog.csdn.net/gmynebula/article/details/134887145</a></p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

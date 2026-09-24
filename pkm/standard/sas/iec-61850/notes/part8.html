@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>part8</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="iec-61850-part-8-1-scsm-mms">IEC 61850 Part 8-1 解读：SCSM-MMS 映射</h1>
+<blockquote>
+<p><strong>对应文件</strong>：<code>860[1].8-1.pdf</code><br />
+<strong>正式标题</strong>：IEC 61850-8-1 — Specific Communication Service Mapping (SCSM) - Mappings to MMS (ISO/IEC 9506-1 and ISO/IEC 9506-2) over ISO/IEC 8802-3（特定通信服务映射——映射到 MMS）<br />
+<strong>页数</strong>：约 200 页<br />
+<strong>定位</strong>：ACSI 到 MMS 的具体映射规则，iec61850bean 的实现依据</p>
+</blockquote>
+<hr />
+<h2 id="_1">一、这一章在说什么？</h2>
+<p>Part 8-1 是 IEC 61850 的<strong>实现层</strong>规范。它定义了如何把 Part 7-2 的 ACSI 抽象服务，映射到具体的 MMS（Manufacturing Message Specification）协议。</p>
+<p><strong>关键理解</strong>：
+- Part 7-2 说"读数据"这个服务长什么样（抽象）
+- Part 8-1 说"读数据"用 MMS 的哪个服务实现（具体）</p>
+<hr />
+<h2 id="mms">二、MMS 简介</h2>
+<h3 id="mms_1">什么是 MMS？</h3>
+<p>MMS（Manufacturing Message Specification，制造报文规范）是 ISO 9506 标准，诞生于 1990 年代，用于工业自动化领域的设备通信。</p>
+<p><strong>特点</strong>：
+- 基于客户端-服务器模型
+- 运行在 TCP/IP 之上（端口 102）
+- 支持变量读写、事件通知、文件传输
+- 已被 IEC 61850 采纳为主要通信协议</p>
+<h3 id="mms_2">MMS 协议栈</h3>
+<pre><code class="md-fencescode">┌─────────────────────────────────────┐
+│           MMS 应用层                 │
+│  (ISO 9506-1: 服务定义)              │
+├─────────────────────────────────────┤
+│           MMS 协议层                 │
+│  (ISO 9506-2: 协议规范)              │
+├─────────────────────────────────────┤
+│           表示层 (Presentation)      │
+│  (ISO 8823 / ASN.1 BER 编码)         │
+├─────────────────────────────────────┤
+│           会话层 (Session)           │
+│  (ISO 8327)                          │
+├─────────────────────────────────────┤
+│           传输层                     │
+│  (TCP, 端口 102)                     │
+├─────────────────────────────────────┤
+│           网络层/链路层              │
+│  (IP / Ethernet)                     │
+└─────────────────────────────────────┘
+</code></pre>
+<hr />
+<h2 id="acsi-mms">三、ACSI 到 MMS 的映射总览</h2>
+<table>
+<thead>
+<tr>
+<th>ACSI 服务</th>
+<th>MMS 服务</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Associate</strong></td>
+<td>Initiate / Conclude</td>
+<td>建立/释放连接</td>
+</tr>
+<tr>
+<td><strong>Abort</strong></td>
+<td>Abort</td>
+<td>异常断开</td>
+</tr>
+<tr>
+<td><strong>GetDataValues</strong></td>
+<td>Read</td>
+<td>读变量值</td>
+</tr>
+<tr>
+<td><strong>SetDataValues</strong></td>
+<td>Write</td>
+<td>写变量值</td>
+</tr>
+<tr>
+<td><strong>GetDataDirectory</strong></td>
+<td>GetNameList</td>
+<td>获取对象列表</td>
+</tr>
+<tr>
+<td><strong>GetDataDefinition</strong></td>
+<td>GetVariableAccessAttributes</td>
+<td>获取对象定义</td>
+</tr>
+<tr>
+<td><strong>CreateDataSet</strong></td>
+<td>DefineNamedVariableList</td>
+<td>定义数据集</td>
+</tr>
+<tr>
+<td><strong>GetDataSetValues</strong></td>
+<td>Read (NamedVariableList)</td>
+<td>读数据集</td>
+</tr>
+<tr>
+<td><strong>SetDataSetValues</strong></td>
+<td>Write (NamedVariableList)</td>
+<td>写数据集</td>
+</tr>
+<tr>
+<td><strong>Report</strong></td>
+<td>InformationReport / EventNotification</td>
+<td>报告/事件通知</td>
+</tr>
+<tr>
+<td><strong>Select</strong></td>
+<td>Write (to SBOw)</td>
+<td>选择操作</td>
+</tr>
+<tr>
+<td><strong>Operate</strong></td>
+<td>Write (to Oper)</td>
+<td>执行操作</td>
+</tr>
+<tr>
+<td><strong>Cancel</strong></td>
+<td>Write (to Cancel)</td>
+<td>取消操作</td>
+</tr>
+<tr>
+<td><strong>GetFile</strong></td>
+<td>FileOpen + FileRead</td>
+<td>读取文件</td>
+</tr>
+<tr>
+<td><strong>SetFile</strong></td>
+<td>FileOpen + FileWrite</td>
+<td>写入文件</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="mms_3">四、MMS 变量访问模型</h2>
+<h3 id="mms_4">MMS 命名层次</h3>
+<pre><code class="md-fencescode">MMS 命名空间：
+├── VMD（Virtual Manufacturing Device）
+│   └── 对应 IEC 61850 的 IED
+│
+├── Domain（域）
+│   └── 对应 IEC 61850 的 LD（Logical Device）
+│
+├── Named Variable（命名变量）
+│   └── 对应 IEC 61850 的 DO/DA
+│
+└── Named Variable List（命名变量列表）
+    └── 对应 IEC 61850 的 DataSet
+</code></pre>
+<h3 id="_2">对象引用映射</h3>
+<pre><code class="md-fencescode">IEC 61850 引用：
+IED1/LD0/MMXU1.PhV.phsA.cVal.mag.f
+
+映射到 MMS：
+Domain: LD0
+Item: MMXU1$PhV$phsA$cVal$mag$f
+
+或（使用 AA 特定引用）：
+Domain: IED1LD0
+Item: MMXU1.PhV.phsA.cVal.mag.f
+</code></pre>
+<p><strong>分隔符转换</strong>：
+- IEC 61850 用 <code>/</code> 分隔层次
+- MMS 用 <code>$</code> 或 <code>.</code> 分隔层次</p>
+<hr />
+<h2 id="_3">五、关联服务映射</h2>
+<h3 id="associate-mms-initiate">Associate → MMS Initiate</h3>
+<pre><code class="md-fencescode">IEC 61850 Associate Request:
+├── Application Reference
+├── Authentication
+└── Proposed Parameters
+
+映射到 MMS Initiate Request:
+├── Initiate Request Detail
+│   ├── Proposed MMS Version Number
+│   ├── Proposed Parameter CBB
+│   ├── Services Supported Calling
+│   └── Additional Support
+├── Local Detail
+└── Proposed Max Serv Outstanding
+</code></pre>
+<h3 id="_4">连接参数协商</h3>
+<pre><code class="md-fencescode">协商内容：
+├── Max MMS PDU Size（最大报文大小，默认 65000）
+├── Max Services Outstanding（最大并发服务数）
+├── Services Supported（支持的服务列表）
+└── Parameter CBB（参数支持位图）
+</code></pre>
+<hr />
+<h2 id="_5">六、数据服务映射</h2>
+<h3 id="getdatavalues-mms-read">GetDataValues → MMS Read</h3>
+<p><strong>请求映射</strong>：</p>
+<pre><code class="md-fencescode">IEC 61850:
+GetDataValuesRequest(
+    ReferenceList: [&quot;LD0/MMXU1.PhV.phsA.cVal.mag.f&quot;]
+)
+
+MMS:
+Read Request(
+    VariableAccessSpecification: 
+        ListOfVariable: [
+            {Domain: &quot;LD0&quot;, Item: &quot;MMXU1$PhV$phsA$cVal$mag$f&quot;}
+        ]
+)
+</code></pre>
+<p><strong>响应映射</strong>：</p>
+<pre><code class="md-fencescode">IEC 61850:
+GetDataValuesResponse(
+    DataValueList: [
+        {value: 220.5, quality: 0, timestamp: ...}
+    ]
+)
+
+MMS:
+Read Response(
+    ListOfAccessResult: [
+        {Value: {Real: 220.5}, Success}
+    ]
+)
+</code></pre>
+<h3 id="setdatavalues-mms-write">SetDataValues → MMS Write</h3>
+<p><strong>请求映射</strong>：</p>
+<pre><code class="md-fencescode">IEC 61850:
+SetDataValuesRequest(
+    Reference: &quot;LD0/CSWI1.Pos.Oper.ctlVal&quot;,
+    Value: true
+)
+
+MMS:
+Write Request(
+    VariableAccessSpecification:
+        {Domain: &quot;LD0&quot;, Item: &quot;CSWI1$Pos$Oper$ctlVal&quot;},
+    ListOfData: [{Boolean: true}]
+)
+</code></pre>
+<hr />
+<h2 id="_6">七、数据集服务映射</h2>
+<h3 id="dataset-mms-namedvariablelist">DataSet → MMS NamedVariableList</h3>
+<pre><code class="md-fencescode">IEC 61850 DataSet:
+DataSet Name: &quot;dsMeasurements&quot;
+Members:
+  - LD0/MMXU1.PhV.phsA.cVal.mag.f
+  - LD0/MMXU1.PhV.phsB.cVal.mag.f
+  - LD0/MMXU1.PhV.phsC.cVal.mag.f
+
+映射到 MMS NamedVariableList:
+NamedVariableList Name: &quot;dsMeasurements&quot;
+Members:
+  - {Domain: &quot;LD0&quot;, Item: &quot;MMXU1$PhV$phsA$cVal$mag$f&quot;}
+  - {Domain: &quot;LD0&quot;, Item: &quot;MMXU1$PhV$phsB$cVal$mag$f&quot;}
+  - {Domain: &quot;LD0&quot;, Item: &quot;MMXU1$PhV$phsC$cVal$mag$f&quot;}
+</code></pre>
+<h3 id="getdatasetvalues-mms-read-namedvariablelist">GetDataSetValues → MMS Read (NamedVariableList)</h3>
+<pre><code class="md-fencescode">MMS Read Request:
+VariableAccessSpecification:
+    VariableListName: &quot;dsMeasurements&quot;
+
+MMS Read Response:
+ListOfAccessResult: [
+    {Value: {Real: 220.5}},
+    {Value: {Real: 221.0}},
+    {Value: {Real: 220.8}}
+]
+</code></pre>
+<hr />
+<h2 id="_7">八、报告服务映射</h2>
+<h3 id="report-mms-informationreport-eventnotification">Report → MMS InformationReport / EventNotification</h3>
+<p><strong>URCB（非缓存报告）映射</strong>：</p>
+<pre><code class="md-fencescode">IEC 61850 Report:
+RptID: &quot;URCB_Meas&quot;
+Data:
+  - Reference: MMXU1.PhV.phsA.cVal.mag.f
+    Value: 221.0
+    Reason: data-change
+
+MMS InformationReport:
+VariableAccessSpecification:
+    ListOfVariable: [
+        {Domain: &quot;LD0&quot;, Item: &quot;MMXU1$PhV$phsA$cVal$mag$f&quot;}
+    ]
+ListOfAccessResult: [
+    {Value: {Real: 221.0}}
+]
+</code></pre>
+<p><strong>BRCB（缓存报告）映射</strong>：</p>
+<pre><code class="md-fencescode">BRCB 使用 MMS EventNotification 服务
+包含额外的缓冲信息（序列号、缓冲时间等）
+</code></pre>
+<hr />
+<h2 id="_8">九、控制服务映射</h2>
+<h3 id="sbo">SBO 控制映射</h3>
+<p><strong>Select → MMS Write to SBOw</strong>：</p>
+<pre><code class="md-fencescode">IEC 61850 Select Request:
+ControlObject: &quot;LD0/XCBR1.Pos&quot;
+
+MMS Write Request:
+Domain: &quot;LD0&quot;
+Item: &quot;XCBR1$Pos$SBOw&quot;
+Data: {Structure: [
+    {Boolean: true},      -- ctlVal
+    {Integer: 1},         -- ctlNum
+    {OctetString: ...},   -- origin
+    {UtcTime: ...},       -- T
+    {Boolean: false}      -- Test
+]}
+</code></pre>
+<p><strong>Operate → MMS Write to Oper</strong>：</p>
+<pre><code class="md-fencescode">MMS Write Request:
+Domain: &quot;LD0&quot;
+Item: &quot;XCBR1$Pos$Oper&quot;
+Data: {Structure: [...]}  -- 同上
+</code></pre>
+<hr />
+<h2 id="_9">十、文件服务映射</h2>
+<h3 id="getfile-mms-file-services">GetFile → MMS File Services</h3>
+<pre><code class="md-fencescode">IEC 61850 GetFile:
+FileName: &quot;/COMTRADE/fault.cfg&quot;
+
+MMS 流程:
+1. FileOpen Request:
+   FileName: &quot;COMTRADE/fault.cfg&quot;
+   InitialPosition: 0
+
+2. FileOpen Response:
+   FileAttributes: {size: 2048, ...}
+   FrsmID: 1
+
+3. FileRead Request:
+   FrsmID: 1
+   RequestedOctetCount: 2048
+
+4. FileRead Response:
+   FileData: [...]
+   MoreFollows: false
+
+5. FileClose Request:
+   FrsmID: 1
+</code></pre>
+<hr />
+<h2 id="asn1">十一、ASN.1 编码示例</h2>
+<p>MMS 使用 ASN.1 BER（Basic Encoding Rules）编码。以下是 Read Request 的编码示例：</p>
+<pre><code class="md-fencescode">MMS Read Request 的 ASN.1 结构：
+Read-Request ::= SEQUENCE {
+    specificationWithResult [0] IMPLICIT BOOLEAN DEFAULT TRUE,
+    variableAccessSpecification VariableAccessSpecification
+}
+
+VariableAccessSpecification ::= CHOICE {
+    listOfVariable          [0] IMPLICIT SEQUENCE OF ...,
+    variableListName        [1] IMPLICIT ObjectName,
+    ...
+}
+
+编码示例（十六进制）：
+A0 1A                    -- [0] SEQUENCE (26 bytes)
+  80 01 01               -- [0] BOOLEAN: TRUE
+  A0 15                  -- [0] SEQUENCE (21 bytes)
+    30 13                -- SEQUENCE (19 bytes)
+      A1 06              -- [1] CHOICE (6 bytes)
+        1A 04 4C 44 30   -- VisibleString: &quot;LD0&quot;
+      A2 09              -- [2] CHOICE (9 bytes)
+        1A 07 ...        -- VisibleString: &quot;MMXU1$PhV$phsA$cVal$mag$f&quot;
+</code></pre>
+<hr />
+<h2 id="iec61850bean">十二、与 iec61850bean 的对应</h2>
+<p>项目中的 iec61850bean 实现了 Part 8-1 的映射：</p>
+<table>
+<thead>
+<tr>
+<th>iec61850bean 类</th>
+<th>对应 MMS 功能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ClientAssociation</code></td>
+<td>MMS 关联管理</td>
+</tr>
+<tr>
+<td><code>ServerAssociation</code></td>
+<td>MMS 服务器端</td>
+</tr>
+<tr>
+<td><code>ClientSap</code> / <code>ServerSap</code></td>
+<td>服务访问点</td>
+</tr>
+<tr>
+<td><code>Read</code> / <code>Write</code> 方法</td>
+<td>MMS Read/Write 服务</td>
+</tr>
+<tr>
+<td><code>FcDataObject</code></td>
+<td>MMS 变量访问</td>
+</tr>
+<tr>
+<td><code>Urcb</code> / <code>Brcb</code></td>
+<td>MMS 报告机制</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_10">十三、总结</h2>
+<p>Part 8-1 的核心：</p>
+<ol>
+<li><strong>ACSI → MMS 映射</strong>——抽象服务到具体协议的转换</li>
+<li><strong>命名映射</strong>——IEC 61850 引用转换为 MMS 变量名</li>
+<li><strong>服务映射</strong>——每个 ACSI 服务对应 MMS 的具体服务</li>
+<li><strong>ASN.1 编码</strong>——MMS 报文的二进制格式</li>
+</ol>
+<p><strong>一句话记忆</strong>：</p>
+<blockquote>
+<p>Part 8-1 = ACSI 的 MMS 实现 = iec61850bean 的协议基础</p>
+</blockquote>
+<hr />
+<p><em>文档系列：IEC 61850 标准解读 | Part 8-1/13 | 生成于 2026-04-08</em></p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

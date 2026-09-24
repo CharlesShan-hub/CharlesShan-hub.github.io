@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>part3</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="iec-61850-part-3">IEC 61850 Part 3 解读：总体要求——好系统该有的样子</h1>
+<blockquote>
+<p><strong>对应文件</strong>：<code>860[1].3.pdf</code><br />
+<strong>正式标题</strong>：IEC 61850-3 — General Requirements（总体要求）<br />
+<strong>页数</strong>：约 50 页<br />
+<strong>定位</strong>：标准的"质量规范"，定义变电站自动化系统应该满足什么要求</p>
+</blockquote>
+<hr />
+<h2 id="_1">一、这一章在说什么？</h2>
+<p>想象你要装修一套房子。Part 1 是"设计理念"，Part 2 是"专业术语词典"，Part 3 就是"装修验收标准"——墙要平、水电要通、甲醛不能超标。</p>
+<p>Part 3 不告诉你"怎么实现"，而是告诉你"做成什么样才算合格"。</p>
+<p>它回答的核心问题是：
+- 一个<strong>可靠的</strong>变电站自动化系统应该具备什么特性？
+- 不同<strong>质量等级</strong>的系统有什么区别？
+- 怎么评估一个系统是否<strong>达标</strong>？</p>
+<hr />
+<h2 id="_2">二、三个核心概念：性能、可靠性、可用性</h2>
+<p>Part 3 开篇就定义了评估系统的三个维度，这是理解后续所有要求的基础：</p>
+<h3 id="performance">🚀 性能（Performance）</h3>
+<p><strong>定义</strong>：系统完成任务的速度和效率。</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>含义</th>
+<th>举例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>响应时间</td>
+<td>从请求到响应的时间</td>
+<td>监控后台读一个数据点 &lt; 500ms</td>
+</tr>
+<tr>
+<td>传输延迟</td>
+<td>报文从发送到接收的时间</td>
+<td>GOOSE 跳闸信号 &lt; 4ms</td>
+</tr>
+<tr>
+<td>吞吐量</td>
+<td>单位时间能处理多少数据</td>
+<td>每秒处理 1000 个报告</td>
+</tr>
+<tr>
+<td>采样率</td>
+<td>SV 报文的发送频率</td>
+<td>每秒 80/256/4000 个采样点</td>
+</tr>
+</tbody>
+</table>
+<p><strong>类比</strong>：汽车的 0-100km/h 加速时间、最高时速。</p>
+<hr />
+<h3 id="reliability">🛡️ 可靠性（Reliability）</h3>
+<p><strong>定义</strong>：系统在规定的条件下、规定的时间内，完成规定功能的能力。</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>含义</th>
+<th>计算方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MTBF</td>
+<td>平均故障间隔时间</td>
+<td>总运行时间 / 故障次数</td>
+</tr>
+<tr>
+<td>MTTR</td>
+<td>平均修复时间</td>
+<td>总修复时间 / 故障次数</td>
+</tr>
+<tr>
+<td>故障率</td>
+<td>单位时间的故障概率</td>
+<td>λ = 1/MTBF</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键理解</strong>：可靠性是"不出错的概率"。MTBF = 10000 小时，不是说 10000 小时后一定坏，而是说平均而言每 10000 小时可能发生一次故障。</p>
+<p><strong>类比</strong>：汽车的故障率、保养周期。</p>
+<hr />
+<h3 id="availability">⏱️ 可用性（Availability）</h3>
+<p><strong>定义</strong>：系统处于可工作状态的时间比例。</p>
+<pre><code class="md-fencescode">可用性 = MTBF / (MTBF + MTTR)
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>可用性等级</th>
+<th>每年停机时间</th>
+<th>应用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>99%（两个9）</td>
+<td>87.6 小时</td>
+<td>普通办公系统</td>
+</tr>
+<tr>
+<td>99.9%（三个9）</td>
+<td>8.76 小时</td>
+<td>一般工业系统</td>
+</tr>
+<tr>
+<td>99.99%（四个9）</td>
+<td>52.6 分钟</td>
+<td>变电站自动化</td>
+</tr>
+<tr>
+<td>99.999%（五个9）</td>
+<td>5.26 分钟</td>
+<td>关键保护系统</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键理解</strong>：可用性同时考虑"可靠"和"好修"。一个设备很可靠但坏了要修一周，可用性可能不如一个经常小毛病但5分钟能修好的设备。</p>
+<p><strong>类比</strong>：汽车的"出勤率"——既能跑，坏了也能快速修好。</p>
+<hr />
+<h2 id="class-a-b-c">三、系统质量等级：Class A / B / C</h2>
+<p>Part 3 把变电站自动化系统按重要性分成三个等级，不同等级有不同的要求：</p>
+<pre><code class="md-fencescode">┌─────────────────────────────────────────────────────────────┐
+│                    Class A（最高等级）                       │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  • 主保护系统（线路保护、变压器保护、母线保护）          │  │
+│  │  • 故障直接影响电网安全或人身安全                       │  │
+│  │  • 要求：极高可靠性、极低延迟、冗余设计                   │  │
+│  │  • 可用性目标：99.999%（五个9）                         │  │
+│  └───────────────────────────────────────────────────────┘  │
+│                            │                                │
+│                            ▼                                │
+│                    Class B（中等等级）                       │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  • 监控和控制系统（SCADA、测量、状态监测）              │  │
+│  │  • 故障影响运行但不直接导致事故                         │  │
+│  │  • 要求：高可靠性、可接受的延迟                         │  │
+│  │  • 可用性目标：99.99%（四个9）                          │  │
+│  └───────────────────────────────────────────────────────┘  │
+│                            │                                │
+│                            ▼                                │
+│                    Class C（基础等级）                       │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  • 辅助功能（故障录波、事件记录、非关键监测）            │  │
+│  │  • 故障影响较小，可容忍短暂中断                         │  │
+│  │  • 要求：基本可靠性、成本优先                           │  │
+│  │  • 可用性目标：99.9%（三个9）                           │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+</code></pre>
+<p><strong>类比</strong>：
+- Class A = 汽车的安全气囊、ABS 系统——绝对不能失效
+- Class B = 仪表盘、空调——坏了不舒服但能开
+- Class C = 行车记录仪、氛围灯——锦上添花的功能</p>
+<hr />
+<h2 id="_3">四、通信要求：三种机制的性能指标</h2>
+<p>Part 3 对 MMS、GOOSE、SV 分别提出了性能要求：</p>
+<h3 id="mms">🔵 MMS 通信要求</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>Class A</th>
+<th>Class B</th>
+<th>Class C</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>连接建立时间</td>
+<td>&lt; 1s</td>
+<td>&lt; 5s</td>
+<td>&lt; 10s</td>
+</tr>
+<tr>
+<td>读响应时间</td>
+<td>&lt; 100ms</td>
+<td>&lt; 500ms</td>
+<td>&lt; 1s</td>
+</tr>
+<tr>
+<td>写响应时间</td>
+<td>&lt; 100ms</td>
+<td>&lt; 500ms</td>
+<td>&lt; 1s</td>
+</tr>
+<tr>
+<td>报告延迟</td>
+<td>&lt; 100ms</td>
+<td>&lt; 500ms</td>
+<td>&lt; 1s</td>
+</tr>
+<tr>
+<td>并发连接数</td>
+<td>≥ 16</td>
+<td>≥ 8</td>
+<td>≥ 4</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键理解</strong>：MMS 是"人机交互"用的，延迟要求相对宽松。监控后台读个数据，几百毫秒用户感知不到。</p>
+<hr />
+<h3 id="goose">🟡 GOOSE 通信要求</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>Class A</th>
+<th>Class B</th>
+<th>Class C</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>传输延迟</td>
+<td>&lt; 3ms</td>
+<td>&lt; 10ms</td>
+<td>&lt; 100ms</td>
+</tr>
+<tr>
+<td>丢包率</td>
+<td>&lt; 0.001%</td>
+<td>&lt; 0.01%</td>
+<td>&lt; 0.1%</td>
+</tr>
+<tr>
+<td>重复发送间隔</td>
+<td>T0, T1, T2, T3</td>
+<td>同左</td>
+<td>同左</td>
+</tr>
+<tr>
+<td>网络故障检测</td>
+<td>&lt; 4ms</td>
+<td>&lt; 20ms</td>
+<td>&lt; 100ms</td>
+</tr>
+</tbody>
+</table>
+<p><strong>GOOSE 的重复发送机制</strong>：</p>
+<pre><code class="md-fencescode">事件触发
+   │
+   ▼
+┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐
+│ 第1次发送 │────→│ 第2次发送 │────→│ 第3次发送 │────→│ 心跳报文 │
+│  T0=0ms  │     │  T1=2ms │     │  T2=4ms │     │ T3=5s... │
+└─────────┘     └─────────┘     └─────────┘     └─────────┘
+   ↑                                              ↑
+   └────────────── 事件报文 ──────────────────────┘
+                    重发确保可靠性
+</code></pre>
+<p><strong>关键理解</strong>：GOOSE 是"保护跳闸"用的，毫秒级延迟要求。为了确保可靠性，事件触发后会连发 3 次，然后转为心跳。</p>
+<hr />
+<h3 id="sv">🟢 SV 采样值通信要求</h3>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>Class A</th>
+<th>Class B</th>
+<th>Class C</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>采样频率</td>
+<td>4000 Hz</td>
+<td>2560 Hz</td>
+<td>1280 Hz</td>
+</tr>
+<tr>
+<td>传输延迟</td>
+<td>&lt; 0.5ms</td>
+<td>&lt; 1ms</td>
+<td>&lt; 2ms</td>
+</tr>
+<tr>
+<td>丢包率</td>
+<td>&lt; 0.0001%</td>
+<td>&lt; 0.001%</td>
+<td>&lt; 0.01%</td>
+</tr>
+<tr>
+<td>时间同步精度</td>
+<td>&lt; 1μs</td>
+<td>&lt; 10μs</td>
+<td>&lt; 100μs</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键理解</strong>：SV 是"采样值"，频率最高、延迟要求最严。4000Hz 意味着每 250μs 发一个报文，一年要发 1.26 亿个报文，丢一个都不行。</p>
+<hr />
+<h2 id="_4">五、时间同步要求</h2>
+<p>变电站里的设备必须"步调一致"，否则保护会误判。Part 3 规定了时间同步的要求：</p>
+<h3 id="_5">同步精度等级</h3>
+<table>
+<thead>
+<tr>
+<th>应用场景</th>
+<th>精度要求</th>
+<th>同步协议</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SV 采样同步</td>
+<td>±1 μs</td>
+<td>IEEE 1588 PTP</td>
+</tr>
+<tr>
+<td>事件顺序记录（SOE）</td>
+<td>±1 ms</td>
+<td>SNTP / PTP</td>
+</tr>
+<tr>
+<td>一般时间标记</td>
+<td>±10 ms</td>
+<td>SNTP</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_6">为什么需要微秒级同步？</h3>
+<p>想象两个保护装置，一个测到 A 相电流突变，另一个测到 B 相电流突变。如果它们的时间不同步，可能误判为"相间短路"，实际只是"先后发生的单相故障"。</p>
+<p><strong>类比</strong>：汽车的多点喷油系统，各喷油嘴必须在精确时刻喷油，否则燃烧不充分。</p>
+<hr />
+<h2 id="emc">六、电磁兼容性（EMC）要求</h2>
+<p>变电站是电磁环境最恶劣的地方之一：
+- 开关操作产生<strong>快速瞬变脉冲群</strong>
+- 雷击产生<strong>浪涌</strong>
+- 高压设备产生<strong>强电磁场</strong></p>
+<p>Part 3 规定了设备必须通过以下测试：</p>
+<table>
+<thead>
+<tr>
+<th>测试项目</th>
+<th>严酷等级</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>静电放电（ESD）</td>
+<td>4 级（±8kV 接触/±15kV 空气）</td>
+<td>人体静电</td>
+</tr>
+<tr>
+<td>射频电磁场</td>
+<td>10V/m</td>
+<td>对讲机、手机干扰</td>
+</tr>
+<tr>
+<td>快速瞬变脉冲群</td>
+<td>4 级（±4kV）</td>
+<td>开关操作</td>
+</tr>
+<tr>
+<td>浪涌</td>
+<td>4 级（±4kV 线-地）</td>
+<td>雷击感应</td>
+</tr>
+<tr>
+<td>传导骚扰</td>
+<td>10V</td>
+<td>电源线干扰</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键理解</strong>：通过 EMC 测试的设备，才能在变电站里稳定工作。这就是为什么工业级设备比消费级贵很多。</p>
+<p><strong>类比</strong>：汽车的电磁兼容——收音机不能因点火系统干扰而杂音，ECU 不能因手机信号而重启。</p>
+<hr />
+<h2 id="_7">七、环境适应性要求</h2>
+<p>变电站的环境很苛刻：</p>
+<table>
+<thead>
+<tr>
+<th>环境因素</th>
+<th>要求范围</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>工作温度</td>
+<td>-40°C ~ +70°C</td>
+<td>户外柜夏季暴晒、冬季严寒</td>
+</tr>
+<tr>
+<td>存储温度</td>
+<td>-40°C ~ +85°C</td>
+<td>运输和仓储</td>
+</tr>
+<tr>
+<td>相对湿度</td>
+<td>5% ~ 95%（无凝露）</td>
+<td>南方潮湿环境</td>
+</tr>
+<tr>
+<td>海拔</td>
+<td>≤ 2000m（标准型）</td>
+<td>高原地区需特殊设计</td>
+</tr>
+<tr>
+<td>防护等级</td>
+<td>IP51（室内）/ IP54（室外）</td>
+<td>防尘防水</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键理解</strong>：设备要在这些条件下连续运行 10~20 年不出故障。</p>
+<hr />
+<h2 id="_8">八、安全性要求</h2>
+<h3 id="functional-safety">功能安全（Functional Safety）</h3>
+<p>Part 3 引用 IEC 61508 标准，定义了安全完整性等级（SIL）：</p>
+<table>
+<thead>
+<tr>
+<th>SIL 等级</th>
+<th>失效概率（每小时）</th>
+<th>应用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SIL 1</td>
+<td>10⁻⁵ ~ 10⁻⁶</td>
+<td>一般控制</td>
+</tr>
+<tr>
+<td>SIL 2</td>
+<td>10⁻⁶ ~ 10⁻⁷</td>
+<td>重要保护</td>
+</tr>
+<tr>
+<td>SIL 3</td>
+<td>10⁻⁷ ~ 10⁻⁸</td>
+<td>关键保护</td>
+</tr>
+<tr>
+<td>SIL 4</td>
+<td>10⁻⁸ ~ 10⁻⁹</td>
+<td>最高安全要求</td>
+</tr>
+</tbody>
+</table>
+<p>变电站保护系统通常要求 <strong>SIL 2~3</strong>。</p>
+<h3 id="cyber-security">网络安全（Cyber Security）</h3>
+<p>虽然 Part 3 第一版（2003）对网络安全着墨不多，但后续版本（IEC 62351）补充了：
+- 认证机制（谁可以访问）
+- 加密传输（防止窃听）
+- 访问控制（能做什么操作）
+- 审计日志（记录所有操作）</p>
+<p><strong>类比</strong>：汽车的防盗系统 + 诊断接口安全——不能谁拿个 OBD 线就能刷写 ECU。</p>
+<hr />
+<h2 id="_9">九、可维护性要求</h2>
+<p>一个系统再好，坏了修不了也是白搭。Part 3 规定了：</p>
+<table>
+<thead>
+<tr>
+<th>要求</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>模块化设计</td>
+<td>故障模块可热插拔更换</td>
+</tr>
+<tr>
+<td>自诊断功能</td>
+<td>设备能报告自己的健康状态</td>
+</tr>
+<tr>
+<td>远程维护</td>
+<td>支持远程升级、远程诊断</td>
+</tr>
+<tr>
+<td>配置管理</td>
+<td>配置可备份、可恢复、可版本控制</td>
+</tr>
+<tr>
+<td>文档完整</td>
+<td>提供完整的安装、操作、维护手册</td>
+</tr>
+</tbody>
+</table>
+<p><strong>MTTR 目标</strong>：
+- Class A：MTTR &lt; 30 分钟（冗余设计，单模块故障不影响运行）
+- Class B：MTTR &lt; 2 小时
+- Class C：MTTR &lt; 8 小时</p>
+<hr />
+<h2 id="_10">十、与汽车诊断系统的对比</h2>
+<table>
+<thead>
+<tr>
+<th>要求维度</th>
+<th>IEC 61850 变电站</th>
+<th>汽车诊断系统</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>实时性</td>
+<td>极高（GOOSE &lt; 4ms）</td>
+<td>中等（UDS 响应 &lt; 50ms）</td>
+</tr>
+<tr>
+<td>可靠性</td>
+<td>极高（99.999%）</td>
+<td>高（99.9%）</td>
+</tr>
+<tr>
+<td>环境严酷度</td>
+<td>极端（EMC 4 级）</td>
+<td>严苛（振动、温度）</td>
+</tr>
+<tr>
+<td>生命周期</td>
+<td>30~40 年</td>
+<td>15~20 年</td>
+</tr>
+<tr>
+<td>安全等级</td>
+<td>SIL 2~3</td>
+<td>ASIL A~D（ISO 26262）</td>
+</tr>
+<tr>
+<td>维护方式</td>
+<td>远程 + 现场</td>
+<td>主要现场</td>
+</tr>
+<tr>
+<td>升级难度</td>
+<td>可在线升级</td>
+<td>通常需回厂</td>
+</tr>
+</tbody>
+</table>
+<p><strong>关键区别</strong>：
+- 变电站是"固定设施"，强调长期稳定、远程维护
+- 汽车是"移动设备"，强调抗振动、抗温度变化、批量一致性</p>
+<hr />
+<h2 id="_11">十一、验收测试清单（实用工具）</h2>
+<p>如果你要验收一个 IEC 61850 系统，可以参考这个清单：</p>
+<h3 id="_12">功能测试</h3>
+<ul>
+<li>[ ] 所有 IED 能正常上电并建立通信</li>
+<li>[ ] MMS 客户端能读写所有数据对象</li>
+<li>[ ] GOOSE 报文传输延迟 &lt; 4ms</li>
+<li>[ ] SV 采样值连续 24 小时无丢包</li>
+<li>[ ] 时间同步精度 &lt; 1ms</li>
+</ul>
+<h3 id="_13">性能测试</h3>
+<ul>
+<li>[ ] 系统满负荷运行时 CPU 占用 &lt; 70%</li>
+<li>[ ] 网络负载 &lt; 40%（以太网）</li>
+<li>[ ] 报告机制能处理最大配置的数据集</li>
+<li>[ ] 控制命令响应时间 &lt; 100ms</li>
+</ul>
+<h3 id="_14">可靠性测试</h3>
+<ul>
+<li>[ ] 单点故障不影响系统运行（冗余测试）</li>
+<li>[ ] 网络断开后能自动恢复</li>
+<li>[ ] 设备重启后能自动同步</li>
+<li>[ ] 连续运行 72 小时无故障</li>
+</ul>
+<h3 id="_15">安全测试</h3>
+<ul>
+<li>[ ] 未授权客户端无法访问</li>
+<li>[ ] 所有操作有审计记录</li>
+<li>[ ] 配置修改需权限验证</li>
+</ul>
+<hr />
+<h2 id="part-3">十二、总结：Part 3 的核心思想</h2>
+<p>Part 3 告诉我们：</p>
+<ol>
+<li><strong>质量是有等级的</strong>——根据重要性选择 Class A/B/C，不要过度设计，也不要偷工减料</li>
+<li><strong>性能是可量化的</strong>——响应时间、延迟、丢包率，都要有明确的指标</li>
+<li><strong>可靠是设计出来的</strong>——冗余、自诊断、热插拔，不是碰运气</li>
+<li><strong>环境是残酷的</strong>——EMC、温湿度、海拔，必须达标才能进场</li>
+<li><strong>安全是底线</strong>——功能安全和网络安全，缺一不可</li>
+</ol>
+<p><strong>一句话记忆</strong>：</p>
+<blockquote>
+<p>好系统 = 够快（性能）+ 不坏（可靠）+ 好修（可维护）+ 抗造（环境）+ 安全（功能+网络）</p>
+</blockquote>
+<hr />
+<h2 id="_16">下一步阅读建议</h2>
+<p>Part 3 是"要求"，接下来要看"怎么做"：</p>
+<ul>
+<li><strong>Part 4</strong>（<code>860[1].4.pdf</code>）：系统和项目管理——工程实施的方法论</li>
+<li><strong>Part 5</strong>（<code>860[1].5.pdf</code>）：功能和设备模型的通信要求——具体功能的通信需求</li>
+<li><strong>Part 7-1</strong>（<code>860[1].7-1.pdf</code>）：信息模型设计原则——如何用面向对象实现这些要求</li>
+</ul>
+<p>如果你更关心实际工程，建议先看 Part 4；如果关心技术实现，直接跳 Part 7-1。</p>
+<hr />
+<p><em>文档系列：IEC 61850 标准解读 | Part 3/13 | 生成于 2026-04-08</em></p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

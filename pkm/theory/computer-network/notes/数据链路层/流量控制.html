@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>流量控制</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="_1">流量控制</h1>
+<p>2022.08.13</p>
+<p>[toc]</p>
+<h2 id="_2">知识点</h2>
+<blockquote>
+<p>资料：</p>
+<p><a href="https://blog.csdn.net/jiangchufeng123/article/details/122278427">图解回退N帧协议（GBN）- 窗口为什么是2^N-1？</a></p>
+</blockquote>
+<h3 id="_3">停止等待与滑动窗口流量控制原理</h3>
+<ol>
+<li>停止等待是窗口=1的滑动窗口</li>
+<li>窗口大小固定（传输层不固定）</li>
+</ol>
+<h3 id="_4">可靠传输机制</h3>
+<ol>
+<li>停止等待ARQ</li>
+<li>后退N帧ARQ</li>
+<li>选择重传ARQ</li>
+<li>2与3统称连续ARQ</li>
+</ol>
+<h3 id="_5">单帧滑动窗口与停止等待协议</h3>
+<ol>
+<li>0，1帧用ACK0，ACK1确认（<strong>确认收到的帧</strong>而不是下一帧）</li>
+<li>接收端重复接受n：表明发送端进行了超时重传</li>
+<li>发送端重复接受ACKn：表明接收端接到了重复帧</li>
+</ol>
+<h3 id="n">多帧滑动窗口与后退N帧协议</h3>
+<ol>
+<li>
+<p>累计确认</p>
+</li>
+<li>
+<p>接收方只能按序接受</p>
+</li>
+<li>
+<p>窗口大小
+   $$
+   1≤W_T≤2^n-1
+   $$</p>
+</li>
+</ol>
+<h3 id="_6">多帧滑动窗口与选择重传协议</h3>
+<ol>
+<li>
+<p>选择重传ARQ协议；错误传NAK（否定帧）</p>
+</li>
+<li>
+<p>窗口大小（用nbit对帧编号）
+   $$
+   W_T+W_R≤2^n\
+   W_T=W_R=2^{n-1}
+   $$</p>
+</li>
+</ol>
+<h2 id="_7">计算题要领</h2>
+<ol>
+<li>
+<p>链路层流量控制：接受方式不下就丢弃</p>
+</li>
+<li>
+<p>传输层流量控制：接受端返回发送方一个窗口公告</p>
+</li>
+<li>
+<p>要重发的“帧数”不是“帧的序号”</p>
+</li>
+<li>
+<p>小结</p>
+</li>
+</ol>
+<p><img alt="img" src="resources/小结.jpeg" /></p>
+<ul>
+<li>确认帧发送时间：可能被<a href="#确认帧发送时间-忽略">忽略</a>，可能是<a href="#确认帧发送时间-等长">与发送帧等长</a>，可能<a href="#确认帧发送时间-数据">返回也是数据帧</a></li>
+<li><a href="#非受限协议">非受限协议</a>下不需要确认帧，就没有确认帧发送时间和传输时间了</li>
+</ul>
+<h2 id="_8">计算题</h2>
+<ol>
+<li>
+<p>【窗口的定义】
+   对于窗口大小为n的滑动窗口, 最多可以有( )帧已发送但没有确认
+   答案：n-1。<strong>窗口大小是指2^k=n，发送窗口大小最大=窗口大小-1</strong></p>
+</li>
+<li>
+<p><a id="确认帧发送时间-等长"></a>【2012统考真题】两台主机之间的数据链路层采用后退N帧协议(<strong>GBN</strong>)传输数据,数据传输速率为<strong>16kb/s</strong>,单向传播时延为<strong>270ms</strong>,数据帧长度范围是<strong>128~512字节</strong>,接收方总是以与<strong>数据帧等长</strong>的帧进行确认。为使<strong>信道利用率达到最高</strong>,帧序号的比特数至少为(B)</p>
+</li>
+</ol>
+<p>A.5</p>
+<p>B.4</p>
+<p>C.3</p>
+<p>D.2</p>
+<p><a href="https://blog.csdn.net/weixin_48284330/article/details/124111045">网友回答</a></p>
+<p>信道利用率最高，在发送某种帧一定量的情况下达到某吞吐量，为了达到吞吐量，要考虑最坏的情况——全是128B帧。
+   $$
+   \begin{align<em>}
+   t_{双方发}&amp;=2</em>\frac{128\cdot 8b}{16kb/s}=128ms\
+   RTT&amp;=540ms\
+   T&amp;=668ms\
+   N&amp;=\frac{668ms}{64ms}=10.4375\to11\
+   N&amp;=2^n-1\to n≥4</p>
+<p>\end{align*}
+   $$</p>
+<ol>
+<li><a id="确认帧发送时间-忽略"></a>【2014统考真题】主机甲与主机乙之间使用后退N帧协议(<strong>GBN</strong>)传输数据,甲的发送窗口尺寸为<strong>1000</strong>,数据帧长为<strong>1000</strong>字节,信道带宽为<strong>100Mb/s</strong>,乙每收到一个数据帧立即利用一个<strong>短帧(忽略其传输延迟)进行确认</strong>,若甲、乙之间的单向传播时延是<strong>50ms</strong>,则甲可以达到的最大平均数据传输速率约为( )</li>
+</ol>
+<p>A. 10Mb/s</p>
+<p>B. 20Mb/s</p>
+<p>C. 80Mb/s</p>
+<p>D. 100Mb/s</p>
+<p><img alt="img" src="resources/例题.jpeg" />
+   $$
+   \begin{align<em>}
+   t_{发}&amp;=\frac{8000b}{100Mb/s}=80\mu s\
+   t_{发全部窗口}&amp;=80ms\
+   RTT&amp;=100ms\
+   c&amp;=100Mb/s\cdot 80\%=80Mb/s
+   \end{align</em>}
+   $$</p>
+<ol>
+<li>【2015统考真题】主机甲通过<strong>128kb/s</strong>卫星链路,采用<strong>滑动窗口协议</strong>向主机乙发送数据,链路单向传播时延为<strong>250ms</strong>,帧长为<strong>1000字节</strong>。不考虑确认帧的开销,为使链路利用率不小于<strong>80%</strong>,帧序号的比特数至少是(B)</li>
+</ol>
+<p>A.3</p>
+<p>B.4</p>
+<p>C.7</p>
+<p>D.8
+   $$
+   \begin{align<em>}
+   t_{发1个}&amp;=\frac{8000b}{128kb/s}=62.5ms\
+   T&amp;=t_{发1个}+RTT=562.5ms\
+   N&amp;=\frac{562.5}{62.5}\cdot 0.8=7.2\
+   N&amp;≤2^n-1\to n≥4
+   \end{align</em>}
+   $$</p>
+<ol>
+<li>【2018统考真题】主机甲采用<strong>停止等待协议</strong>向主机乙发送数据,数据传输速率是<strong>3kb/s</strong>,单向传播时延是<strong>200ms</strong>,忽略确认帧的传输时延。当信道利用率等于<strong>40%</strong>时,数据帧的长度为(D)</li>
+</ol>
+<p>A.240比特</p>
+<p>B.400比特</p>
+<p>C.480比特</p>
+<p>D.800比特
+   $$
+   \begin{align<em>}
+   t&amp;=\frac{Lb}{3kb/s}=\frac{L}{3}ms\
+   T&amp;=\frac{L}{3}+400ms\
+   0.4&amp;=\frac{\frac{L}{3}}{\frac{L}{3}+400}\to L=800b
+   \end{align</em>}
+   $$</p>
+<ol>
+<li>【2019统考真题】对于滑动窗口协议,若分组序号采用3比特编号,发送窗口大小为5,则接收窗口最大是(B)</li>
+</ol>
+<p>A.2  B.3 C.4 D.5
+   $$
+   \begin{align<em>}
+   2^3-5=3
+   \end{align</em>}
+   $$</p>
+<ol>
+<li>【2020统考真题】假设主机甲采用<strong>停-等</strong>协议向主机乙发送数据帧,<strong>数据帧长与确认帧长均为1000B</strong>,数据传输速率是<strong>10kb/s</strong>,单项传延时是<strong>200ms</strong>。则甲的最大信道利用率为(D)</li>
+</ol>
+<p>A.80%</p>
+<p>B.66.7%</p>
+<p>C.44.4%</p>
+<p>D.40%
+   $$
+   \begin{align<em>}
+   t_{发}=t_{回}&amp;=\frac{8000b}{10kb/s}=0.8s\
+   \eta&amp;=\frac{0.8s}{1.6s+0.4s}=40\%
+   \end{align</em>}
+   $$</p>
+<ol>
+<li>假定卫星信道的数据率为<strong>100kb/s</strong>,卫星信道的单程传播时延为<strong>250ms</strong>,每个数据帧的长度均为<strong>2000</strong>位,并且不考虑误码、确认帧长、头部和处理时间等开销,<strong>为达到传输的最大效率</strong>,试问帧的顺序号应为多少位?此时信道利用率是多少?</li>
+</ol>
+<p>为达到传输的最大效率采用GBN协议！
+   $$
+   \begin{align<em>}
+   t_{1}&amp;=\frac{2000b}{100kb/s}=20ms\
+   T&amp;=520ms\
+   N&amp;=520/20=26\
+   N&amp;≤2^n-1\to n≥5\
+   \eta &amp;= \frac{20\cdot\min(26,31)}{520}=100\%
+   \end{align</em>}
+   $$</p>
+<ol>
+<li>在数据传输速率为50kb/s的卫星信道上传长度为1kbit的帧,假设确认帧总由数据帧捎带,帧头的序号长度为3bit,卫星信道端到端的单向传播延迟为270ms。对于下面三种协议,信道的最大利用率是多少?</li>
+</ol>
+<p>1)停止-等待协议<a id="确认帧发送时间-数据"></a></p>
+<blockquote>
+<p>坑：<strong>虽然是捎带确认，往返的都是数据帧，但是分母还是一个RTT😭，原来返回来的数据帧是确认的意义，所以对于前一个数据帧也算成确认帧发送时间的一部分</strong></p>
+</blockquote>
+<p>$$
+   \begin{align<em>}
+   t_1=\frac{1kb}{50kb/s}=20ms\
+   \eta=\frac{20ms}{20\cdot 2ms+540ms}=3.45\%
+   \end{align</em>}
+   $$
+   2)后退N帧协议。
+   $$
+   \begin{align<em>}
+   N_{max}&amp;=2^3-1=7\
+   \eta&amp;=\frac{7\cdot20}{20\cdot 2+540}=24.14\%
+   \end{align</em>}
+   $$
+   3)选择重传协议(假设发送窗口和接收窗口相等)
+   $$
+   \begin{align<em>}
+   N_{max}&amp;=2^{3-1}=4\
+   \eta&amp;=\frac{4\cdot20}{20\cdot 2+540}=13.79\%
+   \end{align</em>}
+   $$</p>
+<ol>
+<li>
+<p><a id="非受限协议"></a>对于下列给定的值,不考虑差错重传,<strong>非受限协议</strong>(无须等待应答)和<strong>停止等待协议</strong>的有效数据率是多少?(即每秒传输了多少真正的数据,单位为b/s</p>
+<p>R=传输速率(16Mb/s)</p>
+<p>S=信号传播速率(200m/us)</p>
+<p>D=接收主机和发送主机之间传播距离(200m)</p>
+<p>T=创建帧的时间(2μs)</p>
+<p>F=每帧的长度(500bit)</p>
+<p>N=每帧中的数据长度(450bit)</p>
+<p>A=确认帧ACK的帧长(80bit)</p>
+<p>非受限协议:<strong>不用加传输时延了😭</strong>
+$$
+\begin{align<em>}
+T_{发数据}&amp;=\frac{450b}{16Mb/s}=28.125\mu s\
+T_{发送端}&amp;=\frac{500b}{16Mb/s}=31.25\mu s\
+T_{传输}&amp;=\frac{200m}{200m/\mu s}=1\mu s\
+T_{创建}&amp;=2\mu s\
+\eta &amp;= \frac{28.125}{31.25+2+0[不用加传输时延了,没有确认帧]}\
+c &amp;= \eta\cdot16Mb/s=13.53Mb/s
+\end{align</em>}
+$$</p>
+</li>
+</ol>
+<p>停止等待协议:
+$$
+\begin{align<em>}
+T_{发数据}&amp;=\frac{450b}{16Mb/s}=28.125\mu s\
+T_{发送端}&amp;=\frac{500b}{16Mb/s}=31.25\mu s\
+T_{接受端}&amp;=\frac{80b}{16Mb/s}=5\mu s\
+RTT&amp;=\frac{400m}{200m/\mu s}=2\mu s\
+T_{创建}&amp;=4\mu s\
+\eta &amp;= \frac{28.125}{31.25+5+2+4}\
+c &amp;= \eta\cdot16Mb/s=10.65Mb/s
+\end{align</em>}
+$$</p>
+<ol>
+<li>
+<p>在某个卫星信道上,发送端从一个方向发长度为<strong>512B</strong>的帧,且发送端的数据发送速率为<strong>64kb/s</strong>,接收端在另一端返回一个很短确认帧。设卫星信道端到端的单向传播延时为<strong>270ms</strong>,对于发送窗口尺寸分别为<strong>1、7、17和117</strong>的情况,信道的吞吐率分别为多少?
+    $$
+    \begin{align<em>}
+    t_1&amp;=\frac{512\cdot8b}{64kb/s}=64ms\
+    \eta&amp;=\frac{[1,7,17,117]\cdot64ms}{64ms+540ms}=[10.60\%,74.17\%,100\%,100\%]\
+    c&amp;=\eta\cdot c_0=[6.78kb/s,47.47kb/s,64kb/s,64kb/s]
+    \end{align</em>}
+    $$</p>
+</li>
+<li>
+<p>【2017统考真题】甲乙双方均采用<strong>后退N帧协议(GBN)</strong>进行持续的双向数据传输,且双方始终采用<strong>捎带确认</strong>,帧长均为<strong>1000B</strong>, $$S_{x,y}和R_{x,y}$$分别表示甲方和乙方发送的数据帧,其中<strong>x是发送序号,y是确认序号</strong>(表示希望接收对方的下一帧序号),数据帧的发送序号和确认<strong>序号</strong>字段均为<strong>3比特</strong>。信道传输速率为<strong>100Mb/s,RTT=0.96ms</strong>。下图给出了甲方发送数据帧和接收数据帧的两种场景,其中$t_0$为初始时刻,此时甲方的发送和确认序号均为0,1时刻甲方有足够多的数据待发送</p>
+<p>请回答下列问题</p>
+<p><img alt="img" src="resources/例题2.jpg" /></p>
+<p>1)对于图(a),t0时刻到t1时刻期间,甲方可以断定乙方已正确接收的数据帧数是多少?正确接收的是哪几个帧(请用S形式给出)?
+$$
+\begin{align<em>}
+GBN\to累计确认\
+收到了R_{3,3}\to乙希望收到3\
+正确接受3个:S_{0,0},S_{1,0},S_{2,0}
+\end{align</em>}
+$$</p>
+<p>2)对于图(a),从t1时刻起,甲方在不出现超时且未收到乙方新的数据帧之前,最多还可以发送多少个数据帧?其中第一个和最后一个帧分别是哪个(请用$$S_{x,y}$$形式给出)?
+$$
+\begin{align<em>}
+&amp;N=2^3-1=7\
+&amp;\to 0√,1√,2√,[3?,4?,5,6,7,0,1],2,3,4,5...\
+&amp;?:待确认\
+&amp;√:已确认\
+&amp;还可以发7-2=5个\
+&amp;第一个是:S_{5,2}\
+&amp;最后一个:S_{1,2}
+\end{align</em>}
+$$</p>
+<p>3)对于图(b),从t1时刻起,甲方在不出现新超时且未收到乙方新的数据帧之前,需要重发多少个数据帧?重发的第一个帧是哪个帧(请用$$S_{x,y}$$形式给出)
+$$
+\begin{align<em>}
+甲发送窗口:0√,1√,[2?,3?,4?,5,6,7,0],1,2,3...\
+重新发送3个,重发的是已经发过的234,第一个是:S_{2,3}
+\end{align</em>}
+$$</p>
+<p>4)甲方可以达到的最大信道利用率是多少?
+$$
+\begin{align<em>}
+t_1&amp;=\frac{8kb}{100Mb/s}=80\mu s\
+\eta&amp;=\frac{7\cdot 80\mu s}{2\cdot 80\mu s+960ms}=50.45\%
+\end{align</em>}
+$$</p>
+</li>
+</ol>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

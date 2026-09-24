@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>README</title>
+<link id="theme-css" rel="stylesheet" href="../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="rfc-1157-a-simple-network-management-protocol-snmpv1">RFC 1157 — A Simple Network Management Protocol (SNMPv1)</h1>
+<blockquote>
+<p><strong>原文链接</strong>: <a href="https://datatracker.ietf.org/doc/html/rfc1157">https://datatracker.ietf.org/doc/html/rfc1157</a></p>
+<p><strong>状态</strong>: Standard Protocol (Recommended) | <strong>废止</strong>: RFC 1098</p>
+<p><strong>核心定位</strong>: 定义了 SNMPv1 的<strong>协议规范</strong>——管理站与代理之间如何通信、交换哪些消息、消息的格式与处理规则。与 RFC 1155（SMI）、RFC 1156（MIB-I）组成 SNMPv1 三驾马车。</p>
+<p><strong>参考</strong>: 前身为 SGMP（Simple Gateway Monitoring Protocol），<strong>不向后兼容</strong>。分配了新 UDP 端口。</p>
+</blockquote>
+<hr />
+<h2 id="1-status-of-this-memo-introduction1-2">1. Status of this Memo &amp; Introduction（§1-§2）</h2>
+<ul>
+<li>简单网关监控协议（<strong>SGMP</strong> - RFC 1098）：SNMP（RFC - 1157）的前身。rfc1157对其进行分叉，不在追踪其后续进展。SGMP只监控网关（路由器），SNMP 将其泛化为管理所有网络设备的通用协议。</li>
+<li>OSI 网络管理（CMIS/CMIP）（<strong>CMOT</strong>（RFC-1095））：由于 IAB 双轨策略打算以后使用，但后来废弃。</li>
+<li><strong>SNMP</strong>：定位是简单、可快速部署的短期方案。后来成功普及，成为事实标准。SNMP 进行了新 UDP 端口分配：代理监听 <strong>161</strong>，Trap 接收 <strong>162</strong>。</li>
+</ul>
+<hr />
+<h2 id="2-architecture3">2. Architecture（§3）</h2>
+<p>名词解析：考虑下面场景，公司有一个主交换机，各自连接到一楼到六楼的楼层交换机，他们所有都打开了SNMP协议。我在某一个未知请求他们，获取网络拓扑结构。
+* SNMP：管理站与代理之间传递管理信息的协议
+* 管理站：我的电脑（运行的 SNMP 管理应用程序）
+* 网络元素：中心和楼层交换机
+* Agent：每个交换机上运行的 SNMP 代理
+* 被管对象：每个交换机的端口状态、流量、MAC 表等</p>
+<h3 id="32-32">3.2 架构六要素（§3.2）</h3>
+<table>
+<thead>
+<tr>
+<th>要素</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>管理信息的范围</strong>（§3.2.1）</td>
+<td>仅包含 MIB 中的非聚合（non-aggregate）对象类型</td>
+</tr>
+<tr>
+<td><strong>管理信息的表示</strong>（§3.2.2）</td>
+<td>使用 ASN.1 受限子集（同 SMI），BER 编码使用<strong>定长形式</strong></td>
+</tr>
+<tr>
+<td><strong>支持的操作</strong>（§3.2.3）</td>
+<td>本质上只有两种：<strong>get</strong>（取值）和 <strong>set</strong>（赋值）；通过<strong>轮询 + 有限 Trap</strong> 实现监控</td>
+</tr>
+<tr>
+<td><strong>协议交换的形式与含义</strong>（§3.2.4）</td>
+<td>基于不可靠数据报（UDP），每条消息独立由单个数据报表示</td>
+</tr>
+<tr>
+<td><strong>管理关系定义</strong>（§3.2.5）</td>
+<td>Community（团体）体系</td>
+</tr>
+<tr>
+<td><strong>管理对象引用</strong>（§3.2.6）</td>
+<td>对象实例的命名规则</td>
+</tr>
+</tbody>
+</table>
+<h3 id="33-community-325">3.3 关键概念：Community 模型（§3.2.5）</h3>
+<p>SNMPv1 的安全模型完全基于 <strong>Community（团体）</strong> 字符串：</p>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>定义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>SNMP Community</strong></td>
+<td>代理（Agent）与一组管理应用的配对关系，用 <strong>community name</strong>（OCTET STRING）标识</td>
+</tr>
+<tr>
+<td><strong>Authentication Scheme</strong></td>
+<td>鉴定消息是否属于某 Community 的规则集；v1 仅提供<strong>弱认证</strong>（community 字符串明文传输）</td>
+</tr>
+<tr>
+<td><strong>SNMP MIB View</strong></td>
+<td>某个网络元素上可访问的 MIB 对象子集</td>
+</tr>
+<tr>
+<td><strong>SNMP Access Mode</strong></td>
+<td>READ-ONLY 或 READ-WRITE</td>
+</tr>
+<tr>
+<td><strong>SNMP Community Profile</strong></td>
+<td>MIB View + Access Mode 的组合</td>
+</tr>
+<tr>
+<td><strong>SNMP Access Policy</strong></td>
+<td>Community + Profile 的组合，定义了代理对某个 Community 的授权</td>
+</tr>
+<tr>
+<td><strong>SNMP Proxy Agent</strong></td>
+<td>提供协议转换，允许管理站通过代理管理非 SNMP 设备</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>关键</strong>：v1 没有加密，community 字符串以明文出现在每个消息中，是后来 SNMPv3 USM 要解决的核心问题之一。</p>
+</blockquote>
+<hr />
+<h2 id="4-326">4. 对象实例的命名（§3.2.6）</h2>
+<p>SNMP 如何唯一标识某个具体对象实例？规则如下：</p>
+<h3 id="41">4.1 标量对象</h3>
+<ul>
+<li>格式：<code>对象类型OID . 0</code></li>
+<li>示例：<code>sysDescr.0</code> → <code>1.3.6.1.2.1.1.1.0</code></li>
+</ul>
+<h3 id="42">4.2 表对象</h3>
+<table>
+<thead>
+<tr>
+<th>表</th>
+<th>实例标识方式</th>
+<th>示例</th>
+<th>注释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ifTable</strong></td>
+<td><code>类型OID . ifIndex</code></td>
+<td><code>ifType.2</code></td>
+<td>按接口索引，唯一标识一个接口</td>
+</tr>
+<tr>
+<td><strong>atTable</strong></td>
+<td><code>类型OID . ifIndex . IP地址</code></td>
+<td><code>atPhysAddress.3.1.89.1.1.42</code></td>
+<td>接口 3 上 IP 为 89.1.1.42 的地址转发表条目</td>
+</tr>
+<tr>
+<td><strong>ipAddrTable</strong></td>
+<td><code>类型OID . IP地址</code></td>
+<td><code>ipAdEntNetMask.89.1.1.42</code></td>
+<td>设备上 IP 地址为 89.1.1.42 的接口配置条目</td>
+</tr>
+<tr>
+<td><strong>ipRoutingTable</strong></td>
+<td><code>类型OID . 目的地址</code></td>
+<td><code>ipRouteNextHop.89.1.1.42</code></td>
+<td>以 89.1.1.42 为目的的路由条目</td>
+</tr>
+<tr>
+<td><strong>tcpConnTable</strong></td>
+<td><code>类型OID . 本地IP.本地端口.远端IP.远端端口</code></td>
+<td><code>tcpConnState.89.1.1.42.21.10.0.0.51.2059</code></td>
+<td>TCP 连接：本地 89.1.1.42:21 → 远端 10.0.0.51:2059</td>
+</tr>
+<tr>
+<td><strong>egpNeighTable</strong></td>
+<td><code>类型OID . 邻居IP</code></td>
+<td><code>egpNeighState.89.1.1.42</code></td>
+<td>EGP 邻居 89.1.1.42 的邻居关系状态</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>核心思想</strong>：所有实例名按<strong>字典序（lexicographical order）</strong> 组织，这是 GetNextRequest 实现表遍历的基础。</p>
+</blockquote>
+<hr />
+<h2 id="5-4">5. 协议规范（§4）</h2>
+<h3 id="51-message">5.1 消息格式 — Message 结构</h3>
+<pre><code class="md-fencescode">Message ::= SEQUENCE {
+    version     INTEGER { version-1(0) },
+    community   OCTET STRING,
+    data        ANY     -- PDU
+}
+</code></pre>
+<ul>
+<li>版本固定为 <code>version-1(0)</code></li>
+<li>Community 为明文</li>
+<li>PDU 通过 ASN.1 BER 编码后放入 data 字段</li>
+</ul>
+<h3 id="52-pdu">5.2 五种 PDU 类型</h3>
+<table>
+<thead>
+<tr>
+<th>PDU</th>
+<th>ASN.1 Tag</th>
+<th>方向</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>GetRequest-PDU</strong></td>
+<td><code>[0]</code></td>
+<td>Manager → Agent</td>
+<td>请求获取一个或多个变量的值</td>
+</tr>
+<tr>
+<td><strong>GetNextRequest-PDU</strong></td>
+<td><code>[1]</code></td>
+<td>Manager → Agent</td>
+<td>请求获取字典序下一个变量的值，用于<strong>遍历表</strong></td>
+</tr>
+<tr>
+<td><strong>GetResponse-PDU</strong></td>
+<td><code>[2]</code></td>
+<td>Agent → Manager</td>
+<td>对 Get/GetNext/Set 请求的响应</td>
+</tr>
+<tr>
+<td><strong>SetRequest-PDU</strong></td>
+<td><code>[3]</code></td>
+<td>Manager → Agent</td>
+<td>设置一个或多个变量的值</td>
+</tr>
+<tr>
+<td><strong>Trap-PDU</strong></td>
+<td><code>[4]</code></td>
+<td>Agent → Manager</td>
+<td><strong>主动上报</strong>事件（无需轮询）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="53-pdu">5.3 五种 PDU 的公共结构</h3>
+<p>GetRequest / GetNextRequest / GetResponse / SetRequest 共享同一个 <code>PDU</code> 结构：</p>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="n n-Type">PDU</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">request-id</span><span class="w">        </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">error-status</span><span class="w">      </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">noError</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span><span class="w"> </span><span class="nv">tooBig</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="nv">noSuchName</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+<span class="w">                                </span><span class="nv">badValue</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span><span class="w"> </span><span class="nv">readOnly</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span><span class="w"> </span><span class="nv">genErr</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nv">error-index</span><span class="w">       </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">variable-bindings</span><span class="w"> </span><span class="n n-Type">VarBindList</span>
+<span class="p">}</span>
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>错误码</th>
+<th>含义</th>
+<th>触发场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>noError(0)</td>
+<td>无错误</td>
+<td>正常响应</td>
+</tr>
+<tr>
+<td>tooBig(1)</td>
+<td>响应超长</td>
+<td>响应超过 484 字节限制</td>
+</tr>
+<tr>
+<td>noSuchName(2)</td>
+<td>变量不存在</td>
+<td>Get/GetNext 请求了不存在的变量</td>
+</tr>
+<tr>
+<td>badValue(3)</td>
+<td>值不正确</td>
+<td>Set 请求的值类型/长度不匹配</td>
+</tr>
+<tr>
+<td>readOnly(4)</td>
+<td>只读</td>
+<td>Set 请求尝试写只读变量</td>
+</tr>
+<tr>
+<td>genErr(5)</td>
+<td>其他错误</td>
+<td>无法归类的错误</td>
+</tr>
+</tbody>
+</table>
+<h3 id="54-getrequest-412">5.4 GetRequest 处理流程（§4.1.2）</h3>
+<ol>
+<li>变量名不存在 → <code>noSuchName</code></li>
+<li>变量是聚合类型 → <code>noSuchName</code></li>
+<li>响应超限 → <code>tooBig</code></li>
+<li>其他无法获取 → <code>genErr</code></li>
+<li>正常 → 返回 <code>noError</code> + 所有变量的值</li>
+</ol>
+<h3 id="55-getnextrequest-4134131">5.5 GetNextRequest 与表遍历（§4.1.3、§4.1.3.1）</h3>
+<ul>
+<li>GetNextRequest 在字典序中找到<strong>紧邻的下一个</strong>变量</li>
+<li>这是 SNMP 中<strong>遍历表</strong>的核心机制 —— 不需要知道表有多大</li>
+<li>§4.1.3.1 给出了完整的路由表示例遍历过程</li>
+</ul>
+<h3 id="56-setrequest-415">5.6 SetRequest 处理流程（§4.1.5）</h3>
+<ol>
+<li>变量不可写 → <code>noSuchName</code></li>
+<li>值类型/长度不符 → <code>badValue</code></li>
+<li>响应超限 → <code>tooBig</code></li>
+<li>其他 → <code>genErr</code></li>
+<li>正常 → 所有变量<strong>原子式同步赋值</strong>，返回 <code>noError</code></li>
+</ol>
+<h3 id="57-trap-pdu416">5.7 Trap-PDU（§4.1.6）</h3>
+<p>Trap 是<strong>唯一由 Agent 主动发起</strong>的 PDU，结构与其他不同：</p>
+<pre><code class="md-fencescode">Trap-PDU ::= SEQUENCE {
+    enterprise        OBJECT IDENTIFIER,   -- 产生 trap 的设备类型 (sysObjectID)
+    agent-addr        NetworkAddress,      -- 产生 trap 的设备地址
+    generic-trap      INTEGER { 0..6 },    -- 通用 trap 类型
+    specific-trap     INTEGER,             -- 企业自定义 trap 码
+    time-stamp        TimeTicks,           -- 自上次初始化以来的时间
+    variable-bindings VarBindList          -- 附加信息
+}
+</code></pre>
+<h4 id="7-trap">7 种通用 Trap 类型</h4>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>值</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>coldStart</strong></td>
+<td>0</td>
+<td>代理<strong>冷启动</strong> — 配置或实现可能已改变</td>
+</tr>
+<tr>
+<td><strong>warmStart</strong></td>
+<td>1</td>
+<td>代理<strong>热启动</strong> — 配置未改变</td>
+</tr>
+<tr>
+<td><strong>linkDown</strong></td>
+<td>2</td>
+<td>通信链路故障，VarBind 首项为 <code>ifIndex</code></td>
+</tr>
+<tr>
+<td><strong>linkUp</strong></td>
+<td>3</td>
+<td>通信链路恢复，VarBind 首项为 <code>ifIndex</code></td>
+</tr>
+<tr>
+<td><strong>authenticationFailure</strong></td>
+<td>4</td>
+<td>认证失败（可配置抑制）</td>
+</tr>
+<tr>
+<td><strong>egpNeighborLoss</strong></td>
+<td>5</td>
+<td>EGP 邻居关系中断，VarBind 首项为 <code>egpNeighAddr</code></td>
+</tr>
+<tr>
+<td><strong>enterpriseSpecific</strong></td>
+<td>6</td>
+<td>企业自定义事件，<code>specific-trap</code> 标识具体类型</td>
+</tr>
+</tbody>
+</table>
+<h3 id="58-varbind-varbindlist">5.8 变量绑定（VarBind / VarBindList）</h3>
+<pre><code class="md-fencescode">VarBind ::= SEQUENCE {
+    name    ObjectName,
+    value   ObjectSyntax
+}
+VarBindList ::= SEQUENCE OF VarBind
+</code></pre>
+<ul>
+<li>一个 PDU 可以携带<strong>多个</strong> VarBind，实现一次请求读写多个变量</li>
+<li>GetRequest 的 value 部分为 NULL（被忽略）</li>
+<li>建议的最大消息长度：<strong>484 字节</strong>（最早的实现限制）</li>
+</ul>
+<hr />
+<h2 id="6-asn1-5">6. ASN.1 正式定义（§5）</h2>
+<p>模块 <code>RFC1157-SNMP</code> 定义：</p>
+<ul>
+<li><strong>导入自 RFC1155-SMI</strong>：<code>ObjectName</code>、<code>ObjectSyntax</code>、<code>NetworkAddress</code>、<code>IpAddress</code>、<code>TimeTicks</code></li>
+<li><strong>Message</strong>：顶层消息结构</li>
+<li><strong>PDUs</strong>：五种 PDU 的 CHOICE</li>
+<li><strong>GetRequest-PDU / GetNextRequest-PDU / GetResponse-PDU / SetRequest-PDU</strong>：共享 <code>PDU</code> 结构</li>
+<li><strong>Trap-PDU</strong>：独立的结构（enterprise、agent-addr、generic-trap、specific-trap、time-stamp）</li>
+<li><strong>VarBind / VarBindList</strong>：变量绑定</li>
+</ul>
+<hr />
+<h2 id="7">7. 协议操作总结</h2>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th>方向</th>
+<th>典型用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Get</strong></td>
+<td>M → A</td>
+<td>查询设备的一个或多个变量</td>
+</tr>
+<tr>
+<td><strong>GetNext</strong></td>
+<td>M → A</td>
+<td>遍历表、发现未知对象</td>
+</tr>
+<tr>
+<td><strong>GetResponse</strong></td>
+<td>A → M</td>
+<td>对 Get/GetNext/Set 的应答</td>
+</tr>
+<tr>
+<td><strong>Set</strong></td>
+<td>M → A</td>
+<td>修改设备配置、触发动作</td>
+</tr>
+<tr>
+<td><strong>Trap</strong></td>
+<td>A → M</td>
+<td>事件上报（启动、故障、认证失败等）</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="8-rfc">8. 与其他 RFC 的关系</h2>
+<table>
+<thead>
+<tr>
+<th>RFC</th>
+<th>关系</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>RFC 1155 (SMIv1)</strong></td>
+<td>定义数据类型和 OID 结构，本协议中的 ObjectSyntax、ObjectName 均导入自此处</td>
+</tr>
+<tr>
+<td><strong>RFC 1156 (MIB-I)</strong></td>
+<td>本协议操作的管理对象集合，对象实例的命名规则专门为 MIB-I 中的表做了适配</td>
+</tr>
+<tr>
+<td><strong>RFC 1905 (SNMPv2c)</strong></td>
+<td>SNMPv2 协议操作，新增 <strong>GetBulk</strong> 和 <strong>Inform</strong> 两种 PDU</td>
+</tr>
+<tr>
+<td><strong>RFC 3411-3415 (SNMPv3)</strong></td>
+<td>引入 USM（认证加密）和 VACM（视图访问控制），完全替代 v1 的 Community 模型</td>
+</tr>
+<tr>
+<td><strong>RFC 1098</strong></td>
+<td>RFC 1157 的前身（重新发布，技术内容不变）</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="9">9. 学习要点与建议</h2>
+<ul>
+<li>SNMPv1 的设计哲学：<strong>把复杂留给管理站，让代理保持简单</strong>。代理只有 Get 和 Set 两类本质操作</li>
+<li><strong>GetNextRequest + 字典序</strong> 是 SNMP 最精巧的设计之一，实现了变量发现和表遍历而无需预知 MIB 结构</li>
+<li><strong>Community 字符串</strong> 就是 v1 的全部安全机制 —— 明文传输，等同于密码，是后来 v3 改进的重点</li>
+<li>Trap 是唯一由代理发起的消息，发送到 <strong>UDP 162</strong>（区别于其他 PDU 的 161）</li>
+<li>建议使用 Wireshark 抓一次 <code>snmpwalk</code> 和 <code>snmptrap</code> 的包，观察五种 PDU 的实际字节流和 BER 编码</li>
+</ul>
+<hr />
+<p><em>大纲整理时间: 2026-07-17</em></p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

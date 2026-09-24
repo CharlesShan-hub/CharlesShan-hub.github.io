@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>part7-3</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="iec-61850-part-7-3-cdc">IEC 61850 Part 7-3 解读：公共数据类 CDC</h1>
+<blockquote>
+<p><strong>对应文件</strong>：<code>860[1].7-3.pdf</code><br />
+<strong>正式标题</strong>：IEC 61850-7-3 — Basic Communication Structure for Substation and Feeder Equipment - Common Data Classes（变电站和馈线设备的基本通信结构——公共数据类）<br />
+<strong>页数</strong>：约 100 页<br />
+<strong>定位</strong>：CDC 的完整规范，数据结构的"标准模板库"</p>
+</blockquote>
+<hr />
+<h2 id="_1">一、这一章在说什么？</h2>
+<p>Part 7-3 是 CDC（Common Data Class）的<strong>完整字典</strong>。它定义了所有标准化的数据结构模板，确保不同厂家的设备用相同的格式描述相同类型的数据。</p>
+<p><strong>类比</strong>：CDC 就像 C 语言里的标准结构体（struct），或者编程语言里的类（class）。</p>
+<hr />
+<h2 id="cdc">二、CDC 的分类</h2>
+<p>Part 7-3 把 CDC 分为几大类：</p>
+<pre><code class="md-fencescode">CDC 分类
+│
+├── 状态类（Status）
+│   ├── SPS - Single Point Status（单点状态）
+│   ├── DPS - Double Point Status（双点状态）
+│   ├── INS - Integer Status（整数状态）
+│   └── ENS - Enumerated Status（枚举状态）
+│
+├── 测量类（Measurement）
+│   ├── MV - Measured Value（测量值）
+│   ├── CMV - Complex Measured Value（复数测量值）
+│   ├── WYE - Wye Connection（三相星形）
+│   ├── DEL - Delta Connection（三相三角形）
+│   └── SAV - Sampled Analog Value（采样值）
+│
+├── 控制类（Control）
+│   ├── SPC - Single Point Controllable（单点可控）
+│   ├── DPC - Double Point Controllable（双点可控）
+│   ├── INC - Integer Controllable（整数可控）
+│   └── APC - Analogue Point Controllable（模拟可控）
+│
+├── 保护类（Protection）
+│   ├── ACD - AC Directional（交流方向）
+│   ├── ACT - Protection Activation（保护动作）
+│   └── BCR - Binary Counter Reading（二进制计数器）
+│
+└── 设定类（Setting）
+    ├── SPG - Single Point Setting（单点设定）
+    ├── ING - Integer Setting（整数设定）
+    └── ASG - Analog Setting（模拟设定）
+</code></pre>
+<hr />
+<h2 id="cdc_1">三、状态类 CDC 详解</h2>
+<h3 id="sps-single-point-status">SPS - Single Point Status（单点状态）</h3>
+<p>最常用的 CDC，表示 true/false 状态。</p>
+<pre><code class="md-fencescode">SPS 结构：
+├── stVal      BOOLEAN      [ST]  状态值（true/false）
+├── q          Quality      [ST]  品质
+├── t          Timestamp    [ST]  时间戳
+└── subVal     BOOLEAN      [SV]  替代值（调试时用）
+</code></pre>
+<p><strong>应用示例</strong>：</p>
+<pre><code class="md-fencescode">XCBR1.Pos.stVal = true   ← 断路器合位
+XCBR1.Pos.q = 0x00       ← 有效
+XCBR1.Pos.t = 2024-01-15T10:30:00Z
+</code></pre>
+<hr />
+<h3 id="dps-double-point-status">DPS - Double Point Status（双点状态）</h3>
+<p>用于需要区分"中间态"的设备，如断路器。</p>
+<pre><code class="md-fencescode">DPS 结构：
+├── stVal      ENUMERATED   [ST]  状态值
+│                    0 = 中间态（intermediate-state）
+│                    1 = off（分位）
+│                    2 = on（合位）
+│                    3 = 坏状态（bad-state）
+├── q          Quality      [ST]  品质
+└── t          Timestamp    [ST]  时间戳
+</code></pre>
+<p><strong>应用示例</strong>：</p>
+<pre><code class="md-fencescode">XCBR1.Pos.stVal = 2   ← 合位
+XCBR1.Pos.stVal = 1   ← 分位
+XCBR1.Pos.stVal = 0   ← 正在分合闸过程中（中间态）
+</code></pre>
+<hr />
+<h2 id="cdc_2">四、测量类 CDC 详解</h2>
+<h3 id="mv-measured-value">MV - Measured Value（测量值）</h3>
+<p>单相测量值的标准结构。</p>
+<pre><code class="md-fencescode">MV 结构：
+├── mag        AnalogueValue    [MX]  幅值
+│   └── f      FLOAT32              浮点数值
+│   └── i      INT32                整数值（可选）
+├── q          Quality          [MX]  品质
+├── t          Timestamp        [MX]  时间戳
+├── units      Unit             [CF]  单位（配置参数）
+│   └── SIUnit ENUMERATED           标准单位（A, V, W, Hz...）
+│   └── multiplier ENUMERATED       倍率（m, k, M...）
+└── db         INT32U           [CF]  死区（变化超过此值才报告）
+</code></pre>
+<p><strong>应用示例</strong>：</p>
+<pre><code class="md-fencescode">MMXU1.TotW.mag.f = 125.5     ← 有功功率 125.5 MW
+MMXU1.TotW.units.SIUnit = W
+MMXU1.TotW.units.multiplier = M
+MMXU1.TotW.db = 500          ← 死区 0.5 MW
+</code></pre>
+<hr />
+<h3 id="cmv-complex-measured-value">CMV - Complex Measured Value（复数测量值）</h3>
+<p>包含幅值和相角的测量值。</p>
+<pre><code class="md-fencescode">CMV 结构：
+├── cVal       Vector           [MX]  复数值
+│   ├── mag    AnalogueValue        幅值
+│   └── ang    AnalogueValue        相角（度）
+├── q          Quality          [MX]  品质
+├── t          Timestamp        [MX]  时间戳
+└── units      Unit             [CF]  单位
+</code></pre>
+<p><strong>应用示例</strong>：</p>
+<pre><code class="md-fencescode">MMXU1.PhV.phsA.cVal.mag.f = 220.5   ← 幅值 220.5 kV
+MMXU1.PhV.phsA.cVal.ang.f = 0.0     ← 相角 0°
+</code></pre>
+<hr />
+<h3 id="wye-wye-connection">WYE - Wye Connection（三相星形连接）</h3>
+<p>三相测量值的标准结构。</p>
+<pre><code class="md-fencescode">WYE 结构：
+├── phsA       CMV/MV          [MX]  A相
+├── phsB       CMV/MV          [MX]  B相
+├── phsC       CMV/MV          [MX]  C相
+├── neut       CMV/MV          [MX]  中性点（可选）
+└── net        CMV/MV          [MX]  零序（可选）
+</code></pre>
+<p><strong>应用示例</strong>：</p>
+<pre><code class="md-fencescode">MMXU1.PhV.phsA.cVal.mag.f = 220.5   ← A相电压
+MMXU1.PhV.phsB.cVal.mag.f = 221.0   ← B相电压
+MMXU1.PhV.phsC.cVal.mag.f = 220.8   ← C相电压
+</code></pre>
+<hr />
+<h2 id="cdc_3">五、控制类 CDC 详解</h2>
+<h3 id="spc-single-point-controllable">SPC - Single Point Controllable（单点可控）</h3>
+<p>可控制的单点状态。</p>
+<pre><code class="md-fencescode">SPC 结构：
+├── stVal      BOOLEAN      [ST]  当前状态值
+├── q          Quality      [ST]  品质
+├── t          Timestamp    [ST]  时间戳
+├── Oper       SBOw/Oper    [CO]  控制操作对象
+│   ├── ctlVal BOOLEAN          控制值（目标值）
+│   ├── origin Origin             操作来源
+│   ├── ctlNum INT8U              控制序号
+│   ├── T      Timestamp          操作时间
+│   ├── Test   BOOLEAN            测试标志
+│   └── Check  Check              检查条件
+└── SBOw       SBOw          [CO]  选择操作对象（SBO模式用）
+</code></pre>
+<p><strong>控制流程</strong>：</p>
+<pre><code class="md-fencescode">1. 客户端写 SBOw（选择）
+   CSWI1.Oper.ctlVal = true
+   CSWI1.Oper.origin = {orCat: remote-control, orIdent: &quot;SCADA&quot;}
+
+2. 客户端写 Oper（执行）
+   CSWI1.Oper.ctlVal = true
+
+3. 服务器执行后，stVal 变化
+   CSWI1.stVal = true
+</code></pre>
+<hr />
+<h2 id="cdc_4">六、保护类 CDC 详解</h2>
+<h3 id="act-protection-activation">ACT - Protection Activation（保护动作）</h3>
+<p>保护动作信号的标准结构。</p>
+<pre><code class="md-fencescode">ACT 结构：
+├── general    BOOLEAN      [ST]  总动作信号
+├── phsA       BOOLEAN      [ST]  A相动作
+├── phsB       BOOLEAN      [ST]  B相动作
+├── phsC       BOOLEAN      [ST]  C相动作
+├── neut       BOOLEAN      [ST]  中性点动作（可选）
+├── q          Quality      [ST]  品质
+└── t          Timestamp    [ST]  时间戳
+</code></pre>
+<p><strong>应用示例</strong>：</p>
+<pre><code class="md-fencescode">PDIS1.Op.general = true    ← 距离保护动作
+PDIS1.Op.phsA = true       ← A相动作
+PDIS1.Op.t = 2024-01-15T10:30:00.123Z
+</code></pre>
+<hr />
+<h2 id="cdc_5">七、设定类 CDC 详解</h2>
+<h3 id="asg-analog-setting">ASG - Analog Setting（模拟设定值）</h3>
+<p>模拟量设定值，如保护定值。</p>
+<pre><code class="md-fencescode">ASG 结构：
+├── setMag     AnalogueValue    [SP]  设定值
+├── q          Quality          [SP]  品质
+├── t          Timestamp        [SP]  时间戳
+├── units      Unit             [CF]  单位
+├── minVal     AnalogueValue    [CF]  最小值（范围限制）
+├── maxVal     AnalogueValue    [CF]  最大值（范围限制）
+└── stepSize   AnalogueValue    [CF]  步长（调节增量）
+</code></pre>
+<p><strong>应用示例</strong>：</p>
+<pre><code class="md-fencescode">PDIS1.Zn.setMag.f = 5.0        ← 距离保护定值 5 Ω
+PDIS1.Zn.units.SIUnit = Ohm
+PDIS1.Zn.minVal.f = 0.1
+PDIS1.Zn.maxVal.f = 50.0
+PDIS1.Zn.stepSize.f = 0.1
+</code></pre>
+<hr />
+<h2 id="quality">八、品质（Quality）详解</h2>
+<p>每个 CDC 都包含 <code>q</code>（品质）属性，表示数据的可信度。</p>
+<pre><code class="md-fencescode">Quality 结构（16位）：
+┌────┬────┬────┬────┬────┬────┬────┬────┐
+│validity│  │  │  │  │source│test│operator│
+│ 2bits  │  │  │  │  │ 1bit │1bit│ 1bit   │
+└────┴────┴────┴────┴────┴────┴────┴────┘
+
+validity（有效性）：
+  00 = good（有效）
+  01 = invalid（无效）
+  10 = reserved（保留）
+  11 = questionable（可疑）
+
+detail（详细原因）：
+  - overflow（溢出）
+  - outOfRange（超范围）
+  - badReference（基准错误）
+  - oscillatory（振荡）
+  - failure（故障）
+  - oldData（数据过期）
+  - inconsistent（不一致）
+  - inaccurate（不精确）
+</code></pre>
+<hr />
+<h2 id="cdc_6">九、CDC 速查表</h2>
+<table>
+<thead>
+<tr>
+<th>CDC</th>
+<th>用途</th>
+<th>关键属性</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SPS</td>
+<td>单点状态</td>
+<td>stVal, q, t</td>
+</tr>
+<tr>
+<td>DPS</td>
+<td>双点状态</td>
+<td>stVal(0/1/2/3), q, t</td>
+</tr>
+<tr>
+<td>INS</td>
+<td>整数状态</td>
+<td>stVal, q, t</td>
+</tr>
+<tr>
+<td>MV</td>
+<td>测量值</td>
+<td>mag, q, t, units, db</td>
+</tr>
+<tr>
+<td>CMV</td>
+<td>复数测量值</td>
+<td>cVal(mag,ang), q, t</td>
+</tr>
+<tr>
+<td>WYE</td>
+<td>三相星形</td>
+<td>phsA, phsB, phsC, neut</td>
+</tr>
+<tr>
+<td>DEL</td>
+<td>三相三角形</td>
+<td>phsAB, phsBC, phsCA</td>
+</tr>
+<tr>
+<td>SPC</td>
+<td>单点可控</td>
+<td>stVal, Oper, SBOw</td>
+</tr>
+<tr>
+<td>DPC</td>
+<td>双点可控</td>
+<td>stVal, Oper, SBOw</td>
+</tr>
+<tr>
+<td>ACT</td>
+<td>保护动作</td>
+<td>general, phsA, phsB, phsC, q, t</td>
+</tr>
+<tr>
+<td>ACD</td>
+<td>交流方向</td>
+<td>general, dir, phsA, phsB, phsC</td>
+</tr>
+<tr>
+<td>SPG</td>
+<td>单点设定</td>
+<td>setVal, q, t</td>
+</tr>
+<tr>
+<td>ING</td>
+<td>整数设定</td>
+<td>setVal, q, t, minVal, maxVal</td>
+</tr>
+<tr>
+<td>ASG</td>
+<td>模拟设定</td>
+<td>setMag, q, t, units, minVal, maxVal</td>
+</tr>
+<tr>
+<td>CURVE</td>
+<td>曲线设定</td>
+<td>保护特性曲线</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_2">十、总结</h2>
+<p>Part 7-3 的核心：</p>
+<ol>
+<li><strong>CDC 是数据模板</strong>——标准化的数据结构</li>
+<li><strong>分类清晰</strong>——状态、测量、控制、保护、设定</li>
+<li><strong>结构统一</strong>——都包含值、品质、时间戳</li>
+<li><strong>可扩展</strong>——厂商可以在标准基础上扩展</li>
+</ol>
+<p><strong>一句话记忆</strong>：</p>
+<blockquote>
+<p>CDC = 数据结构模板 = 确保不同厂家用相同格式描述相同类型的数据</p>
+</blockquote>
+<hr />
+<p><em>文档系列：IEC 61850 标准解读 | Part 7-3/13 | 生成于 2026-04-08</em></p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

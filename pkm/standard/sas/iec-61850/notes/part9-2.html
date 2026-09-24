@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>part9-2</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="iec-61850-part-9-2">IEC 61850 Part 9-2 解读：采样值——以太网传输</h1>
+<blockquote>
+<p><strong>对应文件</strong>：<code>860[1].9-2.pdf</code><br />
+<strong>正式标题</strong>：IEC 61850-9-2 — Specific Communication Service Mapping (SCSM) - Sampled Values over ISO/IEC 8802-3（特定通信服务映射——ISO/IEC 8802-3 上的采样值）<br />
+<strong>页数</strong>：约 80 页<br />
+<strong>定位</strong>：SV 采样值的以太网传输映射，现代变电站的主流方案</p>
+</blockquote>
+<hr />
+<h2 id="_1">一、这一章在说什么？</h2>
+<p>Part 9-2 定义了如何通过<strong>以太网</strong>传输采样值（SV）数据。这是目前<strong>最主流</strong>的 SV 传输方案，广泛应用于数字化变电站。</p>
+<p><strong>关键地位</strong>：
+- 数字化变电站的核心技术之一
+- 取代传统模拟量接线（电缆）
+- 支持保护、测量、故障录波等多种应用</p>
+<hr />
+<h2 id="_2">二、为什么用以太网传采样值？</h2>
+<h3 id="_3">传统方式的痛点</h3>
+<p>传统变电站使用模拟量传输：</p>
+<pre><code class="md-fencescode">互感器（CT/VT）
+    ↓ 铜电缆（二次回路）
+保护/测控装置
+    ↓ 铜电缆
+监控后台
+</code></pre>
+<p><strong>问题</strong>：
+- 电缆多、接线复杂
+- 电缆损耗、干扰
+- 难以实现信息共享
+- 扩建改造困难</p>
+<h3 id="_4">数字化方案</h3>
+<pre><code class="md-fencescode">电子式互感器（ECT/EVT）
+    ↓ 光纤
+合并单元（MU）
+    ↓ 以太网（SV 报文）
+保护/测控/计量/录波装置
+    ↓ 以太网
+监控后台
+</code></pre>
+<p><strong>优势</strong>：
+- 一根光纤代替多根电缆
+- 数字传输无损耗
+- 多装置共享采样值
+- 灵活组网、易于扩展</p>
+<hr />
+<h2 id="sv">三、SV 以太网帧结构</h2>
+<h3 id="_5">以太网帧格式</h3>
+<pre><code class="md-fencescode">SV 以太网帧：
+┌─────────────────────────────────────────────────────────────┐
+│  目的 MAC 地址（6字节）                                       │
+│  ├── 01-0C-CD-04-00-00 ~ 01-0C-CD-04-01-FF（SV 组播地址）   │
+│  └── 由 SCL 文件中的 Communication/SMV/Address/P 定义        │
+├─────────────────────────────────────────────────────────────┤
+│  源 MAC 地址（6字节）                                         │
+│  └── 合并单元的 MAC 地址                                      │
+├─────────────────────────────────────────────────────────────┤
+│  VLAN TPID + TCI（4字节，可选）                               │
+│  ├── TPID：0x8100                                            │
+│  ├── VLAN ID：0~4095（由 SCL 定义）                          │
+│  └── Priority：0~7（SV 通常用 4）                             │
+├─────────────────────────────────────────────────────────────┤
+│  以太网类型（2字节）                                          │
+│  └── 0x88BA（IEC 61850-9-2 专用类型）                         │
+├─────────────────────────────────────────────────────────────┤
+│  APDU（应用协议数据单元）                                     │
+│  └── ASN.1 BER 编码的 SV 数据                                 │
+├─────────────────────────────────────────────────────────────┤
+│  FCS（帧校验序列，4字节）                                     │
+└─────────────────────────────────────────────────────────────┘
+</code></pre>
+<hr />
+<h2 id="sv-apdu">四、SV APDU 结构</h2>
+<h3 id="asn1">ASN.1 定义</h3>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="n n-Type">SV</span><span class="w"> </span><span class="n n-Type">APDU</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">savPdu</span><span class="w">          </span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="n n-Type">SavPdu</span>
+<span class="p">}</span>
+
+<span class="n n-Type">SavPdu</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">noASDU</span><span class="w">          </span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="kt">INTEGER</span><span class="p">,</span><span class="w">           </span><span class="c1">-- ASDU 数量</span>
+<span class="w">    </span><span class="nv">seqASDU</span><span class="w">         </span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="n n-Type">ASDU</span><span class="w">   </span><span class="c1">-- ASDU 序列</span>
+<span class="p">}</span>
+
+<span class="n n-Type">ASDU</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">svID</span><span class="w">            </span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="kt">VisibleString</span><span class="p">,</span><span class="w">     </span><span class="c1">-- SV 标识</span>
+<span class="w">    </span><span class="nv">smpCnt</span><span class="w">          </span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="kt">INTEGER</span><span class="p">,</span><span class="w">           </span><span class="c1">-- 采样计数器</span>
+<span class="w">    </span><span class="nv">confRev</span><span class="w">         </span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="kt">INTEGER</span><span class="p">,</span><span class="w">           </span><span class="c1">-- 配置版本</span>
+<span class="w">    </span><span class="nv">refrTm</span><span class="w">          </span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="n n-Type">UtcTime</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 参考时间</span>
+<span class="w">    </span><span class="nv">smpSynch</span><span class="w">        </span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="kt">INTEGER</span><span class="p">,</span><span class="w">           </span><span class="c1">-- 同步标志</span>
+<span class="w">    </span><span class="nv">seqData</span><span class="w">         </span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="kt">OCTET STRING</span><span class="w">       </span><span class="c1">-- 采样数据</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="asdu">ASDU 详解</h3>
+<pre><code class="md-fencescode">ASDU（Application Service Data Unit）：
+┌─────────────────────────────────────────────────────────────┐
+│  svID（SV 标识）                                             │
+│  ├── 字符串，标识这组采样值的来源                            │
+│  ├── 例如：&quot;MU_Line1&quot;、&quot;MU_T1&quot;                              │
+│  └── 由 SCL 文件中的 DataSet/name 定义                       │
+├─────────────────────────────────────────────────────────────┤
+│  smpCnt（采样计数器）                                        │
+│  ├── 范围：0 ~ (SmpRate - 1)                                 │
+│  ├── 每个采样周期 +1，循环计数                               │
+│  └── 用于检测丢帧和同步                                      │
+├─────────────────────────────────────────────────────────────┤
+│  confRev（配置版本）                                         │
+│  └── 数据集配置版本号，配置变更时 +1                         │
+├─────────────────────────────────────────────────────────────┤
+│  refrTm（参考时间，可选）                                    │
+│  └── UTC 时间戳，用于绝对时间同步                            │
+├─────────────────────────────────────────────────────────────┤
+│  smpSynch（同步标志）                                        │
+│  ├── 0 = 未同步                                              │
+│  ├── 1 = 本地同步（与其他 MU 同步）                          │
+│  └── 2 = 全局同步（与绝对时间同步）                          │
+├─────────────────────────────────────────────────────────────┤
+│  seqData（采样数据序列）                                     │
+│  └── 二进制编码的采样值数组                                  │
+└─────────────────────────────────────────────────────────────┘
+</code></pre>
+<hr />
+<h2 id="_6">五、采样数据编码</h2>
+<h3 id="_7">数据格式</h3>
+<pre><code class="md-fencescode">每个采样值：
+├── 数据类型：32位有符号整数（INT32）
+├── 字节序：大端（Big Endian）
+├── 比例：额定值对应 0x01D4（4672）
+└── 额定值定义：
+    ├── 电流：1A 或 5A（额定二次电流）
+    └── 电压：100V 或 110V（额定二次电压）
+
+编码示例：
+额定电流 1A → 编码值 4672（0x00001240）
+实际值 = 编码值 × 额定值 / 4672
+
+例如：
+编码值 = 9344（0x00002480）
+实际电流 = 9344 × 1A / 4672 = 2A
+</code></pre>
+<h3 id="asdu_1">典型 ASDU 数据内容</h3>
+<pre><code class="md-fencescode">一个典型的 ASDU 包含 8 个通道：
+├── 电流 Ia（4字节）
+├── 电流 Ib（4字节）
+├── 电流 Ic（4字节）
+├── 电流 In（4字节，中性点）
+├── 电压 Ua（4字节）
+├── 电压 Ub（4字节）
+├── 电压 Uc（4字节）
+└── 电压 Un（4字节，中性点）
+
+总数据长度：8 × 4 = 32 字节
+</code></pre>
+<hr />
+<h2 id="_8">六、采样率与网络负载</h2>
+<h3 id="_9">标准采样率</h3>
+<table>
+<thead>
+<tr>
+<th>采样率</th>
+<th>周期</th>
+<th>应用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>80 Hz</td>
+<td>12.5 ms</td>
+<td>低速保护、监测</td>
+</tr>
+<tr>
+<td>256 Hz</td>
+<td>3.9 ms</td>
+<td>中速保护</td>
+</tr>
+<tr>
+<td>4000 Hz</td>
+<td>250 μs</td>
+<td>高速保护、故障录波</td>
+</tr>
+<tr>
+<td>4800 Hz</td>
+<td>208 μs</td>
+<td>高精度测量</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_10">网络负载计算</h3>
+<pre><code class="md-fencescode">以 4000 Hz、8 通道为例：
+
+每帧大小：
+├── 以太网头：14 字节（MAC 头）
+├── VLAN：4 字节
+├── 以太网类型：2 字节
+├── APDU：约 100 字节（svID + smpCnt + 8×4 字节数据）
+├── FCS：4 字节
+└── 帧间隙：12 字节
+总计：约 136 字节/帧
+
+每秒帧数：4000
+
+带宽占用：
+136 字节 × 8 bit × 4000 /s = 4.35 Mbps
+
+考虑 100 Mbps 以太网：
+负载率 = 4.35 / 100 = 4.35%
+</code></pre>
+<p><strong>结论</strong>：即使是 4000 Hz 高速采样，100 Mbps 以太网也完全可以承载。</p>
+<hr />
+<h2 id="_11">七、时间同步</h2>
+<h3 id="_12">为什么需要同步？</h3>
+<pre><code class="md-fencescode">场景：差动保护需要比较线路两侧电流
+
+线路侧 A                    线路侧 B
+   │                            │
+   MU-A                         MU-B
+   │                            │
+   └──→ 保护装置 ←──┘
+
+如果 MU-A 和 MU-B 的采样时间不同步：
+- 外部故障时，两侧电流波形相位差 ≠ 180°
+- 保护可能误判为内部故障，导致误动！
+
+同步要求：
+- 差动保护：采样同步误差 &lt; 10 μs
+- 一般保护：采样同步误差 &lt; 100 μs
+</code></pre>
+<h3 id="ieee-1588-ptp">同步方案：IEEE 1588 PTP</h3>
+<pre><code class="md-fencescode">PTP（Precision Time Protocol）同步架构：
+
+┌─────────────┐         ┌─────────────┐
+│  PTP 主时钟  │◄───────►│  PTP 主时钟  │
+│  （GPS/北斗）│  热备份  │  （GPS/北斗）│
+└──────┬──────┘         └─────────────┘
+       │
+       │ PTP 协议（以太网组播）
+       ▼
+┌─────────────┐
+│   交换机     │◄── PTP 透明时钟
+│  （带 BMCA） │    （补偿驻留时间）
+└──────┬──────┘
+       │
+   ┌───┴───┐
+   ▼       ▼
+┌─────┐ ┌─────┐
+│ MU1 │ │ MU2 │ ...
+└─────┘ └─────┘
+
+同步精度：亚微秒级（&lt; 1 μs）
+</code></pre>
+<h3 id="sv_1">SV 中的同步标志</h3>
+<pre><code class="md-fencescode">smpSynch 字段：
+├── 0：未同步（Local）
+│   └── MU 使用本地时钟，未与外部同步
+│
+├── 1：本地同步（Local Clocked）
+│   └── 与其他 MU 同步，但可能未与绝对时间同步
+│
+└── 2：全局同步（Global Clocked）
+    └── 与绝对时间同步（如 GPS 时间）
+
+保护装置使用规则：
+- smpSynch = 0：闭锁差动保护（数据不可靠）
+- smpSynch = 1/2：允许差动保护
+</code></pre>
+<hr />
+<h2 id="scl">八、SCL 配置</h2>
+<h3 id="sv_2">SV 通信配置示例</h3>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;Communication&gt;</span>
+<span class="w">    </span><span class="nt">&lt;SubNetwork</span><span class="w"> </span><span class="na">name=</span><span class="s">"ProcessBus"</span><span class="w"> </span><span class="na">type=</span><span class="s">"8-MMS"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;BitRate</span><span class="w"> </span><span class="na">unit=</span><span class="s">"b/s"</span><span class="w"> </span><span class="na">multiplier=</span><span class="s">"M"</span><span class="nt">&gt;</span>100<span class="nt">&lt;/BitRate&gt;</span>
+
+<span class="w">        </span><span class="cm">&lt;!-- 合并单元 --&gt;</span>
+<span class="w">        </span><span class="nt">&lt;ConnectedAP</span><span class="w"> </span><span class="na">iedName=</span><span class="s">"MU_Line1"</span><span class="w"> </span><span class="na">apName=</span><span class="s">"S1"</span><span class="nt">&gt;</span>
+<span class="w">            </span><span class="nt">&lt;SMV</span><span class="w"> </span><span class="na">ldInst=</span><span class="s">"MU"</span><span class="w"> </span><span class="na">cbName=</span><span class="s">"SVCB"</span><span class="nt">&gt;</span>
+<span class="w">                </span><span class="nt">&lt;Address&gt;</span>
+<span class="w">                    </span><span class="cm">&lt;!-- 组播 MAC 地址 --&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;P</span><span class="w"> </span><span class="na">type=</span><span class="s">"MAC-Address"</span><span class="nt">&gt;</span>01-0C-CD-04-00-10<span class="nt">&lt;/P&gt;</span>
+<span class="w">                    </span><span class="cm">&lt;!-- VLAN ID --&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;P</span><span class="w"> </span><span class="na">type=</span><span class="s">"VLAN-ID"</span><span class="nt">&gt;</span>100<span class="nt">&lt;/P&gt;</span>
+<span class="w">                    </span><span class="cm">&lt;!-- 优先级 --&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;P</span><span class="w"> </span><span class="na">type=</span><span class="s">"VLAN-PRIORITY"</span><span class="nt">&gt;</span>4<span class="nt">&lt;/P&gt;</span>
+<span class="w">                    </span><span class="cm">&lt;!-- APPID --&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;P</span><span class="w"> </span><span class="na">type=</span><span class="s">"APPID"</span><span class="nt">&gt;</span>0x4000<span class="nt">&lt;/P&gt;</span>
+<span class="w">                </span><span class="nt">&lt;/Address&gt;</span>
+<span class="w">            </span><span class="nt">&lt;/SMV&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/ConnectedAP&gt;</span>
+
+<span class="w">        </span><span class="cm">&lt;!-- 保护装置（订阅 SV）--&gt;</span>
+<span class="w">        </span><span class="nt">&lt;ConnectedAP</span><span class="w"> </span><span class="na">iedName=</span><span class="s">"PROT_Line1"</span><span class="w"> </span><span class="na">apName=</span><span class="s">"S1"</span><span class="nt">&gt;</span>
+<span class="w">            </span><span class="cm">&lt;!-- 订阅 MU_Line1 的 SV --&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/ConnectedAP&gt;</span>
+
+<span class="w">    </span><span class="nt">&lt;/SubNetwork&gt;</span>
+<span class="nt">&lt;/Communication&gt;</span>
+</code></pre>
+<h3 id="_13">数据集定义</h3>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;IED</span><span class="w"> </span><span class="na">name=</span><span class="s">"MU_Line1"</span><span class="nt">&gt;</span>
+<span class="w">    </span><span class="nt">&lt;AccessPoint</span><span class="w"> </span><span class="na">name=</span><span class="s">"S1"</span><span class="nt">&gt;</span>
+<span class="w">        </span><span class="nt">&lt;Server&gt;</span>
+<span class="w">            </span><span class="nt">&lt;LDevice</span><span class="w"> </span><span class="na">inst=</span><span class="s">"MU"</span><span class="nt">&gt;</span>
+<span class="w">                </span><span class="nt">&lt;LN0</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"LLN0"</span><span class="w"> </span><span class="na">inst=</span><span class="s">""</span><span class="w"> </span><span class="na">lnType=</span><span class="s">"LLN0_1"</span><span class="nt">&gt;</span>
+<span class="w">                    </span><span class="cm">&lt;!-- SV 控制块 --&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;SampledValueControl</span><span class="w"> </span><span class="na">name=</span><span class="s">"SVCB"</span><span class="w"> </span>
+<span class="w">                                         </span><span class="na">datSet=</span><span class="s">"dsSV"</span><span class="w"> </span>
+<span class="w">                                         </span><span class="na">confRev=</span><span class="s">"1"</span>
+<span class="w">                                         </span><span class="na">smvID=</span><span class="s">"MU_Line1"</span><span class="nt">&gt;</span>
+<span class="w">                        </span><span class="nt">&lt;SmvOpts</span><span class="w"> </span><span class="na">refreshTime=</span><span class="s">"false"</span><span class="w"> </span>
+<span class="w">                                 </span><span class="na">sampleRate=</span><span class="s">"false"</span><span class="w"> </span>
+<span class="w">                                 </span><span class="na">dataSet=</span><span class="s">"false"</span><span class="w"> </span>
+<span class="w">                                 </span><span class="na">security=</span><span class="s">"false"</span><span class="nt">/&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;/SampledValueControl&gt;</span>
+
+<span class="w">                    </span><span class="cm">&lt;!-- 数据集 --&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;DataSet</span><span class="w"> </span><span class="na">name=</span><span class="s">"dsSV"</span><span class="nt">&gt;</span>
+<span class="w">                        </span><span class="nt">&lt;FCDA</span><span class="w"> </span><span class="na">ldInst=</span><span class="s">"MU"</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"TCTR"</span><span class="w"> </span><span class="na">lnInst=</span><span class="s">"1"</span><span class="w"> </span>
+<span class="w">                              </span><span class="na">doName=</span><span class="s">"Amp"</span><span class="w"> </span><span class="na">daName=</span><span class="s">"instMag"</span><span class="w"> </span><span class="na">fc=</span><span class="s">"MX"</span><span class="nt">/&gt;</span>
+<span class="w">                        </span><span class="nt">&lt;FCDA</span><span class="w"> </span><span class="na">ldInst=</span><span class="s">"MU"</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"TCTR"</span><span class="w"> </span><span class="na">lnInst=</span><span class="s">"2"</span><span class="w"> </span>
+<span class="w">                              </span><span class="na">doName=</span><span class="s">"Amp"</span><span class="w"> </span><span class="na">daName=</span><span class="s">"instMag"</span><span class="w"> </span><span class="na">fc=</span><span class="s">"MX"</span><span class="nt">/&gt;</span>
+<span class="w">                        </span><span class="nt">&lt;FCDA</span><span class="w"> </span><span class="na">ldInst=</span><span class="s">"MU"</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"TCTR"</span><span class="w"> </span><span class="na">lnInst=</span><span class="s">"3"</span><span class="w"> </span>
+<span class="w">                              </span><span class="na">doName=</span><span class="s">"Amp"</span><span class="w"> </span><span class="na">daName=</span><span class="s">"instMag"</span><span class="w"> </span><span class="na">fc=</span><span class="s">"MX"</span><span class="nt">/&gt;</span>
+<span class="w">                        </span><span class="nt">&lt;FCDA</span><span class="w"> </span><span class="na">ldInst=</span><span class="s">"MU"</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"TVTR"</span><span class="w"> </span><span class="na">lnInst=</span><span class="s">"1"</span><span class="w"> </span>
+<span class="w">                              </span><span class="na">doName=</span><span class="s">"Vol"</span><span class="w"> </span><span class="na">daName=</span><span class="s">"instMag"</span><span class="w"> </span><span class="na">fc=</span><span class="s">"MX"</span><span class="nt">/&gt;</span>
+<span class="w">                        </span><span class="nt">&lt;FCDA</span><span class="w"> </span><span class="na">ldInst=</span><span class="s">"MU"</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"TVTR"</span><span class="w"> </span><span class="na">lnInst=</span><span class="s">"2"</span><span class="w"> </span>
+<span class="w">                              </span><span class="na">doName=</span><span class="s">"Vol"</span><span class="w"> </span><span class="na">daName=</span><span class="s">"instMag"</span><span class="w"> </span><span class="na">fc=</span><span class="s">"MX"</span><span class="nt">/&gt;</span>
+<span class="w">                        </span><span class="nt">&lt;FCDA</span><span class="w"> </span><span class="na">ldInst=</span><span class="s">"MU"</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"TVTR"</span><span class="w"> </span><span class="na">lnInst=</span><span class="s">"3"</span><span class="w"> </span>
+<span class="w">                              </span><span class="na">doName=</span><span class="s">"Vol"</span><span class="w"> </span><span class="na">daName=</span><span class="s">"instMag"</span><span class="w"> </span><span class="na">fc=</span><span class="s">"MX"</span><span class="nt">/&gt;</span>
+<span class="w">                    </span><span class="nt">&lt;/DataSet&gt;</span>
+<span class="w">                </span><span class="nt">&lt;/LN0&gt;</span>
+
+<span class="w">                </span><span class="cm">&lt;!-- 电流互感器逻辑节点 --&gt;</span>
+<span class="w">                </span><span class="nt">&lt;LN</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"TCTR"</span><span class="w"> </span><span class="na">inst=</span><span class="s">"1"</span><span class="w"> </span><span class="na">lnType=</span><span class="s">"TCTR_1"</span><span class="nt">/&gt;</span>
+<span class="w">                </span><span class="nt">&lt;LN</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"TCTR"</span><span class="w"> </span><span class="na">inst=</span><span class="s">"2"</span><span class="w"> </span><span class="na">lnType=</span><span class="s">"TCTR_1"</span><span class="nt">/&gt;</span>
+<span class="w">                </span><span class="nt">&lt;LN</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"TCTR"</span><span class="w"> </span><span class="na">inst=</span><span class="s">"3"</span><span class="w"> </span><span class="na">lnType=</span><span class="s">"TCTR_1"</span><span class="nt">/&gt;</span>
+
+<span class="w">                </span><span class="cm">&lt;!-- 电压互感器逻辑节点 --&gt;</span>
+<span class="w">                </span><span class="nt">&lt;LN</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"TVTR"</span><span class="w"> </span><span class="na">inst=</span><span class="s">"1"</span><span class="w"> </span><span class="na">lnType=</span><span class="s">"TVTR_1"</span><span class="nt">/&gt;</span>
+<span class="w">                </span><span class="nt">&lt;LN</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"TVTR"</span><span class="w"> </span><span class="na">inst=</span><span class="s">"2"</span><span class="w"> </span><span class="na">lnType=</span><span class="s">"TVTR_1"</span><span class="nt">/&gt;</span>
+<span class="w">                </span><span class="nt">&lt;LN</span><span class="w"> </span><span class="na">lnClass=</span><span class="s">"TVTR"</span><span class="w"> </span><span class="na">inst=</span><span class="s">"3"</span><span class="w"> </span><span class="na">lnType=</span><span class="s">"TVTR_1"</span><span class="nt">/&gt;</span>
+<span class="w">            </span><span class="nt">&lt;/LDevice&gt;</span>
+<span class="w">        </span><span class="nt">&lt;/Server&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/AccessPoint&gt;</span>
+<span class="nt">&lt;/IED&gt;</span>
+</code></pre>
+<hr />
+<h2 id="goose">九、与 GOOSE 的对比</h2>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>SV（采样值）</th>
+<th>GOOSE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>传输内容</strong></td>
+<td>模拟量采样（电流/电压）</td>
+<td>开关量状态（跳闸/位置）</td>
+</tr>
+<tr>
+<td><strong>发送频率</strong></td>
+<td>固定周期（80/256/4000 Hz）</td>
+<td>事件触发 + 心跳</td>
+</tr>
+<tr>
+<td><strong>延迟要求</strong></td>
+<td>&lt; 0.5 ms</td>
+<td>&lt; 4 ms</td>
+</tr>
+<tr>
+<td><strong>MAC 地址</strong></td>
+<td>01-0C-CD-04-xx-xx</td>
+<td>01-0C-CD-01-xx-xx</td>
+</tr>
+<tr>
+<td><strong>以太网类型</strong></td>
+<td>0x88BA</td>
+<td>0x88B8</td>
+</tr>
+<tr>
+<td><strong>主要应用</strong></td>
+<td>保护计算、测量、录波</td>
+<td>保护跳闸、联闭锁</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_14">十、总结</h2>
+<p>Part 9-2 的核心：</p>
+<ol>
+<li><strong>以太网传输 SV</strong>——数字化变电站的核心技术</li>
+<li><strong>ASN.1 BER 编码</strong>——标准化的数据格式</li>
+<li><strong>高采样率支持</strong>——最高 4800 Hz</li>
+<li><strong>精确时间同步</strong>——IEEE 1588 PTP</li>
+<li><strong>网络负载可控</strong>——100 Mbps 轻松承载</li>
+</ol>
+<p><strong>一句话记忆</strong>：</p>
+<blockquote>
+<p>Part 9-2 = 以太网采样值 = 数字化变电站的"神经网络"</p>
+</blockquote>
+<hr />
+<h2 id="_15">下一步阅读建议</h2>
+<p>理解了 SV 传输，可以：
+- 研究合并单元（MU）的工作原理
+- 学习 PTP 时间同步的实现
+- 查看数字化变电站的工程案例</p>
+<hr />
+<p><em>文档系列：IEC 61850 标准解读 | Part 9-2/13 | 生成于 2026-04-08</em></p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>同步与互斥(详细版)</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="_1">同步与互斥</h1>
+<p>2022.07.14</p>
+<div class="toc">
+<ul>
+<li><a href="#_1">同步与互斥</a><ul>
+<li><a href="#_2">同步与互斥的基本概念</a><ul>
+<li><a href="#_3">临界资源</a></li>
+<li><a href="#_4">同步</a></li>
+<li><a href="#_5">互斥</a></li>
+<li><a href="#_6">例题</a></li>
+</ul>
+</li>
+<li><a href="#_7">实现临界区互斥的基本方法</a><ul>
+<li><a href="#_8">软件实现方法</a><ul>
+<li><a href="#_9">单标志法</a></li>
+<li><a href="#_10">双标志先检查</a></li>
+<li><a href="#_11">双标志后检查</a></li>
+<li><a href="#peterson">Peterson算法</a></li>
+</ul>
+</li>
+<li><a href="#_12">硬件实现方法</a><ul>
+<li><a href="#_13">中断屏蔽方法</a></li>
+<li><a href="#_14">硬件指令方法</a></li>
+</ul>
+</li>
+<li><a href="#_15">互斥锁</a></li>
+<li><a href="#_16">信号量</a><ul>
+<li><a href="#_17">整型信号量</a></li>
+<li><a href="#_18">记录型信号量</a></li>
+<li><a href="#_19">利用信号量实现同步</a></li>
+<li><a href="#_20">利用信号量实现互斥</a></li>
+<li><a href="#_21">利用信号量实现前驱关系</a></li>
+</ul>
+</li>
+<li><a href="#_22">例题</a></li>
+</ul>
+</li>
+<li><a href="#_23">管程</a><ul>
+<li><a href="#_24">管程的定义</a></li>
+<li><a href="#_25">条件变量</a></li>
+<li><a href="#_26">例题</a></li>
+<li><a href="#_27">生产者消费者问题</a><ul>
+<li><a href="#_28">生产者消费者问题原型</a></li>
+<li><a href="#_29">生产者消费者问题提高</a></li>
+</ul>
+</li>
+<li><a href="#_30">读者写者问题</a><ul>
+<li><a href="#_31">读者写者问题一般情况</a></li>
+<li><a href="#_32">读者写者问题优化</a></li>
+</ul>
+</li>
+<li><a href="#_33">哲学家进餐问题</a><ul>
+<li><a href="#_34">哲学家进餐基础方案</a></li>
+<li><a href="#_35">哲学家进餐防止死锁</a></li>
+</ul>
+</li>
+<li><a href="#_36">吸烟者问题</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<h2 id="_2">同步与互斥的基本概念</h2>
+<p>在多道程序环境下，进程是并发执行的，不同进程之间存在着不同的相互制约关系。为了协调进程之间的相互制约关系，引入了进程同步的概念。下面举一个简单的例子来帮大家理解这个概念。例如，让系统计算 1+2×3，假设系统产生两个进程：一个是加法进程，一个是乘法进程。</p>
+<p>要让计算结果是正确的，一定要让加法进程发生在乘法进程之后，但实际上操作系统具有异步性，若不加以制约，加法进程发生在乘法进程之前是绝对有可能的，因此要制定一定的机制去约束加法进程，让它在乘法进程完成之后才发生，而这种机制就是本节要讨论的内容。</p>
+<h3 id="_3">临界资源</h3>
+<p>虽然多个进程可以共享系统中的各种资源，但其中许多资源一次只能为一个进程所用，我们将<u>一次仅允许一个进程使用的资源</u>称为<strong>临界资源</strong>。许多物理设备都属于临界资源，如打印机等。此外，还有许多变量、数据等都可以被若干进程共享，也属于临界资源。</p>
+<p><u>对临界资源的访问，必须互斥地进行</u>，在每个进程中，<u>访问临界资源的那段代码</u>称为<strong>临界区</strong>。</p>
+<p>为了保证临界资源的正确使用，可把临界资源的访问过程分成4个部分：</p>
+<ul>
+<li><strong>进入区</strong>。为了进入临界区使用临界资源，在进入区要<u>检查可否进入临界区</u>，若能进入临界区，则应<u>设置正在访问临界区的标志</u>，以阻止其他进程同时进入临界区。</li>
+<li><strong>临界区</strong>。<u>进程中访问临界资源的那段代码，又称临界段</u>。</li>
+<li><strong>退出区</strong>。将正在访问临界区的<u>标志清除</u>。</li>
+<li><strong>剩余区</strong>。代码中的其余部分。</li>
+</ul>
+<pre lang="c"><code class="language-c md-fencescode"><span class="k">do</span><span class="p">{</span>
+<span class="w">    </span><span class="n">entry</span><span class="w"> </span><span class="n">section</span><span class="p">;</span><span class="w"> </span><span class="c1">// 进入区   </span>
+<span class="w">  </span><span class="n">critical</span><span class="w"> </span><span class="n">section</span><span class="p">;</span><span class="w"> </span><span class="c1">// 临界区</span>
+<span class="w">  </span><span class="n">exit</span><span class="w"> </span><span class="n">section</span><span class="p">;</span><span class="w"> </span><span class="c1">// 退出区</span>
+<span class="w">  </span><span class="n">reminderr</span><span class="w"> </span><span class="n">section</span><span class="p">;</span><span class="w"> </span><span class="c1">// 剩余区</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="_4">同步</h3>
+<p><strong>同步</strong>亦称<strong>直接制约关系</strong>，是指为完成某种任务而建立的两个或多个进程，这些进程因为需要在某些位置上<u>协调它们的工作次序而等待、传递信息所产生的制约关系</u>。进程间的直接制约关系源于它们之间的相互合作。</p>
+<p>例如，输入进程 A 通过单缓冲向进程B提供数据。当该缓冲区空时，进程B不能获得所需数据而阻塞，一旦进程 A 将数据送入缓冲区，进程B就被唤醒。反之，当缓冲区满时，进程 A被阻塞，仅当进程B取走缓冲数据时，才唤醒进程 A。</p>
+<h3 id="_5">互斥</h3>
+<p><strong>互斥</strong>也称<strong>间接制约关系</strong>。当一个进程进入临界区<u>使用临界资源</u>时，另一个进程必须等待，当占用临界资源的进程退出临界区后，另一进程才允许去访问此临界资源。</p>
+<p>例如，在仅有一台打印机的系统中，有两个进程 A 和进程 B，若进程 A 需要打印时，系统己将打印机分配给进程 B，则进程 A 必须阻塞。一旦进程 B 将打印机释放，系统便将进程 A唤醒，并将其由阻塞态变为就绪态。</p>
+<p>为禁止两个进程同时进入临界区，同步机制应遵循以下准则：</p>
+<ul>
+<li><strong>空闲让进</strong>。临界区空闲时，可以允许一个请求进入临界区的进程立即进入临界区。</li>
+<li><strong>忙则等待</strong>。当己有进程进入临界区时，其他试图进入临界区的进程必须等待。</li>
+<li><strong>有限等待</strong>。对请求访问的进程，应保证能在有限时间内进入临界区。</li>
+<li><strong>让权等待</strong>。当进程不能进入临界区时，应立即释放处理器，防止进程忙等待</li>
+</ul>
+<h3 id="_6">例题</h3>
+<p><button onclick='change(0)'>隐藏答案</button><button onclick='change(1)'>显示答案</button></p>
+<ul>
+<li>一个正在访问临界资源的进程由于申请等待 I/O 操作而被中断时，它（）。
+  A. 允许其他进程进入与该进程相关的临界区
+  B. 不允许其他进程进入任何临界区
+  C. 允许其他进程抢占处理器，但不得进入该进程的临界区
+  D. 不允许任何进程抢占处理器</li>
+</ul>
+<div class="DynamicShow">答案：C</div>
+
+<ul>
+<li>进程 A 和进程 B 通过共享缓冲区协作完成数据处理，进程A 负责产生数据并放入缓冲区，进程B从缓冲区读数据并输出。进程A和进程B之间的制约关系是(）。
+  A. 互斥关系
+  B. 同步关系
+  C. 至斥和同步关系 
+  D. 无制约关系</li>
+</ul>
+<div class="DynamicShow">答案：C</div>
+
+<ul>
+<li>在用信号量机制实现互斥时，<strong>互斥</strong>信号量的初值为（)。
+  A. 0
+  B. 1
+  C. 2
+  D. 3</li>
+</ul>
+<div class="DynamicShow">答案：B</div>
+
+<ul>
+<li>PV操作实现同步时，信号量的初值为（）。
+  A. -1
+  B. 0
+  C. 1
+  D. 由用户确定</li>
+</ul>
+<div class="DynamicShow">答案：D</div>
+
+<ul>
+<li>一个进程映像由 PCB、程序、数据 组成，其中（）必须用可重入编码编写。
+  A. PCB
+  B. 程序
+  C. 数据
+  D．共享程序段</li>
+</ul>
+<div class="DynamicShow">答案：D</div>
+
+<ul>
+<li>一个系统中共有5个并发进程涉及某个相同的变量A，变量A的相关临界区是由（）个临界区构成的。
+  A. 1
+  B. 3
+  C. 5
+  D. 6</li>
+</ul>
+<div class="DynamicShow">答案：C。这里的临界区是指访问临界资源 A 的那段代码（临界区的定义）。那么5个并发进程共有 5个操作共享变量 A 的代码段。</div>
+
+<ul>
+<li>系统有n个进程，则就绪队列中进程的个数最多有（①）个；阻塞队列中进程的个数最多有（②）个。
+  ① A. n+1 B. n  C. n-1 D. 1
+  ② A. n+1 B. m C. n-1 D. 1</li>
+</ul>
+<div class="DynamicShow">答案：B、C。<br>① 系统中有n个进程，其中至少有一个进程正在执行（处理器至少有一个），因此就绪队列中的进程个数最多有n-1个。B选项容易被错选，以为出现了处理器为空、就绪队列全满的情况，实际调度无此状态。<br>
+  注意：系统中有n个进程，其中至少有一个进程正在执行（处理器至少有一个），其实这句话对于一般情況是错误的，但我们只需考虑就绪队列中进程最多这种特殊情況即可。<br>
+  ② 此题C 选项容易被错选，阻塞队列有n-1个进程这种情况是可能发生的，但不是最多的情况。可能不少读者会忽视死锁的情况，死锁就是n个进程都被阻塞，所以最多可以有n个进程在阻塞队列。</div>
+
+<blockquote>
+<p>小结：</p>
+<ol>
+<li>临界资源</li>
+<li>临界区</li>
+<li>临界资源的访问过程（进入区，临界区，退出区，剩余区）</li>
+<li>同步/直接制约关系</li>
+<li>互斥/间接制约关系</li>
+<li>临界资源的访问机制（空闲让进、忙则等待、优先等待、让权等待）</li>
+</ol>
+</blockquote>
+<h2 id="_7">实现临界区互斥的基本方法</h2>
+<h3 id="_8">软件实现方法</h3>
+<p>进入区设置并检杳一些标志来标明是否有进程在临界区中，若己有进程在临界区，则在进入区通过循环检查进行等待，进程离开临界区后则在退出区修改标志</p>
+<h4 id="_9">单标志法</h4>
+<p>该算法设置一个公用整型变量 <u>turn</u>，用于指示<u>被允许进入临界区的进程编号</u>，即若 turn=0，则允许P0进程进入临界区。该算法可确保每次只允许一个进程进入临界区。但<u>两个进程必须交替进入临界区</u>，若某个进程不再进入临界区，则另一个进程也将无法进入临界区(违背“空闲让进”)。这样很容易造成资源利用不充分。</p>
+<p>若P0顺利进入临界区并从临界区离开，则此时临界区是空闲的，但P1并没有进入临界区的打算，turn = 1 一直成立，P0就无法再次进入临界区（一直被while 死循环困住）。</p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="c1">// P0进程访问</span>
+<span class="k">while</span><span class="p">(</span><span class="n">turn</span><span class="o">!=</span><span class="mi">0</span><span class="p">);</span><span class="w">    </span><span class="c1">// trun不是自己就等待</span>
+<span class="n">critical</span><span class="w"> </span><span class="n">section</span><span class="p">;</span><span class="w">  </span><span class="c1">// 临界区</span>
+<span class="n">trun</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w">          </span><span class="c1">// 把trun交给1</span>
+<span class="n">remainder</span><span class="w"> </span><span class="n">section</span><span class="p">;</span><span class="w"> </span><span class="c1">// 剩余区</span>
+
+<span class="c1">// P1进程访问</span>
+<span class="k">while</span><span class="p">(</span><span class="n">turn</span><span class="o">!=</span><span class="mi">1</span><span class="p">);</span><span class="w">    </span><span class="c1">// trun不是自己就等待</span>
+<span class="n">critical</span><span class="w"> </span><span class="n">section</span><span class="p">;</span><span class="w">  </span><span class="c1">// 临界区</span>
+<span class="n">trun</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w">          </span><span class="c1">// 把trun交给0</span>
+<span class="n">remainder</span><span class="w"> </span><span class="n">section</span><span class="p">;</span><span class="w"> </span><span class="c1">// 剩余区</span>
+</code></pre>
+<blockquote>
+<p>妙记：</p>
+<p>男生女生去厕所，厕所只有一间，门上挂一个牌子。男生看牌子是男，进去💩，出来把牌子改成女。女生看牌子是女，进去💩，出来把牌子改成男。如果两个男的都想💩，第一个进去出来把牌子一改，如果一直没女生来的话，第二个男生就要憋死。</p>
+</blockquote>
+<h4 id="_10">双标志先检查</h4>
+<p>该算法的基本思想是在每个进程访问临界区资源之前，<u>先查看临界资源是否正被访问，若正被访问，该进程需等待</u>；否则，进程才进入自己的临界区。为此，设置一个 flag数组，如第i个元素值为 FALSE， 表示Pi进程末进入临界区，值为 TRUE，表示Pi进程进入临界区。</p>
+<p>优点：不用交替进入，可连续使用：缺点：Pi和Pj可能同时进入临界区。按序列①②③④执行时，会同时进入临界区（违背“忙则等待”)。即在检查对方的 flag 后和切换自己的flag 前有一段时间，结果都检查通过。这里的问题出在检查和修改操作不能一次进行</p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="c1">// P0进程访问</span>
+<span class="k">while</span><span class="p">(</span><span class="n">flag</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="nb">true</span><span class="p">);</span><span class="w">  </span><span class="c1">// 别的进程占用自己就等待【1】</span>
+<span class="n">flag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w">        </span><span class="c1">// 标记自己占用【3】</span>
+<span class="n">critical</span><span class="w"> </span><span class="n">section</span><span class="p">;</span><span class="w">      </span><span class="c1">// 临界区</span>
+<span class="n">flag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w">       </span><span class="c1">// 标记自己未占用</span>
+<span class="n">remainder</span><span class="w"> </span><span class="n">section</span><span class="p">;</span><span class="w">     </span><span class="c1">// 剩余区</span>
+
+<span class="c1">// P1进程访问</span>
+<span class="k">while</span><span class="p">(</span><span class="n">flag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="nb">true</span><span class="p">);</span><span class="w">  </span><span class="c1">// 别的进程占用自己就等待【2】</span>
+<span class="n">flag</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w">        </span><span class="c1">// 标记自己占用【4】</span>
+<span class="n">critical</span><span class="w"> </span><span class="n">section</span><span class="p">;</span><span class="w">      </span><span class="c1">// 临界区</span>
+<span class="n">flag</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w">       </span><span class="c1">// 标记自己未占用</span>
+<span class="n">remainder</span><span class="w"> </span><span class="n">section</span><span class="p">;</span><span class="w">     </span><span class="c1">// 剩余区</span>
+
+<span class="c1">// 按照1，2，3，4执行，就会同时进入临界区！！违背忙则等待</span>
+</code></pre>
+<blockquote>
+<p>妙记：</p>
+<p>一男一女去厕所，厕所只有一间，门上挂两个牌子，男生一个牌，女生一个牌，牌子的正反代表自己是否在💩。男生看到了女生不在💩，决定要进去。男生还没翻自己的牌子，说时迟那时快，女生也来厕所了，看到男生不在💩，也决定进去。于是两人先后翻了牌子。。然后。。</p>
+</blockquote>
+<h4 id="_11">双标志后检查</h4>
+<p>算法二<u>先检测对方的进程状态标志，再置自己的标志</u>，由于在检测和放置中可插入另一个进程到达时的检测操作，会造成两个进程在分别检测后同时进入临界区。为此，算法三先将自己的标志设置为 TRUE，再检测对方的状态标志，若对方标志为 TRUE，则进程等待：否则进入临界区。</p>
+<p>个进程几乎同时都想进入临界区时，它们分别将自己的标志值 flag 设置为 TRUE， 并且同时检测对方的状态（执行 while 语句），发现对方也要进入临界区时，双方互相谦让，结果谁也进不了临界区，从而导致“饥饿”现象。</p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="c1">// P0进程访问</span>
+<span class="n">flag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w">        </span><span class="c1">// 标记自己想占用【1】</span>
+<span class="k">while</span><span class="p">(</span><span class="n">flag</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="nb">true</span><span class="p">);</span><span class="w">  </span><span class="c1">// 别的进程占用自己就等待【3】</span>
+<span class="n">critical</span><span class="w"> </span><span class="n">section</span><span class="p">;</span><span class="w">      </span><span class="c1">// 临界区</span>
+<span class="n">flag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w">       </span><span class="c1">// 标记自己未占用</span>
+<span class="n">remainder</span><span class="w"> </span><span class="n">section</span><span class="p">;</span><span class="w">     </span><span class="c1">// 剩余区</span>
+
+<span class="c1">// P1进程访问</span>
+<span class="n">flag</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w">        </span><span class="c1">// 标记自己想占用【2】</span>
+<span class="k">while</span><span class="p">(</span><span class="n">flag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="nb">true</span><span class="p">);</span><span class="w">  </span><span class="c1">// 别的进程占用自己就等待【4】</span>
+<span class="n">critical</span><span class="w"> </span><span class="n">section</span><span class="p">;</span><span class="w">      </span><span class="c1">// 临界区</span>
+<span class="n">flag</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w">       </span><span class="c1">// 标记自己未占用</span>
+<span class="n">remainder</span><span class="w"> </span><span class="n">section</span><span class="p">;</span><span class="w">     </span><span class="c1">// 剩余区</span>
+
+<span class="c1">// 按照1，2，3，4执行，就会同时进入不了临界区！！违背有限等待</span>
+</code></pre>
+<blockquote>
+<p>妙记：</p>
+<p>一男一女去厕所，厕所只有一间，门上挂两个牌子，男生一个牌，女生一个牌，牌子的正反代表自己是否在💩。吸取了刚才的尴尬经验，现在男生把自己的牌子翻了，然后再看女生在不在。女生也是这样。结果男生女生一次翻了自己的牌子，然后发现对方的被翻了，结果双双憋死在厕所🚽。。。</p>
+</blockquote>
+<h4 id="peterson">Peterson算法</h4>
+<p><a href="https://zh.m.wikipedia.org/wiki/Peterson%E7%AE%97%E6%B3%95">Peterson算法 wiki</a></p>
+<p>为了防止两个进程为进入临界区而无限期等待，又设置了变量 turn，每个进程在先设置自己的标志后再设置 turn 标志。这时，再同时检测另一个进程状态标志和允许进入标志，以便保证两个进程同时要求进入临界区时，只允许一个进程进入临界区。</p>
+<p>具体如下：考虑进程Pi，一旦设置 flag[i]=true，就表示它想要进入临界区，同时 turn=j，此时若进程 Pj己在临界区中，符合进程Pi中的while 循环条件，则Pi不能进入临界区。</p>
+<p>若Pj不想要进入临界区，即flag[j]=false，循环系件不符合，则P,可以顺利进入，反之亦然。本算法的基本思想是算法一和算法三的结合。利用flag 解决临界资源的互斥访问，而利用 tunr 解决“饥饿”现象。理解 Peterson’s Algorithm 的最好方法就是手动模拟。</p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="c1">// P0进程</span>
+<span class="n">flag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w">          </span><span class="c1">// 自己意愿  - 设置 【1】</span>
+<span class="n">turn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w">                </span><span class="c1">// 谦让一下，先给对面一个机会</span>
+<span class="k">while</span><span class="p">(</span><span class="n">flag</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">&amp;&amp;</span><span class="n">turn</span><span class="o">==</span><span class="mi">1</span><span class="p">);</span><span class="w"> </span><span class="c1">// 如果对面想要，也没把机会给回来，就等他</span>
+<span class="n">critical</span><span class="w"> </span><span class="n">section</span><span class="p">;</span><span class="w">        </span><span class="c1">// 如果对面不想要(flag=false)，或者对面把机会给回来了就执行</span>
+<span class="n">flag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w">         </span><span class="c1">// 自己意愿  - 清除</span>
+<span class="n">reminder</span><span class="w"> </span><span class="n">section</span><span class="p">;</span>
+
+<span class="c1">// P1进程</span>
+<span class="n">flag</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w">          </span><span class="c1">// 自己意愿  - 设置</span>
+<span class="n">turn</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w">                </span><span class="c1">// 谦让一下，先给对面一个机会</span>
+<span class="k">while</span><span class="p">(</span><span class="n">flag</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">&amp;&amp;</span><span class="n">turn</span><span class="o">==</span><span class="mi">0</span><span class="p">);</span><span class="w"> </span><span class="c1">// </span>
+<span class="n">critical</span><span class="w"> </span><span class="n">section</span><span class="p">;</span>
+<span class="n">flag</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w">         </span><span class="c1">// 自己意愿  - 清除</span>
+<span class="n">reminder</span><span class="w"> </span><span class="n">section</span><span class="p">;</span>
+</code></pre>
+<blockquote>
+<p>妙记：</p>
+<p>一男一女去厕所，厕所只有一间。一个牌子正面是男反面是女，另外男女各自有一块自己的牌子。分别考虑刚才两次尴尬场面：</p>
+<p>单标志法时，厕所只有一个性别牌。如果男生闹肚子，刚拉完还想拉时，门上的性别牌已经被改成了女。比如现在不要紧了，只有性别牌是女同时女生表示要去厕所男生才会等待。所以在没有女生的情况下，男生可以继续去厕所了。</p>
+<p>双标志后检查时，厕所只有两个人自己意愿牌。如果男生女生先后表示意愿，两个人都去不了厕所。现在不要紧了，即使两个人都想去厕所，门上的性别牌规定了只有男/女可以进入。就不会出现两人都在等待的情况了。</p>
+<p>我的理解：</p>
+<ol>
+<li>之前的算法有缺陷</li>
+<li>单标志法会导致只能轮流进入，违背了空闲让进。 </li>
+<li>双标志后检查法会导致过分谦让，违背了有限等待。 </li>
+<li>皮特森算法将两者结合： </li>
+<li>单标志法违背空闲让进的原因是turn只能是轮流的0和1，新加入的flag[0],flag[1]可以代表意愿。如果是别人的turn，但别人没意愿，自己就可以进去了。 </li>
+<li>双标志后检查法违背了有限等待的原因是flag[0],flag[1]会依次设置成true，新加入的turn可以决定谁才有资格进入。如果对方想进入，但他没资格，自己就可以进去了。 </li>
+</ol>
+<p>单标志法和双标志后检查法只有刚才的两种情况会有bug，现在皮特森算法让彼此修改了对方的bug，新算法就没bug了，无论怎么组合都是正常的。</p>
+</blockquote>
+<h3 id="_12">硬件实现方法</h3>
+<p>理解本节介绍的硬件实现，对学习后面的信号量很有帮助。计算机提供了特殊的硬件指令，允许对一个字中的内容进行检测和修正，或对两个字的内容进行交换等。通过硬件支持实现临界段问题的方法称为<strong>低级方法</strong>，或称<strong>元方法</strong>。</p>
+<h4 id="_13">中断屏蔽方法</h4>
+<p>当一个进程正在执行它的临界区代码时，防止其他进程进入其临界区的最简方法是关中断。因为CPU 只在发生中断时引起进程切换，因此屏蔽中断能够保证当前运行的进程让临界区代码顺利地执行完，进而保证互斥的正确实现，然后执行开中断。其典型模式为</p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="c1">// ...</span>
+<span class="n">关中断</span>
+<span class="n">临界区</span>
+<span class="n">开中断</span>
+<span class="c1">// ...</span>
+</code></pre>
+<p>这种方法限制了处理机交替执行程序的能力，因此执行的效率会明显降低。对内核来说，在它执行更新变量或列表的几条指令期间，关中断是很方便的，但将关中断的权力交给用户则很不明智，若一个进程关中断后不再开中断，则系统可能会因此终止</p>
+<h4 id="_14">硬件指令方法</h4>
+<p><strong>TestAndset 指令</strong>：这条指令是原子操作，即执行该代码时不允许被中断。其功能是<u>读出指定标志后把该标志设置为真</u>。</p>
+<p>为每个临界资源设置一个共享布尔变量 lock，表示资源的两种状态：true 表示正被占用，初值为 false。进程在进入临界区之前，利用 TestAndset 检查标志 lock，若无进程在临界区，则其值为false，可以进入，关闭临界资源，把lock 置为 true，使任何进程都不能进入临界区；若有进
+程在临界区，则循环检查，直到进程退出。</p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="cm">/**</span>
+<span class="cm"> * TestAndSet</span>
+<span class="cm"> * 读出指定标志后把该标志设置为真</span>
+<span class="cm"> */</span>
+<span class="kt">bool</span><span class="w"> </span><span class="nf">TestAndSet</span><span class="p">(</span><span class="kt">bool</span><span class="w"> </span><span class="o">&amp;</span><span class="n">lock</span><span class="p">){</span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="n">old</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">lock</span><span class="p">;</span>
+<span class="w">  </span><span class="n">lock</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="n">old</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// 为每个临界资源设置一个共享布尔变量 lock</span>
+<span class="kt">bool</span><span class="w"> </span><span class="n">lockArray</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="nb">false</span><span class="p">,</span><span class="nb">false</span><span class="p">,</span><span class="nb">false</span><span class="p">};</span>
+
+<span class="c1">// 访问第二个临界资源的过程</span>
+<span class="k">while</span><span class="p">(</span><span class="n">TestAndSet</span><span class="p">(</span><span class="n">lockArray</span><span class="p">[</span><span class="mi">1</span><span class="p">]));</span>
+<span class="c1">// 临界区</span>
+<span class="c1">// ...</span>
+<span class="n">lockArray</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">=</span><span class="nb">false</span><span class="p">;</span>
+<span class="c1">// 剩余区</span>
+<span class="c1">// ...</span>
+</code></pre>
+<p><strong>Swap 指令</strong>：该指令的功能是交换两个字（字节）的内容。</p>
+<p>用 Swap 指令可以简单有效地实现互斥，为每个临界资源设置一个共享布尔变量 lock，初值false：在每个进程中再设置一个局部布尔变量key，用于与lock 交换信息。在进入临界区前，先利用 Swap 指令交换lock 与key 的内容，然后检查key 的状态：有进程在临界区时，重复交换和检查过程，直到进程退出。</p>
+<p>硬件方法的优点：适用于任意数目的进程，而不管是单处理机还是多处理机：简单、容易验证其正确性。可以支持进程内有多个临界区，只需为每个临界区设立一个布尔变量。</p>
+<p>硬件方法的缺点：进程等待进入临界区时要耗费处理机时间，<u>不能实现让权等待</u>。从等待进程中随机选择一个进入临界区，有的进程可能一直选不上，从而导致“饥饿”现象。</p>
+<p>无论是软件实现方法还是硬件实现方法，读者只需理解它的执行过程即可，关键是软件实现方法。实际练习和考试中很少让读者写出某种软件和硬件实现方法，因此读者并不需要默写或记忆。以上的代码实现与我们平时在编译器上写的代码意义不同，以上的代码实现是为了表述进程实现同步和互斥的过程，并不是说计算机内部实现同步互斥的就是这些代码。</p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="cm">/**</span>
+<span class="cm"> * Swap</span>
+<span class="cm"> * 交换</span>
+<span class="cm"> */</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">Swap</span><span class="p">(</span><span class="kt">bool</span><span class="w"> </span><span class="o">&amp;</span><span class="n">a</span><span class="p">,</span><span class="kt">bool</span><span class="w"> </span><span class="o">&amp;</span><span class="n">b</span><span class="p">){</span>
+<span class="w">  </span><span class="kt">bool</span><span class="w"> </span><span class="n">temp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
+<span class="w">  </span><span class="n">a</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">b</span><span class="p">;</span>
+<span class="w">  </span><span class="n">b</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">temp</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// 为每个临界资源设置一个共享布尔变量 lock</span>
+<span class="kt">bool</span><span class="w"> </span><span class="n">lockArray</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="nb">false</span><span class="p">,</span><span class="nb">false</span><span class="p">,</span><span class="nb">false</span><span class="p">};</span>
+
+<span class="c1">// 访问第二个临界资源的过程</span>
+<span class="kt">bool</span><span class="w"> </span><span class="n">key</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w"> </span><span class="c1">// 局部变量</span>
+<span class="k">while</span><span class="p">(</span><span class="n">key</span><span class="o">==</span><span class="nb">true</span><span class="p">)</span><span class="w"> </span>
+<span class="w">  </span><span class="c1">// 这里的key是换完的key, true代表lockArray[i]是true（正在使用）</span>
+<span class="w">  </span><span class="c1">// 如果lockArray[i]是true，不停的换也是俩true</span>
+<span class="w">  </span><span class="n">Swap</span><span class="p">(</span><span class="n">key</span><span class="p">,</span><span class="n">lockArray</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="c1">// 临界区</span>
+<span class="c1">// ...</span>
+<span class="n">lockArray</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">=</span><span class="nb">false</span><span class="p">;</span>
+<span class="c1">// 剩余区</span>
+<span class="c1">// ...</span>
+</code></pre>
+<h3 id="_15">互斥锁</h3>
+<p>解决临界区<u>最简单</u>的工具就是<u>互斥锁(mutex lock)</u>。</p>
+<p>一个进程在进入临界区时应获得锁，在退出临界区时释放锁。函数 <u>acquire()</u>获得锁，用函数<u>release()</u>释放锁。</p>
+<p>每个互斥锁有一个布尔变量 available， 表示锁是否可用。如果锁是可用的，调用 acaiure()会成功，且锁不再可用。当一个进程试图获取不可用的锁时，会被阻塞，直到锁被释放。</p>
+<p>acquire()或 release()的执行必须是原子操作，因此互斥锁通常采用<u>硬件机制</u>来实现。</p>
+<p>互斥锁的主要缺点是<u>忙等待</u>，当有一个进程在临界区中，任何其他进程在进入临界区时必领连续循环调用 acquire()。当多个进程共享同一 CPU 时，就浪费了 CPU 周期。因此，互斥锁通常用于<u>多处理器系统</u>，一个线程可以在一个处理器上等待，不影响其他线程的执行</p>
+<p>本节后面，将会研究如何使用互斥锁解决经典同步问题。</p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="n">acquire</span><span class="p">(){</span>
+<span class="w">  </span><span class="k">while</span><span class="p">(</span><span class="o">!</span><span class="n">available</span><span class="p">);</span><span class="w"> </span><span class="c1">// 忙等待</span>
+<span class="w">  </span><span class="n">available</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">false</span><span class="p">;</span><span class="w"> </span><span class="c1">// 获得锁</span>
+<span class="p">}</span>
+
+<span class="n">release</span><span class="p">(){</span>
+<span class="w">  </span><span class="n">available</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">true</span><span class="p">;</span><span class="w">  </span><span class="c1">// 释放锁</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="_16">信号量</h3>
+<p>信号量机制是一种功能较强的机制，可用来解决互斥与同步问题，它只能被两个标准的<strong>原语wait(S)和 signal(S)</strong>访问，也可记为<strong>“P操作”和“V操作”</strong>。</p>
+<p>原语是指完成某种功能且不被分割、不被中断执行的操作序列，通常可由硬件来实现。例如，前述的 Test-and-Set 和 Swap 指令就是由硬件实现的原子操作。原语功能的不被中断执行特性在单处理机上可由软件通过屏蔽中断方法实现。原语之所以不能被中断执行，是因为原语对变量的操作过程若被打断，可能会去运行另一个对同一变量的操作过程，从而出现临界段问题。</p>
+<h4 id="_17">整型信号量</h4>
+<p>S代表资源数目</p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="c1">//P</span>
+<span class="n">wait</span><span class="p">(</span><span class="n">S</span><span class="p">){</span>
+<span class="w">  </span><span class="k">while</span><span class="p">(</span><span class="n">S</span><span class="o">&lt;=</span><span class="mi">0</span><span class="p">);</span>
+<span class="w">  </span><span class="n">S</span><span class="o">--</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// V</span>
+<span class="n">signal</span><span class="p">(</span><span class="n">S</span><span class="p">){</span>
+<span class="w">  </span><span class="n">S</span><span class="o">++</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<h4 id="_18">记录型信号量</h4>
+<p>记录型信号量机制是一种<u>不存在“忙等”现象</u>的进程同步机制。除了需要一个用于代表资源数目的整型变量 value 外，<u>再增加一个进程链表 L</u>，用于链接所有等待该资源的进程。记录型信号量得名于采用了记录型的数据结构。</p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="c1">// 记录型信号量</span>
+<span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="p">{</span>
+<span class="w">  </span><span class="kt">int</span><span class="w"> </span><span class="n">value</span><span class="p">;</span><span class="w">         </span><span class="c1">// 代表资源数目</span>
+<span class="w">  </span><span class="k">struct</span><span class="w"> </span><span class="nc">process</span><span class="w"> </span><span class="o">*</span><span class="n">L</span><span class="p">;</span><span class="w"> </span><span class="c1">// 链接所有等待该资源的进程</span>
+<span class="p">}</span><span class="n">semaphore</span><span class="p">;</span>
+
+<span class="c1">// wait</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">wait</span><span class="p">(</span><span class="n">semaphore</span><span class="w"> </span><span class="n">S</span><span class="p">){</span>
+<span class="w">  </span><span class="n">S</span><span class="p">.</span><span class="n">value</span><span class="o">--</span><span class="p">;</span>
+<span class="w">  </span><span class="k">if</span><span class="p">(</span><span class="n">S</span><span class="p">.</span><span class="n">value</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">){</span>
+<span class="w">    </span><span class="c1">// push this process to S.L;</span>
+<span class="w">    </span><span class="n">block</span><span class="p">(</span><span class="n">S</span><span class="p">.</span><span class="n">L</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// signal</span>
+<span class="kt">void</span><span class="w"> </span><span class="nf">signal</span><span class="p">(</span><span class="n">semaphore</span><span class="w"> </span><span class="n">S</span><span class="p">){</span>
+<span class="w">  </span><span class="n">S</span><span class="p">.</span><span class="n">value</span><span class="o">++</span><span class="p">;</span>
+<span class="w">  </span><span class="k">if</span><span class="p">(</span><span class="n">S</span><span class="p">.</span><span class="n">value</span><span class="o">&lt;=</span><span class="mi">0</span><span class="p">){</span>
+<span class="w">    </span><span class="c1">// pop a process P from S.L;</span>
+<span class="w">    </span><span class="n">wakeup</span><span class="p">(</span><span class="n">P</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h4 id="_19">利用信号量实现同步</h4>
+<pre lang="c"><code class="language-c md-fencescode"><span class="n">smaphore</span><span class="w"> </span><span class="n">S</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+
+<span class="n">P1</span><span class="p">(){</span>
+<span class="w">  </span><span class="n">before</span><span class="p">();</span>
+<span class="w">  </span><span class="n">V</span><span class="p">(</span><span class="n">S</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">P2</span><span class="p">(){</span>
+<span class="w">  </span><span class="n">P</span><span class="p">(</span><span class="n">S</span><span class="p">);</span>
+<span class="w">  </span><span class="n">after</span><span class="p">();</span>
+<span class="p">}</span>
+</code></pre>
+<h4 id="_20">利用信号量实现互斥</h4>
+<pre lang="c"><code class="language-c md-fencescode"><span class="n">semaphore</span><span class="w"> </span><span class="n">S</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+
+<span class="n">P1</span><span class="p">(){</span>
+<span class="w">  </span><span class="n">P</span><span class="p">(</span><span class="n">S</span><span class="p">);</span>
+<span class="w">  </span><span class="c1">// 临界区 访问S</span>
+<span class="w">  </span><span class="n">V</span><span class="p">(</span><span class="n">S</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">P2</span><span class="p">(){</span>
+<span class="w">  </span><span class="n">P</span><span class="p">(</span><span class="n">S</span><span class="p">);</span>
+<span class="w">  </span><span class="c1">// 临界区 访问S</span>
+<span class="w">  </span><span class="n">V</span><span class="p">(</span><span class="n">S</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<h4 id="_21">利用信号量实现前驱关系</h4>
+<pre lang="c"><code class="language-c md-fencescode"><span class="c1">// a -&gt; b ---&gt; c</span>
+<span class="c1">// \--&gt; d --/</span>
+
+<span class="n">semaphore</span><span class="w"> </span><span class="n">b</span><span class="p">,</span><span class="n">c</span><span class="p">,</span><span class="n">d</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+
+<span class="n">P_a</span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="w">  </span><span class="n">V</span><span class="p">(</span><span class="n">b</span><span class="p">);</span>
+<span class="w">  </span><span class="n">V</span><span class="p">(</span><span class="n">d</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">P_b</span><span class="p">{</span>
+<span class="w">  </span><span class="n">P</span><span class="p">(</span><span class="n">b</span><span class="p">);</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="w">  </span><span class="n">V</span><span class="p">(</span><span class="n">c1</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">P_b</span><span class="p">{</span>
+<span class="w">  </span><span class="n">P</span><span class="p">(</span><span class="n">d</span><span class="p">);</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="w">  </span><span class="n">V</span><span class="p">(</span><span class="n">c2</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="n">P_c</span><span class="p">{</span>
+<span class="w">  </span><span class="n">P</span><span class="p">(</span><span class="n">c1</span><span class="p">);</span>
+<span class="w">  </span><span class="n">P</span><span class="p">(</span><span class="n">c2</span><span class="p">);</span>
+<span class="w">  </span><span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="_22">例题</h3>
+<p><button onclick='change(0)'>隐藏答案</button><button onclick='change(1)'>显示答案</button></p>
+<ul>
+<li>【2018统考真题】 在下列同步机制中，可以实现让权等待的是（）。
+  A. Peterson 方法
+  B. swap指今
+  C. 信号量方法
+  D. TestAndSet 指令</li>
+</ul>
+<div class="DynamicShow">答案：C。硬件方法实现进程同步时不能实现让权等待，B和口错误;Peterson 算法满足有限等待但不满足让权等待，A错误；记录型信号量由于引入阻塞机制，消除了不让权等待的情况，C正确。</div>
+
+<ul>
+<li>【2016真题】进程P1和P2均包含并罚执行的线程，部分为代码描述如下所示。</li>
+</ul>
+<pre lang="c"><code class="language-c md-fencescode"><span class="c1">// 进程P1</span>
+<span class="kt">int</span><span class="w"> </span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+<span class="n">Thread1</span><span class="p">(){</span>
+<span class="w">  </span><span class="kt">int</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
+<span class="w">  </span><span class="n">a</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
+<span class="w">  </span><span class="n">x</span><span class="o">+=</span><span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="n">Thread2</span><span class="p">(){</span>
+<span class="w">  </span><span class="kt">int</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
+<span class="w">  </span><span class="n">a</span><span class="o">=</span><span class="mi">2</span><span class="p">;</span>
+<span class="w">  </span><span class="n">x</span><span class="o">+=</span><span class="mi">2</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<pre lang="c"><code class="language-c md-fencescode"><span class="c1">// 进程P2</span>
+<span class="kt">int</span><span class="w"> </span><span class="n">x</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+<span class="n">Thread3</span><span class="p">(){</span>
+<span class="w">  </span><span class="kt">int</span><span class="w"> </span><span class="n">a</span><span class="p">;</span>
+<span class="w">  </span><span class="n">a</span><span class="o">=</span><span class="n">x</span><span class="p">;</span>
+<span class="w">  </span><span class="n">x</span><span class="o">+=</span><span class="mi">3</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="n">Thread4</span><span class="p">(){</span>
+<span class="w">  </span><span class="kt">int</span><span class="w"> </span><span class="n">b</span><span class="p">;</span>
+<span class="w">  </span><span class="n">b</span><span class="o">=</span><span class="n">x</span><span class="p">;</span>
+<span class="w">  </span><span class="n">x</span><span class="o">+=</span><span class="mi">4</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<p>下列选项中需要互斥之行的操作（）</p>
+<p>A <code>a=1</code>与<code>a=2</code></p>
+<p>B <code>a=x</code>与<code>b=x</code></p>
+<p>C <code>x+=1</code>与<code>x+=2</code></p>
+<p>D <code>x+=1</code>与<code>x+=3</code></p>
+<p><button onclick='change(0)'>隐藏答案</button><button onclick='change(1)'>显示答案</button></p>
+<div class="DynamicShow">答案：C<br>
+  P1中对a进行赋值，并不影响最终的结果，因此a=1与a=2不需要互斥执行;<br>
+  a=x与b=x执行先后不影响a与6的结果，无须互斥执行;<br>
+  x+=1与x+=2执行先后会影响× 的结果，需要互斥执行;<br>
+  P1中的x1和P2中的x是不同范围中的×，互不影响，不需要互斥执行。</div>
+
+<blockquote>
+<p>小结：</p>
+<ol>
+<li>
+<p>软件实现方法</p>
+</li>
+<li>
+<p>单标志法 - 违背“空闲让进”</p>
+</li>
+<li>双标志先检查法 - 违背“忙则等待”</li>
+<li>双标志后检查法 - 违背“有限等待”</li>
+<li>皮特森算法 - 结合了单标志法和双标志后检查法
+本文是《进程与线程》专题的精简总结版，包含概念关键词、图表汇总、易错点汇总。</li>
+</ol>
+<p><img src="resources/软件实现小结.png" alt="image-20220711171528592" style="zoom:50%;" /></p>
+<ol>
+<li>硬件实现方法（低级方法，元方法）</li>
+<li>中断屏蔽方法</li>
+<li>硬件指令方法<ol>
+<li>TestAndSet指令</li>
+<li>Swap指令</li>
+</ol>
+</li>
+<li>互斥锁</li>
+<li>信号量</li>
+<li>整型信号量</li>
+<li>记录型信号量</li>
+<li>利用信号量实现同步</li>
+<li>利用信号量实现互斥</li>
+<li>利用信号量实现前驱图</li>
+</ol>
+</blockquote>
+<h2 id="_23">管程</h2>
+<p>信号量机制中，每个要访问临界资源的进程都必须自各同步的 PV 操作，大量分散的同步操作给系统管理带来了麻烦，且容易因同步操作不当而导致系统死锁。于是，便产生了一种新的进程同步工具——管程。管程的特性保证了进程互斥，无须程序员自己实现互斥，从而降低了死锁发生的可能性。同时管程提供了条件变量，可以让程序员灵活地实现进程同步。</p>
+<h3 id="_24">管程的定义</h3>
+<p>系统中的各种硬件资源和软件资源，均可用<u>数据结构</u>抽象地描达其资源特性，即用少量信息和对资源所执行的操作来表征该资源，而忽略它们的内部结构和实现细节.</p>
+<p>利用<u>共享数据结构</u>抽象地表示系统中的共享资源，而把对该数据结构实施的操作定义为一组过程。进程对共享资源的申请、释放等操作，都通过这组过程来实现，这组过程还可以根据资源情况，或接受或阻塞进程的访问，确保每次仅有一个进程使用共享资源，这样就可以统一管理对共享资源的所有访问，实现进程互斥。</p>
+<p><u>这个代表共享资源的数据结构，以及由对该共享数据结构实施操作的一组过程所组成的资源管理程序，称为管程(monitor）</u>。管程定义了一个数据结构和能为并发进程所执行（在该数据结构上）的一组操作，这组操作能同步进程和改变管程中的数据。</p>
+<p>上述定义可知，管程由4部分组成：
+<u>①管程的名称；</u>
+<u>②局部于管程内部的共享数据结构说明；</u>
+<u>③对该数据结构进行操作的一组过程（或函数）：</u>
+<u>④对局部于管程内部的共享数据设置初始值的语句。</u></p>
+<p>熟悉面向对象程序设计的读者看到管程的组成后，会立即联想到管程很像一个类 (class)。</p>
+<ol>
+<li>管程把对共享资源的操作封装起来，<u>管程内的共享数据结构只能被管程内的过程所访问</u>。一个进程只有通过调用管程内的过程才能进入管程访问共享资源。对于上例，外部进程只能通过调用 take_ avay() 过程来申请一个资源：归还资源也一样。</li>
+<li><u>每次仅允许一个进程进入管程，从而实现进程互斥</u>。若多个进程同时调用 take_away(), give_back()，则只有某个进程运行完它调用的过程后，下个进程才能开始运行它调用的过程。也就是说，各个进程只能串行执行管程内的过程，这一特性保证了进程 “互斥”访问共享数据结构S。</li>
+</ol>
+<h3 id="_25">条件变量</h3>
+<p>当一个进程进入管程后被阻塞，直到阻塞的原因解除时，在此期间，如果该进程不释放管程，那么其他进程无法进入管程。为此，将阻塞原因定义为条件变量 condition。通常，一𠆤进程被阻塞的原因可以有多个，因此在管程中设置了多个条件变量。每个条件变量保存了一个等待队列，用于记录因该条件变量而阻塞的所有进程，对条件变量只能进行两种操作，即wait 和 signal。</p>
+<ul>
+<li>x.wait：当x对应的条件不满足时，正在调用管程的进程调用 x.wait 将自己插入×条件的等待队列，并释放管程。此时其他进程可以使用该管程</li>
+<li>x.signal：×对应的条件发生了变化，则调用 x.signal，唤醒一个因x条件而阻塞的进程，下面给出条件变量的定义和使用</li>
+</ul>
+<pre lang="c"><code class="language-c md-fencescode"><span class="n">monitor</span><span class="w"> </span><span class="n">Demo</span><span class="p">{</span>
+<span class="w">  </span><span class="n">共享数据结构</span><span class="w"> </span><span class="n">S</span><span class="p">;</span>
+<span class="w">  </span><span class="n">condition</span><span class="w"> </span><span class="n">x</span><span class="p">;</span><span class="w">  </span><span class="c1">//定义一个【条件变量】</span>
+<span class="w">  </span><span class="n">init_code</span><span class="p">(){...}</span>
+<span class="w">  </span><span class="n">take_away</span><span class="p">(){</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="n">S</span><span class="o">&lt;=</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">x</span><span class="p">.</span><span class="n">wait</span><span class="p">();</span><span class="w">  </span><span class="c1">//资源不够，在条件变量× 上阻塞等待</span>
+<span class="w">      </span><span class="c1">// 资源足够，分配资源，做一系列相应处理;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="n">give_back</span><span class="p">(){</span>
+<span class="w">    </span><span class="c1">// 归还资源，做一系列相应处理;</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="n">有进程在等待</span><span class="p">)</span><span class="w"> </span><span class="n">x</span><span class="p">.</span><span class="n">signal</span><span class="p">;</span><span class="w"> </span><span class="c1">//唤醒一个阻塞进程</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>条件变量和信号量的比较：</p>
+<p>相似点：条件变量的wait/signal 操作类似于信号量的P/V操作，可以实现进程的阻塞/唤醒。</p>
+<p>不同点：<u>条件变量是“没有值”的</u>，仅实现了 “排队等待”功能;而信号量是“有值”的，信号量的值反映了剩余资源数，而在管程中，剩余资源数用共享数据结构记录。</p>
+<h3 id="_26">例题</h3>
+<p><button onclick='change(0)'>隐藏答案</button><button onclick='change(1)'>显示答案</button></p>
+<ul>
+<li>【2016统考真题】下列关于管程的积迷中，错误的是（）。
+  A. 管程只能用于实现进程的互斥
+  B. 管程是由编程语言支持的进程同步机制
+  C. 任何时候只能有一个进程在管程中执行
+  D. 管程中定义的变量只能被管程内的过程访问</li>
+</ul>
+<div class="DynamicShow">答案：A</div>
+
+<ul>
+<li>【2018统考真题】若x是管程内的条件交量。则当进程执行 x.wait()时所做的工作()
+  A．实现对变量x的互斥访问
+  B．唤醒一个在x上阻塞的进程
+  C.   根据x 的值判断该进程是否进入阻塞态
+  D．阻塞该进程，并将之插入×的阻塞队列中</li>
+</ul>
+<div class="DynamicShow">答案：D</div>
+
+<p>## 经典同步问题</p>
+<h3 id="_27">生产者消费者问题</h3>
+<h4 id="_28">生产者消费者问题原型</h4>
+<ul>
+<li>同步关系：产品</li>
+<li>生产者生产后消费者才能使用</li>
+<li>消费者消费后生产者才有地方放</li>
+<li>互斥关系：生产者与消费者对缓存的访问</li>
+<li>设置mutex=1</li>
+</ul>
+<pre lang="c"><code class="language-c md-fencescode"><span class="n">semaphore</span><span class="w"> </span><span class="n">mutex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="n">semaphore</span><span class="w"> </span><span class="n">product</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="n">semaphore</span><span class="w"> </span><span class="n">place</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">N</span><span class="p">;</span>
+
+<span class="n">productor</span><span class="p">(){</span>
+<span class="w">  </span><span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">){</span>
+<span class="w">    </span><span class="c1">// produce a product</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">place</span><span class="p">);</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">// input the product</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">product</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">comsumer</span><span class="p">(){</span>
+<span class="w">  </span><span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">){</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">product</span><span class="p">);</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">// get a product</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">place</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">// use the product</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h4 id="_29">生产者消费者问题提高</h4>
+<p>问题描述：桌子上有一个盘子，每次只能向其中放入一个水果。爸爸专向盘子中放苹果，妈妈专向盛子中放橘子，儿子专等吃盘子中的橘子，女儿专等吃盘子中的苹果。只有盘子为空时，爸爸或妈妈才可向盘子中放一个水果；仅当盘子中有自己需要的水果时，儿子或女儿可以从盘子中取出。</p>
+<ul>
+<li>互斥问题：对盘子的访问</li>
+<li>同步问题：</li>
+<li>爸爸妈妈放水果的地方</li>
+<li>两种水果</li>
+</ul>
+<pre lang="c"><code class="language-c md-fencescode"><span class="n">semaphore</span><span class="w"> </span><span class="n">mutex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="n">semaphore</span><span class="w"> </span><span class="n">orange</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="n">semaphore</span><span class="w"> </span><span class="n">apple</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="n">semaphore</span><span class="w"> </span><span class="n">place</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+
+<span class="n">father</span><span class="p">(){</span>
+<span class="w">  </span><span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">){</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">place</span><span class="p">);</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">// put an apple</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">apple</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">mother</span><span class="p">(){</span>
+<span class="w">  </span><span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">){</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">place</span><span class="p">);</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">// put an orange</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">orange</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">son</span><span class="p">(){</span>
+<span class="w">  </span><span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">){</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">orange</span><span class="p">);</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">// get an orange</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">place</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">daughtor</span><span class="p">(){</span>
+<span class="w">  </span><span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">){</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">apple</span><span class="p">);</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">// get an apple</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">place</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>改进：由于盘子的大小为1。所以当水果放入时，不能放新水果。没有水果是，不能再拿水果。所以其实本题不需要mutex！</strong></p>
+<h3 id="_30">读者写者问题</h3>
+<h4 id="_31">读者写者问题一般情况</h4>
+<p>每一个读者可以随便读文件。但是写文件的时候只能有一个进程在工作，不能有别的读或写。</p>
+<ul>
+<li>创新点：使用计数器记录读者的数量，只有最后一个读者的退出才能让写进程进入</li>
+<li>互斥：对计数器的访问；写变量与其他变量互斥</li>
+</ul>
+<pre lang="c"><code class="language-c md-fencescode"><span class="kt">int</span><span class="w"> </span><span class="n">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="n">semaphore</span><span class="w"> </span><span class="n">mutex</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
+<span class="n">semaphore</span><span class="w"> </span><span class="n">write</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
+
+<span class="n">writer</span><span class="p">(){</span>
+<span class="w">  </span><span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">){</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">write</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">// write</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">write</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">reader</span><span class="p">(){</span>
+<span class="w">  </span><span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">){</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="n">count</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">P</span><span class="p">(</span><span class="n">write</span><span class="p">);</span><span class="w"> </span><span class="c1">// 代表写进程用不了了</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+<span class="w">    </span><span class="n">count</span><span class="o">++</span><span class="p">;</span>
+
+<span class="w">    </span><span class="c1">// read</span>
+
+<span class="w">    </span><span class="n">count</span><span class="o">--</span><span class="p">;</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="n">count</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">V</span><span class="p">(</span><span class="n">write</span><span class="p">);</span><span class="w"> </span><span class="c1">// 代表写进程可以用了</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h4 id="_32">读者写者问题优化</h4>
+<p>上面的问题如果有读者正在运行时，新的读者可以随笔进入，这是写者会一直进入不了。下面方案会检查是否有读写着在等待。</p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="kt">int</span><span class="w"> </span><span class="n">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="n">semaphore</span><span class="w"> </span><span class="n">mutex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="n">semaphore</span><span class="w"> </span><span class="n">wait</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+
+<span class="n">writer</span><span class="p">(){</span>
+<span class="w">  </span><span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">){</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">wait</span><span class="p">);</span><span class="w"> </span><span class="c1">// [1] - 写者等待（针对进程）</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">write</span><span class="p">);</span><span class="w"> </span><span class="c1">// [2] - 共享文件访问互斥（针对文件）</span>
+<span class="w">    </span><span class="c1">// write</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">write</span><span class="p">);</span><span class="w"> </span><span class="c1">// [2]</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">wait</span><span class="p">);</span><span class="w"> </span><span class="c1">// [1]</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">reader</span><span class="p">(){</span>
+<span class="w">  </span><span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">){</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">wait</span><span class="p">);</span><span class="w"> </span><span class="c1">// [1] - 检查是否有等待的写者</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span><span class="w"> </span><span class="c1">// [2] - 互斥访问计数器</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="n">count</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">P</span><span class="p">(</span><span class="n">write</span><span class="p">);</span><span class="w"> </span><span class="c1">// 代表写进程用不了了</span>
+<span class="w">    </span><span class="n">count</span><span class="o">++</span><span class="p">;</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span><span class="w"> </span><span class="c1">// [2]</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">wait</span><span class="p">);</span><span class="w"> </span><span class="c1">// [1]</span>
+
+<span class="w">    </span><span class="c1">// read</span>
+
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+<span class="w">    </span><span class="n">count</span><span class="o">--</span><span class="p">;</span>
+<span class="w">    </span><span class="k">if</span><span class="p">(</span><span class="n">count</span><span class="o">==</span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="n">V</span><span class="p">(</span><span class="n">write</span><span class="p">);</span><span class="w"> </span><span class="c1">// 代表写进程可以用了</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="_33">哲学家进餐问题</h3>
+<p>问题描述：
+一张圆桌边上坐着 5 名哲学家，每两名哲学家之间的桌上摆一根筷子，两根筷子中间是一碗米饭。哲学家们倾注毕生精力用于思考和进餐，哲学家在思考时，并不影响他人。只有当哲学家饥饿时，才试图拿起左、右两根筷子（一根一根地拿起）。若筷子已在他人手上，则需要等待。饥饿的哲学家只有同时拿到了两根筷子才可以开始进餐，进餐完毕后，放下筷子继续恩考。</p>
+<h4 id="_34">哲学家进餐基础方案</h4>
+<pre lang="c"><code class="language-c md-fencescode"><span class="n">semaphore</span><span class="w"> </span><span class="n">c</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">=</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">};</span>
+<span class="n">P</span><span class="p">(</span><span class="n">i</span><span class="p">){</span>
+<span class="w">  </span><span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">){</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">c</span><span class="p">[(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">%</span><span class="mi">5</span><span class="p">]);</span>
+<span class="w">    </span><span class="c1">//eating</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">c</span><span class="p">[(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">%</span><span class="mi">5</span><span class="p">]);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h4 id="_35">哲学家进餐防止死锁</h4>
+<pre lang="c"><code class="language-c md-fencescode"><span class="c1">// 方案1，仅允许n-1个人同时进餐</span>
+<span class="n">semaphore</span><span class="w"> </span><span class="n">c</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">=</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">};</span>
+<span class="n">semaphore</span><span class="w"> </span><span class="n">n</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span><span class="p">;</span>
+<span class="n">P</span><span class="p">(</span><span class="n">i</span><span class="p">){</span>
+<span class="w">  </span><span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">){</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">c</span><span class="p">[(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">%</span><span class="mi">5</span><span class="p">]);</span>
+<span class="w">    </span><span class="c1">//eating</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">c</span><span class="p">[(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">%</span><span class="mi">5</span><span class="p">]);</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// 方案2，一个人检查左右筷子都可用后，下一个人才开始检查</span>
+<span class="n">semaphore</span><span class="w"> </span><span class="n">c</span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="o">=</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">};</span>
+<span class="n">semaphore</span><span class="w"> </span><span class="n">mutex</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span>
+<span class="n">P</span><span class="p">(</span><span class="n">i</span><span class="p">){</span>
+<span class="w">  </span><span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">){</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">c</span><span class="p">[(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">%</span><span class="mi">5</span><span class="p">]);</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">mutex</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">//eating</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">c</span><span class="p">[(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">%</span><span class="mi">5</span><span class="p">]);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="_36">吸烟者问题</h3>
+<p>假设一个系统有三个抽烟者进程和一个供应者进程。每个抽烟者不停地卷烟并抽它，但要卷起并抽掉一支烟，抽烟者需要有三种材料：<u>烟草、纸和胶水</u>。三个抽烟者中，第一个拥有烟草，第二个拥有纸，第三个拥有胶水。供应者进程无限地提供三种材料，供应者每次将两种材料放到桌子上，拥有剩下那种材料的抽烟者卷一根烟并抽掉它，并给供应者一个信号告诉己完成，此时供应者就会将另外两种材料放到桌上，如此重复（让三个抽烟者轮流地抽烟）。</p>
+<pre lang="c"><code class="language-c md-fencescode"><span class="n">semaphore</span><span class="w"> </span><span class="n">needG</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+<span class="n">semaphore</span><span class="w"> </span><span class="n">needP</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+<span class="n">semaphore</span><span class="w"> </span><span class="n">needW</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+<span class="c1">// semaphore mutex=1; -&gt; place=1不用mutex</span>
+<span class="n">semaphore</span><span class="w"> </span><span class="n">place</span><span class="o">=</span><span class="mi">1</span><span class="p">;</span>
+
+<span class="n">P</span><span class="p">(){</span>
+<span class="w">  </span><span class="k">for</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;;</span><span class="n">i</span><span class="o">=</span><span class="p">(</span><span class="n">i</span><span class="o">++</span><span class="p">)</span><span class="o">%</span><span class="mi">3</span><span class="p">){</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">place</span><span class="p">);</span>
+<span class="w">    </span><span class="k">switch</span><span class="p">(</span><span class="n">i</span><span class="p">){</span>
+<span class="w">      </span><span class="k">case</span><span class="w"> </span><span class="mi">0</span><span class="p">:</span>
+<span class="w">        </span><span class="c1">//P(mutex);</span>
+<span class="w">        </span><span class="n">put_P_W</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">//V(mutex);</span>
+<span class="w">        </span><span class="n">P</span><span class="p">(</span><span class="n">needG</span><span class="p">);</span>
+<span class="w">        </span><span class="k">break</span><span class="p">;</span>
+
+<span class="w">      </span><span class="k">case</span><span class="w"> </span><span class="mi">1</span><span class="p">:</span>
+<span class="w">        </span><span class="c1">//P(mutex);</span>
+<span class="w">        </span><span class="n">put_W_G</span><span class="p">()</span>
+<span class="w">        </span><span class="c1">//V(mutex);</span>
+<span class="w">        </span><span class="n">P</span><span class="p">(</span><span class="n">needP</span><span class="p">);</span>
+<span class="w">        </span><span class="k">break</span><span class="p">;</span>
+
+<span class="w">      </span><span class="k">case</span><span class="w"> </span><span class="mi">2</span><span class="p">:</span>
+<span class="w">        </span><span class="c1">//P(mutex);</span>
+<span class="w">        </span><span class="n">put_G_P</span>
+<span class="w">        </span><span class="c1">//V(mutex);</span>
+<span class="w">        </span><span class="nf">P</span><span class="p">(</span><span class="n">needW</span><span class="p">);</span>
+<span class="w">        </span><span class="k">break</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">PG</span><span class="p">(){</span>
+<span class="w">  </span><span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">){</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">needG</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">//P(mutex);</span>
+<span class="w">    </span><span class="n">get</span><span class="p">();</span>
+<span class="w">    </span><span class="c1">//V(mutex);</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">place</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">PP</span><span class="p">(){</span>
+<span class="w">  </span><span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">){</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">needP</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">//P(mutex);</span>
+<span class="w">    </span><span class="n">get</span><span class="p">();</span>
+<span class="w">    </span><span class="c1">//V(mutex);</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">place</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n">PW</span><span class="p">(){</span>
+<span class="w">  </span><span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">){</span>
+<span class="w">    </span><span class="n">P</span><span class="p">(</span><span class="n">needW</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">//P(mutex);</span>
+<span class="w">    </span><span class="n">get</span><span class="p">();</span>
+<span class="w">    </span><span class="c1">//V(mutex);</span>
+<span class="w">    </span><span class="n">V</span><span class="p">(</span><span class="n">place</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<script> 
+  function change(v){
+    var ele = document.getElementsByClassName('DynamicShow')
+    if(v==1){
+      for(let i in ele){
+        ele[i].style.display = ""
+      }
+    }else{
+        for(let i in ele){
+        ele[i].style.display = "none"
+      }
+    }
+    }
+</script>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

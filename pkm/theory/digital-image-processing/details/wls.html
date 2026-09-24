@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>wls</title>
+<link id="theme-css" rel="stylesheet" href="../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="weighted-least-squares-filter">Weighted Least Squares Filter</h1>
+<hr />
+<h2 id="_1">资料</h2>
+<ul>
+<li>github： https://github.com/goldbema/WeightedLeastSquaresFilter</li>
+<li>大佬介绍： https://blog.csdn.net/qq_19784349/article/details/130504721</li>
+</ul>
+<hr />
+<h2 id="_2">原理</h2>
+<p>作者认为，虽然 BLF 在平滑强度的微小变化同时保留强边缘方面非常有效，但它实现渐进粗化的能力相当有限。如下图所示，左上角是合成示例，拥有几个不同步长幅度的边缘，并且包含两个不同尺度的噪声。</p>
+<p><img alt="wls-contract" src="../assets/wls-contract.png" /></p>
+<p>WLS将图像分解为<strong>基底层</strong>（大尺度强度变化）和<strong>细节层</strong>（小尺度细节），进而提出了一种基于<strong>加权最小二乘法</strong>（Weighted Least Squares, WLS）的新方法。
+* WLS方法将图像平滑过程转化为一个<strong>最小化能量函数</strong>的数学问题。该函数包含两个目标：
+    - <strong>保真度（Fidelity）</strong>：平滑后的图像 u要尽量接近原始图像 g。
+    - <strong>平滑度（Smoothness）</strong>：图像 u要尽量平滑，但<strong>在原始图像的强边缘处允许不连续</strong>。
+* 能量函数：
+    $$E(u)=p∑​((up​−gp​)2+λ(ax,p​(g)(∂x∂u​)p2​+ay,p​(g)(∂y∂u​)p2​))$$
+    - up​,gp​：像素 p在平滑后图像和原始图像中的值。
+    - λ：<strong>平滑系数</strong>。λ越大，图像越平滑。
+    - ax,p​(g),ay,p​(g)：<strong>权重函数</strong>。这是实现“保边”的关键，它根据原始图像 g的梯度动态调整平滑力度。
+* 权重函数（Edge-Aware Weights）权重函数的设计决定了算法是“无脑模糊”还是“智能保边”。文章采用如下定义：
+    $$ax,p​(g)=(​∂x∂ℓ​(p)​α+ϵ)−1$$
+    - ℓ：原始图像的对数亮度（log-luminance）。
+    - α：<strong>敏感度参数</strong>（通常取1.2-2.0）。α越大，对边缘越敏感，越不容易模糊。
+    - ϵ：极小常数（如0.0001），防止分母为零。
+* 逻辑解释
+    - 在<strong>平坦区域</strong>：梯度 ∂x∂ℓ​很小，权重 a很大，此时算法会大力平滑（即允许模糊）。
+    - 在<strong>边缘处</strong>：梯度很大，权重 a很小，此时算法会限制平滑，从而<strong>保留边缘</strong>。
+* 求解方法：线性系统。将上述能量函数最小化，最终转化为求解一个大型<strong>稀疏线性系统</strong>
+    $$(I+λLg​)u=g$$
+    - I：单位矩阵。
+    - Lg​：由权重 a构造的拉普拉斯矩阵。
+    - g：原始图像向量。
+    由于矩阵 (I+λLg​)是稀疏且对称正定的，文章建议使用<strong>预条件共轭梯度法</strong>（Preconditioned Conjugate Gradient）来高效求解。
+* 多尺度分解，为了提取不同尺度的细节，文章提出两种构建多尺度金字塔的方法：
+    - <strong>直接法</strong>：直接对原始图像 g应用不同 λ的WLS滤波，得到不同尺度的平滑结果 ui。细节层 di=ui−1−ui。
+    - <strong>迭代法</strong>：对上一层的平滑结果 ui再次应用WLS滤波。这种方法更倾向于产生分片常数（piecewise constant）的结果，适合图像抽象化（Abstraction）应用。</p>
+<hr />
+<h2 id="_3">代码</h2>
+<p><img alt="wls" src="../assets/wls.png" /></p>
+<pre lang="python"><code class="language-python md-fencescode"><span class="kn">import</span><span class="w"> </span><span class="nn">cv2</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipy.sparse</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipy.sparse.linalg</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sl</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+
+<span class="c1"># ----------------- WLS Filter Implementation -----------------</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">process_difference_operator</span><span class="p">(</span><span class="n">difference_operator</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">):</span>
+<span class="w">  </span><span class="sd">"""</span>
+<span class="sd">    Apply non-linear mapping to the difference operator to compute weights.</span>
+<span class="sd">    """</span>
+  <span class="n">difference_operator</span> <span class="o">=</span> <span class="o">-</span><span class="n">lambda_</span> <span class="o">/</span> <span class="p">(</span><span class="n">epsilon</span> <span class="o">+</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">absolute</span><span class="p">(</span><span class="n">difference_operator</span><span class="p">)</span><span class="o">**</span><span class="n">alpha</span><span class="p">))</span>
+  <span class="k">return</span> <span class="n">difference_operator</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">wls_filter</span><span class="p">(</span><span class="n">L</span><span class="p">,</span> <span class="n">lambda_</span><span class="o">=</span><span class="mf">0.35</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">):</span>
+<span class="w">  </span><span class="sd">"""</span>
+<span class="sd">    Weighted Least Squares (WLS) Filter</span>
+<span class="sd">    Based on: "Edge-Preserving Decompositions for Multi-Scale Tone and Detail Manipulation" (Farbman et al., 2008)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        L: Input luminance image (2D numpy array), values should be normalized to [0, 1] or similar scale.</span>
+<span class="sd">        lambda_: Balance between data fidelity and smoothness. Larger lambda = more smoothing.</span>
+<span class="sd">        alpha: Controls the sensitivity to edges.</span>
+<span class="sd">        epsilon: Small constant to avoid division by zero.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        x: Smoothed image (same shape as L)</span>
+<span class="sd">    """</span>
+  <span class="c1"># Get log-luminance for weight calculation (perceptual based edge detection)</span>
+  <span class="n">L_log</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">L</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1e-10</span><span class="p">)</span>
+
+  <span class="c1"># Compute the forward and backward differences of the luminance channel</span>
+  <span class="c1"># dx_forward: L(x+1) - L(x)</span>
+  <span class="n">dx_forward</span> <span class="o">=</span> <span class="n">L_log</span> <span class="o">-</span> <span class="n">cv2</span><span class="o">.</span><span class="n">copyMakeBorder</span><span class="p">(</span><span class="n">L_log</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:],</span> <span class="n">top</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">bottom</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">borderType</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">BORDER_REPLICATE</span><span class="p">)</span>
+  <span class="c1"># dx_backward: L(x-1) - L(x)</span>
+  <span class="n">dx_backward</span> <span class="o">=</span> <span class="n">L_log</span> <span class="o">-</span> <span class="n">cv2</span><span class="o">.</span><span class="n">copyMakeBorder</span><span class="p">(</span><span class="n">L_log</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">top</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">bottom</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">borderType</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">BORDER_REPLICATE</span><span class="p">)</span>
+  <span class="c1"># dy_forward: L(y+1) - L(y)</span>
+  <span class="n">dy_forward</span> <span class="o">=</span> <span class="n">L_log</span> <span class="o">-</span> <span class="n">cv2</span><span class="o">.</span><span class="n">copyMakeBorder</span><span class="p">(</span><span class="n">L_log</span><span class="p">[</span><span class="mi">1</span><span class="p">:,</span> <span class="p">:],</span> <span class="n">top</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">bottom</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">borderType</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">BORDER_REPLICATE</span><span class="p">)</span>
+  <span class="c1"># dy_backward: L(y-1) - L(y)</span>
+  <span class="n">dy_backward</span> <span class="o">=</span> <span class="n">L_log</span> <span class="o">-</span> <span class="n">cv2</span><span class="o">.</span><span class="n">copyMakeBorder</span><span class="p">(</span><span class="n">L_log</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:],</span> <span class="n">top</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">bottom</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">right</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">borderType</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">BORDER_REPLICATE</span><span class="p">)</span>
+
+  <span class="c1"># Weight each derivative (compute smoothness weights)</span>
+  <span class="n">dx_forward_weighted</span> <span class="o">=</span> <span class="n">process_difference_operator</span><span class="p">(</span><span class="n">dx_forward</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">)</span>
+  <span class="n">dx_forward_weighted</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+  <span class="n">dx_backward_weighted</span> <span class="o">=</span> <span class="n">process_difference_operator</span><span class="p">(</span><span class="n">dx_backward</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">)</span>
+  <span class="n">dx_backward_weighted</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+  <span class="n">dy_forward_weighted</span> <span class="o">=</span> <span class="n">process_difference_operator</span><span class="p">(</span><span class="n">dy_forward</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">)</span>
+  <span class="n">dy_forward_weighted</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>
+
+  <span class="n">dy_backward_weighted</span> <span class="o">=</span> <span class="n">process_difference_operator</span><span class="p">(</span><span class="n">dy_backward</span><span class="p">,</span> <span class="n">lambda_</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">)</span>
+  <span class="n">dy_backward_weighted</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="mi">0</span>
+
+  <span class="c1"># Calculate the diagonal (central) element</span>
+  <span class="c1"># A_ii = 1 - sum(weights connected to i)</span>
+  <span class="c1"># But here weights are negative (see process_difference_operator: -lambda / ...), </span>
+  <span class="c1"># so we subtract them to make A_ii = 1 + sum(|weights|) if we view it as Laplacian matrix</span>
+  <span class="c1"># The code does: 1 - (sum of negative weights) = 1 + sum(positive weights)</span>
+  <span class="n">central_element</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">dx_forward</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">dx_forward_weighted</span> <span class="o">+</span> <span class="n">dx_backward_weighted</span> <span class="o">+</span> <span class="n">dy_forward_weighted</span> <span class="o">+</span> <span class="n">dy_backward_weighted</span><span class="p">)</span>
+
+  <span class="c1"># Form sparse matrix</span>
+  <span class="n">N</span> <span class="o">=</span> <span class="n">L</span><span class="o">.</span><span class="n">size</span>
+  <span class="n">C</span> <span class="o">=</span> <span class="n">L</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+  <span class="n">row</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">5</span> <span class="o">*</span> <span class="n">N</span><span class="p">)</span>
+  <span class="n">col</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+  <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
+  <span class="c1"># Central element</span>
+  <span class="n">row</span><span class="p">[:</span><span class="n">N</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+  <span class="n">col</span><span class="p">[:</span><span class="n">N</span><span class="p">]</span> <span class="o">=</span> <span class="n">row</span><span class="p">[:</span><span class="n">N</span><span class="p">]</span>
+  <span class="n">data</span><span class="p">[:</span><span class="n">N</span><span class="p">]</span> <span class="o">=</span> <span class="n">central_element</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+
+  <span class="c1"># dx_forward (neighbor at x+1, index i+1)</span>
+  <span class="n">row</span><span class="p">[</span><span class="n">N</span><span class="p">:</span><span class="mi">2</span><span class="o">*</span><span class="n">N</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+  <span class="n">col</span><span class="p">[</span><span class="n">N</span><span class="p">:</span><span class="mi">2</span><span class="o">*</span><span class="n">N</span><span class="p">]</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">N</span><span class="p">:</span><span class="mi">2</span><span class="o">*</span><span class="n">N</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+  <span class="n">data</span><span class="p">[</span><span class="n">N</span><span class="p">:</span><span class="mi">2</span><span class="o">*</span><span class="n">N</span><span class="p">]</span> <span class="o">=</span> <span class="n">dx_forward_weighted</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+
+  <span class="c1"># dx_backward (neighbor at x-1, index i-1)</span>
+  <span class="n">row</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">N</span><span class="p">:</span><span class="mi">3</span><span class="o">*</span><span class="n">N</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+  <span class="n">col</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">N</span><span class="p">:</span><span class="mi">3</span><span class="o">*</span><span class="n">N</span><span class="p">]</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">N</span><span class="p">:</span><span class="mi">3</span><span class="o">*</span><span class="n">N</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+  <span class="n">data</span><span class="p">[</span><span class="mi">2</span><span class="o">*</span><span class="n">N</span><span class="p">:</span><span class="mi">3</span><span class="o">*</span><span class="n">N</span><span class="p">]</span> <span class="o">=</span> <span class="n">dx_backward_weighted</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+
+  <span class="c1"># dy_forward (neighbor at y+1, index i+C)</span>
+  <span class="n">row</span><span class="p">[</span><span class="mi">3</span><span class="o">*</span><span class="n">N</span><span class="p">:</span><span class="mi">4</span><span class="o">*</span><span class="n">N</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+  <span class="n">col</span><span class="p">[</span><span class="mi">3</span><span class="o">*</span><span class="n">N</span><span class="p">:</span><span class="mi">4</span><span class="o">*</span><span class="n">N</span><span class="p">]</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">3</span><span class="o">*</span><span class="n">N</span><span class="p">:</span><span class="mi">4</span><span class="o">*</span><span class="n">N</span><span class="p">]</span> <span class="o">+</span> <span class="n">C</span>
+  <span class="n">data</span><span class="p">[</span><span class="mi">3</span><span class="o">*</span><span class="n">N</span><span class="p">:</span><span class="mi">4</span><span class="o">*</span><span class="n">N</span><span class="p">]</span> <span class="o">=</span> <span class="n">dy_forward_weighted</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+
+  <span class="c1"># dy_backward (neighbor at y-1, index i-C)</span>
+  <span class="n">row</span><span class="p">[</span><span class="mi">4</span><span class="o">*</span><span class="n">N</span><span class="p">:</span><span class="mi">5</span><span class="o">*</span><span class="n">N</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+  <span class="n">col</span><span class="p">[</span><span class="mi">4</span><span class="o">*</span><span class="n">N</span><span class="p">:</span><span class="mi">5</span><span class="o">*</span><span class="n">N</span><span class="p">]</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="mi">4</span><span class="o">*</span><span class="n">N</span><span class="p">:</span><span class="mi">5</span><span class="o">*</span><span class="n">N</span><span class="p">]</span> <span class="o">-</span> <span class="n">C</span>
+  <span class="n">data</span><span class="p">[</span><span class="mi">4</span><span class="o">*</span><span class="n">N</span><span class="p">:</span><span class="mi">5</span><span class="o">*</span><span class="n">N</span><span class="p">]</span> <span class="o">=</span> <span class="n">dy_backward_weighted</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+
+  <span class="c1"># Prevent out-of-bounds indices.</span>
+  <span class="c1"># Setting invalid indices to 0 ensures they don't affect the matrix structure wrongly.</span>
+  <span class="c1"># However, since we used copyMakeBorder and set boundary weights to 0, </span>
+  <span class="c1"># the values at boundary connections should already be 0.</span>
+  <span class="c1"># But col indices might be out of range (e.g. -1 or N).</span>
+  <span class="n">valid_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">col</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">col</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">)</span>
+
+  <span class="c1"># Filter valid entries</span>
+  <span class="n">row</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+  <span class="n">col</span> <span class="o">=</span> <span class="n">col</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+  <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">valid_mask</span><span class="p">]</span>
+
+  <span class="c1"># Construct sparse matrix A</span>
+  <span class="n">A</span> <span class="o">=</span> <span class="n">sparse</span><span class="o">.</span><span class="n">coo_matrix</span><span class="p">((</span><span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">)),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">N</span><span class="p">))</span><span class="o">.</span><span class="n">tocsr</span><span class="p">()</span>
+  <span class="n">b</span> <span class="o">=</span> <span class="n">L</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+
+  <span class="c1"># Solve linear system Ax = b</span>
+  <span class="c1"># Use Conjugate Gradient method for symmetric positive definite matrix</span>
+  <span class="n">x</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">sl</span><span class="o">.</span><span class="n">cg</span><span class="p">(</span><span class="n">A</span><span class="o">=</span><span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">b</span><span class="p">)</span>
+
+  <span class="k">if</span> <span class="n">info</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Warning: CG did not converge (info=</span><span class="si">{</span><span class="n">info</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">L</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">x</span>
+
+
+  <span class="c1"># ----------------- Testing Code -----------------</span>
+
+  <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">'__main__'</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">skimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">data</span><span class="p">,</span> <span class="n">img_as_float</span>
+
+    <span class="c1"># Load test image</span>
+    <span class="n">image</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">astronaut</span><span class="p">()</span>
+
+    <span class="c1"># Convert to grayscale for WLS filter (which operates on luminance)</span>
+    <span class="c1"># Alternatively, you can apply it to V channel in HSV or Y in YCbCr</span>
+    <span class="n">gray_image</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_RGB2GRAY</span><span class="p">)</span>
+    <span class="n">gray_image</span> <span class="o">=</span> <span class="n">img_as_float</span><span class="p">(</span><span class="n">gray_image</span><span class="p">)</span>
+
+    <span class="c1"># Apply WLS Filter</span>
+    <span class="c1"># lambda_ controls smoothing amount (0.1 is subtle, 1.0 is strong)</span>
+    <span class="n">lambda_val</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">alpha_val</span> <span class="o">=</span> <span class="mf">1.2</span>
+    <span class="n">smoothed</span> <span class="o">=</span> <span class="n">wls_filter</span><span class="p">(</span><span class="n">gray_image</span><span class="p">,</span> <span class="n">lambda_</span><span class="o">=</span><span class="n">lambda_val</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="n">alpha_val</span><span class="p">)</span>
+
+    <span class="c1"># Enhance detail: Original + (Original - Smoothed) * gain</span>
+    <span class="n">detail_layer</span> <span class="o">=</span> <span class="n">gray_image</span> <span class="o">-</span> <span class="n">smoothed</span>
+    <span class="n">enhanced</span> <span class="o">=</span> <span class="n">gray_image</span> <span class="o">+</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">detail_layer</span>
+    <span class="n">enhanced</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">enhanced</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Visualization</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">gray_image</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'gray'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">'Original (Grayscale)'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">'off'</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">smoothed</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'gray'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s1">'WLS Smoothed (lambda=</span><span class="si">{</span><span class="n">lambda_val</span><span class="si">}</span><span class="s1">)'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">'off'</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">enhanced</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">'gray'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s1">'Detail Enhanced (Original + 2*Detail)'</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s1">'off'</span><span class="p">)</span>
+
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</code></pre>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

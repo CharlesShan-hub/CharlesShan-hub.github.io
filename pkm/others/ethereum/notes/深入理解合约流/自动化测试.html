@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>自动化测试</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="_1">自动化测试</h1>
+<p>2022.2.26</p>
+<h2 id="_2">主要内容</h2>
+<p>Ganache，mocha</p>
+<h2 id="_3">前言</h2>
+<p>我们已经实现了合约的编译和部署的自动化，这将大大提升我们开发的效率。 但流程的自动化并不能保证我们的代码质量。质量意识是靠谱工程师的基本职业 素养，在智能合约领域也不例外:任何代码如果不做充分的测试，问题发现时通 常都已为时太晚;如果代码不做自动化测试，问题发现的成本就会越来越高。</p>
+<p>在编写合约时，我们可以利用 remix 部署后的页面调用合约函数，进行单元 测试;还可以将合约部署到私链，用 geth 控制台或者 node 命令行进行交互测 试。但这有很大的随意性，并不能形成标准化测试流程;而且手动一步步操作， 比较繁琐，不易保证重复一致。</p>
+<p>于是我们想到，是否可以利用现成的前端技术栈实现合约的自动化测试呢? 当然是可以的，mocha 就是这样一个 JavaScript 测试框架。</p>
+<h2 id="_4">安装依赖</h2>
+<p>开始编写测试脚本之前，我们首先需要安装依赖:测试框架 mocha。当然，作为对合约的测试，模拟节点 ganache 和 web3 都是不可缺少的;不过我们在 上节课编写部署脚本时，已经安装了这些依赖(我们的 web3 依然是 1.0.0 版本)。</p>
+<pre lang="bash"><code class="language-bash md-fencescode"><span class="w"> </span>npm<span class="w"> </span>install<span class="w"> </span>mocha<span class="w"> </span>–save-dev
+</code></pre>
+<p>进行单元测试，比较重要的一点是保证测试的独立性和隔离性，所以我们并 不需要测试网络这种有复杂交互的环境，甚至不需要本地私链保存测试历史。而 ganache 基于内存模拟以太坊节点行为，每次启动都是一个干净的空白环境，所以非常适合我们做开发时的单元测试。还记得 ganache 的前身叫什么吗?就是大名鼎鼎的 testRPC。</p>
+<h2 id="mocha">mocha简介</h2>
+<p><a href="https://mochajs.cn/">mocha官网（中国）</a></p>
+<p>mocha 是 JavaScript 的一个单元测试框架，既可以在浏览器环境中运行，也可以在 node.js 环境下运行。我们只需要编写测试用例，mocha 会将测试自动运行并给出测试结果。
+mocha 的主要特点有:</p>
+<ul>
+<li>既可以测试简单的 JavaScript 函数，又可以测试异步代码;</li>
+<li>可以自动运行所有测试，也可以只运行特定的测试;</li>
+<li>可以支持 before、after、beforeEach 和 afterEach 来编写初始化代码。</li>
+</ul>
+<h2 id="_5">测试脚本示例</h2>
+<p>假设我们编写了一个 sum.js，并且输出一个简单的求和函数:</p>
+<pre lang="js"><code class="language-js md-fencescode"><span class="nx">module</span><span class="p">.</span><span class="nx">exports</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="p">(...</span><span class="nx">rest</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="nx">sum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">let</span><span class="w"> </span><span class="nx">n</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">rest</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">       </span><span class="nx">sum</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="nx">n</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">sum</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre>
+<p>这个函数非常简单，就是对输入的任意参数求和并返回结果。
+如果我们想对这个函数进行测试，可以写一个 test.js，然后使用 Node.js 提 供的 assert 模块进行断言:</p>
+<pre lang="js"><code class="language-js md-fencescode"><span class="kd">const</span><span class="w"> </span><span class="nx">assert</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'assert'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">sum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'../scripts/sum'</span><span class="p">);</span>
+<span class="nx">assert</span><span class="p">.</span><span class="nx">strictEqual</span><span class="p">(</span><span class="nx">sum</span><span class="p">(),</span><span class="w"> </span><span class="mf">0</span><span class="p">);</span>
+<span class="nx">assert</span><span class="p">.</span><span class="nx">strictEqual</span><span class="p">(</span><span class="nx">sum</span><span class="p">(</span><span class="mf">1</span><span class="p">),</span><span class="w"> </span><span class="mf">1</span><span class="p">);</span>
+<span class="nx">assert</span><span class="p">.</span><span class="nx">strictEqual</span><span class="p">(</span><span class="nx">sum</span><span class="p">(</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">),</span><span class="w"> </span><span class="mf">3</span><span class="p">);</span>
+<span class="nx">assert</span><span class="p">.</span><span class="nx">strictEqual</span><span class="p">(</span><span class="nx">sum</span><span class="p">(</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">,</span><span class="w"> </span><span class="mf">3</span><span class="p">),</span><span class="w"> </span><span class="mf">6</span><span class="p">);</span>
+</code></pre>
+<p>assert 模块非常简单，它断言一个表达式为 true。如果断言失败，就抛出 Error。</p>
+<p>单独写一个 test.js 的缺点是没法自动运行测试，而且，如果第一个 assert 报错，后面的测试也执行不了了。</p>
+<p>如果有很多测试需要运行，就必须把这些测试全部组织起来，然后统一执行， 并且得到执行结果。这就是我们为什么要用 mocha 来编写并运行测试。</p>
+<p>我们利用 mocha 修改后的测试脚本如下:</p>
+<pre lang="js"><code class="language-js md-fencescode"><span class="kd">const</span><span class="w"> </span><span class="nx">assert</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'assert'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">sum</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'../scripts/sum'</span><span class="p">);</span>
+<span class="nx">describe</span><span class="p">(</span><span class="s1">'#sum.js'</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">describe</span><span class="p">(</span><span class="s1">'#sum()'</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">       </span><span class="nx">it</span><span class="p">(</span><span class="s1">'sum() should return 0'</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                 </span><span class="nx">assert</span><span class="p">.</span><span class="nx">strictEqual</span><span class="p">(</span><span class="nx">sum</span><span class="p">(),</span><span class="w"> </span><span class="mf">0</span><span class="p">);</span><span class="w"> </span><span class="p">});</span>
+<span class="w">       </span><span class="nx">it</span><span class="p">(</span><span class="s1">'sum(1) should return 1'</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">               </span><span class="nx">assert</span><span class="p">.</span><span class="nx">strictEqual</span><span class="p">(</span><span class="nx">sum</span><span class="p">(</span><span class="mf">1</span><span class="p">),</span><span class="w"> </span><span class="mf">1</span><span class="p">);</span>
+<span class="p">});</span>
+<span class="nx">it</span><span class="p">(</span><span class="s1">'sum(1, 2) should return 3'</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">strictEqual</span><span class="p">(</span><span class="nx">sum</span><span class="p">(</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">),</span><span class="w"> </span><span class="mf">3</span><span class="p">);</span>
+<span class="w">  </span><span class="p">});</span>
+<span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s1">'sum(1, 2, 3) should return 6'</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">strictEqual</span><span class="p">(</span><span class="nx">sum</span><span class="p">(</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">,</span><span class="w"> </span><span class="mf">3</span><span class="p">),</span><span class="w"> </span><span class="mf">6</span><span class="p">);</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="p">});</span>
+</code></pre>
+<p>里我们使用 mocha 默认的 BDD-style 的测试。describe 可以任意嵌套， 以便把相关测试看成一组测试。</p>
+<p>describe 可以任意嵌套，以便把相关测试看成一组测试;而其中的每个 it 就代表一个测试。</p>
+<p>每个 it("name", function() {...})就代表一个测试。例如，为了测试 sum(1, 2)， 我们这样写:</p>
+<pre lang="js"><code class="language-js md-fencescode"><span class="nx">it</span><span class="p">(</span><span class="s1">'sum(1, 2) should return 3'</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">strictEqual</span><span class="p">(</span><span class="nx">sum</span><span class="p">(</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">2</span><span class="p">),</span><span class="w"> </span><span class="mf">3</span><span class="p">);</span>
+<span class="p">});</span>
+</code></pre>
+<p>编写测试的原则是，一次只测一种情况，且测试代码要非常简单。我们编写多个测试来分别测试不同的输入，并使用 assert 判断输出是否是我们所期望的。</p>
+<h2 id="_6">运行测试脚本</h2>
+<p>下一步，我们就可以用 mocha 运行测试了。打开命令提示符，切换到项目目录，然后创建文件夹 test，将 test.js 放入 test 文件夹下，执行命令:</p>
+<pre lang="bash"><code class="language-bash md-fencescode"><span class="w"> </span>./node_modules/mocha/bin/mocha<span class="w">  </span>test.js
+</code></pre>
+<p>mocha 就会自动执行 test 文件夹下所有测试，然后输出如下:</p>
+<pre lang="bash"><code class="language-bash md-fencescode"><span class="c1">#sum.js</span>
+<span class="w">  </span><span class="c1">#sum()</span>
+✓<span class="w"> </span>sum<span class="o">()</span><span class="w"> </span>should<span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="m">0</span>
+✓<span class="w"> </span>sum<span class="o">(</span><span class="m">1</span><span class="o">)</span><span class="w"> </span>should<span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="m">1</span>
+✓<span class="w"> </span>sum<span class="o">(</span><span class="m">1</span>,<span class="w"> </span><span class="m">2</span><span class="o">)</span><span class="w"> </span>should<span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="m">3</span>
+✓<span class="w"> </span>sum<span class="o">(</span><span class="m">1</span>,<span class="w"> </span><span class="m">2</span>,<span class="w"> </span><span class="m">3</span><span class="o">)</span><span class="w"> </span>should<span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="m">6</span>
+<span class="m">4</span><span class="w"> </span>passing<span class="w"> </span><span class="o">(</span>7ms<span class="o">)</span>
+</code></pre>
+<p>这说明我们编写的 4 个测试全部通过。如果没有通过，要么修改测试代码， 要么修改 hello.js，直到测试全部通过为止。</p>
+<h2 id="_7">编写合约测试脚本</h2>
+<p>测试时我们通常会把每次测试运行的环境隔离开，以保证互不影响。对应到合约测试，我们每次测试都需要部署新的合约实例，然后针对新的实例做功能测试。 Car 合约的功能比较简单，我们只要设计 2 个测试用例:</p>
+<ul>
+<li>合约部署时传入的 brand 属性被正确存储;</li>
+<li>调用 setBrand 之后合约的 brand 属性被正确更新;</li>
+</ul>
+<p>新建测试文件 tests/car.spec.js，完整的测试代码如下。</p>
+<h3 id="web3050">web3:0.5.0之前</h3>
+<pre lang="js"><code class="language-js md-fencescode"><span class="kd">const</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'path'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">assert</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'assert'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">ganache</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'ganache-cli'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">Web3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'web3'</span><span class="p">);</span>
+<span class="c1">// 1. 配置 provider</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">web3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Web3</span><span class="p">(</span><span class="nx">ganache</span><span class="p">.</span><span class="nx">provider</span><span class="p">());</span>
+<span class="c1">// 2. 拿到 abi 和 bytecode</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">contractPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">__dirname</span><span class="p">,</span><span class="s1">'../compiled/Car.json'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kr">interface</span><span class="p">,</span><span class="w"> </span><span class="nx">bytecode</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="nx">contractPath</span><span class="p">);</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="nx">accounts</span><span class="p">;</span>
+<span class="kd">let</span><span class="w"> </span><span class="nx">contract</span><span class="p">;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">initialBrand</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'BMW'</span><span class="p">;</span>
+
+<span class="nx">describe</span><span class="p">(</span><span class="s1">'contract'</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="c1">// 3. 每次跑单测时需要部署全新的合约实例，起到隔离的作用 </span>
+<span class="nx">beforeEach</span><span class="p">(</span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="nx">accounts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">web3</span><span class="p">.</span><span class="nx">eth</span><span class="p">.</span><span class="nx">getAccounts</span><span class="p">();</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'合约部署账户:'</span><span class="p">,</span><span class="w"> </span><span class="nx">accounts</span><span class="p">[</span><span class="mf">0</span><span class="p">]);</span><span class="w"> </span><span class="nx">contract</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="ow">new</span>
+<span class="nx">web3</span><span class="p">.</span><span class="nx">eth</span><span class="p">.</span><span class="nx">Contract</span><span class="p">(</span><span class="nb">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="kr">interface</span><span class="p">))</span>
+<span class="p">.</span><span class="nx">deploy</span><span class="p">({</span><span class="w"> </span><span class="nx">data</span><span class="o">:</span><span class="w"> </span><span class="nx">bytecode</span><span class="p">,</span><span class="w"> </span><span class="nb">arguments</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="nx">initialBrand</span><span class="p">]</span><span class="w"> </span><span class="p">})</span>
+<span class="p">.</span><span class="nx">send</span><span class="p">({</span><span class="w"> </span><span class="kr">from</span><span class="o">:</span><span class="w"> </span><span class="nx">accounts</span><span class="p">[</span><span class="mf">0</span><span class="p">],</span><span class="w"> </span><span class="nx">gas</span><span class="o">:</span><span class="w"> </span><span class="s1">'1000000'</span><span class="w"> </span><span class="p">});</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'合约部署成功:'</span><span class="p">,</span>
+<span class="w">                 </span><span class="nx">contract</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">address</span><span class="p">);</span><span class="w"> </span><span class="p">});</span>
+<span class="c1">// 4. 编写单元测试</span>
+<span class="nx">it</span><span class="p">(</span><span class="s1">'deployed contract'</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">assert</span><span class="p">.</span><span class="nx">ok</span><span class="p">(</span><span class="nx">contract</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">address</span><span class="p">);</span>
+<span class="p">});</span>
+<span class="nx">it</span><span class="p">(</span><span class="s1">'should has initial brand'</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">brand</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">contract</span><span class="p">.</span><span class="nx">methods</span><span class="p">.</span><span class="nx">brand</span><span class="p">().</span><span class="nx">call</span><span class="p">();</span><span class="w"> </span><span class="nx">assert</span><span class="p">.</span><span class="nx">equal</span><span class="p">(</span><span class="nx">brand</span><span class="p">,</span><span class="w"> </span><span class="nx">initialBrand</span><span class="p">);</span>
+<span class="p">});</span>
+
+<span class="nx">it</span><span class="p">(</span><span class="s1">'can change the brand'</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()=&gt;{</span>
+<span class="w">       </span><span class="kd">const</span><span class="w"> </span><span class="nx">newBrand</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'Benz'</span><span class="p">;</span>
+<span class="w">       </span><span class="k">await</span><span class="w"> </span><span class="nx">contract</span><span class="p">.</span><span class="nx">methods</span><span class="p">.</span><span class="nx">setBrand</span><span class="p">(</span><span class="nx">newBrand</span><span class="p">)</span>
+<span class="w">                              </span><span class="p">.</span><span class="nx">send</span><span class="p">({</span><span class="kr">from</span><span class="o">:</span><span class="w"> </span><span class="nx">accounts</span><span class="p">[</span><span class="mf">0</span><span class="p">]});</span>
+<span class="w">       </span><span class="kd">const</span><span class="w"> </span><span class="nx">brand</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">contract</span><span class="p">.</span><span class="nx">methods</span><span class="p">.</span><span class="nx">brand</span><span class="p">().</span><span class="nx">call</span><span class="p">();</span>
+<span class="w">       </span><span class="nx">assert</span><span class="p">.</span><span class="nx">equal</span><span class="p">(</span><span class="nx">brand</span><span class="p">,</span><span class="w"> </span><span class="nx">newBrand</span><span class="p">);</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="p">});</span>
+</code></pre>
+<p>部署合约</p>
+<pre lang="bash"><code class="language-bash md-fencescode">kimshan@MacBook-Pro<span class="w"> </span>contract_workflow<span class="w"> </span>%<span class="w">  </span>./node_modules/.bin/mocha<span class="w"> </span>tests/car.spec.js
+
+<span class="w">  </span>contract
+合约部署账户:<span class="w"> </span>0xeb35932Ab3fa7967409F6c7333b4AfE7b345E4aB
+合约部署成功:<span class="w"> </span>0xd14C19f1DE8cfC3Ce8fD02a19DebE38bA93c107D
+<span class="w">    </span>✔<span class="w"> </span>deployed<span class="w"> </span>contract
+合约部署账户:<span class="w"> </span>0xeb35932Ab3fa7967409F6c7333b4AfE7b345E4aB
+合约部署成功:<span class="w"> </span>0x6883F1eebF9Bb7DC1b6cA3b01240aB819467Ad50
+<span class="w">    </span>✔<span class="w"> </span>should<span class="w"> </span>has<span class="w"> </span>initial<span class="w"> </span>brand
+合约部署账户:<span class="w"> </span>0xeb35932Ab3fa7967409F6c7333b4AfE7b345E4aB
+合约部署成功:<span class="w"> </span>0x93Ad119F4d3AE3554b702CC5a34A8A0C2430E2d4
+<span class="w">    </span>✔<span class="w"> </span>can<span class="w"> </span>change<span class="w"> </span>the<span class="w"> </span>brand<span class="w"> </span><span class="o">(</span>81ms<span class="o">)</span>
+
+<span class="w">  </span><span class="m">3</span><span class="w"> </span>passing<span class="w"> </span><span class="o">(</span>400ms<span class="o">)</span>
+</code></pre>
+<h3 id="web3050_1">web3:0.5.0之后</h3>
+<pre lang="js"><code class="language-js md-fencescode"><span class="kd">const</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'path'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">assert</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'assert'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">ganache</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'ganache-cli'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">Web3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'web3'</span><span class="p">);</span>
+<span class="c1">// 1. 配置 provider</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">web3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Web3</span><span class="p">(</span><span class="nx">ganache</span><span class="p">.</span><span class="nx">provider</span><span class="p">());</span>
+<span class="c1">// 2. 拿到 abi 和 bytecode</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">contractPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">__dirname</span><span class="p">,</span><span class="s1">'../compiled/Connect.json'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">abi</span><span class="p">,</span><span class="w"> </span><span class="nx">evm</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="nx">contractPath</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="kr">interface</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">abi</span><span class="p">;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">bytecode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">evm</span><span class="p">.</span><span class="nx">bytecode</span><span class="p">.</span><span class="nx">object</span><span class="p">;</span>
+
+<span class="kd">let</span><span class="w"> </span><span class="nx">accounts</span><span class="p">;</span>
+<span class="kd">let</span><span class="w"> </span><span class="nx">contract</span><span class="p">;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">initialBrand</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'Name'</span><span class="p">;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">initialPrise</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">newBrand</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">'New'</span><span class="p">;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">newPrise</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1</span><span class="p">;</span>
+
+<span class="nx">describe</span><span class="p">(</span><span class="s1">'contract'</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 3. 每次跑单测时需要部署全新的合约实例，起到隔离的作用 </span>
+<span class="w">    </span><span class="nx">beforeEach</span><span class="p">(</span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">accounts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">web3</span><span class="p">.</span><span class="nx">eth</span><span class="p">.</span><span class="nx">getAccounts</span><span class="p">();</span><span class="w"> </span>
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'合约部署账户:'</span><span class="p">,</span><span class="w"> </span><span class="nx">accounts</span><span class="p">[</span><span class="mf">0</span><span class="p">]);</span><span class="w"> </span>
+<span class="w">        </span><span class="nx">contract</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">web3</span><span class="p">.</span><span class="nx">eth</span><span class="p">.</span><span class="nx">Contract</span><span class="p">(</span><span class="kr">interface</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="nx">deploy</span><span class="p">({</span><span class="w"> </span><span class="nx">data</span><span class="o">:</span><span class="w"> </span><span class="nx">bytecode</span><span class="p">,</span><span class="w"> </span><span class="nb">arguments</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="nx">initialBrand</span><span class="p">,</span><span class="nx">initialPrise</span><span class="p">]</span><span class="w"> </span><span class="p">})</span>
+<span class="w">        </span><span class="p">.</span><span class="nx">send</span><span class="p">({</span><span class="w"> </span><span class="kr">from</span><span class="o">:</span><span class="w"> </span><span class="nx">accounts</span><span class="p">[</span><span class="mf">0</span><span class="p">],</span><span class="w"> </span><span class="nx">gas</span><span class="o">:</span><span class="w"> </span><span class="s1">'1000000'</span><span class="w"> </span><span class="p">});</span><span class="w"> </span>
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'合约部署成功:'</span><span class="p">,</span><span class="nx">contract</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">address</span><span class="p">);</span><span class="w"> </span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="c1">// 4. 编写单元测试</span>
+<span class="w">    </span><span class="nx">it</span><span class="p">(</span><span class="s1">'deployed contract'</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">assert</span><span class="p">.</span><span class="nx">ok</span><span class="p">(</span><span class="nx">contract</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">address</span><span class="p">);</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="nx">it</span><span class="p">(</span><span class="s1">'should has initial brand'</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">brand</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">contract</span><span class="p">.</span><span class="nx">methods</span><span class="p">.</span><span class="nx">getBrand</span><span class="p">().</span><span class="nx">call</span><span class="p">();</span><span class="w"> </span>
+<span class="w">        </span><span class="nx">assert</span><span class="p">.</span><span class="nx">equal</span><span class="p">(</span><span class="nx">brand</span><span class="p">,</span><span class="w"> </span><span class="nx">initialBrand</span><span class="p">);</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="nx">it</span><span class="p">(</span><span class="s1">'should has initial prise'</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">prise</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">contract</span><span class="p">.</span><span class="nx">methods</span><span class="p">.</span><span class="nx">getPrice</span><span class="p">().</span><span class="nx">call</span><span class="p">();</span><span class="w"> </span>
+<span class="w">        </span><span class="nx">assert</span><span class="p">.</span><span class="nx">equal</span><span class="p">(</span><span class="nx">prise</span><span class="p">,</span><span class="w"> </span><span class="nx">initialPrise</span><span class="p">);</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="nx">it</span><span class="p">(</span><span class="s1">'should has new brand'</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">await</span><span class="w"> </span><span class="nx">contract</span><span class="p">.</span><span class="nx">methods</span><span class="p">.</span><span class="nx">setBrand</span><span class="p">(</span><span class="nx">newBrand</span><span class="p">).</span><span class="nx">send</span><span class="p">({</span><span class="kr">from</span><span class="o">:</span><span class="w"> </span><span class="nx">accounts</span><span class="p">[</span><span class="mf">0</span><span class="p">]});</span><span class="w"> </span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">brand</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">contract</span><span class="p">.</span><span class="nx">methods</span><span class="p">.</span><span class="nx">getBrand</span><span class="p">().</span><span class="nx">call</span><span class="p">();</span><span class="w"> </span>
+<span class="w">        </span><span class="nx">assert</span><span class="p">.</span><span class="nx">equal</span><span class="p">(</span><span class="nx">brand</span><span class="p">,</span><span class="w"> </span><span class="nx">newBrand</span><span class="p">);</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="nx">it</span><span class="p">(</span><span class="s1">'should has new prise'</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">await</span><span class="w"> </span><span class="nx">contract</span><span class="p">.</span><span class="nx">methods</span><span class="p">.</span><span class="nx">setPrice</span><span class="p">(</span><span class="nx">newPrise</span><span class="p">).</span><span class="nx">send</span><span class="p">({</span><span class="kr">from</span><span class="o">:</span><span class="w"> </span><span class="nx">accounts</span><span class="p">[</span><span class="mf">0</span><span class="p">]});</span><span class="w"> </span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">prise</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">contract</span><span class="p">.</span><span class="nx">methods</span><span class="p">.</span><span class="nx">getPrice</span><span class="p">().</span><span class="nx">call</span><span class="p">();</span>
+<span class="w">        </span><span class="nx">assert</span><span class="p">.</span><span class="nx">equal</span><span class="p">(</span><span class="nx">prise</span><span class="p">,</span><span class="w"> </span><span class="nx">newPrise</span><span class="p">);</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="p">});</span>
+</code></pre>
+<p>部署合约</p>
+<pre lang="bash"><code class="language-bash md-fencescode">kimshan@MacBook-Pro<span class="w"> </span>scripts<span class="w"> </span>%<span class="w"> </span>npm<span class="w"> </span>run<span class="w"> </span><span class="nb">test</span>
+
+&gt;<span class="w"> </span>contract_workflow@1.0.0<span class="w"> </span>pretest<span class="w"> </span>/Users/kimshan/workplace/blockchain/connect
+&gt;<span class="w"> </span>npm<span class="w"> </span>run<span class="w"> </span>compile
+
+
+&gt;<span class="w"> </span>contract_workflow@1.0.0<span class="w"> </span>compile<span class="w"> </span>/Users/kimshan/workplace/blockchain/connect
+&gt;<span class="w"> </span>node<span class="w"> </span>scripts/compile.js
+
+save<span class="w"> </span>compiled<span class="w"> </span>contract<span class="w"> </span>Connect<span class="w"> </span>to<span class="w"> </span>/Users/kimshan/workplace/blockchain/connect/compiled/Connect.json
+
+&gt;<span class="w"> </span>contract_workflow@1.0.0<span class="w"> </span><span class="nb">test</span><span class="w"> </span>/Users/kimshan/workplace/blockchain/connect
+&gt;<span class="w"> </span>mocha<span class="w"> </span>tests/
+
+
+
+<span class="w">  </span>contract
+合约部署账户:<span class="w"> </span>0xb863B44Bb2EE9E1F7D619B318eF438e2f932dE66
+合约部署成功:<span class="w"> </span>0x121798DFE9192756672C2cC50254eF142Fd64865
+<span class="w">    </span>✔<span class="w"> </span>deployed<span class="w"> </span>contract
+合约部署账户:<span class="w"> </span>0xb863B44Bb2EE9E1F7D619B318eF438e2f932dE66
+合约部署成功:<span class="w"> </span>0x322F3792Ee504F628aB98ceEAcc7f9eF74282e42
+<span class="w">    </span>✔<span class="w"> </span>should<span class="w"> </span>has<span class="w"> </span>initial<span class="w"> </span>brand
+合约部署账户:<span class="w"> </span>0xb863B44Bb2EE9E1F7D619B318eF438e2f932dE66
+合约部署成功:<span class="w"> </span>0x2BfcDADba49751C5eDe8d09a44744C41D1827D7A
+<span class="w">    </span>✔<span class="w"> </span>should<span class="w"> </span>has<span class="w"> </span>initial<span class="w"> </span>prise
+合约部署账户:<span class="w"> </span>0xb863B44Bb2EE9E1F7D619B318eF438e2f932dE66
+合约部署成功:<span class="w"> </span>0xd4BaC4e71c82d0834a0F8703FFB9Ee8332Fcb902
+<span class="w">    </span>✔<span class="w"> </span>should<span class="w"> </span>has<span class="w"> </span>new<span class="w"> </span>brand<span class="w"> </span><span class="o">(</span>70ms<span class="o">)</span>
+合约部署账户:<span class="w"> </span>0xb863B44Bb2EE9E1F7D619B318eF438e2f932dE66
+合约部署成功:<span class="w"> </span>0x1c034d941A47EEFB4d7CA96da27C19A8738d1E9f
+<span class="w">    </span>✔<span class="w"> </span>should<span class="w"> </span>has<span class="w"> </span>new<span class="w"> </span>prise<span class="w"> </span><span class="o">(</span>54ms<span class="o">)</span>
+
+
+<span class="w">  </span><span class="m">5</span><span class="w"> </span>passing<span class="w"> </span><span class="o">(</span>607ms<span class="o">)</span>
+</code></pre>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

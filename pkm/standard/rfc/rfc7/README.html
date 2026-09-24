@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>README</title>
+<link id="theme-css" rel="stylesheet" href="../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="rfc-7-host-imp-interface-imp-gerard-deloche">RFC 7 — Host-IMP Interface（主机-IMP 接口）· Gerard Deloche</h1>
+<blockquote>
+<p><strong>一句话定位</strong>：这是<strong>主机侧操作系统内核</strong>的设计文档——Deloche（UCLA 的法国研究员）写的 HOST-IMP 接口软件方案。别的 RFC 在讨论"协议说什么"，这篇在讨论"内核里那两段驱动代码怎么写"。而且它的原稿是<strong>手写的，部分字迹无法辨认</strong>。</p>
+<p>📄 原文见 <a href="./rfc7.txt">rfc7.txt</a> ｜ 中英对照见 <a href="./zh.html">zh.md</a></p>
+</blockquote>
+<hr />
+<h2 id="_1">〇、背景：一份手写稿和它的重建</h2>
+<p>1969 年 5 月，ARPANET 四站里唯一没交出"接口软件设计"的是 UCLA（Sigma 7 的接法最难，其他站都用的相对简单的机器）。这份作业落在了 <strong>Gerard Deloche</strong> 身上——RFC 1 里 Crocker 提过的"独立工作的 Deloche"。</p>
+<p>最传奇的是文档的命运：</p>
+<blockquote>
+<p>【RFC Editor 注】RFC 7 的原稿是<strong>手写的</strong>，只有部分无法辨认的副本存世。后来由 SRI 的扩展研究中心（ARC）用 NLS 系统重新录入。以下是我们能做到的最佳重建版本。</p>
+</blockquote>
+<p>所以 RFC 7 里有好几处 <strong>...(unreadable)（无法辨认）</strong>。<strong>手写 → 打字机重录 → 半世纪后数字归档</strong>，一份 1969 年的内核设计就这样传到了你手上。</p>
+<hr />
+<h2 id="_2">一、内容细读</h2>
+<h3 id="1-1">1. 总体架构：两个程序（图 1）</h3>
+<pre><code class="md-fencescode">  用户程序               NETWORK 程序          HANDLER 程序      硬件接口         IMP
+    o---|             +-----------+      +-----------+      +------+------+
+    o---| (多路复用) → |  Output   | →    |  Output   |  →   |              | → IMP
+        |             |           |      |           |      |   HARDWARE   |
+    o---| (分发)    ← |  Input    | ←    |  Input    |  ←   |  Interface   | ← IMP
+        |             +-----------+      +-----------+      +------+------+
+                          ▲                   ▲
+                          └────── 缓冲池 + 接口表 ──────┘
+</code></pre>
+<p><strong>Network 程序</strong>（网络程序）：承载用户的传输请求——多路复用、构建消息头、分包、转码、填缓冲。
+<strong>Handler 程序</strong>（处理器程序）：驱动通道硬件——发起发送、数据链式传输（data chaining）、处理中断。</p>
+<p>这两个程序就是今天网卡驱动 + 协议栈的 1969 版分工：<strong>上层管"发什么"，下层管"怎么把比特送出去"。</strong></p>
+<p>关键设计点：
+- 通信是<strong>全双工</strong>的，两个程序各自再拆成"输出半部 + 输入半部"（图里只画了输出半部）
+- 两个程序之间通过<strong>缓冲池</strong>交换数据、通过<strong>接口表</strong>交换逻辑信息——生产者/消费者模型的完美实现</p>
+<h3 id="2-network-ii-1">2. Network 程序：多路复用 + 消息组装（II-1）</h3>
+<p><strong>多路复用</strong>：把所有用户的请求堆起来，把缓冲池填满，让 Handler 一直有活干（keep the handler busy emitting）。多路复用/分发<strong>基于链路号</strong>（Link = 两个用户之间的逻辑连接）。</p>
+<p><strong>输出消息处理</strong>（II-1-2）：用户程序要发文本时，说明三件事：<strong>文本位置、文本长度（字节）、目的地</strong>。Network 程序拿到后：</p>
+<pre><code class="md-fencescode">① 构建 16 位 HOST 头：1 位追踪 + 2 位备用 + 8 位链路号 + 5 位目的主机
+② 在头部和正文之间插入 16 位标记（1 + 15 个 0），让正文从字边界开始
+③ 检查文本长度：超过 1006 字节就拆成多条消息
+   （1006 = (8080 - 32) / 8，即最大消息 8080 位 - 头部 32 位，再除以 8 位/字节）
+④ 把 EBCDIC 字符转码成 ASCII
+⑤ 把消息内容填入缓冲池
+⑥ 更新接口表、移动填充指针
+</code></pre>
+<p>注意②：<strong>"在头部和正文之间塞 16 位填充，让正文对齐字边界"</strong>——这是 1969 年的"内存对齐"技巧，为了让主机（Sigma 7）处理消息时不用跨字读取。今天的 struct 对齐、JSON 字段序设计，干的是同一件事。</p>
+<h3 id="3-handler-ii-2">3. Handler 程序：短小精悍的内核驱动（II-2）</h3>
+<blockquote>
+<p>这个程序会<strong>非常短</strong>。它将用<strong>主模式（特权指令）</strong>编写，并应集成到操作系统的 I/O 监控程序（supervisor）中。</p>
+</blockquote>
+<ul>
+<li>由 Network 程序或 I/O 中断唤醒</li>
+<li>控制通道硬件：发起发送、在缓冲间做<strong>数据链式传输</strong>（data chaining）、收到中断时测试各种设备状态</li>
+<li>清空 Network 程序填好的缓冲</li>
+<li>探查并更新接口表</li>
+</ul>
+<p>"非常短 + 特权模式 + 并入 I/O supervisor"——这就是今天的<strong>内核态网卡驱动</strong>的完整定义：短、特权、中断驱动、负责数据搬运不负责业务逻辑。</p>
+<h3 id="4-ii-3">4. 缓冲池与接口表：生产者-消费者（II-3）</h3>
+<ul>
+<li><strong>缓冲</strong>：每块 256 字（1024 字节），刚好装下最大消息（正文 1006 + 头与标记 4 = 1010 字节）。缓冲数量决定链路的利用率。</li>
+<li><strong>接口表</strong>：<strong>环形表（ring table）+ 两个指针</strong>——Network 程序用"填充指针"写入，Handler 程序用"提取指针"读出：</li>
+</ul>
+<pre><code class="md-fencescode">           +--------------+----------+
+           | Buffer addr. | nb bytes | &lt;== 填充指针 (Filling pointer)
+           +--------------+----------+
+           |              |          |
+           //    ...     //
+           +--------------+----------+
+           | Buffer addr. | nb bytes | &lt;== 提取指针 (Extracting pointer)
+           +--------------+----------+
+</code></pre>
+<p><strong>这就是教科书级的环形缓冲 + 双指针生产者-消费者队列</strong>——1969 年 5 月，Deloche 在 UCLA 把它写进了 ARPANET 主机软件规格。今天 Linux 的 sk_buff 队列、Kafka 的分区、React 的 fiber 队列，全是它的远房后代。</p>
+<h3 id="5-iii">5. 三个待解问题（III）</h3>
+<p>Deloche 诚实地列了三个问题：
+1. <strong>为什么 HOST 和 IMP 之间没有一个简单的控制规程？</strong> 如果 HOST 发出的消息在传输中出错，BBN 规格里说错误会一路传到接收 HOST——那是不是需要 HOST-HOST 的控制规程？
+2. <strong>特殊通道硬件单元接在哪（MIOP/SIOP）？</strong> 硬件怎么知道消息什么时候结束、好开始填充（padding）？反向：Handler 怎么知道进来的消息有多长——从上一条的内容推断，还是永远按最大长度准备接收？
+3. <strong>"Gordo"文档什么时候出？</strong> 用于设计用户-网络程序接口（程序启动机制、参数传递……）。</p>
+<p>第 2 个问题的两难（"按最大长度准备 vs 从内容推断长度"）——今天每一个流式解析器都在面对同样的选择。第 3 个问题里的 "Gordo" 是 UCLA Sigma 7 的操作系统，Deloche 在等操作系统的接口文档才能定用户-网络接口。<strong>架构师依赖操作系统的文档，操作系统又依赖架构师的需求——1969 年的依赖地狱。</strong></p>
+<hr />
+<h2 id="_3">二、🔷 本质升华</h2>
+<blockquote>
+<ul>
+<li><strong>「人类发明的实现」</strong>：16 位头（1+2+8+5 的分配）、1006 字节、256 字缓冲、环形表双指针——全是 Deloche 为 Sigma 7 定的具体参数。换成 32 位头、MTU 1500、无锁队列，一样成立。</li>
+<li><strong>「先于人类存在的规律」</strong>：
+  ① <strong>生产者-消费者律</strong>：一个生产数据、一个消费数据，两者速率不同步——<strong>唯一的正确解法就是中间放一个"缓冲 + 同步指针"</strong>，让双方互不阻塞。这是从水坝蓄水、工厂流水线缓冲区、到 CPU 生产者和内存消费者之间 cache，再到网络协议栈，<strong>所有异步系统共同的结构</strong>。Deloche 的"缓冲池 + 环形接口表"是这条律在 1969 年的一次标准实现。
+  ② <strong>内核态/用户态分离律</strong>：Network 程序管逻辑、Handler 程序管硬件，后者"短小、特权、中断驱动"——<strong>把"必须信任的硬件搬运代码"和"可以不信任的业务代码"分开</strong>，是操作系统安全模型的原点。今天的 eBPF 把网络处理下沉到内核、DPDK 把数据面移出内核，本质上都是在调整这条分界线的位置——<strong>分界线怎么画是人为的，分界线必须存在是必然的。</strong>
+  ③ <strong>内存对齐律</strong>：头部和正文之间塞 16 位填充让正文对齐字边界——<strong>硬件喜欢对齐、软件喜欢紧凑，折中方案就是"小填充 + 明确规则"</strong>。C 语言的 struct padding、数据库的页对齐、SSD 的扇区对齐，全是同一件事。
+  ④ <strong>文档残缺不阻碍思想传播</strong>：手写稿 + 无法辨认 + 重建——但整份设计依然被读懂、被实现（UCLA 的 Sigma 7 后来真的连上了网）。<strong>思想的传播不依赖载体的完美</strong>，这本身又是一条规律。</li>
+<li><strong>后世重现</strong>：Network/Handler 分工 → 协议栈 vs 网卡驱动；主模式特权 → 内核态驱动；环形表双指针 → 无锁环形队列 / ring buffer（内核网络栈的经典结构）；1006 字节切片 → TCP 分段 / 分帧；字边界对齐 → struct padding；"按最大长度准备接收" → 固定大小 receive buffer；"Gordo 文档依赖" → API 依赖管理。<strong>RFC 7 是这批文档里最"像现代操作系统教材"的一篇。</strong></li>
+</ul>
+</blockquote>
+<hr />
+<h2 id="_4">三、亮点速览</h2>
+<ol>
+<li><strong>生产者-消费者环形缓冲</strong>——教科书级实现出现在 1969 年的网络主机规格里。</li>
+<li><strong>"非常短 + 特权模式 + 并入 I/O supervisor"</strong>——内核态驱动的完整定义。</li>
+<li><strong>1006 = (8080-32)/8 的拆包计算</strong>——每个字节都有账可查的工程。</li>
+<li><strong>字边界对齐的 16 位填充</strong>——1969 年的内存对齐技巧。</li>
+<li><strong>手写稿 + (unreadable) + 重建</strong>——RFC 史上最"野生"的保存方式之一。</li>
+<li><strong>"Gordo 文档什么时候出"</strong>——最早的依赖管理吐槽。</li>
+</ol>
+<hr />
+<h2 id="_5">四、成败与后续</h2>
+<ul>
+<li><strong>成功的</strong>：Network/Handler 分工模式在 UCLA 的 Sigma 7 主机上落地，成为 NCP 实现的基础；缓冲池+接口表设计被其他站点借鉴（SRI 的 NLS 主机接口文档里能看到相似结构）。</li>
+<li><strong>被超越的</strong>：专用 16 位 HOST 头很快被 NCP 的统一消息格式取代；手写文档的悲剧在 RFC 20 之后的规范文档里不再重演（大家改用打字机 + 后续用机器排版）。</li>
+<li><strong>历史彩蛋</strong>：RFC 7 的作者栏写着 "G. Deloche --&gt; Prof. J. Estrin ..."——<strong>这是"转发给"列表</strong>：Deloche 写完把文档抄送给了 UCLA 的教授们（Estrin、Kleinrock、Bussel）和 Crocker。1969 年的"@mentions"。</li>
+</ul>
+<hr />
+<h2 id="_6">五、思想传承对照表</h2>
+<table>
+<thead>
+<tr>
+<th>RFC 7 的设计</th>
+<th>今天的对应物</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Network 程序（管逻辑）</td>
+<td>网络协议栈（TCP/IP 层）</td>
+</tr>
+<tr>
+<td>Handler 程序（管硬件、特权模式、短小）</td>
+<td>内核态网卡驱动 / eBPF 数据面</td>
+</tr>
+<tr>
+<td>缓冲池 + 环形接口表双指针</td>
+<td>ring buffer / 无锁队列 / Kafka 分区</td>
+</tr>
+<tr>
+<td>16 位 HOST 头（1+2+8+5）</td>
+<td>各层协议头（以太网/IP/TCP 头）</td>
+</tr>
+<tr>
+<td>1006 字节拆包</td>
+<td>TCP MSS 分段 / MTU 分片</td>
+</tr>
+<tr>
+<td>16 位填充对齐字边界</td>
+<td>struct padding / 内存对齐</td>
+</tr>
+<tr>
+<td>全双工输出/输入半部</td>
+<td>全双工协议栈收发分离</td>
+</tr>
+<tr>
+<td>"Gordo 文档依赖"</td>
+<td>API 依赖 / 架构师 vs 操作系统团队</td>
+</tr>
+<tr>
+<td>手写稿 + 重建</td>
+<td>文档归档 / RFC Editor 抢救历史</td>
+</tr>
+</tbody>
+</table>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

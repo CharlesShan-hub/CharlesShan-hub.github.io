@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rfc1215</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<pre lang="txt"><code class="language-txt md-fencescode">
+
+
+
+
+
+Network Working Group                                   M. Rose, Editor
+Request for Comments: 1215            Performance Systems International
+                                                             March 1991
+
+
+                    A Convention for Defining Traps
+                         for use with the SNMP
+
+Status of this Memo
+
+   This memo suggests a straight-forward approach towards defining traps
+   used with the SNMP.  Readers should note that the use of traps in the
+   Internet-standard network management framework is controversial.  As
+   such, this memo is being put forward for information purposes.
+   Network management practitioners who employ traps are encouraged to
+   make use of this document.  Practitioners who do not employ traps can
+   safely ignore this document.
+
+   This memo provides information for the Internet community.  It does
+   not specify any standard.  Distribution of this memo is unlimited.
+
+Table of Contents
+
+   1. Historical Perspective ................................    1
+   2. Defining Traps ........................................    2
+   2.1 Mapping of the TRAP-TYPE macro .......................    3
+   2.1.1 Mapping of the ENTERPRISE clause ...................    3
+   2.1.2 Mapping of the VARIABLES clause ....................    4
+   2.1.3 Mapping of the DESCRIPTION clause ..................    4
+   2.1.4 Mapping of the REFERENCE clause ....................    4
+   2.1.5 Mapping of the TRAP-TYPE value .....................    4
+   2.2 Usage Examples .......................................    5
+   2.2.1 Enterprise-specific Trap ...........................    5
+   2.2.2 Generic-Traps for use with the SNMP ................    5
+   3. Acknowledgements ......................................    7
+   4. References ............................................    9
+   5. Security Considerations................................    9
+   6. Author's Address.......................................    9
+
+7.  Historical Perspective
+
+   As reported in RFC 1052, IAB Recommendations for the Development of
+   Internet Network Management Standards [1], a two-prong strategy for
+   network management of TCP/IP-based internets was undertaken.  In the
+   short-term, the Simple Network Management Protocol (SNMP), defined in
+   RFC 1067, was to be used to manage nodes in the Internet community.
+   In the long-term, the use of the OSI network management framework was
+   be examined.  Two documents were produced to define the management
+
+
+
+SNMP Working Group                                              [Page 1]
+
+RFC 1215             Convention for Defining Traps            March 1991
+
+
+   information: RFC 1065, which defined the Structure of Management
+   Information (SMI), and RFC 1066, which defined the Management
+   Information Base (MIB).  Both of these documents were designed so as
+   to be compatible with both the SNMP and the OSI network management
+   framework.
+
+   This strategy was quite successful in the short-term: Internet-based
+   network management technology was fielded, by both the research and
+   commercial communities, within a few months.  As a result of this,
+   portions of the Internet community became network manageable in a
+   timely fashion.
+
+   As reported in RFC 1109, Report of the Second Ad Hoc Network
+   Management Review Group [2], the requirements of the SNMP and the OSI
+   network management frameworks were more different than anticipated.
+   As such, the requirement for compatibility between the SMI/MIB and
+   both frameworks was suspended.  This action permitted the operational
+   network management framework, based on the SNMP, to respond to new
+   operational needs in the Internet community by producing MIB-II.
+
+   In May of 1990, the core documents were elevated to &quot;Standard
+   Protocols&quot; with &quot;Recommended&quot; status.  As such, the Internet-standard
+   network management framework consists of: Structure and
+   Identification of Management Information for TCP/IP-based internets,
+   RFC 1155 [3], which describes how managed objects contained in the
+   MIB are defined; Management Information Base for Network Management
+   of TCP/IP-based internets, which describes the managed objects
+   contained in the MIB, RFC 1156 [4]; and, the Simple Network
+   Management Protocol, RFC 1157 [5], which defines the protocol used to
+   manage these objects.
+
+2.  Defining Traps
+
+   Due to its initial requirement to be protocol-independent, the
+   Internet-standard SMI does not provide a means for defining traps.
+   Instead, the SNMP defines a few standardized traps and provides a
+   means for management enterprises to transmit enterprise-specific
+   traps.
+
+   However, with the introduction of experimental MIBs, some of which
+   have a need to define experiment-specific traps, a convenient means
+   of defining traps is desirable.  The TRAP-TYPE macro is suggested for
+   this purpose:
+
+          IMPORTS
+              ObjectName
+                  FROM RFC1155-SMI;
+
+
+
+
+SNMP Working Group                                              [Page 2]
+
+RFC 1215             Convention for Defining Traps            March 1991
+
+
+          TRAP-TYPE MACRO ::=
+          BEGIN
+              TYPE NOTATION ::= &quot;ENTERPRISE&quot; value
+                                    (enterprise OBJECT IDENTIFIER)
+                                VarPart
+                                DescrPart
+                                ReferPart
+              VALUE NOTATION ::= value (VALUE INTEGER)
+
+              VarPart ::=
+                         &quot;VARIABLES&quot; &quot;{&quot; VarTypes &quot;}&quot;
+                              | empty
+              VarTypes ::=
+                         VarType | VarTypes &quot;,&quot; VarType
+              VarType ::=
+                         value (vartype ObjectName)
+
+              DescrPart ::=
+                         &quot;DESCRIPTION&quot; value (description DisplayString)
+                              | empty
+
+              ReferPart ::=
+                         &quot;REFERENCE&quot; value (reference DisplayString)
+                              | empty
+
+          END
+
+   It must be emphasized however, that the use of traps is STRONGLY
+   discouraged in the Internet-standard Network Management Framework.
+   The TRAP-TYPE macro is intended to allow concise definitions of
+   existing traps, not to spur the definition of new traps.
+
+2.1.  Mapping of the TRAP-TYPE macro
+
+   It should be noted that the expansion of the TRAP-TYPE macro is
+   something which conceptually happens during implementation and not
+   during run-time.
+
+2.1.1.  Mapping of the ENTERPRISE clause
+
+   The ENTERPRISE clause, which must be present, defines the management
+   enterprise under whose registration authority this trap is defined
+   (for a discussion on delegation of registration authority, see the
+   SMI [3]).  This value is placed inside the enterprise field of the
+   SNMP Trap-PDU.
+
+   By convention, if the value of the ENTERPRISE clause is
+
+
+
+
+SNMP Working Group                                              [Page 3]
+
+RFC 1215             Convention for Defining Traps            March 1991
+
+
+                snmp   OBJECT IDENTIFIER ::= { mib-2 11 }
+
+   as defined in MIB-II [7], then instead of using this value, the value
+   of sysObjectID is placed in the enterprise field of the SNMP Trap-
+   PDU.  This provides a simple means of using the TRAP-TYPE macro to
+   represent the existing standard SNMP traps; it is not intended to
+   provide a means to define additional standard SNMP traps.
+
+2.1.2.  Mapping of the VARIABLES clause
+
+   The VARIABLES clause, which need not be present, defines the ordered
+   sequence of MIB objects which are contained within every instance of
+   the trap type.  Each variable is placed, in order, inside the
+   variable-bindings field of the SNMP Trap-PDU.  Note that at the
+   option of the agent, additional variables may follow in the
+   variable-bindings field.
+
+   However, if the value of the ENTERPRISE clause is
+
+               snmp   OBJECT IDENTIFIER ::= { mib-2 11 }
+
+   as defined in MIB-II [7], then the introduction of additional
+   variables must not result in the serialized SNMP Message being larger
+   than 484 octets.
+
+2.1.3.  Mapping of the DESCRIPTION clause
+
+   The DESCRIPTION clause, which need not be present, contains a textual
+   definition of the trap type.  Note that in order to conform to the
+   ASN.1 syntax, the entire value of this clause must be enclosed in
+   double quotation marks, although the value may be multi-line.
+
+   Further, note that if the MIB module does not contain a textual
+   description of the trap elsewhere then the DESCRIPTION clause must be
+   present.
+
+2.1.4.  Mapping of the REFERENCE clause
+
+   The REFERENCE clause, which need not be present, contains a textual
+   cross-reference to a trap, event, or alarm, defined in some other MIB
+   module.  This is useful when de-osifying a MIB produced by some other
+   organization.
+
+2.1.5.  Mapping of the TRAP-TYPE value
+
+   The value of an invocation of the TRAP-TYPE macro is the (integer)
+   number which is uniquely assigned to the trap by the registration
+   authority indicated by the ENTERPRISE clause.  This value is placed
+
+
+
+SNMP Working Group                                              [Page 4]
+
+RFC 1215             Convention for Defining Traps            March 1991
+
+
+   inside the specific-trap field of the SNMP Trap-PDU, and the
+   generic-trap field is set to &quot;enterpriseSpecific(6)&quot;.
+
+   By convention, if the value of the ENTERPRISE clause is
+
+               snmp   OBJECT IDENTIFIER ::= { mib-2 11 }
+
+   as defined in MIB-II [7], then the value of an invocation of the
+   TRAP-TYPE macro is placed inside the generic-trap field of the SNMP
+   Trap-PDU, and the specific-trap field is set to 0.  This provides a
+   simple means of using the TRAP-TYPE macro to represent the existing
+   standard SNMP traps; it is not intended to provide a means to define
+   additional standard SNMP traps.
+
+2.2.  Usage Examples
+
+2.2.1.  Enterprise-specific Trap
+
+   Consider a simple example of an enterprise-specific trap that is sent
+   when a communication link failure is encountered:
+
+          myEnterprise OBJECT IDENTIFIER ::= { enterprises 9999 }
+
+          myLinkDown TRAP-TYPE
+              ENTERPRISE  myEnterprise
+              VARIABLES   { ifIndex }
+              DESCRIPTION
+                          &quot;A myLinkDown trap signifies that the sending
+                          SNMP application entity recognizes a failure
+                          in one of the communications links represented
+                          in the agent's configuration.&quot;
+              ::= 2
+
+2.2.2.  Generic-Traps for use with the SNMP
+
+   Consider how the standard SNMP traps might be defined:
+
+          coldStart TRAP-TYPE
+              ENTERPRISE  snmp
+              DESCRIPTION
+                          &quot;A coldStart trap signifies that the sending
+                          protocol entity is reinitializing itself such
+                          that the agent's configuration or the rotocol
+                          entity implementation may be altered.&quot;
+              ::= 0
+
+          warmStart TRAP-TYPE
+              ENTERPRISE  snmp
+
+
+
+SNMP Working Group                                              [Page 5]
+
+RFC 1215             Convention for Defining Traps            March 1991
+
+
+              DESCRIPTION
+                          &quot;A warmStart trap signifies that the sending
+                          protocol entity is reinitializing itself such
+                          that neither the agent configuration nor the
+                          protocol entity implementation is altered.&quot;
+              ::= 1
+
+          linkDown TRAP-TYPE
+              ENTERPRISE  snmp
+              VARIABLES   { ifIndex }
+              DESCRIPTION
+                          &quot;A linkDown trap signifies that the sending
+                          protocol entity recognizes a failure in one of
+                          the communication links represented in the
+                          agent's configuration.&quot;
+              ::= 2
+
+          linkUp TRAP-TYPE
+              ENTERPRISE  snmp
+              VARIABLES   { ifIndex }
+              DESCRIPTION
+                          &quot;A linkUp trap signifies that the sending
+                          protocol entity recognizes that one of the
+                          communication links represented in the agent's
+                          configuration has come up.&quot;
+              ::= 3
+
+          authenticationFailure TRAP-TYPE
+              ENTERPRISE  snmp
+              DESCRIPTION
+                          &quot;An authenticationFailure trap signifies that
+                          the sending protocol entity is the addressee
+                          of a protocol message that is not properly
+                          authenticated.  While implementations of the
+                          SNMP must be capable of generating this trap,
+                          they must also be capable of suppressing the
+                          emission of such traps via an implementation-
+                          specific mechanism.&quot;
+              ::= 4
+
+
+
+
+
+
+
+
+
+
+
+
+SNMP Working Group                                              [Page 6]
+
+RFC 1215             Convention for Defining Traps            March 1991
+
+
+          egpNeighborLoss TRAP-TYPE
+              ENTERPRISE  snmp
+              VARIABLES   { egpNeighAddr }
+              DESCRIPTION
+                          &quot;An egpNeighborLoss trap signifies that an EGP
+                          neighbor for whom the sending protocol entity
+                          was an EGP peer has been marked down and the
+                          peer relationship no longer obtains.&quot;
+              ::= 5
+
+3.  Acknowledgements
+
+   This document was produced by the SNMP Working Group:
+
+               Anne Ambler, Spider
+               Karl Auerbach, Sun
+               Fred Baker, ACC
+               Ken Brinkerhoff
+               Ron Broersma, NOSC
+               Jack Brown, US Army
+               Theodore Brunner, Bellcore
+               Jeffrey Buffum, HP
+               John Burress, Wellfleet
+               Jeffrey D. Case, University of Tennessee at Knoxville
+               Chris Chiptasso, Spartacus
+               Paul Ciarfella, DEC
+               Bob Collet
+               John Cook, Chipcom
+               Tracy Cox, Bellcore
+               James R. Davin, MIT-LCS
+               Eric Decker, cisco
+               Kurt Dobbins, Cabletron
+               Nadya El-Afandi, Network Systems
+               Gary Ellis, HP
+               Fred Engle
+               Mike Erlinger
+               Mark S. Fedor, PSI
+               Richard Fox, Synoptics
+               Karen Frisa, CMU
+               Chris Gunner, DEC
+               Fred Harris, University of Tennessee at Knoxville
+               Ken Hibbard, Xylogics
+               Ole Jacobsen, Interop
+               Ken Jones
+               Satish Joshi, Synoptics
+               Frank Kastenholz, Racal-Interlan
+               Shimshon Kaufman, Spartacus
+               Ken Key, University of Tennessee at Knoxville
+
+
+
+SNMP Working Group                                              [Page 7]
+
+RFC 1215             Convention for Defining Traps            March 1991
+
+
+               Jim Kinder, Fibercom
+               Alex Koifman, BBN
+               Christopher Kolb, PSI
+               Cheryl Krupczak, NCR
+               Paul Langille, DEC
+               Peter Lin, Vitalink
+               John Lunny, TWG
+               Carl Malamud
+               Randy Mayhew, University of Tennessee at Knoxville
+               Keith McCloghrie, Hughes LAN Systems
+               Donna McMaster, David Systems
+               Lynn Monsanto, Sun
+               Dave Perkins, 3COM
+               Jim Reinstedler, Ungerman Bass
+               Anil Rijsinghani, DEC
+               Kathy Rinehart, Arnold AFB
+               Kary Robertson
+               Marshall T. Rose, PSI (chair)
+               L. Michael Sabo, NCSC
+               Jon Saperia, DEC
+               Greg Satz, cisco
+               Martin Schoffstall, PSI
+               John Seligson
+               Steve Sherry, Xyplex
+               Fei Shu, NEC
+               Sam Sjogren, TGV
+               Mark Sleeper, Sparta
+               Lance Sprung
+               Mike St.Johns
+               Bob Stewart, Xyplex
+               Emil Sturniold
+               Kaj Tesink, Bellcore
+               Dean Throop, Data General
+               Bill Townsend, Xylogics
+               Maurice Turcotte, Racal-Milgo
+               Kannan Varadhou
+               Sudhanshu Verma, HP
+               Bill Versteeg, Network Research Corporation
+               Warren Vik, Interactive Systems
+               David Waitzman, BBN
+               Steve Waldbusser, CMU
+               Dan Wintringhan
+               David Wood
+               Wengyik Yeong, PSI
+               Jeff Young, Cray Research
+
+
+
+
+
+
+SNMP Working Group                                              [Page 8]
+
+RFC 1215             Convention for Defining Traps            March 1991
+
+
+4.  References
+
+   [1] Cerf, V., &quot;IAB Recommendations for the Development of Internet
+       Network Management Standards&quot;, RFC 1052, NRI, April 1988.
+
+   [2] Cerf, V., &quot;Report of the Second Ad Hoc Network Management Review
+       Group&quot;, RFC 1109, NRI, August 1989.
+
+   [3] Rose M., and K. McCloghrie, &quot;Structure and Identification of
+       Management Information for TCP/IP-based internets&quot;, RFC 1155,
+       Performance Systems International, Hughes LAN Systems, May 1990.
+
+   [4] McCloghrie K., and M. Rose, &quot;Management Information Base for
+       Network Management of TCP/IP-based internets&quot;, RFC 1156, Hughes
+       LAN Systems, Performance Systems International, May 1990.
+
+   [5] Case, J., Fedor, M., Schoffstall, M., and J. Davin, &quot;Simple
+       Network Management Protocol&quot;, RFC 1157, SNMP Research,
+       Performance Systems International, Performance Systems
+       International, MIT Laboratory for Computer Science, May 1990.
+
+   [6] Information processing systems - Open Systems Interconnection -
+       Specification of Abstract Syntax Notation One (ASN.1),
+       International Organization for Standardization International
+       Standard 8824, December 1987.
+
+   [7] Rose M., Editor, &quot;Management Information Base for Network
+       Management of TCP/IP-based internets: MIB-II&quot;, RFC 1213,
+       Performance Systems International, March 1991.
+
+5.  Security Considerations
+
+   Security issues are not discussed in this memo.
+
+6.  Author's Address
+
+   Marshall T. Rose
+   Performance Systems International
+   5201 Great America Parkway
+   Suite 3106
+   Santa Clara, CA  95054
+
+   Phone: +1 408 562 6222
+
+   EMail: mrose@psi.com
+   X.500:  rose, psi, us
+
+
+
+
+
+SNMP Working Group                                              [Page 9]
+
+</code></pre>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASN1_教程_第4天_标签和编码</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="asn1-4">ASN.1 教程 - 第4天：标签和编码</h1>
+<h2 id="_1">🎯 学习目标</h2>
+<ul>
+<li>深入理解ASN.1标签系统：UNIVERSAL/APPLICATION/PRIVATE</li>
+<li>掌握BER、DER、PER、XER四种编码规则的区别与应用</li>
+<li>理解IMPLICIT和EXPLICIT标签的区别及使用场景</li>
+<li>能分析实际编码数据，优化编码效率</li>
+</ul>
+<h2 id="2-3">⏰ 建议时间：2-3小时</h2>
+<h2 id="_2">📖 课程大纲</h2>
+<h3 id="60">一、标签系统深度解析（60分钟）</h3>
+<h4 id="11">1.1 什么是标签？</h4>
+<p><strong>标签的作用</strong>：
+1. <strong>类型识别</strong>：编码时区分不同类型
+2. <strong>版本兼容</strong>：支持向后兼容
+3. <strong>扩展性</strong>：允许添加新字段而不破坏旧解码器</p>
+<p><strong>标签三要素</strong>：</p>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="p">[</span><span class="err">标签类</span><span class="w"> </span><span class="err">标签编号</span><span class="w"> </span><span class="err">编码方式</span><span class="p">]</span>
+<span class="c1">-- 示例：[APPLICATION 0 IMPLICIT]</span>
+</code></pre>
+<h4 id="12">1.2 标签类别详解</h4>
+<table>
+<thead>
+<tr>
+<th>标签类别</th>
+<th>范围</th>
+<th>用途</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>UNIVERSAL</strong></td>
+<td>0-63</td>
+<td>预定义基础类型</td>
+<td>INTEGER(2), IA5String(22)</td>
+</tr>
+<tr>
+<td><strong>APPLICATION</strong></td>
+<td>64+</td>
+<td>应用特定类型</td>
+<td>[APPLICATION 0]</td>
+</tr>
+<tr>
+<td><strong>PRIVATE</strong></td>
+<td>64+</td>
+<td>私有/厂商特定</td>
+<td>[PRIVATE 1]</td>
+</tr>
+<tr>
+<td><strong>CONTEXT-SPECIFIC</strong></td>
+<td>0+</td>
+<td>上下文相关（默认）</td>
+<td>[0], [1]</td>
+</tr>
+</tbody>
+</table>
+<h4 id="13-universal">1.3 UNIVERSAL标签表</h4>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>标签值</th>
+<th>二进制</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>BOOLEAN</strong></td>
+<td>1</td>
+<td>0000 0001</td>
+<td>布尔值</td>
+</tr>
+<tr>
+<td><strong>INTEGER</strong></td>
+<td>2</td>
+<td>0000 0010</td>
+<td>整数</td>
+</tr>
+<tr>
+<td><strong>BIT STRING</strong></td>
+<td>3</td>
+<td>0000 0011</td>
+<td>位串</td>
+</tr>
+<tr>
+<td><strong>OCTET STRING</strong></td>
+<td>4</td>
+<td>0000 0100</td>
+<td>字节串</td>
+</tr>
+<tr>
+<td><strong>NULL</strong></td>
+<td>5</td>
+<td>0000 0101</td>
+<td>空值</td>
+</tr>
+<tr>
+<td><strong>OBJECT IDENTIFIER</strong></td>
+<td>6</td>
+<td>0000 0110</td>
+<td>对象标识符</td>
+</tr>
+<tr>
+<td><strong>SEQUENCE</strong></td>
+<td>16</td>
+<td>0001 0000</td>
+<td>有序结构</td>
+</tr>
+<tr>
+<td><strong>SET</strong></td>
+<td>17</td>
+<td>0001 0001</td>
+<td>无序结构</td>
+</tr>
+<tr>
+<td><strong>PrintableString</strong></td>
+<td>19</td>
+<td>0001 0011</td>
+<td>可打印字符串</td>
+</tr>
+<tr>
+<td><strong>IA5String</strong></td>
+<td>22</td>
+<td>0001 0110</td>
+<td>ASCII字符串</td>
+</tr>
+<tr>
+<td><strong>UTCTime</strong></td>
+<td>23</td>
+<td>0001 0111</td>
+<td>UTC时间</td>
+</tr>
+<tr>
+<td><strong>GeneralizedTime</strong></td>
+<td>24</td>
+<td>0001 1000</td>
+<td>通用时间</td>
+</tr>
+<tr>
+<td><strong>UTF8String</strong></td>
+<td>12</td>
+<td>0000 1100</td>
+<td>UTF-8字符串</td>
+</tr>
+</tbody>
+</table>
+<p><strong>记忆技巧</strong>：
+- 简单类型：1-5（BOOLEAN到NULL）
+- 特殊类型：6（OID）
+- 构造类型：16-17（SEQUENCE/SET）
+- 字符串：19-24（各种字符串和时间）</p>
+<h4 id="14-application">1.4 APPLICATION标签实战</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 网络协议消息定义</span>
+<span class="n n-Type">NetworkProtocol</span><span class="w"> </span><span class="k">DEFINITIONS</span><span class="w"> </span><span class="k">AUTOMATIC</span><span class="w"> </span><span class="k">TAGS</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="k">BEGIN</span>
+
+<span class="c1">-- APPLICATION 0-9：控制消息</span>
+<span class="n n-Type">ControlMessage</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">CHOICE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">-- 登录消息</span>
+<span class="w">    </span><span class="nv">login</span><span class="w">       </span><span class="p">[</span><span class="k">APPLICATION</span><span class="w"> </span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">LoginMsg</span><span class="p">,</span>
+<span class="w">    </span><span class="c1">-- 登出消息</span>
+<span class="w">    </span><span class="nv">logout</span><span class="w">      </span><span class="p">[</span><span class="k">APPLICATION</span><span class="w"> </span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">LogoutMsg</span><span class="p">,</span>
+<span class="w">    </span><span class="c1">-- 心跳消息</span>
+<span class="w">    </span><span class="nv">heartbeat</span><span class="w">   </span><span class="p">[</span><span class="k">APPLICATION</span><span class="w"> </span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">HeartbeatMsg</span><span class="p">,</span>
+<span class="w">    </span><span class="c1">-- 错误消息</span>
+<span class="w">    </span><span class="nv">error</span><span class="w">       </span><span class="p">[</span><span class="k">APPLICATION</span><span class="w"> </span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">ErrorMsg</span>
+<span class="p">}</span>
+
+<span class="c1">-- APPLICATION 10-19：数据消息</span>
+<span class="n n-Type">DataMessage</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">CHOICE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">-- 文本消息</span>
+<span class="w">    </span><span class="nv">text</span><span class="w">        </span><span class="p">[</span><span class="k">APPLICATION</span><span class="w"> </span><span class="mi">10</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">TextMsg</span><span class="p">,</span>
+<span class="w">    </span><span class="c1">-- 文件消息</span>
+<span class="w">    </span><span class="nv">file</span><span class="w">        </span><span class="p">[</span><span class="k">APPLICATION</span><span class="w"> </span><span class="mi">11</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">FileMsg</span><span class="p">,</span>
+<span class="w">    </span><span class="c1">-- 图片消息</span>
+<span class="w">    </span><span class="nv">image</span><span class="w">       </span><span class="p">[</span><span class="k">APPLICATION</span><span class="w"> </span><span class="mi">12</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">ImageMsg</span><span class="p">,</span>
+<span class="w">    </span><span class="c1">-- 语音消息</span>
+<span class="w">    </span><span class="nv">audio</span><span class="w">       </span><span class="p">[</span><span class="k">APPLICATION</span><span class="w"> </span><span class="mi">13</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">AudioMsg</span>
+<span class="p">}</span>
+
+<span class="c1">-- APPLICATION 20-29：配置消息</span>
+<span class="n n-Type">ConfigMessage</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">CHOICE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">-- 获取配置</span>
+<span class="w">    </span><span class="nv">getConfig</span><span class="w">   </span><span class="p">[</span><span class="k">APPLICATION</span><span class="w"> </span><span class="mi">20</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">GetConfigMsg</span><span class="p">,</span>
+<span class="w">    </span><span class="c1">-- 更新配置</span>
+<span class="w">    </span><span class="nv">setConfig</span><span class="w">   </span><span class="p">[</span><span class="k">APPLICATION</span><span class="w"> </span><span class="mi">21</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">SetConfigMsg</span><span class="p">,</span>
+<span class="w">    </span><span class="c1">-- 重置配置</span>
+<span class="w">    </span><span class="nv">resetConfig</span><span class="w"> </span><span class="p">[</span><span class="k">APPLICATION</span><span class="w"> </span><span class="mi">22</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">ResetConfigMsg</span>
+<span class="p">}</span>
+
+<span class="c1">-- 具体消息定义</span>
+<span class="n n-Type">LoginMsg</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">username</span><span class="w">    </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">password</span><span class="w">    </span><span class="kt">OCTET STRING</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">deviceInfo</span><span class="w">  </span><span class="n n-Type">DeviceInfo</span>
+<span class="p">}</span>
+
+<span class="n n-Type">LogoutMsg</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">userId</span><span class="w">      </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">reason</span><span class="w">      </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="n n-Type">HeartbeatMsg</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">timestamp</span><span class="w">   </span><span class="kt">GeneralizedTime</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">status</span><span class="w">      </span><span class="kt">INTEGER</span>
+<span class="p">}</span>
+
+<span class="c1">-- ... 其他消息定义</span>
+
+<span class="k">END</span>
+</code></pre>
+<h4 id="15-private">1.5 PRIVATE标签使用</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 厂商私有扩展</span>
+<span class="n n-Type">VendorExtensions</span><span class="w"> </span><span class="k">DEFINITIONS</span><span class="w"> </span><span class="k">AUTOMATIC</span><span class="w"> </span><span class="k">TAGS</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="k">BEGIN</span>
+
+<span class="c1">-- 华为私有扩展</span>
+<span class="n n-Type">HuaweiExtension</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">hwFeature1</span><span class="w">  </span><span class="p">[</span><span class="k">PRIVATE</span><span class="w"> </span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="kt">OCTET STRING</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">hwFeature2</span><span class="w">  </span><span class="p">[</span><span class="k">PRIVATE</span><span class="w"> </span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">hwConfig</span><span class="w">    </span><span class="p">[</span><span class="k">PRIVATE</span><span class="w"> </span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">HuaweiConfig</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="c1">-- 中兴私有扩展</span>
+<span class="n n-Type">ZteExtension</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">zteFeature1</span><span class="w"> </span><span class="p">[</span><span class="k">PRIVATE</span><span class="w"> </span><span class="mi">10</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="kt">OCTET STRING</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">zteFeature2</span><span class="w"> </span><span class="p">[</span><span class="k">PRIVATE</span><span class="w"> </span><span class="mi">11</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">zteConfig</span><span class="w">   </span><span class="p">[</span><span class="k">PRIVATE</span><span class="w"> </span><span class="mi">12</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">ZteConfig</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="c1">-- 通用消息携带私有扩展</span>
+<span class="n n-Type">VendorMessage</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">standardPart</span><span class="w"> </span><span class="n n-Type">StandardMessage</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">vendorExt</span><span class="w">    </span><span class="kd">CHOICE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nv">huaweiExt</span><span class="w"> </span><span class="p">[</span><span class="k">PRIVATE</span><span class="w"> </span><span class="mi">100</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">HuaweiExtension</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">zteExt</span><span class="w">    </span><span class="p">[</span><span class="k">PRIVATE</span><span class="w"> </span><span class="mi">101</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">ZteExtension</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">otherExt</span><span class="w">  </span><span class="p">[</span><span class="k">PRIVATE</span><span class="w"> </span><span class="mi">102</span><span class="p">]</span><span class="w"> </span><span class="kt">OCTET STRING</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="k">END</span>
+</code></pre>
+<h4 id="16">1.6 上下文特定标签（默认）</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- AUTOMATIC TAGS时，自动分配[0]、[1]、[2]...</span>
+<span class="c1">-- 手动指定上下文标签</span>
+<span class="n n-Type">ManualTagsExample</span><span class="w"> </span><span class="k">DEFINITIONS</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="k">BEGIN</span>
+
+<span class="c1">-- 手动标签分配</span>
+<span class="n n-Type">Person</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">name</span><span class="w">    </span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="kt">IA5String</span><span class="p">,</span><span class="w">      </span><span class="c1">-- 标签0</span>
+<span class="w">    </span><span class="nv">age</span><span class="w">     </span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="kt">INTEGER</span><span class="p">,</span><span class="w">        </span><span class="c1">-- 标签1</span>
+<span class="w">    </span><span class="nv">email</span><span class="w">   </span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="w">  </span><span class="c1">-- 标签2</span>
+<span class="p">}</span>
+
+<span class="c1">-- CHOICE必须指定标签</span>
+<span class="n n-Type">Message</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">CHOICE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">text</span><span class="w">    </span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="kt">IA5String</span><span class="p">,</span><span class="w">      </span><span class="c1">-- 标签3</span>
+<span class="w">    </span><span class="nv">binary</span><span class="w">  </span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="w"> </span><span class="kt">OCTET STRING</span><span class="p">,</span><span class="w">   </span><span class="c1">-- 标签4</span>
+<span class="w">    </span><span class="nv">number</span><span class="w">  </span><span class="p">[</span><span class="mi">5</span><span class="p">]</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w">         </span><span class="c1">-- 标签5</span>
+<span class="p">}</span>
+
+<span class="k">END</span>
+</code></pre>
+<h3 id="implicit-vs-explicit30">二、IMPLICIT vs EXPLICIT（30分钟）</h3>
+<h4 id="21">2.1 核心区别</h4>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>IMPLICIT</th>
+<th>EXPLICIT</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>编码</strong></td>
+<td>只编码值，不编码类型</td>
+<td>编码类型+值</td>
+</tr>
+<tr>
+<td><strong>大小</strong></td>
+<td>更紧凑</td>
+<td>稍大</td>
+</tr>
+<tr>
+<td><strong>兼容性</strong></td>
+<td>差（解码器必须知道类型）</td>
+<td>好（自描述）</td>
+</tr>
+<tr>
+<td><strong>使用场景</strong></td>
+<td>内部协议、性能敏感</td>
+<td>公开协议、兼容性重要</td>
+</tr>
+</tbody>
+</table>
+<h4 id="22">2.2 编码对比</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 定义</span>
+<span class="n n-Type">TestTypes</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">implicitField</span><span class="w">  </span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">explicitField</span><span class="w">  </span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="k">EXPLICIT</span><span class="w"> </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">defaultField</span><span class="w">   </span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w">  </span><span class="c1">-- 默认EXPLICIT</span>
+<span class="p">}</span>
+
+<span class="c1">-- 值</span>
+<span class="nv">testValue</span><span class="w"> </span><span class="n n-Type">TestTypes</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">implicitField</span><span class="w">  </span><span class="mi">100</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">explicitField</span><span class="w">  </span><span class="mi">200</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">defaultField</span><span class="w">   </span><span class="mi">300</span>
+<span class="p">}</span>
+
+<span class="c1">-- BER编码结果（十六进制）</span>
+<span class="c1">-- SEQUENCE标签(30) + 总长度</span>
+<span class="c1">-- [0] IMPLICIT INTEGER(100): </span>
+<span class="c1">--   80 01 64</span>
+<span class="c1">--   ↑  ↑  ↑</span>
+<span class="c1">--   标签 长度 值(100=0x64)</span>
+
+<span class="c1">-- [1] EXPLICIT INTEGER(200):</span>
+<span class="c1">--   A1 03 02 01 C8</span>
+<span class="c1">--   ↑  ↑  ↑  ↑  ↑</span>
+<span class="c1">--   标签 长度  INTEGER标签 INTEGER长度 值(200=0xC8)</span>
+
+<span class="c1">-- [2] INTEGER(300):</span>
+<span class="c1">--   82 03 02 01 2C</span>
+<span class="c1">--   ↑  ↑  ↑  ↑  ↑</span>
+<span class="c1">--   标签 长度  INTEGER标签 INTEGER长度 值(300=0x12C)</span>
+</code></pre>
+<h4 id="23">2.3 实战选择</h4>
+<p><strong>使用IMPLICIT的场景</strong>：
+1. <strong>性能优先</strong>：移动网络、物联网设备
+2. <strong>内部协议</strong>：公司内部系统
+3. <strong>带宽敏感</strong>：卫星通信、低功耗网络
+4. <strong>已知类型</strong>：解码器和编码器使用相同定义</p>
+<p><strong>使用EXPLICIT的场景</strong>：
+1. <strong>公开标准</strong>：X.509证书、LDAP协议
+2. <strong>向前兼容</strong>：支持旧版本解码器
+3. <strong>调试方便</strong>：编码数据可读性好
+4. <strong>安全敏感</strong>：需要严格类型验证</p>
+<h3 id="60_1">三、编码规则详解（60分钟）</h3>
+<h4 id="31-ber-">3.1 BER - 基本编码规则</h4>
+<p><strong>BER编码结构</strong>：</p>
+<pre><code class="md-fencescode">[标签] [长度] [值]
+  ↑     ↑     ↑
+ 1字节 1-n字节 变长
+</code></pre>
+<p><strong>长度编码方式</strong>：
+| 长度范围 | 编码方式 | 示例 |
+|----------|----------|------|
+| 0-127 | 直接编码 | 长度5 → 05 |
+| 128-255 | 短形式 | 长度200 → 81 C8 |
+| 256-65535 | 长形式 | 长度1000 → 82 03 E8 |
+| 更大 | 扩展形式 | 长度1000000 → 84 00 0F 42 40 |</p>
+<p><strong>BER示例</strong>：</p>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 定义</span>
+<span class="n n-Type">SimpleData</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">version</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">data</span><span class="w">    </span><span class="kt">IA5String</span>
+<span class="p">}</span>
+
+<span class="c1">-- 值</span>
+<span class="nv">example</span><span class="w"> </span><span class="n n-Type">SimpleData</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">version</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">data</span><span class="w"> </span><span class="s">"Hello"</span>
+<span class="p">}</span>
+
+<span class="c1">-- BER编码（十六进制）：</span>
+<span class="mi">30</span><span class="w"> </span><span class="mi">0</span><span class="err">A</span><span class="w">           </span><span class="c1">-- SEQUENCE(标签30)，长度10</span>
+<span class="w">  </span><span class="mi">02</span><span class="w"> </span><span class="mi">01</span><span class="w"> </span><span class="mi">01</span><span class="w">      </span><span class="c1">-- INTEGER(标签02)，长度1，值1</span>
+<span class="w">  </span><span class="mi">16</span><span class="w"> </span><span class="mi">05</span><span class="w">         </span><span class="c1">-- IA5String(标签16)，长度5</span>
+<span class="w">    </span><span class="mi">48</span><span class="w"> </span><span class="mi">65</span><span class="w"> </span><span class="mi">6</span><span class="err">C</span><span class="w"> </span><span class="mi">6</span><span class="err">C</span><span class="w"> </span><span class="mi">6</span><span class="err">F</span><span class="w">  </span><span class="c1">-- "Hello"的ASCII</span>
+</code></pre>
+<h4 id="32-der-">3.2 DER - 可辨别编码规则</h4>
+<p><strong>DER是BER的子集，更严格</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>规则</th>
+<th>BER</th>
+<th>DER</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>长度编码</strong></td>
+<td>多种形式</td>
+<td>最短形式</td>
+</tr>
+<tr>
+<td><strong>整数编码</strong></td>
+<td>可以有前导零</td>
+<td>无前导零</td>
+</tr>
+<tr>
+<td><strong>位串编码</strong></td>
+<td>任意</td>
+<td>无尾随零</td>
+</tr>
+<tr>
+<td><strong>集合顺序</strong></td>
+<td>任意</td>
+<td>按标签值排序</td>
+</tr>
+<tr>
+<td><strong>布尔值</strong></td>
+<td>任意非零为TRUE</td>
+<td>必须为0xFF</td>
+</tr>
+</tbody>
+</table>
+<p><strong>DER使用场景</strong>：
+1. <strong>数字签名</strong>：X.509证书
+2. <strong>安全协议</strong>：需要确定性的编码
+3. <strong>哈希计算</strong>：相同数据必须编码相同</p>
+<p><strong>DER示例</strong>：</p>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 与BER相同的定义</span>
+<span class="c1">-- DER编码（十六进制）：</span>
+<span class="mi">30</span><span class="w"> </span><span class="mi">0</span><span class="err">A</span><span class="w">           </span><span class="c1">-- 必须用最短长度编码</span>
+<span class="w">  </span><span class="mi">02</span><span class="w"> </span><span class="mi">01</span><span class="w"> </span><span class="mi">01</span><span class="w">      </span><span class="c1">-- 整数1编码为01（无前导零）</span>
+<span class="w">  </span><span class="mi">16</span><span class="w"> </span><span class="mi">05</span><span class="w"> </span><span class="mi">48</span><span class="w"> </span><span class="mi">65</span><span class="w"> </span><span class="mi">6</span><span class="err">C</span><span class="w"> </span><span class="mi">6</span><span class="err">C</span><span class="w"> </span><span class="mi">6</span><span class="err">F</span><span class="w">  </span><span class="c1">-- 与BER相同</span>
+</code></pre>
+<h4 id="33-per-">3.3 PER - 压缩编码规则（重点！）</h4>
+<p><strong>PER的特点</strong>：
+1. <strong>极致压缩</strong>：移除标签、长度字段
+2. <strong>需要模式</strong>：解码器必须知道ASN.1定义
+3. <strong>分对齐方式</strong>：
+   - <strong>PER对齐</strong>：按字节对齐（更简单）
+   - <strong>PER非对齐</strong>：按位打包（更紧凑）</p>
+<p><strong>PER对齐 vs 非对齐</strong>：
+| 特性 | PER对齐 | PER非对齐 |
+|------|---------|-----------|
+| <strong>单位</strong> | 字节 | 位 |
+| <strong>大小</strong> | 稍大 | 最小 |
+| <strong>复杂度</strong> | 简单 | 复杂 |
+| <strong>兼容性</strong> | 好 | 差 |</p>
+<p><strong>PER实战示例</strong>：</p>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 电信协议消息（3GPP TS 29.060）</span>
+<span class="n n-Type">GtpMessage</span><span class="w"> </span><span class="k">DEFINITIONS</span><span class="w"> </span><span class="k">AUTOMATIC</span><span class="w"> </span><span class="k">TAGS</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="k">BEGIN</span>
+
+<span class="c1">-- GTPv2消息头</span>
+<span class="n n-Type">GtpV2Header</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">version</span><span class="w">             </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">15</span><span class="p">),</span><span class="w">     </span><span class="c1">-- 4位</span>
+<span class="w">    </span><span class="nv">piggybacking</span><span class="w">        </span><span class="kt">BOOLEAN</span><span class="p">,</span><span class="w">             </span><span class="c1">-- 1位</span>
+<span class="w">    </span><span class="nv">teidFlag</span><span class="w">            </span><span class="kt">BOOLEAN</span><span class="p">,</span><span class="w">             </span><span class="c1">-- 1位</span>
+<span class="w">    </span><span class="nv">spare</span><span class="w">               </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">3</span><span class="p">),</span><span class="w">      </span><span class="c1">-- 2位</span>
+<span class="w">    </span><span class="nv">messageType</span><span class="w">         </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">255</span><span class="p">),</span><span class="w">    </span><span class="c1">-- 8位</span>
+<span class="w">    </span><span class="nv">length</span><span class="w">              </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">65535</span><span class="p">),</span><span class="w">  </span><span class="c1">-- 16位</span>
+<span class="w">    </span><span class="nv">teid</span><span class="w">                </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="kc">MAX</span><span class="p">)</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 32位（如果teidFlag为TRUE）</span>
+<span class="w">    </span><span class="nv">sequenceNumber</span><span class="w">      </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">16777215</span><span class="p">),</span><span class="w"> </span><span class="c1">-- 24位</span>
+<span class="w">    </span><span class="nv">spare2</span><span class="w">              </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">255</span><span class="p">)</span><span class="w">     </span><span class="c1">-- 8位</span>
+<span class="p">}</span>
+
+<span class="c1">-- PER编码优化：</span>
+<span class="c1">-- 1. 使用小范围整数节省空间</span>
+<span class="c1">-- 2. 布尔值只占1位</span>
+<span class="c1">-- 3. 可选字段有标志位</span>
+<span class="c1">-- 4. 固定长度字段无长度编码</span>
+
+<span class="c1">-- 示例消息</span>
+<span class="nv">createSessionRequest</span><span class="w"> </span><span class="n n-Type">GtpV2Header</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">version</span><span class="w">         </span><span class="mi">2</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">piggybacking</span><span class="w">    </span><span class="kc">FALSE</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">teidFlag</span><span class="w">        </span><span class="kc">TRUE</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">spare</span><span class="w">           </span><span class="mi">0</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">messageType</span><span class="w">     </span><span class="mi">200</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">length</span><span class="w">          </span><span class="mi">1500</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">teid</span><span class="w">            </span><span class="mi">0</span><span class="nv">x12345678</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">sequenceNumber</span><span class="w">  </span><span class="mi">0</span><span class="nv">xAABBCC</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">spare2</span><span class="w">          </span><span class="mi">0</span>
+<span class="p">}</span>
+
+<span class="c1">-- PER对齐编码（估算）：</span>
+<span class="c1">-- 版本(4位)+piggy(1位)+teidFlag(1位)+spare(2位)=1字节</span>
+<span class="c1">-- messageType: 1字节</span>
+<span class="c1">-- length: 2字节</span>
+<span class="c1">-- teid: 4字节（因为teidFlag为TRUE）</span>
+<span class="c1">-- sequenceNumber: 3字节（24位）</span>
+<span class="c1">-- spare2: 1字节</span>
+<span class="c1">-- 总计：12字节</span>
+
+<span class="c1">-- 对比BER/DER：至少20+字节</span>
+<span class="k">END</span>
+</code></pre>
+<p><strong>PER优化技巧</strong>：
+1. <strong>使用合适范围</strong>：<code>INTEGER (0..255)</code>比<code>INTEGER</code>节省空间
+2. <strong>布尔值打包</strong>：多个布尔值可以打包到一个字节
+3. <strong>变长编码</strong>：使用<code>SEQUENCE SIZE (0..MAX) OF</code>处理变长数组
+4. <strong>对齐考虑</strong>：32位整数按4字节边界对齐</p>
+<h4 id="34-xer-xml">3.4 XER - XML编码规则</h4>
+<p><strong>XER特点</strong>：
+1. <strong>人类可读</strong>：XML格式，易于调试
+2. <strong>体积庞大</strong>：标签名、属性名占用空间
+3. <strong>Web友好</strong>：适合HTTP/Web服务</p>
+<p><strong>XER示例</strong>：</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="cm">&lt;!-- 对应之前的SimpleData --&gt;</span>
+<span class="nt">&lt;SimpleData&gt;</span>
+<span class="w">  </span><span class="nt">&lt;version&gt;</span>1<span class="nt">&lt;/version&gt;</span>
+<span class="w">  </span><span class="nt">&lt;data&gt;</span>Hello<span class="nt">&lt;/data&gt;</span>
+<span class="nt">&lt;/SimpleData&gt;</span>
+</code></pre>
+<p><strong>XER使用场景</strong>：
+1. <strong>配置文件</strong>：需要人工编辑
+2. <strong>Web服务</strong>：SOAP/XML-RPC
+3. <strong>调试输出</strong>：可读性优先</p>
+<h3 id="30">四、编码规则对比与选择（30分钟）</h3>
+<h4 id="41">4.1 四规则对比表</h4>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>BER</th>
+<th>DER</th>
+<th>PER</th>
+<th>XER</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>人类可读</strong></td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>编码大小</strong></td>
+<td>中</td>
+<td>中</td>
+<td>小</td>
+<td>大</td>
+</tr>
+<tr>
+<td><strong>编解码速度</strong></td>
+<td>快</td>
+<td>快</td>
+<td>很快</td>
+<td>慢</td>
+</tr>
+<tr>
+<td><strong>自描述性</strong></td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>确定性</strong></td>
+<td>❌</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>兼容性</strong></td>
+<td>✅</td>
+<td>✅</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+<tr>
+<td><strong>主要用途</strong></td>
+<td>通用</td>
+<td>安全</td>
+<td>电信</td>
+<td>Web</td>
+</tr>
+</tbody>
+</table>
+<h4 id="42">4.2 选择指南</h4>
+<p><strong>根据应用选择</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>应用领域</th>
+<th>推荐编码</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>数字证书</strong></td>
+<td>DER</td>
+<td>安全、确定性</td>
+</tr>
+<tr>
+<td><strong>电信协议</strong></td>
+<td>PER</td>
+<td>带宽敏感、高效</td>
+</tr>
+<tr>
+<td><strong>网络管理</strong></td>
+<td>BER</td>
+<td>通用、兼容性好</td>
+</tr>
+<tr>
+<td><strong>Web服务</strong></td>
+<td>XER</td>
+<td>人类可读、XML友好</td>
+</tr>
+<tr>
+<td><strong>物联网</strong></td>
+<td>PER对齐</td>
+<td>低功耗、中等复杂度</td>
+</tr>
+<tr>
+<td><strong>内部系统</strong></td>
+<td>BER/PER</td>
+<td>平衡性能与兼容性</td>
+</tr>
+</tbody>
+</table>
+<p><strong>根据约束选择</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>需求</th>
+<th>推荐编码</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>最小带宽</td>
+<td>PER非对齐</td>
+<td>卫星通信</td>
+</tr>
+<tr>
+<td>快速开发</td>
+<td>BER</td>
+<td>原型系统</td>
+</tr>
+<tr>
+<td>长期存储</td>
+<td>DER</td>
+<td>数字档案</td>
+</tr>
+<tr>
+<td>人工调试</td>
+<td>XER</td>
+<td>配置文件</td>
+</tr>
+<tr>
+<td>混合环境</td>
+<td>BER</td>
+<td>多语言集成</td>
+</tr>
+</tbody>
+</table>
+<h3 id="30_1">五、实际编码分析（30分钟）</h3>
+<h4 id="51-x509">5.1 X.509证书编码分析</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- X.509证书简化的ASN.1定义</span>
+<span class="n n-Type">Certificate</span><span class="w"> </span><span class="k">DEFINITIONS</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="k">BEGIN</span>
+
+<span class="n n-Type">Certificate</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">tbsCertificate</span><span class="w">      </span><span class="n n-Type">TBSCertificate</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">signatureAlgorithm</span><span class="w">  </span><span class="n n-Type">AlgorithmIdentifier</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">signatureValue</span><span class="w">      </span><span class="kt">BIT STRING</span>
+<span class="p">}</span>
+
+<span class="n n-Type">TBSCertificate</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">version</span><span class="w">         </span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="k">EXPLICIT</span><span class="w"> </span><span class="n n-Type">Version</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="nv">v1</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">serialNumber</span><span class="w">    </span><span class="n n-Type">CertificateSerialNumber</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">signature</span><span class="w">       </span><span class="n n-Type">AlgorithmIdentifier</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">issuer</span><span class="w">          </span><span class="n n-Type">Name</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">validity</span><span class="w">        </span><span class="n n-Type">Validity</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">subject</span><span class="w">         </span><span class="n n-Type">Name</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">subjectPublicKeyInfo</span><span class="w"> </span><span class="n n-Type">SubjectPublicKeyInfo</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">extensions</span><span class="w">      </span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="k">EXPLICIT</span><span class="w"> </span><span class="n n-Type">Extensions</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="n n-Type">Version</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">v1</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span><span class="w"> </span><span class="nv">v2</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="nv">v3</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="p">}</span>
+
+<span class="c1">-- 实际证书的DER编码示例（十六进制）：</span>
+<span class="c1">-- 30 82 03 21                     -- SEQUENCE，长度0x321（801字节）</span>
+<span class="c1">--   30 82 02 09                   -- TBSCertificate SEQUENCE，长度0x209（521字节）</span>
+<span class="c1">--     A0 03 02 01 02              -- [0] EXPLICIT，长度3，INTEGER，长度1，值2（v3）</span>
+<span class="c1">--     02 10 01 23 45 67 89 AB CD EF 01 23 45 67 89 AB  -- serialNumber</span>
+<span class="c1">--     30 0D 06 09 2A 86 48 86 F7 0D 01 01 0B 05 00  -- signature algorithm</span>
+<span class="c1">--     ... 更多字段</span>
+<span class="c1">--   30 0D 06 09 2A 86 48 86 F7 0D 01 01 0B 05 00  -- signatureAlgorithm</span>
+<span class="c1">--   03 82 01 01 ...                               -- signatureValue</span>
+</code></pre>
+<p><strong>分析要点</strong>：
+1. <strong>版本字段</strong>：使用<code>[0] EXPLICIT</code>标签，支持向后兼容
+2. <strong>扩展字段</strong>：使用<code>[3] EXPLICIT</code>，v3证书特有
+3. <strong>DER编码</strong>：长度使用最短形式，整数无前导零</p>
+<h4 id="52-snmp">5.2 SNMP协议编码分析</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- SNMP消息编码（BER）</span>
+<span class="n n-Type">SnmpMessage</span><span class="w"> </span><span class="k">DEFINITIONS</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="k">BEGIN</span>
+
+<span class="n n-Type">Message</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">version</span><span class="w">     </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">v1</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span><span class="w"> </span><span class="nv">v2c</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w"> </span><span class="nv">v3</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nv">community</span><span class="w">   </span><span class="kt">OCTET STRING</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">data</span><span class="w">        </span><span class="kd">CHOICE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nv">getRequest</span><span class="w">   </span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="n n-Type">PDU</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">getNextRequest</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="n n-Type">PDU</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">getResponse</span><span class="w">  </span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="n n-Type">PDU</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">setRequest</span><span class="w">   </span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="n n-Type">PDU</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">trap</span><span class="w">         </span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="n n-Type">PDU</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="n n-Type">PDU</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">requestId</span><span class="w">   </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">errorStatus</span><span class="w"> </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">errorIndex</span><span class="w">  </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">varBindList</span><span class="w"> </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="n n-Type">VarBind</span>
+<span class="p">}</span>
+
+<span class="n n-Type">VarBind</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">name</span><span class="w">    </span><span class="n n-Type">ObjectName</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">value</span><span class="w">   </span><span class="kd">CHOICE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nv">value</span><span class="w">   </span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="n n-Type">ObjectSyntax</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">unSpecified</span><span class="w"> </span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="kc">NULL</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">noSuchObject</span><span class="w"> </span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="kc">NULL</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">noSuchInstance</span><span class="w"> </span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="kc">NULL</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">endOfMibView</span><span class="w"> </span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="kc">NULL</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">-- BER编码特点：</span>
+<span class="c1">-- 1. 使用IMPLICIT标签节省空间</span>
+<span class="c1">-- 2. 错误状态使用枚举值</span>
+<span class="c1">-- 3. 变量绑定列表使用SEQUENCE OF</span>
+<span class="k">END</span>
+</code></pre>
+<h3 id="_3">六、今日练习</h3>
+<h4 id="1per">练习1：PER编码优化设计</h4>
+<p>设计一个物联网设备状态消息，要求：
+1. 设备ID：32位整数
+2. 温度：-50.0到150.0度，精度0.1度
+3. 湿度：0-100%，精度1%
+4. 电池电量：0-100%
+5. 信号强度：0-31（5位）
+6. 在线状态：布尔值
+7. 错误代码：0-15（4位）</p>
+<p>优化目标：使用PER非对齐编码，计算最小可能大小。</p>
+<h4 id="2">练习2：标签迁移分析</h4>
+<p>有一个v1协议：</p>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="n n-Type">OldProtocol</span><span class="w"> </span><span class="k">DEFINITIONS</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="k">BEGIN</span>
+<span class="n n-Type">Message</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">type</span><span class="w">    </span><span class="kt">INTEGER</span><span class="p">,</span><span class="w">        </span><span class="c1">-- 0:文本, 1:图片</span>
+<span class="w">    </span><span class="nv">data</span><span class="w">    </span><span class="kt">OCTET STRING</span>
+<span class="p">}</span>
+<span class="k">END</span>
+</code></pre>
+<p>需要升级到v2，支持：
+- 类型0：文本（IA5String）
+- 类型1：图片（OCTET STRING）
+- 类型2：位置（SEQUENCE {lat REAL, lng REAL}）</p>
+<p>设计v2协议的标签系统，保持向后兼容。</p>
+<h4 id="3">练习3：编码性能测试</h4>
+<p>使用在线ASN.1工具（如asn1.io）：
+1. 创建一个包含10个字段的复杂SEQUENCE
+2. 分别生成BER、DER、PER、XER编码
+3. 比较编码大小
+4. 分析哪种编码最适合你的应用场景</p>
+<h3 id="_4">七、学习要点总结</h3>
+<table>
+<thead>
+<tr>
+<th>主题</th>
+<th>关键概念</th>
+<th>实际应用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>UNIVERSAL标签</strong></td>
+<td>预定义类型标签值</td>
+<td>基础类型识别</td>
+</tr>
+<tr>
+<td><strong>APPLICATION标签</strong></td>
+<td>应用特定标签</td>
+<td>协议消息类型</td>
+</tr>
+<tr>
+<td><strong>PRIVATE标签</strong></td>
+<td>厂商私有标签</td>
+<td>扩展兼容</td>
+</tr>
+<tr>
+<td><strong>IMPLICIT标签</strong></td>
+<td>只编码值</td>
+<td>性能优先场景</td>
+</tr>
+<tr>
+<td><strong>EXPLICIT标签</strong></td>
+<td>编码类型+值</td>
+<td>兼容性重要场景</td>
+</tr>
+<tr>
+<td><strong>BER编码</strong></td>
+<td>基本编码规则</td>
+<td>通用网络协议</td>
+</tr>
+<tr>
+<td><strong>DER编码</strong></td>
+<td>可辨别编码规则</td>
+<td>数字证书、安全</td>
+</tr>
+<tr>
+<td><strong>PER编码</strong></td>
+<td>压缩编码规则</td>
+<td>电信、物联网</td>
+</tr>
+<tr>
+<td><strong>XER编码</strong></td>
+<td>XML编码规则</td>
+<td>Web服务、配置</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_5">八、今日成就检查</h3>
+<p>✅ <strong>完成标志</strong>：
+- [ ] 能说出UNIVERSAL标签中INTEGER和IA5String的标签值
+- [ ] 理解IMPLICIT和EXPLICIT编码的区别
+- [ ] 知道BER、DER、PER、XER各自的应用场景
+- [ ] 能为特定场景选择合适的编码规则
+- [ ] 能回答：为什么PER编码比BER更紧凑？</p>
+<h3 id="_6">九、常见问题与解决</h3>
+<p><strong>Q1：标签冲突怎么办？</strong>
+- 不同模块使用不同标签范围
+- 使用AUTOMATIC TAGS自动分配
+- 显式指定标签值避免冲突</p>
+<p><strong>Q2：PER编码的兼容性问题如何解决？</strong>
+1. 版本协商：通信前协商编码版本
+2. 转换网关：不同版本间转换
+3. 双编码支持：同时支持BER和PER</p>
+<p><strong>Q3：如何调试编码问题？</strong>
+1. 使用在线ASN.1工具验证
+2. 逐字段编码检查
+3. 对比参考实现
+4. 使用hexdump分析二进制</p>
+<h3 id="_7">十、明日预告</h3>
+<p><strong>第5天：综合实践</strong>
+- 完整项目：设计一个通讯录管理系统
+- 模块化架构设计
+- 编码规则选择与优化
+- 实际编码生成与验证
+- 性能分析与改进</p>
+<hr />
+<h2 id="_8">💡 高级技巧总结</h2>
+<ol>
+<li><strong>标签规划</strong>：提前规划标签范围，避免冲突</li>
+<li><strong>编码选择</strong>：根据应用特点选择最合适的编码</li>
+<li><strong>性能优化</strong>：使用约束和PER减少编码大小</li>
+<li><strong>兼容性设计</strong>：使用EXPLICIT标签和版本号</li>
+<li><strong>调试策略</strong>：从简单到复杂，逐步验证</li>
+</ol>
+<h2 id="_9">🚀 快速参考</h2>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 标签类别</span>
+<span class="p">[</span><span class="k">UNIVERSAL</span><span class="w"> </span><span class="mi">2</span><span class="p">]</span><span class="w">          </span><span class="c1">-- INTEGER</span>
+<span class="p">[</span><span class="k">APPLICATION</span><span class="w"> </span><span class="mi">0</span><span class="p">]</span><span class="w">        </span><span class="c1">-- 应用类型0</span>
+<span class="p">[</span><span class="k">PRIVATE</span><span class="w"> </span><span class="mi">1</span><span class="p">]</span><span class="w">           </span><span class="c1">-- 私有类型1</span>
+<span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w">          </span><span class="c1">-- 上下文隐式标签0</span>
+<span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="k">EXPLICIT</span><span class="w">          </span><span class="c1">-- 上下文显式标签1</span>
+
+<span class="c1">-- 编码规则缩写</span>
+<span class="n n-Type">BER</span><span class="err">:</span><span class="w"> </span><span class="err">基本编码规则（灵活）</span>
+<span class="n n-Type">DER</span><span class="err">:</span><span class="w"> </span><span class="err">可辨别编码规则（严格）</span>
+<span class="n n-Type">PER</span><span class="err">:</span><span class="w"> </span><span class="err">压缩编码规则（紧凑）</span>
+<span class="n n-Type">XER</span><span class="err">:</span><span class="w"> </span><span class="err">XML编码规则（可读）</span>
+
+<span class="c1">-- 选择指南</span>
+<span class="err">安全/证书</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n n-Type">DER</span>
+<span class="err">电信/物联网</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n n-Type">PER</span>
+<span class="err">通用协议</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n n-Type">BER</span>
+<span class="err">Web服务</span><span class="w"> </span><span class="err">→</span><span class="w"> </span><span class="n n-Type">XER</span>
+</code></pre>
+<p><strong>记住</strong>：编码是ASN.1的最终输出。好的编码设计能显著提升系统性能。明天我们将整合所有知识，完成一个实际项目！</p>
+<hr />
+<p><em>编码调试时，使用Wireshark或tcpdump捕获网络包，分析实际编码数据。</em></p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

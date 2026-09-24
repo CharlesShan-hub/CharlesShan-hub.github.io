@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>以太坊交易、gas、EVM</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="gasevm">以太坊交易、gas、EVM</h1>
+<p>2022.2.20</p>
+<h2 id="_1">主要内容</h2>
+<p>交易详解，EVM简介</p>
+<h2 id="gas">交易与gas</h2>
+<h3 id="_2">交易的本质</h3>
+<p>• 交易是由外部拥有的账户发起的签名消息，由以太坊网络传输，并被 序列化后记录在以太坊区块链上。</p>
+<p>• 交易是唯一可以触发状态更改或导致合约在EVM中执行的事物。</p>
+<p>• 以太坊是一个全局单例状态机，交易是唯一可以改变其状态的东西。</p>
+<p>• 合约不是自己运行的，以太坊也不会“在后台”运行。以太坊上的一 切变化都始于交易。</p>
+<h3 id="_3">交易数据结构</h3>
+<p>交易是包含以下数据的序列化二进制消息:</p>
+<ul>
+<li>nonce:由发起人EOA发出的序列号，用于防止交易消息重播。</li>
+<li>gas price:交易发起人愿意支付的gas单价(wei)。</li>
+<li>start gas:交易发起人愿意支付的最大gas量。</li>
+<li>to:目的以太坊地址。</li>
+<li>value:要发送到目的地的以太数量。</li>
+<li>data:可变长度二进制数据负载(payload)。</li>
+<li>v,r,s:发起人EOA的ECDSA签名的三个组成部分。</li>
+<li>交易消息的结构使用递归长度前缀(RLP)编码方案进行序列化，该方案专为在以太坊中准确和字节完美的数据序列化而创建。</li>
+</ul>
+<h3 id="nonce">交易中的nonce</h3>
+<ul>
+<li>
+<p>黄皮书定义: 一个标量值，等于从这个地址发送的交易数，或者对于关联 code的帐户来说，是这个帐户创建合约的数量。</p>
+</li>
+<li>
+<p>nonce不会明确存储为区块链中帐户状态的一部分。相反，它是通过计算发送地址的已确认交易的数量来动态计算的。</p>
+</li>
+<li>
+<p>nonce值还用于防止错误计算账户余额。nonce强制来自任何地址的交易按顺序处理，没有间隔，无论节点接收它们的顺序如何。</p>
+</li>
+<li>
+<p>使用nonce确保所有节点计算相同的余额和正确的序列交易，等同于用于防止比特币“双重支付”(“重放攻击”)的机制。但是，由于以太坊跟踪账户余额并且不单独跟踪 UTXO ，因此只有在错误地计算账户余额时才会发生“双重支付”。nonce机制可以防止这种情况发生。</p>
+</li>
+<li>（可以认为，以太坊为了满足世界计算机的需求，把比特币UTXO的机制改成了账户，结果带来了重播攻击的缺陷，又创造了nonce来弥补这个缺陷）</li>
+</ul>
+<h3 id="nonce_1">并发和nonce</h3>
+<p>• 以太坊是一个允许操作(节点，客户端，DApps)并发的系统，但强制执行单例状态。例如，出块的时候只有一个系统状态。</p>
+<p>• 假如我们有多个独立的钱包应用或客户端，比如 MetaMask和Geth，它们可以使用相同的地址生成交易。如果我们希望它们都够同时发送交易，该 怎么设置交易的nonce呢?</p>
+<p>• 用一台服务器为各个应用分配nonce，先来先服务——可能出现单点故障，并且失败的交易会将后续交易阻塞。</p>
+<p>• 生成交易后不分配nonce，也不签名，而是把它放入一个队列等待。另起一个节点跟踪nonce并签名交易。同样会有单点故障的可能，而且跟踪nonce和签名的节点是无法实现真正并发的。</p>
+<h3 id="gas_1">交易中的gas</h3>
+<p>• 当由于交易或消息触发 EVM 运行时，每个指令都会在网络的每个节点上执行。这具有成本:对于每个执行的操作，都存在固定的成本，我们把这个成本用一定量的 gas 表示。</p>
+<p>• gas是交易发起人需要为EVM上的每项操作支付的成本名称。发起交易时，我们需要从执行代码的矿工那里用以太币购买gas。</p>
+<p>• gas 与消耗的系统资源对应，这是具有自然成本的。因此在设计上 gas 和 ether 有意地解耦，消耗的 gas 数量代表了对资源的占用，而对应的交易费用则还跟 gas 对以太的单价有关。这两者是由自由市场调节的:gas 的价格实际上是由矿工决定的，他们可以拒绝处理 gas 价格低于最低限额的交易。我们不需要专门购买 gas ，只需将以太币添加到帐户即可，客户端在 发送交易时会自动用以太币购买汽油。而以太币本身的价格通常由于市场力量而波动。</p>
+<h3 id="gas_2">gas的计算</h3>
+<ul>
+<li>发起交易时的 <strong>gas limit</strong> 并不是要支付的 gas 数量，而只是给定了一个消耗 gas 的<strong>上限</strong>，相当于“押金”</li>
+<li>实际支付的gas数量是执行过程中消耗的gas(gasUsed)，gas limit 中剩余的部分会返回给发送人</li>
+<li>最终支付的 gas 费用是 gasUsed 对应的以太币费用，单价由设定的 gasPrice 而定</li>
+<li>最终支付费用 totalCost = gasPrice * gasUsed</li>
+<li>totalCost会作为交易手续费(Txfee)支付给矿工</li>
+<li>使用geth进行对gas的估计：<code>eth.estimateGas({from:eth.accounts[0], to:eth.accounts[1], value:10})</code>,(放进入一个交易对象)。</li>
+</ul>
+<h3 id="to">交易的接收者(to)</h3>
+<p>• 交易接收者在to字段中指定，是一个20字节的以太坊地址。地址可以是EOA或合约地址。</p>
+<p>• 以太坊没有进一步的验证，任何20字节的值都被认为是有效的。如果20字节值对应于没有相应私钥的地址，或不存在的合约，则该交易仍然有效。以太坊无法知道地址是否是从公钥正确派生的。</p>
+<p>• 如果将交易发送到无效地址，将销毁发送的以太，使其永远无法访问。</p>
+<p>• 验证接收人地址是否有效的工作，应该在用户界面一层完成。</p>
+<h3 id="value-data">交易的 value 和 data</h3>
+<ul>
+<li>交易的主要“有效负载”包含在两个字段中:value 和 data。交易可 以同时有 value 和 data，仅有 value，仅有 data，或者既没有 value 也没有 data。所有四种组合都有效。</li>
+<li>仅有 value 的交易就是一笔以太的付款</li>
+<li>仅有 data 的交易一般是合约调用</li>
+<li>进行合约调用的同时，我们除了传输data，还可以发送以太，从而交易中同时包含 data 和 value</li>
+<li>没有 value 也没有 data 的交易，只是在浪费 gas，但它是有效的</li>
+</ul>
+<h3 id="eoa-data">向 EOA 或合约传递 data</h3>
+<ul>
+<li>
+<p>当交易包含数据有效负载时，它很可能是发送到合约地址的，但它同样可以发送给 EOA</p>
+</li>
+<li>
+<p>如果发送 data 给 EOA，数据负载(data payload) 的解释取决于钱包</p>
+</li>
+<li>如果发送数据负载给合约地址，EVM 会解释为函数调用，从 payload 里解码出函数名称和参数，调用该函数并传入参数</li>
+<li>送给合约的<strong>数据</strong>有效负载是32字节的十六进制序列化编码</li>
+<li><strong>函数选择器</strong>:<strong>函数原型的 Keccak256 哈希的前4个字节</strong>。这允许 EVM 明确地识别将要调用的函数。</li>
+<li><strong>函数参数</strong>:根据 EVM 定义的各种基本类型的规则进行编码。</li>
+</ul>
+<h3 id="_4">特殊交易:创建(部署)合约</h3>
+<ul>
+<li>
+<p>有一中特殊的交易，具有数据负载且没有value，那就是一个创建新 合约的交易。</p>
+</li>
+<li>
+<p>合约创建交易被发送到特殊目的地地址，即零地址0x0。该地址既不 代表 EOA 也不代表合约。它永远不会花费以太或发起交易，它仅用 作目的地，具有特殊含义“创建合约”。</p>
+</li>
+<li>虽然零地址仅用于合同注册，但它有时会收到来自各种地址的付款。 这种情况要么是偶然误操作，导致失去以太;要么是故意销毁以太。</li>
+<li>合约注册交易不应包含以太值，只包含合约的已编译字节码的数据有 效负载。此交易的唯一效果是注册合约。</li>
+</ul>
+<h2 id="evm">EVM以太坊虚拟机</h2>
+<h3 id="evm_1">以太坊虚拟机(EVM)</h3>
+<ul>
+<li>以太坊虚拟机 EVM 是<strong>智能合约的运行环境</strong></li>
+<li>作为区块验证协议的一部分，参与网络的每个节点都会运行EVM。他们会检查正在验证的块中列出的交易，并运行由EVM中的交易触发的代码</li>
+<li>EVM不仅是沙盒封装的，而且是完全隔离的，也就是说在 EVM 中运行的代码是无法访问网络、文件系统和其他进程的，甚至智能合约之间的访问也是受限的</li>
+<li>合约以字节码的格式(EVM bytecode)存在于区块链上</li>
+<li>合约通常以高级语言(solidity)编写，通过EVM编译器编译为字节码，最终通过客户端上载部署到区块链网络中</li>
+</ul>
+<h3 id="evm_2">EVM和账户</h3>
+<p>• 以太坊中有两类账户: <strong>外部账户和合约账户，它们共用EVM中同一个地址空间</strong></p>
+<p>• 无论帐户是否存储代码，这两类账户对 EVM 来说处理方式是完全一样的</p>
+<p>• 每个账户在EVM中都有一个键值对形式的持久化存储。其中 key 和 value 的长度都是256位，称之为存储空间 (storage)</p>
+<h3 id="evm_3">EVM和交易</h3>
+<p>• 交易可以看作是从一个帐户发送到另一个帐户的消息，它可以包含二进制数据(payload)和以太币</p>
+<p>• <strong>如果目标账户含有代码</strong>，此代码会在EVM中执行，并以 payload 作为入参，这就是合约的调用</p>
+<p>• <strong>如果目标账户是零账户</strong>(账户地址为 0 )，此交易就将创建一个新合约 ，这个用来创建合约的交易的 payload 会被转换为 EVM字节码并执行，执行的输出作为合约代码永久存储</p>
+<h3 id="evmgas">EVM和gas</h3>
+<ul>
+<li>合约被交易触发调用时，指令会在全网的每个节点上执行:这需要消耗算力成本;每一个指令的执行都有特定的消耗，gas 就用来量化表示这个成本消耗</li>
+<li>一经创建，每笔交易都按照一定数量的gas预付一笔费用，目的是限制执行交易所需要的工作量和为交易支付手续费</li>
+<li>EVM执行交易时，gas将按特定规则逐渐耗尽</li>
+<li>gas price 是交易发送者设置的一个值，作为发送者预付手续费的单价。如果交易执行后还有剩余，gas 会原路返还</li>
+<li><strong>无论执行到什么位置，一旦gas被耗尽(比如降为负值)，将会触发 一个 out-of-gas 异常</strong>，（执行一步扣一点gas）。当前调用帧(call frame)所做的所有状态修改都将被回滚</li>
+</ul>
+<h3 id="evm_4">EVM数据存储</h3>
+<ul>
+<li>
+<p><strong>Storage</strong></p>
+</li>
+<li>
+<p>每个账户都有一块持久化的存储空间，称为storage，这是一个将256位字映射到256位字的 key-value 存储区，可以理解为合约的数据库</p>
+</li>
+<li>
+<p>永久储存在区块链中，由于会<strong>永久保存</strong>合约状态变量，所以读写的 gas 开销也最大</p>
+</li>
+<li>
+<p><strong>Memory</strong>(内存)</p>
+</li>
+<li>
+<p>每一次消息调用，合约会临时获取一块干净的内存空间</p>
+</li>
+<li>
+<p>生命周期仅为整个方法执行期间，函数调用后回收，因为仅保存临时变量，故读写 gas 开销较 小</p>
+</li>
+<li>
+<p><strong>Stack</strong>(栈)</p>
+</li>
+<li>
+<p>EVM 不是基于寄存器的，而是基于栈的，因此所有的计算都在一个被称为栈(stack)的区域</p>
+<p>执行</p>
+</li>
+<li>
+<p>存放部分局部值类型变量，几乎免费使用的内存，但有数量限制</p>
+</li>
+</ul>
+<h3 id="evm_5">EVM指令集</h3>
+<ul>
+<li>所有的指令都是针对"<strong>256位的字(word)</strong>"这个基本的数据类型来进行操作</li>
+<li>具备常用的算术、位、逻辑和比较操作，也可以做到有条件和无条件跳转</li>
+<li>合约可以访问当前区块的相关属性，比如它的块高度和时间戳</li>
+</ul>
+<h3 id="message-calls">消息调用( Message Calls )</h3>
+<p>• 合约可以通过消息调用的方式来调用其它合约或者发送以太币到非合约账户</p>
+<p>• 合约可以决定在其内部的消息调用中，对于剩余的 gas ，应发送和保留多少</p>
+<p>• 如果在内部消息调用时发生了 out-of-gas 异常(或其他任何异常)，这将由一个被压入栈顶的错误值所指明;此时只有与该内部消息调用一起发送的 gas 会被消耗掉</p>
+<h3 id="delegatecall">委托调用(Delegatecall)</h3>
+<p>• 一种特殊类型的消息调用</p>
+<p>• 目标地址的代码将在发起调用的合约的上下文中执行，并且 msg.sender 和 msg.value 不变</p>
+<p>• 可以由此实现“库”(library):可复用的代码库可以放在一个合约的存储上，通过委托调用引入相应代码</p>
+<h3 id="_5">合约的创建和自毁</h3>
+<p>• 通过一个特殊的消息调用 <strong>create calls</strong>，<strong>合约可以创建其他合约</strong>(不是简单的调用零地址)</p>
+<p>• 合约代码从区块链上移除的<strong>唯一</strong>方式是合约在合约地址上的执行自毁操作 <strong>selfdestruct</strong> ;合约账户上剩余的以太币会发送给指定的目标，然后其存储和代码从状态中被移除</p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

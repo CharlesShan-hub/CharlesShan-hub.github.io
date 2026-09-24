@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>数据通路的功能和基本结构</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="_1">数据通路的功能和基本结构</h1>
+<p>2022.08.26</p>
+<div class="toc">
+<ul>
+<li><a href="#_1">数据通路的功能和基本结构</a><ul>
+<li><a href="#_2">数据通路的功能</a></li>
+<li><a href="#_3">数据通路的基本结构</a><ul>
+<li><a href="#_4">三种基本结构</a></li>
+<li><a href="#_5">寄存器之间的数据传送</a></li>
+<li><a href="#cpu">主存于CPU之间的数据传送</a></li>
+<li><a href="#_6">执行算数或逻辑运算</a></li>
+</ul>
+</li>
+<li><a href="#_7">例题</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<h2 id="_2">数据通路的功能</h2>
+<p><u>数据在功能部件之问传送的路径</u>称为<strong>数据通路</strong>，包括数据通路上流经的部件，如 ALU、通用寄存器、状态奇存器、异常和中断处理逻辑等。数据通路描述了<u>信息从什么地方开始，中间经过哪个寄存器或多路开关，最后传送到哪个寄存器</u>，这些都需要加以控制。</p>
+<p>数据通路<strong>由控制部件控制</strong>，控制部件根据每条指令功能的不同生成对数据通路的<strong>控制信号</strong>。数据通路的功能是<u>实现 CPU 内部的运算器与寄存器及寄存器之间的数据交换</u>．</p>
+<h2 id="_3">数据通路的基本结构</h2>
+<h3 id="_4">三种基本结构</h3>
+<p>数据通路的基本结构主要有以下几种：</p>
+<ol>
+<li><strong>CPU 内部单总线方式</strong>。将所有寄存器的输入端和输出端都连接到一条公共通路上，这种结构比较简单，但数据传输存在较多的冲突现象，性能较低。连接各部件的总线只有一条时，称为单总线结构：CPU 中有两条或更多的总线时，构成双总线结构或多总线结构。如图所示为 CPU 内部总线的数据通路和控制信号。</li>
+</ol>
+<p><img alt="" src="resources/单总线.png" /></p>
+<ol>
+<li><strong>CPU 内部三总线方式</strong>。将所有寄存器的输入端和输出端都连接到多条公共通路上，相比之下单总线中一个时钟内只允许传一个数据，因为指令执行效率很低，因此采用多总线方式，同时在多个总线上传送不同的数据，提高效率。</li>
+<li><strong>专用数据通路方式</strong>。根据指令执行过程中的数据和地址的流动方向安排连接线路，避免使用共享的总线，性能较高，但硬件量大。</li>
+</ol>
+<p>在上图中，规定各<strong>部件</strong>用<strong>大写字母</strong>表示，字母加 <strong>“in”</strong>表示该部件的<strong>允许输入</strong>控制信号；字母加<strong>“out”</strong>表示该部件的<strong>允许输出</strong>控制信号。</p>
+<p>注意：<strong>内部总线</strong>是指同一部件，如CPU 内部连接各寄存器及运算部件之问的总线；<strong>系统总线</strong>是指同一台计算机系统的各部件，如CPU、内存、通道和各类 I/0 接口间互相连接的总线</p>
+<h3 id="_5">寄存器之间的数据传送</h3>
+<p>奇存器之间的数据传送可通过 CPU 内部总线完成。在上图中，某寄存器 AX 的输出和输入分别由 AXout 和 AXin 控制。这里以PC 寄存器为例，把PC 内容送至 MAR，实现传送操作的
+流程及控制信号为</p>
+<pre lang="C"><code class="language-C md-fencescode"><span class="n">PC</span><span class="o">-&gt;</span><span class="n">Bus</span><span class="w">    </span><span class="c1">// PCout有效, PC内容送总线</span>
+<span class="n">Bus</span><span class="o">-&gt;</span><span class="n">MAR</span><span class="w">   </span><span class="c1">// MARin有效, 总线内容送MAR</span>
+</code></pre>
+<h3 id="cpu">主存于CPU之间的数据传送</h3>
+<p>主存与 CPU 之间的数据传送也要借助 CPU 内部总线完成。现以CPU 从主存读取指令为何说明数据在数据通路中的传送过程。实现传送操作的流程及控制信号为：</p>
+<pre lang="C"><code class="language-C md-fencescode"><span class="n">PC</span><span class="o">-&gt;</span><span class="n">Bus</span><span class="o">-&gt;</span><span class="n">MAR</span><span class="w">       </span><span class="c1">// PCout, MARin有效</span>
+<span class="mi">1</span><span class="o">-&gt;</span><span class="n">R</span><span class="w">               </span><span class="c1">// CU发读指令</span>
+<span class="n">MEM</span><span class="p">(</span><span class="n">MAR</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">MDR</span><span class="w">      </span><span class="c1">// MDRin有效 </span>
+<span class="n">MDR</span><span class="o">-&gt;</span><span class="n">Bus</span><span class="o">-&gt;</span><span class="n">IR</span><span class="w">       </span><span class="c1">// MDRout, IRin有效</span>
+</code></pre>
+<h3 id="_6">执行算数或逻辑运算</h3>
+<p>执行算术或逻辑操作时，由于 ALU 本身是没有内部存储功能的组合电路，因此如要执行加法运算，相加的两个数必须在 ALU 的两个输入端同时有效。上图中的暂存器 Y 即用于该目的。先将一个操作数经CPU 内部总线送入暂存器 Y 保存，Y 的内容在 ALU 的左输入端始终有效，再将另一个操作数经总线直按送到 ALU 的右输入域。这样两个操作数都送入ALU运算结果暂存在暂存器Z中。</p>
+<pre lang="C"><code class="language-C md-fencescode"><span class="n">Ad</span><span class="p">(</span><span class="n">IR</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">Bus</span><span class="o">-&gt;</span><span class="n">MAR</span><span class="w">   </span><span class="c1">// MDRout, MARin有效</span>
+<span class="mi">1</span><span class="o">-&gt;</span><span class="n">R</span><span class="w">               </span><span class="c1">// CU发读指令</span>
+<span class="n">MEM</span><span class="o">-&gt;</span><span class="n">数据线</span><span class="o">-&gt;</span><span class="n">MDR</span><span class="w">  </span>
+<span class="n">MDR</span><span class="o">-&gt;</span><span class="n">Bus</span><span class="o">-&gt;</span><span class="n">Y</span><span class="w">        </span><span class="c1">// MDRout, Yin有效</span>
+<span class="p">(</span><span class="n">ACC</span><span class="p">)</span><span class="o">+</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">Z</span><span class="w">       </span><span class="c1">// ACCout, ALUin有效</span>
+<span class="n">Z</span><span class="o">-&gt;</span><span class="n">ACC</span><span class="w">             </span><span class="c1">// Zout, ACCin有效</span>
+</code></pre>
+<h2 id="_7">例题</h2>
+<ol>
+<li>下列不属于CPU数据通路结构的是（ ）
+   A. 单总线结构
+   B. 多总线结构
+   C. 部件内总线结构
+   D. 专用数据通路结构</li>
+</ol>
+<p>【答案】：C</p>
+<ol>
+<li>在单总线的CPU中，（ ）
+   A. ALU 的两个输入端及输出端都可与总线相连
+   B. ALU的两个输入端可与总线相连，但输出端需通过晢存器与总线相连
+   C. ALU的一个输入端可与总线相连，其输出端也可与总线相连
+   D. ALU 只能有一个输入端可与总线相连，另一输入端需通过暂存器与总线相连</li>
+</ol>
+<p>【答案】：A-&gt;D。由于 ALU 是一个组合逻辑电路，因此其运算过程中必须保持两个输入端的内容不变。又由于 CPU 内部采用单总线结构，因此为了得到两个不同的操作数，ALU 的一个输入端与总线相连，另一个输入端需通过一个寄存器与总线相连。此外，ALU 的输出端也不能直接与内部总线相连，否则其输出又会通过总线反馈到输入端，影响运算结果，因此输出端需通过一个暂存器〔用来暂存结果的寄存器）与总线相连。</p>
+<ol>
+<li>采用CPU 内部总线的数据通路与不采用CPU 内部总线的数据通路相比，( )
+   A. 前者性能较高
+   B. 后者的数据冲突问题较严重
+   C.前者的硬件量大，实现难度高
+   D.以上说法都不对</li>
+</ol>
+<p>【答案】：D</p>
+<ol>
+<li>CPU 的读/写控制信号的作用是（ ）
+   A. 决定数据总线上的数据流方向
+   B. 控制存储器操作的读/写类型
+   C. 控制流入、流出存储器信息的方向
+   D. 以上都是</li>
+</ol>
+<p>【答案】：D</p>
+<ol>
+<li><strong>【2016 统考真题】</strong>单周期处理器中所有指令的指令周期为一个时钟周期。下列关于单周期处理器的叙述中，错误的是（ ）。
+   A. 可以采用单总线结构数据通路
+   B. 处理器时钟频率较低
+   C. 在指令执行过程中控制信号不变
+   D. 每条指令的 CPI为1</li>
+</ol>
+<p>【答案】：C-&gt;A。单周期处理器是指所有指令的指令周期为一个时钟周期的处理器，D正确。因为每条指令的CPI 为1，要考虑比较慢的指令，所以处理器的时钟频率较低，B正确。单总线数据通路将所有寄存器的输入输出端都连接在一条公共通路上，一个时钟内只允许一次操作，无法完成指令的所有操作，A 错误。控制信号是CU 根据指令操作码发出的信号，对于单周期处理器来说，每条指令的执行只有一个时钟周期，而在一个时钟周期内控制信号并不会变化；若是多周期处理器，则指令的执行需要多个时钟周期，在每个时钟周期控制器不会发出不同信号。</p>
+<ol>
+<li><strong>【2021 统考真题】</strong>下列关于数据通路的叙述中，错误的是 ( )
+   A. 数据通路包含 ALU 等组合逻辑（操作）元件
+   B. 数据通路包含寄存器等时序逻辑（状态）元件
+   C. 数据通路不包含用于异常事件检测及响应的电路
+   D. 数据通路中的数据流动路径由控制信号进行控制</li>
+</ol>
+<p>【答案】：C</p>
+<ol>
+<li><strong>【2009统考真题】</strong>某计算机字长16位，采用16位定长指令字结构，部分数据通路结构如下图所示。图中所有控制信号为 1时表示有效，为0时表示无效。例如，控制信号<code>MDRinE</code> 为 1表示允许数据从DB 打入 MDR, <code>MDRin</code> 为1表示允许数据从总线打入MDR。假设MAR 的输出一直处于使能状态。加法指令 “<code>ADD (RI), RO</code>”的功能为<code>(R0)+((R1))-&gt;(R1)</code>，即将RO 中的数据与 R1 的内容所指主存单元的数据相加，并将结果送入R1的内容所指主存单元中保存。</li>
+</ol>
+<p><img alt="截屏2022-08-26 下午3.22.59" src="resources/2009大题.png" /></p>
+<p>下表给出了上述指令取指和译码阶段每个节拍（时钟周期）的功能和有效控制信号，请按表中描述方式用表格列出指令执行阶段每个节拍的功能和有效控制信号</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">时钟</th>
+<th style="text-align: center;">功能</th>
+<th style="text-align: center;">有效控制信号</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">C1</td>
+<td style="text-align: center;"><code>(PC)-&gt;MAR</code></td>
+<td style="text-align: center;">PCout, MARin</td>
+</tr>
+<tr>
+<td style="text-align: center;">C2</td>
+<td style="text-align: center;"><code>M(MAR)-&gt;MDR; (PC)+1-&gt;PC</code></td>
+<td style="text-align: center;">MemR, MDRin, PC+1</td>
+</tr>
+<tr>
+<td style="text-align: center;">C3</td>
+<td style="text-align: center;"><code>(MDR)-&gt;IR</code></td>
+<td style="text-align: center;">MDRout, IRin</td>
+</tr>
+<tr>
+<td style="text-align: center;">C4</td>
+<td style="text-align: center;">指令译码</td>
+<td style="text-align: center;">无</td>
+</tr>
+</tbody>
+</table>
+<p>【答案】：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">时钟</th>
+<th style="text-align: center;">功能</th>
+<th style="text-align: center;">有效控制信号</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">C5</td>
+<td style="text-align: center;"><code>(R1)-&gt;MAR</code></td>
+<td style="text-align: center;">R1out, MARin</td>
+</tr>
+<tr>
+<td style="text-align: center;">C6</td>
+<td style="text-align: center;"><code>M(MAR)-&gt;MDR</code></td>
+<td style="text-align: center;">MemR, MDRin</td>
+</tr>
+<tr>
+<td style="text-align: center;">C7</td>
+<td style="text-align: center;"><code>MDR-&gt;A</code></td>
+<td style="text-align: center;">MDRout, Ain</td>
+</tr>
+<tr>
+<td style="text-align: center;">C8</td>
+<td style="text-align: center;"><code>(R0)+(A)-&gt;AC</code></td>
+<td style="text-align: center;">R0out, Aout, ACin</td>
+</tr>
+<tr>
+<td style="text-align: center;">C9</td>
+<td style="text-align: center;"><code>AC-&gt;MDR</code></td>
+<td style="text-align: center;">ACout, MDRin</td>
+</tr>
+<tr>
+<td style="text-align: center;">C10</td>
+<td style="text-align: center;"><code>MDR-&gt;M(MAR)</code></td>
+<td style="text-align: center;">MemW, MDRout</td>
+</tr>
+</tbody>
+</table>
+<ol>
+<li>某计算机的数据通路结构如下图所示，写出实现 <code>ADD R1, (R2)</code>的微操作序列（取指令及确定后继指令地址）。</li>
+</ol>
+<p><img alt="截屏2022-08-26 下午3.52.20" src="resources/d2.png" /></p>
+<p>【答案】：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">功能</th>
+<th style="text-align: center;">有效控制信号</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><code>(PC)-&gt;MAR</code></td>
+<td style="text-align: center;">PCout, MARin</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>M(MAR)-&gt;MDR;(PC)+1-&gt;PC</code></td>
+<td style="text-align: center;">MR, MDRin, PC+1</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(MDR)-&gt;IR</code></td>
+<td style="text-align: center;">MDRout, IRin</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(R2)-&gt;MAR</code></td>
+<td style="text-align: center;">PCout, MARin</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>M(MAR)-&gt;MDR</code></td>
+<td style="text-align: center;">MR, MDRin</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(MDR)-&gt;LA</code></td>
+<td style="text-align: center;">MDRout, LAin</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(R1)-&gt;LB</code></td>
+<td style="text-align: center;">R1out, LBin</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(LA)+(LB)-&gt;R1</code></td>
+<td style="text-align: center;">+, 移位器out, R1in</td>
+</tr>
+</tbody>
+</table>
+<ol>
+<li>设CPU 内部结构如下图所示，此外还设有B、C、D、E、H、L六个寄存器（图中未画出），它们各自的输入端和输出端都与内部总线相通，并分别受控制信号控制（如Bin 受寄存器 B 的输入控制；Bout 受寄存器 B的输出控制)，假设ALU 的结果直接送入乙 寄存器。要求从取指令开始，写出完成下列指令的微操作序列及所需的控制信号。</li>
+</ol>
+<pre lang="assembly"><code class="language-assembly md-fencescode">ADD B, C     ;(B)+(C)-&gt;B
+SUB ACC, H   ;(ACC)-(H)-&gt;ACC
+</code></pre>
+<p><img alt="截屏2022-08-26 下午4.27.45" src="resources/3.png" /></p>
+<p>【答案】：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">功能</th>
+<th style="text-align: center;">有效控制信号</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">ADD B, C</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(PC)-&gt;MAR</code></td>
+<td style="text-align: center;">PCout, MARin</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>M(MAR)-&gt;MDR;(PC)+1-&gt;PC</code></td>
+<td style="text-align: center;">MR, MDRin, PC+1</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(MDR)-&gt;IR</code></td>
+<td style="text-align: center;">MDRout, IRin</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(B)-&gt;Y</code></td>
+<td style="text-align: center;">Bout, Yin</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(Y)+(C)-&gt;Z</code></td>
+<td style="text-align: center;">Yout, Cout, Zin, 加</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(Z)-&gt;B</code></td>
+<td style="text-align: center;">Zout, Bin</td>
+</tr>
+<tr>
+<td style="text-align: center;">SUB ACC, H</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(PC)-&gt;MAR</code></td>
+<td style="text-align: center;">PCout, MARin</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>M(MAR)-&gt;MDR;(PC)+1-&gt;PC</code></td>
+<td style="text-align: center;">MR, MDRin, PC+1</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(MDR)-&gt;IR</code></td>
+<td style="text-align: center;">MDRout, IRin</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(ACC)-&gt;Y</code></td>
+<td style="text-align: center;">ACCout, Yin</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(Y)-(H)-&gt;Z</code></td>
+<td style="text-align: center;">Yout, Hout, Zin, 减</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(Z)-&gt;ACC</code></td>
+<td style="text-align: center;">Zout, ACCin</td>
+</tr>
+</tbody>
+</table>
+<ol>
+<li>
+<p>设有如下图所示的单总线结构，分析指令 <code>ADD (R0),R1</code> 的指令流程和控制信号。</p>
+<p><img alt="截屏2022-08-26 下午5.24.44" src="resources/10.png" /></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">功能</th>
+<th style="text-align: center;">有效控制信号</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">【取指周期】</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(PC)-&gt;MAR</code></td>
+<td style="text-align: center;">PCout, MARin</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>M(MAR)-&gt;MDR</code></td>
+<td style="text-align: center;">MARout, MREAD, MDRin</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(MDR)-&gt;IR</code></td>
+<td style="text-align: center;">MDRout, IRin</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(PC)+1-&gt;PC</code></td>
+<td style="text-align: center;">+1</td>
+</tr>
+<tr>
+<td style="text-align: center;">【间指周期】</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(R0)-&gt;MAR</code></td>
+<td style="text-align: center;">R0out, MARin</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>M(MAR)-&gt;MDR</code></td>
+<td style="text-align: center;">MARout, MREAD, MDRin</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(MDR)-&gt;Y</code></td>
+<td style="text-align: center;">MDRout, Yin</td>
+</tr>
+<tr>
+<td style="text-align: center;">【执行周期】</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(Y)+(R1)-&gt;Z</code></td>
+<td style="text-align: center;">Yout, R1out, Zin, 加</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(Z)-&gt;MDR</code></td>
+<td style="text-align: center;">Zout, MDRin</td>
+</tr>
+<tr>
+<td style="text-align: center;"><code>(MDR)-&gt;M(MAR)</code></td>
+<td style="text-align: center;">MWRITE, MDRout, MARout</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p>下图是一个简化的 CPU 与主存连接结构示意图（图中省略了所有的多路选择器）。其中有一个累加寄存器(ACC)、一个状态数据寄存器和其他 4 个寄存器：主存地址寄存器（MAR）、主存数据寄存器（MDR）、程序寄存器（PC）和指令寄存器（IR），各部件及其之问的连线表示数据通路，箭头表示信息传递方向.</p>
+<p><img alt="截屏2022-08-26 下午5.38.23" src="resources/11.png" /></p>
+<p>要求</p>
+<ol>
+<li>请写出图中a、b、c、d四个寄存器的名称.</li>
+</ol>
+<p>【答案】：a：MDR，b：IR，c：MAR，d：PC</p>
+<ol>
+<li>简述图中取指令的数据通路</li>
+</ol>
+<p>【答案】：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">功能</th>
+<th style="text-align: center;">有效控制信号</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">(PC)-&gt;MAR</td>
+<td style="text-align: center;">PCout, MARin</td>
+</tr>
+<tr>
+<td style="text-align: center;">M(MAR)-&gt;MDR</td>
+<td style="text-align: center;">MARout, MDRin, MR</td>
+</tr>
+<tr>
+<td style="text-align: center;">MDR-&gt;IR</td>
+<td style="text-align: center;">MDRout, IRin</td>
+</tr>
+</tbody>
+</table>
+<ol>
+<li>简述数据在运算器和主存之间进行存/取访问的数据通路（假设地址已在MAR中）</li>
+</ol>
+<p>【答案】：</p>
+<p>MAR(先置数据地址), 主存M-&gt;MDR-&gt;ALU-&gt;ACC</p>
+<p>MAR(先置数据地址), ACC-&gt;MDR-&gt;主存M</p>
+<ol>
+<li>简述完成指令LDA X的数据通路（X为主存地址，LDA的功能为<code>(X)-&gt;ACC</code>).</li>
+</ol>
+<p>【答案】：</p>
+<p>X-&gt;MAR-&gt;主存-&gt;MDR-&gt;ALU-&gt;ACC</p>
+<ol>
+<li>简述完成指令 ADD Y的数据通路（Y为主存地址，ADD的功能为<code>(ACC)+(Y)-&gt;ACC</code>).</li>
+</ol>
+<p>【答案】：</p>
+<p>Y-&gt;MAR-&gt;主存-&gt;MDR-&gt;ALU-&gt;ACC</p>
+<p>ACC-&gt;ALU-&gt;ACC</p>
+<ol>
+<li>简述完成指令 STA Z 的数据通路（Z为主存地址，STA的功能为<code>(ACC)-&gt;Z</code>)。</li>
+</ol>
+<p>【答案】:</p>
+<p>Z-&gt;MAR</p>
+<p>ACC-&gt;MDR-&gt;主存</p>
+</li>
+<li>
+<p>某机主要功能部件如下图所示，其中 M为主存，MDR 为主存数据寄存器，MAR 为主存地址寄存器，R 为指令寄存器，PC 为程序计数器（并假设当前指令地址在PC中），R0~R3为通用寄存器，C、D为暂存器。</p>
+<p><img alt="截屏2022-08-26 下午5.40.53" src="resources/12.png" /></p>
+<ol>
+<li>请补充各部件之间的主要连接线（总线自己画)，并注明数据流动方向。</li>
+</ol>
+<p>【答案】：</p>
+<p><img alt="image-20220826204344405" src="resources/12d.png" /></p>
+<ol>
+<li>画出“<code>ADD (R1)，(R2)+</code>”指令周期流程图 “该指令的含义是进行求和运算，源操作数地址在 R1 中，<u>目标操作数寻址方式为自增型寄存器问接寻址方式</u>（先取地址后加1），并将相加结果写回R2 寄存器。</li>
+</ol>
+<p>【答案】：</p>
+<p><img alt="截屏2022-08-26 下午8.47.44" src="resources/12d2.png" /></p>
+</li>
+<li>
+<p>已知单总线计算机结构如下图所示，其中M 为主存，XR为变址寄存器，EAR 为有效地址寄存器，LATCH 为暂存器。假设指令地址已存在于PC中，请给出<code>ADD X, D</code>指令周期信息流程和相应的控制信号。说明：</p>
+<p><img alt="截屏2022-08-26 下午5.42.31" src="resources/13.png" /></p>
+<ol>
+<li>ADD X,D指令字中，X为变址寄存器XR，D为形式地址</li>
+<li>寄存器的输入/输出均采用控制信号控制，如PCi表示 PC 的输入控制信号，MDRo表示MDR 的输出控制信号。</li>
+<li>凡需要经过总线的传送，都需要注明，如(PC)一MAR，相应的控制信号为 PC_0和 MAR_i.</li>
+</ol>
+<p>【答案】：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;">功能</th>
+<th style="text-align: center;">有效控制信号</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">取指周期</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;">(PC)-&gt;MAR</td>
+<td style="text-align: center;">PCo, MARi</td>
+</tr>
+<tr>
+<td style="text-align: center;">M(MAR)-&gt;MDR</td>
+<td style="text-align: center;">MARo, MDRi, MR</td>
+</tr>
+<tr>
+<td style="text-align: center;">(MDR)-&gt;IR</td>
+<td style="text-align: center;">MDRo, IRi</td>
+</tr>
+<tr>
+<td style="text-align: center;">(PC)+1-&gt;PC</td>
+<td style="text-align: center;">+1</td>
+</tr>
+<tr>
+<td style="text-align: center;">执行周期</td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;"><strong>(XR)+Ad(IR)-&gt;EAR</strong></td>
+<td style="text-align: center;">XRo, IRo, +, EARi</td>
+</tr>
+<tr>
+<td style="text-align: center;">(EAR)-&gt;MAR</td>
+<td style="text-align: center;">EARo, MARi</td>
+</tr>
+<tr>
+<td style="text-align: center;">M(MAR)-&gt;MDR</td>
+<td style="text-align: center;">R, MARo, MDRi</td>
+</tr>
+<tr>
+<td style="text-align: center;">(MDR)-&gt;X</td>
+<td style="text-align: center;">MDRo, Xi</td>
+</tr>
+<tr>
+<td style="text-align: center;">(ACC)+(X)-&gt;LATCH</td>
+<td style="text-align: center;">ACCo, Xo, LATCHi, +</td>
+</tr>
+<tr>
+<td style="text-align: center;">(LATCH)-&gt;ACC</td>
+<td style="text-align: center;">LATCHo, ACCi</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p><strong>【2015统考真题】</strong>某16位计算机的主存按宇节编码，存取单位为16位；来用16位定长指令字格式；CPU来用单总线结构，主要部分如下图所示。图中R0-R3为通用寄存器；T为暂存器；SR为移位寄存器，可实现直送（mov)、左移一位（left）和右移一位(right）三种操作，控制信号为SRop，SR的输出由信号SRout控制； ALU可实现直送A(mova）、A加B （add）、A减B（sub）、 A与B （and )A或B（or)、非A (not )、A加1(inc）七种操作，控制信号为ALUop。
+    回答下列问题：</p>
+<ol>
+<li>图中哪些寄存器是程序员可见的？为何要设置暂存器T？</li>
+<li>控制信号 ALUop 和SROp 的位数至少各是多少？</li>
+<li>控制信号 SRout 所控制部件的名称或作用是什么？</li>
+<li>端点①~⑨中，哪些端点须连接到控制部件的输出端？</li>
+<li>为完善单总线数据通路，需要在端点①~⑨中相应的端点之间添加必要的连线。写出连线的起点和终点，以正确表示数据的流动方向。</li>
+<li>为什么二路选择器 MUX 的一个输入端是 2？</li>
+</ol>
+<p><img alt="截屏2022-08-26 下午9.15.10" src="resources/14.png" /></p>
+<p>【答案】：</p>
+<ol>
+<li>
+<p>R0,R1,R2,R3,~~MAR,MDR~~,PC。为什么要T，因为采用了单总线结构，如果没有T，A与B会同时收到传入的数据。</p>
+</li>
+<li>
+<p>ALUop7种-&gt;3位；SROp4种-&gt;2位</p>
+</li>
+<li>
+<p><u>信号 SRout 所控制的部件是一个<strong>三态门</strong>，用于控制移位器与总线之问数据通路的连接与断开</u></p>
+</li>
+<li>
+<p>1，2，3，5，8；</p>
+</li>
+<li>
+<p>6-&gt;9；7-&gt;4</p>
+</li>
+<li>
+<p><strong>因为每条指令长度是16bits，按字节编址，顺序执行的时候，(PC)+2-&gt;PC，MUX一个输入为2，可便于执行(PC)+2操作</strong></p>
+</li>
+</ol>
+<blockquote>
+<p>本题讲解:</p>
+<p>【【408考研】历年计组大题串讲】 https://www.bilibili.com/video/BV1Lq4y167rX?p=9</p>
+</blockquote>
+</li>
+</ol>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

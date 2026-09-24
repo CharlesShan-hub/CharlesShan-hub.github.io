@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>异常和中断机制</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="_1">异常和中断机制</h1>
+<p>2022.08.28</p>
+<div class="toc">
+<ul>
+<li><a href="#_1">异常和中断机制</a><ul>
+<li><a href="#_2">异常和中断的基本概念</a></li>
+<li><a href="#_3">异常和中断的分类</a></li>
+<li><a href="#_4">异常和中断响应过程</a></li>
+<li><a href="#_5">例题</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<p>现代计算机中都配有完善的异常和中断处理系统，CPU 的数据通路中有相应的异常检测和响应逻辑，外设接口中有相应的中断请求和控制逻辑，操作系统中有相应的中断服务程序。这些中断硬件线路和中断服务程序有机结合，共同完成异常和中断的处理过程。</p>
+<h2 id="_2">异常和中断的基本概念</h2>
+<p>由 <strong>CPU 内部</strong>产生的意外事件被称为<strong>异常</strong>，有些教材中也称<strong>内中断</strong>。由来自<strong>CPU 外部</strong>的设备向 CPU 发出的中断请求被称为<strong>中断</strong>，通常用于信息的输入和输出，有些教材中也称<strong>外中断</strong>。异常是CPU 执行一条指令时，由 CPU 在其内部检测到的、与正在执行的指令相关的同步事件；中断是一种典型的由外部设备触发的、与当前正在执行的指令无关的异步事件。</p>
+<blockquote>
+<p>CPU内部，异常/内中断，同步事件;</p>
+<p>CPU外部，中断/外中断，异步事件；</p>
+</blockquote>
+<p>异常和中断处理过程的大致描述如下：当 CPU 在执行用户程序的第i条指今时检测到一个异常事件，或者在执行第i条指令后发现一个中断请求信号，则 CPU 打断当前用户程序然后转到相应的异常或中断处理程序去执行。若异常或中断处理程序能够解决相应的问题，则在异常或中断处理程序的最后，CPU 通过执行异常或中断返回指令，回到被打断的用户程序的第 i条指令或第i＋1条指令继续执行：若异常或中断处理程序发现是不可恢复的致命错误，则终止用户程序。通常情况下，对异常和中断的具体处理过程由<u>操作系统（和驱动程序）</u>完成。</p>
+<p>异常和中断的处理过程基本是相同的，这也是有些教材将两者统称为中断的原因。</p>
+<h2 id="_3">异常和中断的分类</h2>
+<ol>
+<li>异常的分类
+   异常是由 CPU 内部产生的意外事件，分为硬故障中断和程序性异常。</li>
+</ol>
+<p><strong>硬故障中断</strong>是由<u>硬连线出现异常</u>引起的，如存储器校验错、总线错误等。</p>
+<p><strong>程序性异常</strong>也称<strong>软件中断</strong>，是指在 <u>CPU 内部因执行指令而引起的异常事</u>件。如整除 0、滥出、断点、单步跟踪、非法指令、栈溢出、地址越界、缺页等。按异常发生原因和返回方式的不同，可分为故障、自陷和终止。</p>
+<ol>
+<li>
+<p><strong>故障 (Fault)</strong>
+      指在引起故障的指令启动后、执行结束前被检测到的异常事件。例如，指令译码时，出现“非法操作码”；取数据时，发生 “缺段”或“缺页”，执行整数除法指令时，发现“除数为0”等。对于 “缺段”“缺页”等异常事件，经处理后，可将所需的段或页面从磁盘调入主存，回到发生故障的指令继续执行，断点为当前发生故障的指令；对于 “非法操作码”“除数为 0” 等，因为无法通过异常处理程序恢复故障，因此不能回到原断点执行，必须终止进程的执行。</p>
+</li>
+<li>
+<p><strong>自陷(Trap)</strong>
+      自陷也称陷阱或陷入，它是预先安排的一种“异常”事件，就像预先设定的“陷阱”样。通常的做法是：事先在程序中用一条特殊指令或通过某种方式设定特殊控制标志来人为设置一个“陷阱”，当执行到被设置了 “陷阱”的指令时，CPU 在执行完自陷指令后，自动根据不同“陷阱”类型进行相应的处理，然后返回到自陷指令的下一条指令执行。注意，<u>当自陷指令是转移指令时，并不是返回到下一条指令执行，而是返回到转移目标指令执行</u>。</p>
+<p>在x86 机器中，用于程序调试 “断点设置” 和单步跟踪的功能就是通过陷阱机制实现的。此外，系统调用指令、条件自陷指令（如 MIPS 中的tea、teqi、tne、tei 等）等都属手陷阱指令令，执行到这些指令时，无条件或有条件地自动调出操作系统内核程序进行执行。故障异常和自陷异常属于程序性异常（软件中断）。</p>
+</li>
+<li>
+<p><strong>终止 (Abort)</strong>
+      如果在执行指令的过程中发生了使计算机无法继续执行的硬件故障，如控制器出错、存储器校验错等，那么程序将无法继续执行，只能终止，此时，调出中断服务程序来重启系统。这种异常与故障和自陷不同，不是由特定指令产生的，而是随机发生的。<strong>终止异常和外中断属于硬件中断</strong>。</p>
+</li>
+</ol>
+<blockquote>
+<p>异常(内中断)：</p>
+<ol>
+<li>硬故障中断：存储器校验错、总线错误</li>
+<li>程序性异常/软件中断：如整除 0、溢出、断点、单步跟踪、栈溢出、地址越界</li>
+<li>故障(Fault)：(指令译码的)非法指令，(取数据时发生)“缺段”或“缺页”，“除数为0”</li>
+<li>自陷(Trap)：(用于程序调试)“断点设置”和“单步跟踪”，“系统调用指令”、“条件自陷指令”如 MIPS 中的tea、teqi、tne、tei 等)</li>
+<li>【硬件】终止(Abort)：控制器出错、存储器校验错等</li>
+</ol>
+</blockquote>
+<ol>
+<li>中断的分类
+   中断是指来自 CPU 外部、与 CPU 执行指令无关的事件引起的中断，包括 IO 设备发出的IO 中断（如键盘输入、打印机缺纸等），或发生某种特殊事件（如用户按 Esc 键、定时器计数时间到）等。外部IO 设备通过特定的中断请求信号线向 CPU 提出中断请求，CPU 每执行完茶指令就检查中断请求信号线，如果检测到中断请求，则进入中断响应周期。</li>
+</ol>
+<p>中断可分为可屏蔽中断和不可屏蔽中断。</p>
+<ol>
+<li><strong>可屏蔽中断</strong>
+      指通过<strong>可屏蔽中断请求线 INTR</strong> 向 CPU 发出的中断请求。CPU 可以通过在中断控制器中设置相应的屏蔽字来屏蔽它或不屏蔽它，被屏蔽的中断请求将不被送到 CPU。</li>
+<li><strong>不可屏蔽中断</strong>
+      指通过专门的<strong>不可屏蔽中断请求线 NMI</strong> 向 CPU 发出的中断请求，通常是非常紧急的硬件故障，如电源掉电等。这类中断请求信号不可被屏蔽，以让 CPU 快速处理这类紧急事件</li>
+<li>中断和异常在本质上是一样的，但它们之问有以下两个重要的不同点：<ol>
+<li>“缺页” 或“溢出” 等异常事件是由特定指令在执行过程中产生的，而中断不和任何指令相关联，也不阻止任何指令的完成</li>
+<li>异常的检测由 CPU 自身完成，不必通过外部的某个信号通知 CPU。对于中断，CPU 必须通过中断请求线获取中断源的信息，才能知道哪个设备发生了何种中断。</li>
+</ol>
+</li>
+</ol>
+<blockquote>
+<p>中断(外中断):</p>
+<ol>
+<li>可屏蔽中断：INTR</li>
+<li>不可屏蔽中断：NMI；电源掉电</li>
+</ol>
+</blockquote>
+<h2 id="_4">异常和中断响应过程</h2>
+<p>CPU 执行指令时，如果发生了异常或中断请求，必须进行相应的处理。从 CPU 检测到异常或中断事件，到调出相应的处理程序，整个过程称为异常和中断的响应。CPU 对异常和中断响应的过程可分为：<strong>关中断、保存断点和程序状态、识别异常和中断并转到相应的处理程序</strong>。</p>
+<ol>
+<li><strong>关中断</strong></li>
+</ol>
+<p>在保存断点和程序状态期间，不能被新的中断打断，因此要禁止响应新的中断，即关中断。通常通过设置<strong>“中断允许”（IF）触发器</strong>来实现，若IF置为1，则为开中断，表示允许响应中断：若IF置为0，则表示关中断，表示不允许响应中断。</p>
+<ol>
+<li><strong>保存断点和程序状态</strong></li>
+</ol>
+<p>为了能在异常和中断处理后正确返回到被中断的程序继续执行，必须将程序的断点（返回地址）送到栈或特定寄存器中。通常保存在<strong>栈</strong>中，这是为了支持异常或中断的嵌套。异常和中断处理后可能还要回到被中断的程序继续执行，被中断时的程序状态字寄存器PSWR 的内容也需要保存在栈或特定寄存器中，在异常和中断返回时恢复到PSWR中。</p>
+<ol>
+<li><strong>识别异常和中断并转到相应的处理程序</strong></li>
+</ol>
+<p>异常和中断源的识别有<strong>软件识别</strong>和<strong>硬件识别</strong>两种方式。异常和中断源的识别方式不同，异常大多采用软件识别方式中断可以采用软件识别方式或硬件识别方式。</p>
+<p>软件识别方式是指 CPU 设置一个异常状态寄存器，用于记录异常原因。操作系统使用一个统一的异常或中断查询程序，按优先级顺序查询异常状态奇存器，以检测异常和中断类型，先查询到的先被处理，然后转到内核中相应的处理程序硬件识别方式又称向量中断，异常或中断处理程序的首地址称为中断向量，所有中断向量都存放在中断向量表中。每个异常或中断都被指定一个中断类型号。在中断向量表中，类型号利中断向量一一对应，因而可以根据类型号快速找到对应的处理程序、整个响应过程是不可被打断的。中断响应过程结束后，CPU 就从 PC 中取出中断服务程序的第一条指令开始执行，直全中断返回，这部分任务是由 CPU 通过执行中断服务程序完成的，整个中断处理过程是由软/硬件协同实现的。</p>
+<h2 id="_5">例题</h2>
+<ol>
+<li>以下关于“自陷”（Trap）异常的叙述中，错误的是（ ）
+   A. “自陷”是人为预先设定的一种特定处理事件
+   B. 可由访管指令或自陷指令的执行进入"自陷"
+   C. 一定是出现某种异常情况才会发生“自陷”
+   D. “自陷“发生后CPU 将进入操作系统内核程序执行</li>
+</ol>
+<p>【答案】：C</p>
+<ol>
+<li>指令执行结果出现异常而引起的中断是（）。
+   A.IO中断
+   B.机器校验中断
+   C.程序性中断
+   D.外部中断</li>
+</ol>
+<p>【答案】：C</p>
+<ol>
+<li>主存故障引起的中断是（）
+   A.故障异常
+   B.程序性中断
+   C.硬件中断
+   D. 外中断</li>
+</ol>
+<p><strong>【答案】：A-&gt;C</strong></p>
+<ol>
+<li>以下关于异常和中断响应的叙述中，错误的是(）
+   A. 异常事件检测由 CPU 在执行每一条指令的过程中进行
+   B. 中断请求检测由 CPU 在每条指令执行结束、取下条指令之前进行
+   C. CPU检測到异常事件后所做的处理和检测到中断请求后所做的处理完全相同
+   D. CPU 在中断响应时会关中断、保存断点和程序状态并转到相应的中断服务程序</li>
+</ol>
+<p><strong>【答案】：C</strong></p>
+<ol>
+<li>以下给出的事件中，无须异常处理程序进行处理的是(）。
+   A.缺页故障
+   B.Cache 缺失
+   C.地址越界
+   D.除数为0</li>
+</ol>
+<p>【答案】：B</p>
+<ol>
+<li>【2015 统考真题】内部异常（内中断）可分为故障（fault ）、陷陆（trap）和终止(abort）三类。下列有关内部异常的叙述中，错误的是(）。
+   A.内部异常的产生与当前执行指令相关
+   B.内部异常的检测由 CPU 内部逻辑实现
+   C.内部异常的响应发生在指令执行过程中
+   D.内部异常处理后返回到发生异常的指令继续执行</li>
+</ol>
+<p><strong>【答案】：A-&gt;D</strong>。D：考虑到特殊情况，如除数为零和自行中断（  INT  ）都会自动跳过中断指令，所以不会返回到发生异常的指令继续执行，故D错误。</p>
+<ol>
+<li>【2016 统考真题】异常是指令执行过程中在处理器内部发生的特殊事件，中断是来自处理器外部的请求事件。下列关于中断或异常情况的叙述中，错误的是().
+   A."访存时缺页"属于中断
+   B."整数除以0"属于异常
+   C."DMA 传送结束"属于中断
+   D."存储保护错"属于异常</li>
+</ol>
+<p>【答案】：A</p>
+<ol>
+<li>【2020 统考真题】下列关于“自陷”（Trap，也称陷阱）的叙述中，错误的是（）。
+   A. 自陷是通过陷阱指令预先设定的一类外部中断事件
+   B. 自陷可用于实现程序调试时的断点设置和单步跟踪
+   C. 自陷发生后CPU 将转去执行操作系统内核相应程序
+   D. 自陷处理完成后返回到陷阱指令的下一条指令执行</li>
+</ol>
+<p>【答案】：A</p>
+<ol>
+<li>【2021 统考真题】异常事件在当前指令执行过程中进行检测，中断请求则在当前指令执行后进行检测。下列事件中，相应处理程序执行后，必须回到当前指令重新执行的是(）。
+   A.系统调用
+   B.页缺失
+   C.DMA 传送结束 
+   D.打印机缺纸</li>
+</ol>
+<p>【答案】：B</p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

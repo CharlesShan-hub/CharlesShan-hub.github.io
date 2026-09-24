@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>part1</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="iec-61850-part-1">IEC 61850 Part 1 解读：这一切从哪里开始？</h1>
+<blockquote>
+<p><strong>对应文件</strong>：<code>860[1].1.pdf</code><br />
+<strong>正式标题</strong>：IEC 61850-1 — Introduction and Overview（介绍与总览）<br />
+<strong>页数</strong>：约 28 页<br />
+<strong>定位</strong>：整个标准体系的"序言"，不涉及技术细节，讲的是"为什么"和"是什么"</p>
+</blockquote>
+<hr />
+<h2 id="_1">一、故事要从变电站说起</h2>
+<p>想象一个1990年代的变电站。</p>
+<p>里面装着来自五六个不同厂家的设备：ABB 的保护继电器、西门子的测控装置、国产的断路器控制器……每台设备都有自己的通信协议，自己的接线方式，自己的配置工具。运维工程师要对付 DNP3、Modbus、IEC 60870-5-101……还有各种私有协议。</p>
+<p>换一台设备？重新做通信适配。升级系统？可能导致整套通信全部重调。现场工程师带着一箱子不同厂家的笔记本电脑和调试软件，每台设备要分别处理。</p>
+<p><strong>这个局面，在全世界几十万座变电站里同时上演。</strong></p>
+<p>国际电工委员会（IEC）的 TC57 工作组坐不住了——不能再这样下去了，我们需要一个统一的标准。</p>
+<hr />
+<h2 id="_2">二、诞生背景：两个世界的合并</h2>
+<p>在 IEC 61850 出现之前，变电站自动化领域其实已经存在两个主要标准：</p>
+<ul>
+<li><strong>IEC 60870-5</strong>：专注于"遥控、遥信、遥测"，即 SCADA 远程通信，偏重于数据采集和传输</li>
+<li><strong>UCA（Utility Communications Architecture）</strong>：美国电力研究院（EPRI）推动的标准，试图用 MMS 等技术实现互操作</li>
+</ul>
+<p>这两个方向各有拥护者，但都不够完整。于是 IEC TC57 在1990年代中期启动了一个雄心勃勃的项目，目标是：</p>
+<blockquote>
+<p><strong>创建一个面向未来的、统一的、制造商无关的变电站通信标准。</strong></p>
+</blockquote>
+<p>这个项目就是 IEC 61850，历经约10年研发，在2003～2005年间正式发布第一版。</p>
+<hr />
+<h2 id="part-1">三、Part 1 说了什么——三个核心问题</h2>
+<h3 id="_3">问题一：这个标准要解决什么？</h3>
+<p>Part 1 开宗明义提出了几个核心目标：</p>
+<p><strong>1. 互操作性（Interoperability）</strong></p>
+<p>不同厂家的设备，只要都符合 IEC 61850，就能互相通信、互相理解对方的数据。就像所有网站都用 HTTP，所有邮件都用 SMTP 一样，变电站里所有设备都说同一种"语言"。</p>
+<p><strong>2. 自由配置（Free Configuration）</strong></p>
+<p>以前，一个功能（比如"当电流超过阈值时跳闸"）的逻辑往往被硬件厂商锁死在特定设备里。IEC 61850 把功能从硬件中解耦——你可以自由地把逻辑功能分配到不同物理设备上，就像软件可以跑在不同服务器上一样。</p>
+<p><strong>3. 长期稳定性（Long-term Stability）</strong></p>
+<p>变电站的生命周期是30～40年，而通信技术10年就换一代。Part 1 解释了标准是如何设计成"技术无关"的抽象层，以便底层通信技术（以太网、光纤……甚至未来的技术）升级时，上层逻辑不需要改变。</p>
+<hr />
+<h3 id="_4">问题二：这个标准怎么组织的？</h3>
+<p>IEC 61850 不是一本书，而是一套体系，被分成多个"部分"（Parts）。Part 1 用很大篇幅来解释这张地图：</p>
+<pre><code class="md-fencescode">IEC 61850 标准结构
+│
+├── Part 1   ← 你现在读的：总览和引言
+├── Part 2      词汇表（专业术语定义）
+├── Part 3      总体要求（质量、可靠性等）
+├── Part 4      系统和项目管理
+├── Part 5      功能和设备模型通信要求
+├── Part 6      变电站配置语言 SCL（XML格式）
+│
+├── Part 7-1    基本通信结构：原则与模型
+├── Part 7-2    基本通信结构：抽象通信服务接口 ACSI
+├── Part 7-3    基本通信结构：公共数据类 CDC
+├── Part 7-4    基本通信结构：逻辑节点类和数据类
+│
+├── Part 8-1    特定通信服务映射 SCSM：MMS（TCP/IP）
+├── Part 9-1    特定通信服务映射 SCSM：采样值（串行）
+└── Part 9-2    特定通信服务映射 SCSM：采样值（以太网）
+</code></pre>
+<p>可以这样理解：
+- <strong>Part 7 系列</strong>是"通用语言"——定义了数据怎么建模、服务怎么抽象（不管底层用什么技术）
+- <strong>Part 8/9 系列</strong>是"翻译器"——把抽象语言翻译成具体的网络协议（MMS、以太网等）
+- <strong>Part 6</strong> 是"配置手册"——用 XML 文件描述整个系统的结构</p>
+<hr />
+<h3 id="_5">问题三：系统是怎么分层的？</h3>
+<p>Part 1 介绍了变电站自动化系统的三层架构，这是理解整个标准的骨架：</p>
+<pre><code class="md-fencescode">┌─────────────────────────────────────────────┐
+│              站控层（Station Level）          │
+│  调度中心、监控后台、操作员界面                │
+└─────────────────┬───────────────────────────┘
+                  │  站级总线（Station Bus）
+                  │  ← 用 MMS over TCP/IP 通信
+┌─────────────────▼───────────────────────────┐
+│              间隔层（Bay Level）              │
+│  保护装置、测控装置、一个间隔一套             │
+└─────────────────┬───────────────────────────┘
+                  │  过程总线（Process Bus）
+                  │  ← 用 GOOSE / SV over Ethernet 通信
+┌─────────────────▼───────────────────────────┐
+│              过程层（Process Level）          │
+│  断路器、互感器、合并单元、智能终端            │
+└─────────────────────────────────────────────┘
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>层级</th>
+<th>类比</th>
+<th>通信方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>站控层</td>
+<td>工厂的ERP管理系统</td>
+<td>MMS over TCP/IP（慢但信息丰富）</td>
+</tr>
+<tr>
+<td>间隔层</td>
+<td>车间的PLC控制器</td>
+<td>MMS + GOOSE（快速事件触发）</td>
+</tr>
+<tr>
+<td>过程层</td>
+<td>车间的传感器/执行器</td>
+<td>GOOSE / SV（毫秒级实时）</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_6">四、三种通信机制：先有个概念</h2>
+<p>Part 1 会简要提到（后续 Parts 详细展开）三种通信机制，每种解决不同的问题：</p>
+<h3 id="mmsmanufacturing-message-specification">🔵 MMS（Manufacturing Message Specification）</h3>
+<ul>
+<li><strong>用途</strong>：读写数据、控制操作、订阅报告</li>
+<li><strong>特点</strong>：基于 TCP/IP，可靠，有连接，像"打电话"</li>
+<li><strong>类比</strong>：汽车诊断里的 UDS 服务（请求-响应模式）</li>
+<li><strong>典型场景</strong>：监控后台读取断路器状态、发出跳闸指令</li>
+</ul>
+<h3 id="goosegeneric-object-oriented-substation-event">🟡 GOOSE（Generic Object Oriented Substation Event）</h3>
+<ul>
+<li><strong>用途</strong>：快速事件广播（保护跳闸信号等）</li>
+<li><strong>特点</strong>：以太网二层，无 IP，极低延迟（4ms 以内），像"广播喊话"</li>
+<li><strong>类比</strong>：汽车的 CAN 总线报文——不需要确认，高速广播</li>
+<li><strong>典型场景</strong>：继电保护动作时，毫秒级通知断路器跳闸</li>
+</ul>
+<h3 id="svsampled-values">🟢 SV（Sampled Values，采样值）</h3>
+<ul>
+<li><strong>用途</strong>：实时传输电流/电压的瞬时采样数据</li>
+<li><strong>特点</strong>：高频率（每秒80/256个采样点），替代传统模拟量接线</li>
+<li><strong>类比</strong>：音频流传输——连续不断的实时数据</li>
+<li><strong>典型场景</strong>：合并单元把互感器的模拟信号数字化后发给保护装置</li>
+</ul>
+<hr />
+<h2 id="_7">五、"语义建模"——这才是革命性的地方</h2>
+<p>这是 Part 1 最重要、也最容易被忽视的思想：</p>
+<p>传统协议（Modbus、DNP3）只传"值"——寄存器地址 40001 里有个数字 220，你得查手册才知道这是电压。</p>
+<p>IEC 61850 传的是<strong>有意义的对象</strong>：</p>
+<pre><code class="md-fencescode">MMXU1.PhV.phsA.cVal.mag.f = 220.5
+└──┬──┘ └─┬─┘ └─┬─┘ └──────┬──────┘
+   │       │      │           └─ 浮点数值：220.5
+   │       │      └─ A相
+   │       └─ 相电压
+   └─ 测量单元逻辑节点
+</code></pre>
+<p>设备不再传"寄存器 40001 = 220"，而是传"我的 A 相电压是 220.5V"。<strong>数据自带语义</strong>，任何符合标准的系统都能理解，不需要查手册、不需要厂商说明文件。</p>
+<p>这就是"标准化信息模型"的核心价值，也是 IEC 61850 与所有前辈协议的根本区别。</p>
+<hr />
+<h2 id="_8">六、一个完整变电站的"对话"</h2>
+<p>为了让 Part 1 的内容更直观，我们来看一个简化的场景：</p>
+<blockquote>
+<p><strong>场景：500kV 变电站，A 相发生短路故障</strong></p>
+</blockquote>
+<pre><code class="md-fencescode">时间线（毫秒级）：
+
+T=0ms    互感器检测到电流骤升
+T=1ms    合并单元采样，通过 SV 报文发给保护装置
+T=2ms    保护装置判断：差动保护动作！
+T=3ms    保护装置发出 GOOSE 报文：&quot;跳闸！&quot;广播到过程层
+T=4ms    断路器的智能终端收到 GOOSE，驱动断路器跳闸
+T=8ms    断路器完成跳闸（机械动作）
+T=10ms   保护装置通过 MMS 向监控后台发送&quot;保护动作&quot;报告
+T+...    调度中心收到 MMS 报告，工程师看到告警
+</code></pre>
+<p>整个过程：
+- <strong>SV</strong> 负责传输电气量（精确、实时）
+- <strong>GOOSE</strong> 负责快速跳闸命令（低延迟、广播）
+- <strong>MMS</strong> 负责事件记录和人机交互（丰富信息）</p>
+<p>三种机制各司其职，共同构成一个完整的变电站通信生态。</p>
+<hr />
+<h2 id="_9">七、和汽车诊断协议的对比（加深理解）</h2>
+<p>你有汽车诊断背景，这张对比表可以帮你快速定位：</p>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>汽车（UDS/OBD）</th>
+<th>IEC 61850</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>物理设备</td>
+<td>ECU</td>
+<td>IED（智能电子设备）</td>
+</tr>
+<tr>
+<td>标准化数据对象</td>
+<td>DID（Data Identifier）</td>
+<td>逻辑节点 LN + 数据对象 DO</td>
+</tr>
+<tr>
+<td>请求-响应通信</td>
+<td>UDS 服务（0x22读/0x2E写）</td>
+<td>MMS 服务（GetDataValues/SetDataValues）</td>
+</tr>
+<tr>
+<td>广播事件</td>
+<td>CAN 帧（无确认）</td>
+<td>GOOSE 报文（无确认广播）</td>
+</tr>
+<tr>
+<td>流式实时数据</td>
+<td>CAN 周期帧</td>
+<td>SV 采样值报文</td>
+</tr>
+<tr>
+<td>设备描述文件</td>
+<td>ODX / A2L</td>
+<td>SCL / ICD（XML）</td>
+</tr>
+<tr>
+<td>地址</td>
+<td>物理地址 + Service ID</td>
+<td>字符串路径（IED/LD/LN.DO.DA）</td>
+</tr>
+<tr>
+<td>诊断会话</td>
+<td>DiagnosticSession</td>
+<td>Association（关联会话）</td>
+</tr>
+<tr>
+<td>故障码上报</td>
+<td>DTC 报告</td>
+<td>URCB/BRCB 报告机制</td>
+</tr>
+</tbody>
+</table>
+<p><strong>最大的不同</strong>：汽车协议主要是"诊断"（被动查询），而 IEC 61850 是"控制+保护+监控"一体，实时性要求更高，控制逻辑更复杂。</p>
+<hr />
+<h2 id="part-1_1">八、Part 1 的历史地位</h2>
+<p>Part 1 在整个 IEC 61850 体系中是一篇"宣言"：</p>
+<ul>
+<li>它宣告了一种新的思维方式：<strong>功能与硬件解耦</strong></li>
+<li>它定义了一种新的通信哲学：<strong>数据自带语义</strong></li>
+<li>它规划了一套新的系统架构：<strong>三层结构 + 三种通信机制</strong></li>
+</ul>
+<p>后续所有 Parts 都是对这个宣言的技术落地。</p>
+<p>读完 Part 1，你知道了"这是什么，为什么这样设计"；读完 Part 7，你会知道"具体怎么建模"；读完 Part 8，你会知道"在代码里怎么实现"。</p>
+<hr />
+<h2 id="_10">九、本文要点速查</h2>
+<table>
+<thead>
+<tr>
+<th>知识点</th>
+<th>一句话总结</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IEC 61850 的目标</td>
+<td>互操作性 + 功能自由配置 + 长期稳定</td>
+</tr>
+<tr>
+<td>系统三层架构</td>
+<td>站控层 → 间隔层 → 过程层</td>
+</tr>
+<tr>
+<td>三种通信机制</td>
+<td>MMS（可靠请求响应）/ GOOSE（快速广播）/ SV（采样值流）</td>
+</tr>
+<tr>
+<td>核心创新</td>
+<td>数据自带语义的标准化信息模型</td>
+</tr>
+<tr>
+<td>标准结构</td>
+<td>Part 1-6（通用）+ Part 7（抽象模型）+ Part 8-9（具体映射）</td>
+</tr>
+<tr>
+<td>与 Modbus 的区别</td>
+<td>Modbus 传数字，IEC 61850 传"有意义的对象"</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_11">下一步</h2>
+<p>读完 Part 1 相当于你看懂了这套系统的"设计理念说明书"。</p>
+<p>下一个要读的是：
+- <strong>Part 7-1</strong>（<code>860[1].7-1.pdf</code>）：具体的信息模型设计原则
+- <strong>Part 7-4</strong>（<code>860[1].7-4.pdf</code>）：所有标准化逻辑节点（LN）的定义
+- <strong>Part 6</strong>（<code>860[1].6.pdf</code>）：SCL 配置文件格式</p>
+<p>如果你更想直接看"代码怎么写"，可以直接跳到 Part 8-1，结合项目里的 iec61850bean 代码一起看。</p>
+<hr />
+<p><em>文档系列：IEC 61850 标准解读 | Part 1/13 | 生成于 2026-04-08</em></p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

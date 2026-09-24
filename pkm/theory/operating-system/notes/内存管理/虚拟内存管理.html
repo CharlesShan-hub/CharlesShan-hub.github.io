@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>虚拟内存管理</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="_1">虚拟内存管理</h1>
+<p>2022.07.16</p>
+<div class="toc">
+<ul>
+<li><a href="#_1">虚拟内存管理</a><ul>
+<li><a href="#_2">虚拟内存的基本概念</a><ul>
+<li><a href="#_3">传统存储管理方式的特征</a></li>
+<li><a href="#_4">局部性原理</a></li>
+<li><a href="#_5">虚拟存储器的定义和特征</a></li>
+<li><a href="#_6">虚拟内存技术的实现</a></li>
+</ul>
+</li>
+<li><a href="#_7">请求分页管理方式</a><ul>
+<li><a href="#_8">页表机制</a></li>
+<li><a href="#_9">缺页中断机构</a></li>
+<li><a href="#_10">地址变换机构</a></li>
+</ul>
+</li>
+<li><a href="#_11">页框分配</a><ul>
+<li><a href="#_12">驻留级大小</a></li>
+<li><a href="#_13">内存分配策略</a></li>
+<li><a href="#_14">物理块调入算法</a></li>
+<li><a href="#_15">调入页面的时机</a></li>
+<li><a href="#_16">从何处调入页面</a></li>
+</ul>
+</li>
+<li><a href="#_17">页面置换算法</a><ul>
+<li><a href="#opt">最佳（OPT）置换算法</a></li>
+<li><a href="#fifo">先进先出（FIFO）置换算法</a></li>
+<li><a href="#lru">最近最久未使用（LRU）置换算法</a></li>
+<li><a href="#clock">时钟（CLOCK）置换算法</a></li>
+<li><a href="#_18">改进型的时钟置换算法</a></li>
+</ul>
+</li>
+<li><a href="#_19">抖动和工作集</a><ul>
+<li><a href="#_20">抖动</a></li>
+<li><a href="#_21">工作集</a></li>
+</ul>
+</li>
+<li><a href="#_22">内存映射文件</a></li>
+<li><a href="#_23">虚拟存储器性能影响因素</a></li>
+<li><a href="#_24">地址翻译与地址保护</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<h2 id="_2">虚拟内存的基本概念</h2>
+<h3 id="_3">传统存储管理方式的特征</h3>
+<ol>
+<li>一次性：一次全部调入内存</li>
+<li>驻留性：作业驻留在内存直到作业运行结束</li>
+</ol>
+<h3 id="_4">局部性原理</h3>
+<ol>
+<li>时间局部性：现在用的以后可能用</li>
+<li>空间局部性：某处用了附近可能用</li>
+</ol>
+<h3 id="_5">虚拟存储器的定义和特征</h3>
+<ol>
+<li>
+<p>多次性：作业可以多次调入内存</p>
+</li>
+<li>
+<p>对唤性：暂时不用的作业部分调出内存</p>
+</li>
+<li>
+<p>虚拟性：逻辑上扩充内存</p>
+</li>
+<li>
+<p>注意</p>
+</li>
+</ol>
+<p>虚拟内存<u>最大</u>容量：由CPU寻址范围确定</p>
+<p>虚拟内存<u>实际</u>容量：min{CPU寻址范围，内外存大小和}</p>
+<h3 id="_6">虚拟内存技术的实现</h3>
+<p>三种方式：请求分页、请求分段、请求段页式</p>
+<p>硬件支持：内存外存、页表机制、中断机构、地址变换机构</p>
+<h2 id="_7">请求分页管理方式</h2>
+<h3 id="_8">页表机制</h3>
+<p>页号（隐藏）、内存块号、状态位（是否调入内存）、访问字段（for置换算法）、修改位、外存地址</p>
+<p><img alt="image-20220716175940903" src="resources/pic3.png" /></p>
+<h3 id="_9">缺页中断机构</h3>
+<p>缺页中断是<strong>内中断</strong></p>
+<blockquote>
+<p>中断</p>
+<p>内中断(内部异常)：陷入Trap、故障(eg. 缺页中断)、终止</p>
+<p>外中断：IO中断请求、人工干预</p>
+</blockquote>
+<h3 id="_10">地址变换机构</h3>
+<ol>
+<li>查快表</li>
+<li>查页表，修改位</li>
+<li>缺页中断 &amp; 页面置换算法 &amp; 调入调出</li>
+</ol>
+<h2 id="_11">页框分配</h2>
+<h3 id="_12">驻留级大小</h3>
+<p>给一个进程分配的物理页框的集合就是<strong>驻留集</strong></p>
+<ol>
+<li>页框越少，主存中进程越多，CPU利用率越高</li>
+<li>进程驻留集越小，缺页率越高</li>
+<li>进程驻留集越多，缺页率变化不大</li>
+</ol>
+<h3 id="_13">内存分配策略</h3>
+<ol>
+<li>分配：固定分配 &amp; 可变分配</li>
+<li>置换：全局置换 &amp; 局部置换</li>
+<li><u>固定分配局部置换</u>：进程的内存不变，缺页时自己换自己</li>
+<li><u>可变分配全局置换</u>：进程的内存不受限，缺页时随便找空的</li>
+<li><u>可变分配局部置换</u>：进程的内存受限但可变，缺页率越高分配的越多，缺页时自己换自己</li>
+</ol>
+<blockquote>
+<p>没有固定+全局这种组合！</p>
+</blockquote>
+<h3 id="_14">物理块调入算法</h3>
+<p>采用固定分配的算法！</p>
+<ol>
+<li><u>平均分配算法</u>：按“人头儿”算（进程数量平均分配）</li>
+<li><u>按比例分配算法</u>：按进程大小算</li>
+<li><u>优先权分配算法</u>：通常分成两部分，一部分按比例，一部分按优先权</li>
+</ol>
+<h3 id="_15">调入页面的时机</h3>
+<ol>
+<li><u>预调页策略</u>：程序员指出一会儿调啥，常用于进程的首次调入。</li>
+<li><u>请求调页策略</u>：一次调一页。运行期间的调入当时。</li>
+</ol>
+<h3 id="_16">从何处调入页面</h3>
+<p>From where？</p>
+<ol>
+<li>文件区：存文件，离散分配</li>
+<li>对换区：存用于对换的页面，连续分配</li>
+</ol>
+<p>Three Method</p>
+<ol>
+<li><u>系统拥有足够的对换区空间</u>：进程运行前把文件全都放到对换区，提高速度</li>
+<li><u>系统缺少足够的对换区空间</u>：不被修改的文件都放入文件区，会被修改的部分放到对换区</li>
+<li><u>UNIX方式</u>：进程相关的页面全在文件区，未运行过的从文件区调入，运行过又被换出的放到对换区，下次调着快。</li>
+</ol>
+<h2 id="_17">页面置换算法</h2>
+<iframe height=498 src="//player.bilibili.com/player.html?aid=70156862&bvid=BV1YE411D7nH&cid=235890180&page=46" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>
+
+<h3 id="opt">最佳（OPT）置换算法</h3>
+<p>淘汰以后永远不使用的页面，或最长时间不使用的页面</p>
+<p>缺点：人们无法预测未来，算法不能实现</p>
+<h3 id="fifo">先进先出（FIFO）置换算法</h3>
+<p>淘汰最先进来的页面</p>
+<p>缺点：最早来的不见得不经常访问的；<strong>Belady异常</strong>（物理块数增大，缺页故障数不减反增）</p>
+<h3 id="lru">最近最久未使用（LRU）置换算法</h3>
+<p>最近最长时间未访问的淘汰</p>
+<h3 id="clock">时钟（CLOCK）置换算法</h3>
+<ol>
+<li>将每一个进程视为一个循环队列。每个页面一个访问位，访问过是1，没访问过是0。</li>
+<li>新页面要被置换进来时，会寻找第一个访问位是0的将其替换，被扫描过的页面由1变0。</li>
+<li>如果找了一轮没找到，就将页面的访问位依次置0后，扫描第二遍。</li>
+</ol>
+<h3 id="_18">改进型的时钟置换算法</h3>
+<ol>
+<li>简单的时钟置换算法仅考虑到一个页面最近是否被访问过。事实上，如果被淘汰的页面没有被修改过就不需要执行1/0操作写回外存。只有被淘汰的页面被修改过时，才需要写回外存。</li>
+<li>因此，除了考虑一个页面最近有没有被访问过之外，操作系统还应考虑页面有没有被修改过。在其他条件都相同时，应优先淘汰没有修改过的页面，避免/0操作。这就是改进型的时钟置换</li>
+<li>算法的思想。修改位=0，表示页面没有被修改过；修改位=1，表示页面被修改过。为方便讨论，用（访问位，修改位）的形式表示各页面状态。如（1，1）表示一个页面近期被访问过，且被修改过。</li>
+<li>算法规则：将所有可能被置换的页面排成一个循环队列
+   第一轮：从当前位置开始扫描到第一个（0,0）的帧用于替换。本轮扫描不修改任何标志位
+   第二轮：若第一轮扫描失败，则重新扫描，查找第一个（0,1）的帧用于替换。本轮将所有扫描过的帧访问位设为0
+   第三轮：若第二轮扫描失败，则重新扫描，查找第一个（0,R）的帧用于替换。本轮扫描不修改任何标志位</li>
+</ol>
+<blockquote>
+<p>我的理解：</p>
+<ol>
+<li>普通的时钟置换算法，只考虑把没访问的也先换出去。改进的时钟置换算法，想把没写过的内容先换出去，因为这样不用改主存。</li>
+<li>（访问位，修改为）。先把没改没用（0，0）的换出去，找不到就找改了没用的（1，0）。这里可能会想，我都改了怎么可能没用过呢。实际上我的理解是，找（0，0）找（0，1）是一个整体。如果两轮没找到会刷新访问位。然后再来找（0，0），（0，1），不过这次就可以找到了，算法就可以结束了。</li>
+<li>简化：「找(0,0)，找(0,1)，访问位(第一位)置0」</li>
+</ol>
+</blockquote>
+<p><img alt="image-20220716200548975" src="resources/pic4.png" /></p>
+<h2 id="_19">抖动和工作集</h2>
+<h3 id="_20">抖动</h3>
+<ul>
+<li>抖动：刚换出就要换入，刚换入就要换出</li>
+<li>抖动根本原因：系统运行进程太多，每个进程的物理块太少</li>
+</ul>
+<h3 id="_21">工作集</h3>
+<ul>
+<li><strong>工作集</strong>：某段时间间隔内，进程要访问的页面的集合：比如下图t1的工作集是{2,3,5}</li>
+</ul>
+<p><img alt="img" src="resources/pic5.png" /></p>
+<ul>
+<li>
+<p><strong>工作集窗口</strong> Delta，比如上图的Delta = 5；（也就是保留五个）</p>
+</li>
+<li>
+<p><strong>把工作及窗口里边的重复的去掉得到工作集</strong>，也就是说工作级内容只能是窗口里的！不可能出现窗口前边的！也就是说工作集随着进程推进不断删除！</p>
+</li>
+</ul>
+<h2 id="_22">内存映射文件</h2>
+<p>内存映射文件（Memory- Mapped Files）与虚拟内存有些相似，将磁盘文件的全部或部分内容与进程虚拟地址空间的某个区域建立映射关系，便可以直接访问被映射的文件</p>
+<h2 id="_23">虚拟存储器性能影响因素</h2>
+<ul>
+<li>抖动与工作集</li>
+<li>局部性原理</li>
+<li>页面置换算法</li>
+<li>写回磁盘</li>
+</ul>
+<h2 id="_24">地址翻译与地址保护</h2>
+<p>与页一样</p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

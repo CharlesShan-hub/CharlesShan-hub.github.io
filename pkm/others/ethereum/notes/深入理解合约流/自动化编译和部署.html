@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>自动化编译和部署</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="_1">自动化编译和部署</h1>
+<p>2022.2.26</p>
+<h2 id="_2">内容简介</h2>
+<p>编写编译脚本和部署脚本</p>
+<p>之前的课程中，我们已经熟悉了智能合约的编译。编译是对合约进行部署和 测试的前置步骤，编译步骤的目标是把源代码转成 ABI 和 Bytecode，并且能够处理编译时抛出的错误，确保不会在包含错误的源代码上进行编译。</p>
+<p>开始我们的编译方式是用 solc 工具做命令行编译，这个过程中牵涉到大段 内容的复制粘贴，很容易出错;之后在项目中引入 solc 模块，可以在 node 命令行中自动编译并读取结果内容。于是我们自然会想到，能不能将这个过程写成脚本，自动完成这些过程呢?这节课我们就来完成这个任务。</p>
+<h2 id="_3">自动构建脚本</h2>
+<h3 id="web3050">web3:0.5.0之前</h3>
+<pre lang="js"><code class="language-js md-fencescode"><span class="kd">const</span><span class="w"> </span><span class="nx">fs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'fs-extra'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'path'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">solc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'solc'</span><span class="p">);</span>
+<span class="c1">// cleanup</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">compiledDir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">__dirname</span><span class="p">,</span><span class="w"> </span><span class="s1">'../compiled'</span><span class="p">);</span>
+<span class="nx">fs</span><span class="p">.</span><span class="nx">removeSync</span><span class="p">(</span><span class="nx">compiledDir</span><span class="p">);</span>
+<span class="nx">fs</span><span class="p">.</span><span class="nx">ensureDirSync</span><span class="p">(</span><span class="nx">compiledDir</span><span class="p">);</span>
+<span class="c1">// compile </span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">contractPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">__dirname</span><span class="p">,</span><span class="s1">'../contracts'</span><span class="p">,</span><span class="w"> </span><span class="s1">'Car.sol'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">contractSource</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nx">readFileSync</span><span class="p">(</span><span class="nx">contractPath</span><span class="p">,</span><span class="w"> </span><span class="s1">'utf8'</span><span class="p">);</span><span class="w"> </span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">solc</span><span class="p">.</span><span class="nx">compile</span><span class="p">(</span><span class="nx">contractSource</span><span class="p">,</span><span class="w"> </span><span class="mf">1</span><span class="p">);</span>
+<span class="c1">// check errors</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nb">Array</span><span class="p">.</span><span class="nx">isArray</span><span class="p">(</span><span class="nx">result</span><span class="p">.</span><span class="nx">errors</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">result</span><span class="p">.</span><span class="nx">errors</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">       </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="nx">result</span><span class="p">.</span><span class="nx">errors</span><span class="p">[</span><span class="mf">0</span><span class="p">]);</span>
+<span class="p">}</span>
+<span class="c1">// save to disk</span>
+<span class="nb">Object</span><span class="p">.</span><span class="nx">keys</span><span class="p">(</span><span class="nx">result</span><span class="p">.</span><span class="nx">contracts</span><span class="p">).</span><span class="nx">forEach</span><span class="p">(</span><span class="nx">name</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">contractName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">name</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/^:/</span><span class="p">,</span><span class="w"> </span><span class="s1">''</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">filePath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">compiledDir</span><span class="p">,</span><span class="sb">`</span><span class="si">${</span><span class="nx">contractName</span><span class="si">}</span><span class="sb">.json`</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">fs</span><span class="p">.</span><span class="nx">outputJsonSync</span><span class="p">(</span><span class="nx">filePath</span><span class="p">,</span><span class="w"> </span><span class="nx">result</span><span class="p">.</span><span class="nx">contracts</span><span class="p">[</span><span class="nx">name</span><span class="p">]);</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`save compiled contract </span><span class="si">${</span><span class="nx">contractName</span><span class="si">}</span><span class="sb"> to </span><span class="si">${</span><span class="nx">filePath</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="p">});</span>
+</code></pre>
+<h3 id="web3050_1">web3:0.5.0之后</h3>
+<pre lang="js"><code class="language-js md-fencescode"><span class="kd">const</span><span class="w"> </span><span class="nx">fs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'fs-extra'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'path'</span><span class="p">);</span>
+<span class="kd">var</span><span class="w"> </span><span class="nx">solc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'solc'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">smtchecker</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'solc/smtchecker'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">smtsolver</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'solc/smtsolver'</span><span class="p">);</span>
+
+
+<span class="c1">// cleanup</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">compiledDir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">__dirname</span><span class="p">,</span><span class="w"> </span><span class="s1">'../compiled'</span><span class="p">);</span>
+<span class="nx">fs</span><span class="p">.</span><span class="nx">removeSync</span><span class="p">(</span><span class="nx">compiledDir</span><span class="p">);</span>
+<span class="nx">fs</span><span class="p">.</span><span class="nx">ensureDirSync</span><span class="p">(</span><span class="nx">compiledDir</span><span class="p">);</span>
+
+<span class="c1">// compile </span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">contractPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">__dirname</span><span class="p">,</span><span class="s1">'../contracts'</span><span class="p">,</span><span class="w"> </span><span class="s1">'Connect.sol'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">contractSource</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nx">readFileSync</span><span class="p">(</span><span class="nx">contractPath</span><span class="p">,</span><span class="w"> </span><span class="s1">'utf8'</span><span class="p">).</span><span class="nx">toString</span><span class="p">();</span><span class="w"> </span>
+
+
+<span class="kd">var</span><span class="w"> </span><span class="nx">input</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">language</span><span class="o">:</span><span class="w"> </span><span class="s1">'Solidity'</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">sources</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s1">'Connect.sol'</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">content</span><span class="o">:</span><span class="w"> </span><span class="nx">contractSource</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">settings</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">outputSelection</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="s1">'*'</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="s1">'*'</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">'*'</span><span class="p">]</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="kd">var</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">solc</span><span class="p">.</span><span class="nx">compile</span><span class="p">(</span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">input</span><span class="p">)));</span>
+
+<span class="c1">// check errors</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nb">Array</span><span class="p">.</span><span class="nx">isArray</span><span class="p">(</span><span class="nx">result</span><span class="p">.</span><span class="nx">errors</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">result</span><span class="p">.</span><span class="nx">errors</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">       </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="nx">result</span><span class="p">.</span><span class="nx">errors</span><span class="p">[</span><span class="mf">0</span><span class="p">]);</span>
+<span class="p">}</span>
+
+<span class="c1">// save to disk</span>
+<span class="nb">Object</span><span class="p">.</span><span class="nx">keys</span><span class="p">(</span><span class="nx">result</span><span class="p">.</span><span class="nx">contracts</span><span class="p">).</span><span class="nx">forEach</span><span class="p">(</span><span class="nx">subName</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nb">Object</span><span class="p">.</span><span class="nx">keys</span><span class="p">(</span><span class="nx">result</span><span class="p">.</span><span class="nx">contracts</span><span class="p">[</span><span class="nx">subName</span><span class="p">]).</span><span class="nx">forEach</span><span class="p">(</span><span class="nx">name</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">contractName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">name</span><span class="p">;</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">filePath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">compiledDir</span><span class="p">,</span><span class="sb">`</span><span class="si">${</span><span class="nx">contractName</span><span class="si">}</span><span class="sb">.json`</span><span class="p">);</span>
+<span class="w">        </span><span class="nx">fs</span><span class="p">.</span><span class="nx">outputJsonSync</span><span class="p">(</span><span class="nx">filePath</span><span class="p">,</span><span class="w"> </span><span class="nx">result</span><span class="p">.</span><span class="nx">contracts</span><span class="p">[</span><span class="nx">subName</span><span class="p">][</span><span class="nx">name</span><span class="p">]);</span>
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`save compiled contract </span><span class="si">${</span><span class="nx">contractName</span><span class="si">}</span><span class="sb"> to </span><span class="si">${</span><span class="nx">filePath</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="p">});</span>
+</code></pre>
+<h2 id="_4">自动部署脚本</h2>
+<h3 id="web3050_2">web3:0.5.0之前</h3>
+<pre lang="js"><code class="language-js md-fencescode"><span class="kd">const</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'path'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">Web3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'web3'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">web3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Web3</span><span class="p">(</span><span class="ow">new</span><span class="w"> </span><span class="nx">Web3</span><span class="p">.</span><span class="nx">providers</span><span class="p">.</span><span class="nx">HttpProvider</span><span class="p">(</span><span class="s1">'http://localhost:8545'</span><span class="p">));</span>
+<span class="c1">// 1. 拿到 bytecode</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">contractPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">__dirname</span><span class="p">,</span><span class="w"> </span><span class="s1">'../compiled/Car.json'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kr">interface</span><span class="p">,</span><span class="w"> </span><span class="nx">bytecode</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="nx">contractPath</span><span class="p">);</span>
+<span class="p">(</span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 2. 获取钱包里面的账户</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">accounts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">web3</span><span class="p">.</span><span class="nx">eth</span><span class="p">.</span><span class="nx">getAccounts</span><span class="p">();</span><span class="w"> </span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'部署合约账户:'</span><span class="p">,</span><span class="w"> </span><span class="nx">accounts</span><span class="p">[</span><span class="mf">0</span><span class="p">]);</span>
+<span class="w">    </span><span class="c1">// 3. 创建合约实例并且部署</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">time</span><span class="p">(</span><span class="s1">'合约部署耗时'</span><span class="p">);</span><span class="w"> </span>
+<span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">web3</span><span class="p">.</span><span class="nx">eth</span><span class="p">.</span><span class="nx">Contract</span><span class="p">(</span><span class="nb">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="kr">interface</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="nx">deploy</span><span class="p">({</span><span class="w"> </span><span class="nx">data</span><span class="o">:</span><span class="w"> </span><span class="nx">bytecode</span><span class="p">,</span><span class="w"> </span><span class="nb">arguments</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">'AUDI'</span><span class="p">]})</span>
+<span class="w">        </span><span class="p">.</span><span class="nx">send</span><span class="p">({</span><span class="w"> </span><span class="kr">from</span><span class="o">:</span><span class="w"> </span><span class="nx">accounts</span><span class="p">[</span><span class="mf">0</span><span class="p">],</span><span class="w"> </span><span class="nx">gas</span><span class="o">:</span><span class="w"> </span><span class="s1">'1000000'</span><span class="w"> </span><span class="p">});</span><span class="w"> </span>
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">timeEnd</span><span class="p">(</span><span class="s1">'合约部署耗时'</span><span class="p">);</span>
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'合约部署成功:'</span><span class="p">,</span><span class="w"> </span><span class="nx">result</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">address</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">)();</span>
+</code></pre>
+<h3 id="web3050_3">web3:0.5.0之后</h3>
+<pre lang="js"><code class="language-js md-fencescode"><span class="kd">const</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'path'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">Web3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'web3'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">web3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Web3</span><span class="p">(</span><span class="ow">new</span><span class="w"> </span><span class="nx">Web3</span><span class="p">.</span><span class="nx">providers</span><span class="p">.</span><span class="nx">HttpProvider</span><span class="p">(</span><span class="s1">'http://localhost:8545'</span><span class="p">));</span>
+<span class="c1">// 1. 拿到 bytecode</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">contractPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">__dirname</span><span class="p">,</span><span class="w"> </span><span class="s1">'../compiled/Connect.json'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">abi</span><span class="p">,</span><span class="w"> </span><span class="nx">evm</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="nx">contractPath</span><span class="p">);</span>
+<span class="c1">//console.log(abi);</span>
+<span class="c1">//console.log(evm.bytecode.object);</span>
+<span class="p">(</span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 2. 获取钱包里面的账户</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">accounts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">web3</span><span class="p">.</span><span class="nx">eth</span><span class="p">.</span><span class="nx">getAccounts</span><span class="p">();</span><span class="w"> </span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'部署合约账户:'</span><span class="p">,</span><span class="w"> </span><span class="nx">accounts</span><span class="p">[</span><span class="mf">0</span><span class="p">]);</span>
+<span class="w">    </span><span class="c1">// 3. 创建合约实例并且部署</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">time</span><span class="p">(</span><span class="s1">'合约部署耗时'</span><span class="p">);</span><span class="w"> </span>
+<span class="w">    </span><span class="c1">//var result = await new web3.eth.Contract(JSON.parse(interface))</span>
+<span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">web3</span><span class="p">.</span><span class="nx">eth</span><span class="p">.</span><span class="nx">Contract</span><span class="p">(</span><span class="nx">abi</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="nx">deploy</span><span class="p">({</span><span class="w"> </span><span class="nx">data</span><span class="o">:</span><span class="w"> </span><span class="nx">evm</span><span class="p">.</span><span class="nx">bytecode</span><span class="p">.</span><span class="nx">object</span><span class="p">,</span><span class="w"> </span><span class="nb">arguments</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">'Name'</span><span class="p">,</span><span class="mf">0</span><span class="p">]})</span>
+<span class="w">        </span><span class="p">.</span><span class="nx">send</span><span class="p">({</span><span class="w"> </span><span class="kr">from</span><span class="o">:</span><span class="w"> </span><span class="nx">accounts</span><span class="p">[</span><span class="mf">0</span><span class="p">],</span><span class="w"> </span><span class="nx">gas</span><span class="o">:</span><span class="w"> </span><span class="s1">'1000000'</span><span class="w"> </span><span class="p">});</span><span class="w"> </span>
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">timeEnd</span><span class="p">(</span><span class="s1">'合约部署耗时'</span><span class="p">);</span>
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'合约部署成功:'</span><span class="p">,</span><span class="w"> </span><span class="nx">result</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">address</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">)();</span>
+</code></pre>
+<h2 id="_5">自动构建脚本详解</h2>
+<h3 id="_6">目录结构</h3>
+<p>首先新建一个项目目录，可以叫做 contract_workflow</p>
+<pre lang="bash"><code class="language-bash md-fencescode">mkdir<span class="w"> </span>contract_workflow
+<span class="nb">cd</span><span class="w"> </span>contract_workflow
+</code></pre>
+<p>为了存放不同目的不同类型的文件，我们先在项目根目录下新建 4 个子目录:</p>
+<pre lang="bash"><code class="language-bash md-fencescode">mkdir<span class="w"> </span>contracts
+mkdir<span class="w"> </span>scripts
+mkdir<span class="w"> </span>compiled
+mkdir<span class="w"> </span>tests
+</code></pre>
+<p>其中 contracts 目录存放合约源代码，scripts 目录存放编译脚本，complied 目录存放编译结果，tests 目录存放测试文件。</p>
+<h3 id="_7">准备合约源码</h3>
+<p>为了简化工作，我们可以直接复制以前的 solidity 代码，也可以自己写一个简单的合约。比如，这里用到了我们最初写的简单合约 Car.sol:</p>
+<pre lang="solidity"><code class="language-solidity md-fencescode"><span class="k">pragma solidity</span><span class="w"> </span><span class="o">^</span><span class="k">0.4.22</span><span class="p">;</span>
+<span class="k">contract</span><span class="w"> </span><span class="ni">Car</span><span class="w"> </span><span class="p">{</span>
+<span class="w">       </span><span class="kt">string</span><span class="w"> </span><span class="k">public </span><span class="nv">brand</span><span class="p">;</span>
+<span class="w">       </span><span class="kt">constructor</span><span class="p">(</span><span class="kt">string</span><span class="w"> </span><span class="nv">initialBrand</span><span class="p">)</span><span class="w"> </span><span class="kt">public</span><span class="w"> </span><span class="p">{</span>
+<span class="w">              </span>brand<span class="w"> </span><span class="o">=</span><span class="w"> </span>initialBrand<span class="p">;</span>
+<span class="w">       </span><span class="p">}</span>
+<span class="w">       </span><span class="kt">function</span><span class="w"> </span><span class="nv">setBrand</span><span class="p">(</span><span class="kt">string</span><span class="w"> </span><span class="nv">newBrand</span><span class="p">)</span><span class="w"> </span><span class="kt">public</span><span class="w"> </span><span class="p">{</span>
+<span class="w">              </span>brand<span class="w"> </span><span class="o">=</span><span class="w"> </span>newBrand<span class="p">;</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="_8">准备编译工具</h3>
+<p>我们用 solc 作为编译的基础工具。用 npm 将 solc 安装到本地目录中:</p>
+<pre lang="bash"><code class="language-bash md-fencescode">npm<span class="w"> </span>install<span class="w"> </span>solc@0.4.23<span class="w">  </span>--save-dev
+</code></pre>
+<h3 id="_9">开发编译脚本</h3>
+<p>我们已经熟悉了命令行编译的流程，现在我们试图将它脚本中。在 scripts 目录下新建文件 compile.js</p>
+<pre lang="js"><code class="language-js md-fencescode"><span class="kd">const</span><span class="w"> </span><span class="nx">fs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'fs'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'path'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">solc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'solc'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">contractPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">__dirname</span><span class="p">,</span><span class="w"> </span><span class="s1">'../contracts'</span><span class="p">,</span><span class="s1">'Car.sol'</span><span class="p">);</span><span class="c1">//目录拼接,__dirname代表当前目录</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">contractSource</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">fs</span><span class="p">.</span><span class="nx">readFileSync</span><span class="p">(</span><span class="nx">contractPath</span><span class="p">,</span><span class="w"> </span><span class="s1">'utf8'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">solc</span><span class="p">.</span><span class="nx">compile</span><span class="p">(</span><span class="nx">contractSource</span><span class="p">,</span><span class="w"> </span><span class="mf">1</span><span class="p">);</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">result</span><span class="p">);</span>
+</code></pre>
+<p>我们把合约源码从文件中读出来，然后传给 solc 编译器，等待同步编译完成之后，把编译结果输出到控制台。</p>
+<p>其中 solc.compile() 的第二个参数给 1，表示启用 solc 的编译优化器。</p>
+<p>编译结果是一个嵌套的 js 对象，其中可以看到 contracts 属性包含了所有找到的合约(当然，我们的源码中只有一个 Car)。每个合约下面包含了 assembly、 bytecode、interface、metadata、opcodes 等字段，我们最关心的当然是这两</p>
+<p>个:</p>
+<ul>
+<li><strong>bytecode</strong>:字节码，部署合约到以太坊区块链上时需要使用;</li>
+<li><strong>interface</strong>: 二进制应用接口(ABI)，使用 web3 初始化智能合约交互实例的时候需要使用。</li>
+</ul>
+<p>其中 interface 是被 JSON.stringify 过的字符串，我们用 JSON.parse 反解出来并格式化，就可以拿到合约的 abi 对象。</p>
+<p>运行脚本</p>
+<pre lang="bash"><code class="language-bash md-fencescode">node<span class="w"> </span>compile.js
+</code></pre>
+<h3 id="fs-extra">保存编译结果(利用fs-extra)</h3>
+<pre lang="bash"><code class="language-bash md-fencescode">npm<span class="w"> </span>install<span class="w"> </span>fs-extra
+</code></pre>
+<p>让我们继续课程，现在将合约部署到区块链上。为此，你必须先通过传入 abi 定义来创建一个合约对象 VotingContract。然后用这个对象在链上部署并初始化合约。为了方便后续的部署和测试过程直接使用编译结果，需要把编译结果保 存到文件系统中，在做改动之前，我们引入一个非常好用的小工具 fs-extra，在 脚本中使用 fs-extra 直接替换到 fs，然后在脚本中加入以下代码:</p>
+<pre lang="js"><code class="language-js md-fencescode"><span class="nb">Object</span><span class="p">.</span><span class="nx">keys</span><span class="p">(</span><span class="nx">result</span><span class="p">.</span><span class="nx">contracts</span><span class="p">).</span><span class="nx">forEach</span><span class="p">(</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">       </span><span class="kd">const</span><span class="w"> </span><span class="nx">contractName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">name</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="sr">/^:/</span><span class="p">,</span><span class="w"> </span><span class="s1">''</span><span class="p">);</span><span class="w"> </span><span class="c1">// ^:代表以冒号开头</span>
+<span class="w">       </span><span class="kd">const</span><span class="w"> </span><span class="nx">filePath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">__dirname</span><span class="p">,</span><span class="w"> </span><span class="s1">'../compiled'</span><span class="p">,</span>
+<span class="w">                            </span><span class="sb">`</span><span class="si">${</span><span class="nx">contractName</span><span class="si">}</span><span class="sb">.json`</span><span class="p">);</span><span class="c1">//`代表模板字符串</span>
+<span class="nx">fs</span><span class="p">.</span><span class="nx">outputJsonSync</span><span class="p">(</span><span class="nx">filePath</span><span class="p">,</span><span class="w"> </span><span class="nx">result</span><span class="p">.</span><span class="nx">contracts</span><span class="p">[</span><span class="nx">name</span><span class="p">]);</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`save compiled contract </span><span class="si">${</span><span class="nx">contractName</span><span class="si">}</span><span class="sb"> to </span><span class="si">${</span><span class="nx">filePath</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="p">});</span>
+</code></pre>
+<p>然后重新运行编译脚本，确保 complied 目录下包含了新生成的 Car.json。类似于前端构建流程中的编译步骤，我们编译前通常需要把之前的结果清空，然后把最新的编译结果保存下来，这对保障一致性非常重要。所以继续对编译脚本做如下改动: </p>
+<p>在脚本执行的开始加入清除编译结果的代码:</p>
+<pre lang="js"><code class="language-js md-fencescode"><span class="c1">// cleanup</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">compiledDir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">__dirname</span><span class="p">,</span><span class="w"> </span><span class="s1">'../compiled'</span><span class="p">);</span>
+<span class="nx">fs</span><span class="p">.</span><span class="nx">removeSync</span><span class="p">(</span><span class="nx">compiledDir</span><span class="p">);</span>
+<span class="nx">fs</span><span class="p">.</span><span class="nx">ensureDirSync</span><span class="p">(</span><span class="nx">compiledDir</span><span class="p">);</span>
+</code></pre>
+<p>这里专门定义了 compiledDir，所以后面的 filePath 也可以改为:</p>
+<pre lang="js"><code class="language-js md-fencescode"><span class="kd">const</span><span class="w"> </span><span class="nx">filePath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">compiledDir</span><span class="p">,</span><span class="w"> </span><span class="sb">`</span><span class="si">${</span><span class="nx">contractName</span><span class="si">}</span><span class="sb">.json`</span><span class="p">);</span>
+</code></pre>
+<p>新增的 cleanup 代码段的作用就是准备全新的目录，修改完之后，需要重新运行编译脚本，确保一切正常。</p>
+<h3 id="_10">处理编译错误</h3>
+<p>现在的编译脚本只处理了最常见的情况，即 Solidity 源代码没问题，这个 假设其实是不成立的。如果源代码有问题，我们在编译阶段就应该报出来，而不 应该把错误的结果写入到文件系统，因为这样会导致后续步骤失败。为了搞清楚编译器 solc 遇到错误时的行为，我们人为在源代码中引入错误(例如把function 关键字写成 functio)，看看脚本的表现如何。 重新运行编译脚本，发现它并没有报错，而是把错误作为输出内容打印出来，其中错误的可读性比较差。</p>
+<p>所以我们对编译脚本稍作改动，在编译完成之后就检查 error，让它能够在出错时直接抛出错误:</p>
+<pre lang="js"><code class="language-js md-fencescode"><span class="c1">// check errors</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nb">Array</span><span class="p">.</span><span class="nx">isArray</span><span class="p">(</span><span class="nx">result</span><span class="p">.</span><span class="nx">errors</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">result</span><span class="p">.</span><span class="nx">errors</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="nx">result</span><span class="p">.</span><span class="nx">errors</span><span class="p">[</span><span class="mf">0</span><span class="p">]);</span>
+<span class="p">}</span>
+</code></pre>
+<p>重新运行编译脚本，可以看到我们得到了可读性更好的错误提示。</p>
+<h2 id="_11">自动部署脚本详解</h2>
+<h3 id="_12">部署的必要条件</h3>
+<ul>
+<li>与以太坊节点的通信连接</li>
+</ul>
+<p>我们需要启动一个以太坊节点，连接到想要的网络，然后开放 HTTP-RPC 的 API(默认 8545 端口)给外部调用;或者也可以用第三方提供的可用节点入 口，以太坊社区有人专门为开发者提供了节点服务。目前我们直接用 ganache，不需要考虑这些问题，但如果配置其它网络，这个配置就是必要的。</p>
+<ul>
+<li>余额大于 0 的账户</li>
+</ul>
+<p>因为以太坊上的任何交易都需要账户发起，账户中必须有足够的余额来支付手续费(Transaction Fee)，如果余额为 0 部署会失败。当然，我们目前用的 是 ganache，里面默认有 10 个账户，每个账户 100ETH，不存在这个问题，但如果要部署到其它网络(私链、测试网络、主网)就必须考虑这个问题。</p>
+<ul>
+<li>安装依赖</li>
+</ul>
+<p>搞清楚部署的必要条件之后，我们需要安装必要的依赖包。首先是 web3.js， web3.js 的 1.0.0 版本尚未发布，但是相比 0.2x.x 版本变化非常大，1.x 中大 量使用了 Promise，可以结合 async/await 使用，而 0.x 版本只支持回调，因 为使用 async/await 能让代码可读性更好，我们这次选择使用 1.0.0 版本。</p>
+<pre lang="bash"><code class="language-bash md-fencescode">npm<span class="w"> </span>install<span class="w"> </span>web3
+</code></pre>
+<h3 id="_13">编写部署脚本</h3>
+<p>做好准备工作之后，我们开始编写合约部署脚本，在 scripts 目录下新建脚本文件 deploy.js:</p>
+<pre lang="js"><code class="language-js md-fencescode"><span class="kd">const</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'path'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">Web3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'web3'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">web3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Web3</span><span class="p">(</span><span class="ow">new</span><span class="w"> </span><span class="nx">Web3</span><span class="p">.</span><span class="nx">providers</span><span class="p">.</span><span class="nx">HttpProvider</span><span class="p">(</span><span class="s1">'http://localhost:8545'</span><span class="p">));</span>
+<span class="c1">// 1. 拿到 abi 和 bytecode</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">contractPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">__dirname</span><span class="p">,</span>
+<span class="w">                                   </span><span class="s1">'../compiled/Car.json'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kr">interface</span><span class="p">,</span><span class="w"> </span><span class="nx">bytecode</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="nx">contractPath</span><span class="p">);</span>
+<span class="p">(</span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="c1">// 2. 获取钱包里面的账户</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">accounts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">web3</span><span class="p">.</span><span class="nx">eth</span><span class="p">.</span><span class="nx">getAccounts</span><span class="p">();</span><span class="w"> </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'部署合约的账户:'</span><span class="p">,</span><span class="w"> </span><span class="nx">accounts</span><span class="p">[</span><span class="mf">0</span><span class="p">]);</span><span class="w"> </span><span class="c1">// 3. 创建合约实例并且部署</span>
+<span class="kd">var</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="ow">new</span>
+
+<span class="nx">web3</span><span class="p">.</span><span class="nx">eth</span><span class="p">.</span><span class="nx">Contract</span><span class="p">(</span><span class="nb">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="kr">interface</span><span class="p">))</span>
+<span class="w">              </span><span class="p">.</span><span class="nx">deploy</span><span class="p">({</span><span class="w"> </span><span class="nx">data</span><span class="o">:</span><span class="w"> </span><span class="nx">bytecode</span><span class="p">,</span><span class="w"> </span><span class="nb">arguments</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">'AUDI'</span><span class="p">]</span><span class="w"> </span><span class="p">})</span>
+<span class="w">              </span><span class="p">.</span><span class="nx">send</span><span class="p">({</span><span class="w"> </span><span class="kr">from</span><span class="o">:</span><span class="w"> </span><span class="nx">accounts</span><span class="p">[</span><span class="mf">0</span><span class="p">],</span><span class="w"> </span><span class="nx">gas</span><span class="o">:</span><span class="w"> </span><span class="s1">'1000000'</span><span class="w"> </span><span class="p">});</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'合约部署成功:'</span><span class="p">,</span><span class="w"> </span><span class="nx">result</span><span class="p">);</span><span class="w"> </span><span class="p">})();</span>
+</code></pre>
+<p>我们来熟悉一下 v1.0.0 版本中的部署操作。由于 1.0.0 版本中调用返回全部 是 promise，所以我们这里用到了 ES7 中的 async/await 来处理所有异步调用。</p>
+<p>第二步获取钱包账户，存为本地变量，然后选取 accounts[0] 作为部署合约 的账户;我们应该确保这个账户中以太余额充足。</p>
+<p>第三步中，我们用 promise 的链式调用完成了创建抽象合约对象、创建部署交易对象(deploy)和发送部署交易三个步骤，其中只有 send 一步是真正的异 步请求调用。分开写就是这样:</p>
+<pre lang="js"><code class="language-js md-fencescode"><span class="kd">const</span><span class="w"> </span><span class="nx">contract</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">web3</span><span class="p">.</span><span class="nx">eth</span><span class="p">.</span><span class="nx">Contract</span><span class="p">(</span><span class="nb">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="kr">interface</span><span class="p">));</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">transaction</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">contract</span><span class="p">.</span><span class="nx">deploy</span><span class="p">({</span><span class="w"> </span><span class="nx">data</span><span class="o">:</span><span class="w"> </span><span class="nx">bytecode</span><span class="p">,</span><span class="w"> </span><span class="nb">arguments</span><span class="o">:</span><span class="p">[</span><span class="s1">'AUDI'</span><span class="p">]</span><span class="w"> </span><span class="p">});</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">transaction</span><span class="p">.</span><span class="nx">send</span><span class="p">({</span><span class="w"> </span><span class="kr">from</span><span class="o">:</span><span class="w"> </span><span class="nx">accounts</span><span class="p">[</span><span class="mf">0</span><span class="p">],</span><span class="w"> </span><span class="nx">gas</span><span class="o">:</span><span class="w"> </span><span class="mf">1000000</span><span class="w"> </span><span class="p">});</span>
+</code></pre>
+<h3 id="_14">运行脚本</h3>
+<p>在根目录下运行写好的部署脚本:
+node scripts/deploy.js
+查看结果，可以看到合约已经成功部署。我们发现返回结果有些复杂，所以可以对代码稍作改进，截取 address 返回，并计算一下部署花了多少时间:</p>
+<pre lang="js"><code class="language-js md-fencescode"><span class="kd">const</span><span class="w"> </span><span class="nx">path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'path'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">Web3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="s1">'web3'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">web3</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Web3</span><span class="p">(</span><span class="ow">new</span><span class="w"> </span><span class="nx">Web3</span><span class="p">.</span><span class="nx">providers</span><span class="p">.</span><span class="nx">HttpProvider</span><span class="p">(</span><span class="s1">'http://localhost:8545'</span><span class="p">));</span>
+<span class="c1">// 1. 拿到 bytecode</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">contractPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">path</span><span class="p">.</span><span class="nx">resolve</span><span class="p">(</span><span class="nx">__dirname</span><span class="p">,</span><span class="w"> </span><span class="s1">'../compiled/Car.json'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="kr">interface</span><span class="p">,</span><span class="w"> </span><span class="nx">bytecode</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">require</span><span class="p">(</span><span class="nx">contractPath</span><span class="p">);</span>
+<span class="p">(</span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 2. 获取钱包里面的账户</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">accounts</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">web3</span><span class="p">.</span><span class="nx">eth</span><span class="p">.</span><span class="nx">getAccounts</span><span class="p">();</span><span class="w"> </span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'部署合约账户:'</span><span class="p">,</span><span class="w"> </span><span class="nx">accounts</span><span class="p">[</span><span class="mf">0</span><span class="p">]);</span>
+<span class="w">    </span><span class="c1">// 3. 创建合约实例并且部署</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">time</span><span class="p">(</span><span class="s1">'合约部署耗时'</span><span class="p">);</span><span class="w"> </span>
+<span class="w">    </span><span class="kd">var</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">web3</span><span class="p">.</span><span class="nx">eth</span><span class="p">.</span><span class="nx">Contract</span><span class="p">(</span><span class="nb">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="kr">interface</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="nx">deploy</span><span class="p">({</span><span class="w"> </span><span class="nx">data</span><span class="o">:</span><span class="w"> </span><span class="nx">bytecode</span><span class="p">,</span><span class="w"> </span><span class="nb">arguments</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">'AUDI'</span><span class="p">]})</span>
+<span class="w">        </span><span class="p">.</span><span class="nx">send</span><span class="p">({</span><span class="w"> </span><span class="kr">from</span><span class="o">:</span><span class="w"> </span><span class="nx">accounts</span><span class="p">[</span><span class="mf">0</span><span class="p">],</span><span class="w"> </span><span class="nx">gas</span><span class="o">:</span><span class="w"> </span><span class="s1">'1000000'</span><span class="w"> </span><span class="p">});</span><span class="w"> </span>
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">timeEnd</span><span class="p">(</span><span class="s1">'合约部署耗时'</span><span class="p">);</span>
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">'合约部署成功:'</span><span class="p">,</span><span class="w"> </span><span class="nx">result</span><span class="p">.</span><span class="nx">options</span><span class="p">.</span><span class="nx">address</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">)();</span>
+</code></pre>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

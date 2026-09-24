@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASN1_教程_第2天_构造类型深入</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="asn1-2">ASN.1 教程 - 第2天：构造类型深入</h1>
+<h2 id="_1">🎯 学习目标</h2>
+<ul>
+<li>掌握SEQUENCE的完整用法和高级特性</li>
+<li>理解CHOICE的实战应用和标签系统</li>
+<li>区分SEQUENCE和SET的不同用途</li>
+<li>设计复杂的数据结构</li>
+</ul>
+<h2 id="2-3">⏰ 建议时间：2-3小时</h2>
+<h2 id="_2">📖 课程大纲</h2>
+<h3 id="sequence60">一、SEQUENCE深度解析（60分钟）</h3>
+<h4 id="11-sequence">1.1 SEQUENCE的核心特性</h4>
+<p><strong>基本定义回顾</strong>：</p>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="n n-Type">Person</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">name</span><span class="w">    </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">age</span><span class="w">     </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">email</span><span class="w">   </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>关键特性表</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>说明</th>
+<th>编码影响</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>有序性</strong></td>
+<td>字段顺序固定</td>
+<td>编码按定义顺序</td>
+</tr>
+<tr>
+<td><strong>可选性</strong></td>
+<td>字段可存在或不存在</td>
+<td>编码时可能省略</td>
+</tr>
+<tr>
+<td><strong>默认值</strong></td>
+<td>字段未指定时用默认值</td>
+<td>编码时可能省略</td>
+</tr>
+<tr>
+<td><strong>唯一性</strong></td>
+<td>字段值唯一标识</td>
+<td>运行时验证</td>
+</tr>
+</tbody>
+</table>
+<h4 id="12-sequence">1.2 SEQUENCE的完整语法</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="n n-Type">ComplexStruct</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">-- 1. 必填字段（无修饰符）</span>
+<span class="w">    </span><span class="nv">requiredField</span><span class="w">    </span><span class="kt">INTEGER</span><span class="p">,</span>
+
+<span class="w">    </span><span class="c1">-- 2. 可选字段（可能不存在）</span>
+<span class="w">    </span><span class="nv">optionalField</span><span class="w">    </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+
+<span class="w">    </span><span class="c1">-- 3. 默认值字段（未指定时用默认值）</span>
+<span class="w">    </span><span class="nv">defaultField</span><span class="w">     </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span>
+
+<span class="w">    </span><span class="c1">-- 4. 唯一字段（值必须唯一）</span>
+<span class="w">    </span><span class="nv">uniqueField</span><span class="w">      </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">UNIQUE</span><span class="p">,</span>
+
+<span class="w">    </span><span class="c1">-- 5. 带标签的字段</span>
+<span class="w">    </span><span class="nv">taggedField</span><span class="w">      </span><span class="p">[</span><span class="k">APPLICATION</span><span class="w"> </span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="kt">OCTET STRING</span><span class="p">,</span>
+
+<span class="w">    </span><span class="c1">-- 6. 组合字段</span>
+<span class="w">    </span><span class="nv">nestedStruct</span><span class="w">     </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nv">innerA</span><span class="w"> </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">innerB</span><span class="w"> </span><span class="kt">BOOLEAN</span>
+<span class="w">    </span><span class="p">},</span>
+
+<span class="w">    </span><span class="c1">-- 7. 数组字段</span>
+<span class="w">    </span><span class="nv">arrayField</span><span class="w">       </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="kt">IA5String</span><span class="p">,</span>
+
+<span class="w">    </span><span class="c1">-- 8. CHOICE字段</span>
+<span class="w">    </span><span class="nv">choiceField</span><span class="w">      </span><span class="kd">CHOICE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nv">option1</span><span class="w"> </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">option2</span><span class="w"> </span><span class="kt">INTEGER</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h4 id="13">1.3 实战：员工管理系统</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="n n-Type">EmployeeModule</span><span class="w"> </span><span class="k">DEFINITIONS</span><span class="w"> </span><span class="k">AUTOMATIC</span><span class="w"> </span><span class="k">TAGS</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="k">BEGIN</span>
+
+<span class="c1">-- 1. 枚举类型</span>
+<span class="n n-Type">Department</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">engineering</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">marketing</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">sales</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">finance</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">hr</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">-- 2. 技能类型</span>
+<span class="n n-Type">SkillLevel</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">beginner</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">intermediate</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">advanced</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">expert</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="n n-Type">Skill</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">name</span><span class="w">        </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">level</span><span class="w">       </span><span class="n n-Type">SkillLevel</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">certified</span><span class="w">   </span><span class="kt">BOOLEAN</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="kc">FALSE</span>
+<span class="p">}</span>
+
+<span class="c1">-- 3. 员工结构（完整示例）</span>
+<span class="n n-Type">Employee</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">-- 必填字段</span>
+<span class="w">    </span><span class="nv">employeeId</span><span class="w">      </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">UNIQUE</span><span class="p">,</span><span class="w">          </span><span class="c1">-- 唯一ID</span>
+<span class="w">    </span><span class="nv">fullName</span><span class="w">        </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="p">(</span><span class="mi">2</span><span class="o">..</span><span class="mi">50</span><span class="p">)),</span><span class="w"> </span><span class="c1">-- 姓名</span>
+
+<span class="w">    </span><span class="c1">-- 可选字段</span>
+<span class="w">    </span><span class="nv">department</span><span class="w">      </span><span class="n n-Type">Department</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span><span class="w">     </span><span class="c1">-- 部门（可能无）</span>
+
+<span class="w">    </span><span class="c1">-- 默认值字段</span>
+<span class="w">    </span><span class="nv">status</span><span class="w">          </span><span class="n n-Type">Status</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="nv">active</span><span class="p">,</span><span class="w">   </span><span class="c1">-- 状态</span>
+<span class="w">    </span><span class="nv">startDate</span><span class="w">       </span><span class="kt">GeneralizedTime</span><span class="p">,</span><span class="w">         </span><span class="c1">-- 入职时间</span>
+<span class="w">    </span><span class="nv">endDate</span><span class="w">         </span><span class="kt">GeneralizedTime</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span><span class="c1">-- 离职时间</span>
+
+<span class="w">    </span><span class="c1">-- 嵌套结构</span>
+<span class="w">    </span><span class="nv">salaryInfo</span><span class="w">      </span><span class="n n-Type">Salary</span><span class="p">,</span><span class="w">                  </span><span class="c1">-- 薪资信息</span>
+<span class="w">    </span><span class="nv">contactInfo</span><span class="w">     </span><span class="n n-Type">ContactInfo</span><span class="p">,</span><span class="w">             </span><span class="c1">-- 联系信息</span>
+
+<span class="w">    </span><span class="c1">-- 数组字段</span>
+<span class="w">    </span><span class="nv">skills</span><span class="w">          </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="n n-Type">Skill</span><span class="p">,</span><span class="w">       </span><span class="c1">-- 技能列表</span>
+<span class="w">    </span><span class="nv">projects</span><span class="w">        </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="n n-Type">ProjectRef</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span><span class="w"> </span><span class="c1">-- 参与项目</span>
+
+<span class="w">    </span><span class="c1">-- 带约束的字段</span>
+<span class="w">    </span><span class="nv">age</span><span class="w">             </span><span class="kt">INTEGER</span><span class="w"> </span><span class="p">(</span><span class="mi">18</span><span class="o">..</span><span class="mi">65</span><span class="p">),</span><span class="w">        </span><span class="c1">-- 年龄范围</span>
+<span class="w">    </span><span class="nv">email</span><span class="w">           </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"</span><span class="p">),</span>
+
+<span class="w">    </span><span class="c1">-- 带标签的字段（重要！）</span>
+<span class="w">    </span><span class="nv">managerId</span><span class="w">       </span><span class="p">[</span><span class="k">APPLICATION</span><span class="w"> </span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="c1">-- 4. 状态枚举</span>
+<span class="n n-Type">Status</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">active</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">inactive</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">onLeave</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">terminated</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">-- 5. 薪资信息</span>
+<span class="n n-Type">Salary</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">baseSalary</span><span class="w">      </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">bonus</span><span class="w">           </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">currency</span><span class="w">        </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="s">"CNY"</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">lastAdjustment</span><span class="w">  </span><span class="kt">GeneralizedTime</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="c1">-- 6. 联系信息</span>
+<span class="n n-Type">ContactInfo</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">workPhone</span><span class="w">   </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"\\d{3,4}-\\d{7,8}"</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">mobilePhone</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"1[3-9]\\d{9}"</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">workEmail</span><span class="w">   </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"[a-zA-Z0-9._%+-]+@company\\.com"</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">wechat</span><span class="w">      </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="c1">-- 7. 项目引用</span>
+<span class="n n-Type">ProjectRef</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">projectId</span><span class="w">   </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">role</span><span class="w">        </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">startDate</span><span class="w">   </span><span class="kt">GeneralizedTime</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">endDate</span><span class="w">     </span><span class="kt">GeneralizedTime</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="k">END</span>
+</code></pre>
+<h3 id="choice45">二、CHOICE高级应用（45分钟）</h3>
+<h4 id="21-choice">2.1 CHOICE的核心概念</h4>
+<p><strong>什么是CHOICE？</strong>
+- 类似于C语言的union、Java的interface
+- 表示"多选一"的场景
+- 必须有机制区分选择了哪个选项</p>
+<h4 id="22">2.2 标签系统详解</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 没有标签的CHOICE（不推荐）</span>
+<span class="n n-Type">BadChoice</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">CHOICE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">name</span><span class="w">    </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">age</span><span class="w">     </span><span class="kt">INTEGER</span>
+<span class="p">}</span>
+<span class="c1">-- 问题：解码时不知道选择了哪个</span>
+
+<span class="c1">-- 有标签的CHOICE（推荐）</span>
+<span class="n n-Type">GoodChoice</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">CHOICE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">name</span><span class="w">    </span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">age</span><span class="w">     </span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="kt">INTEGER</span>
+<span class="p">}</span>
+<span class="c1">-- 编码时会包含标签[0]或[1]</span>
+</code></pre>
+<h4 id="23">2.3 标签类型</h4>
+<table>
+<thead>
+<tr>
+<th>标签类别</th>
+<th>范围</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>UNIVERSAL</strong></td>
+<td>0-63</td>
+<td>预定义类型（INTEGER=2，IA5String=22）</td>
+</tr>
+<tr>
+<td><strong>APPLICATION</strong></td>
+<td>64-∞</td>
+<td>应用特定类型</td>
+</tr>
+<tr>
+<td><strong>PRIVATE</strong></td>
+<td>64-∞</td>
+<td>私有类型</td>
+</tr>
+<tr>
+<td><strong>CONTEXT-SPECIFIC</strong></td>
+<td>0-∞</td>
+<td>上下文特定类型</td>
+</tr>
+</tbody>
+</table>
+<h4 id="24">2.4 实战：网络消息协议</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="n n-Type">NetworkProtocol</span><span class="w"> </span><span class="k">DEFINITIONS</span><span class="w"> </span><span class="k">AUTOMATIC</span><span class="w"> </span><span class="k">TAGS</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="k">BEGIN</span>
+
+<span class="c1">-- 1. 消息头</span>
+<span class="n n-Type">MessageHeader</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">version</span><span class="w">     </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">msgId</span><span class="w">       </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">UNIQUE</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">timestamp</span><span class="w">   </span><span class="kt">GeneralizedTime</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">msgType</span><span class="w">     </span><span class="n n-Type">MessageType</span>
+<span class="p">}</span>
+
+<span class="c1">-- 2. 消息类型</span>
+<span class="n n-Type">MessageType</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">login</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">logout</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">data</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">error</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">heartbeat</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">-- 3. 消息体（CHOICE示例）</span>
+<span class="n n-Type">MessageBody</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">CHOICE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">-- 登录消息</span>
+<span class="w">    </span><span class="nv">loginMsg</span><span class="w">    </span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">LoginMessage</span><span class="p">,</span>
+
+<span class="w">    </span><span class="c1">-- 登出消息</span>
+<span class="w">    </span><span class="nv">logoutMsg</span><span class="w">   </span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">LogoutMessage</span><span class="p">,</span>
+
+<span class="w">    </span><span class="c1">-- 数据消息</span>
+<span class="w">    </span><span class="nv">dataMsg</span><span class="w">     </span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">DataMessage</span><span class="p">,</span>
+
+<span class="w">    </span><span class="c1">-- 错误消息</span>
+<span class="w">    </span><span class="nv">errorMsg</span><span class="w">    </span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">ErrorMessage</span><span class="p">,</span>
+
+<span class="w">    </span><span class="c1">-- 心跳消息</span>
+<span class="w">    </span><span class="nv">heartbeat</span><span class="w">   </span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nv">status</span><span class="w">      </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">extraInfo</span><span class="w">   </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">-- 4. 登录消息</span>
+<span class="n n-Type">LoginMessage</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">username</span><span class="w">    </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">password</span><span class="w">    </span><span class="kt">OCTET STRING</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">deviceInfo</span><span class="w">  </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nv">os</span><span class="w">        </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">version</span><span class="w">   </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">deviceId</span><span class="w">  </span><span class="kt">IA5String</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nv">features</span><span class="w">    </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="n n-Type">Feature</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="c1">-- 5. 登出消息</span>
+<span class="n n-Type">LogoutMessage</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">userId</span><span class="w">      </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">reason</span><span class="w">      </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">timestamp</span><span class="w">   </span><span class="kt">GeneralizedTime</span>
+<span class="p">}</span>
+
+<span class="c1">-- 6. 数据消息</span>
+<span class="n n-Type">DataMessage</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">dataType</span><span class="w">    </span><span class="n n-Type">DataType</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">payload</span><span class="w">     </span><span class="kd">CHOICE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nv">text</span><span class="w">    </span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">binary</span><span class="w">  </span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="kt">OCTET STRING</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">json</span><span class="w">    </span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">xml</span><span class="w">     </span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="kt">IA5String</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nv">compression</span><span class="w"> </span><span class="kt">BOOLEAN</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="kc">FALSE</span>
+<span class="p">}</span>
+
+<span class="c1">-- 7. 错误消息</span>
+<span class="n n-Type">ErrorMessage</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">errorCode</span><span class="w">   </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">errorMsg</span><span class="w">    </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">details</span><span class="w">     </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">retryAfter</span><span class="w">  </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="c1">-- 8. 数据类型</span>
+<span class="n n-Type">DataType</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">text</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">image</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">audio</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">video</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">file</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">-- 9. 功能特性</span>
+<span class="n n-Type">Feature</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">name</span><span class="w">        </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">enabled</span><span class="w">     </span><span class="kt">BOOLEAN</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="kc">TRUE</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">version</span><span class="w">     </span><span class="kt">IA5String</span>
+<span class="p">}</span>
+
+<span class="c1">-- 10. 完整消息</span>
+<span class="n n-Type">NetworkMessage</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">header</span><span class="w">  </span><span class="n n-Type">MessageHeader</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">body</span><span class="w">    </span><span class="n n-Type">MessageBody</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">signature</span><span class="w"> </span><span class="kt">OCTET STRING</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="k">END</span>
+</code></pre>
+<h4 id="25-choice">2.5 CHOICE设计模式</h4>
+<p><strong>模式1：状态机模式</strong></p>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="n n-Type">WorkflowState</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">CHOICE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">pending</span><span class="w">     </span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">PendingState</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">processing</span><span class="w">  </span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">ProcessingState</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">completed</span><span class="w">   </span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">CompletedState</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">failed</span><span class="w">      </span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">FailedState</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>模式2：多版本兼容</strong></p>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="n n-Type">ConfigData</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">CHOICE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">v1Config</span><span class="w">    </span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">ConfigV1</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">v2Config</span><span class="w">    </span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">ConfigV2</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">v3Config</span><span class="w">    </span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">ConfigV3</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>模式3：错误处理</strong></p>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="n n-Type">Response</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">CHOICE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">success</span><span class="w">     </span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">SuccessData</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">error</span><span class="w">       </span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">ErrorData</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">warning</span><span class="w">     </span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">WarningData</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="set30">三、SET类型（30分钟）</h3>
+<h4 id="31-sequence-vs-set">3.1 SEQUENCE vs SET</h4>
+<table>
+<thead>
+<tr>
+<th>特性</th>
+<th>SEQUENCE</th>
+<th>SET</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>顺序</strong></td>
+<td>重要，固定</td>
+<td>不重要，任意</td>
+</tr>
+<tr>
+<td><strong>编码</strong></td>
+<td>按定义顺序</td>
+<td>按标签值排序</td>
+</tr>
+<tr>
+<td><strong>用途</strong></td>
+<td>有序数据（如协议包）</td>
+<td>无序数据（如集合）</td>
+</tr>
+<tr>
+<td><strong>性能</strong></td>
+<td>编码/解码快</td>
+<td>需要排序</td>
+</tr>
+<tr>
+<td><strong>示例</strong></td>
+<td>坐标(x,y,z)</td>
+<td>用户权限集</td>
+</tr>
+</tbody>
+</table>
+<h4 id="32-set">3.2 SET示例</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="n n-Type">UserPermissions</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SET</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">read</span><span class="w">        </span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="kt">BOOLEAN</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="kc">FALSE</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">write</span><span class="w">       </span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="kt">BOOLEAN</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="kc">FALSE</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">execute</span><span class="w">     </span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="kt">BOOLEAN</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="kc">FALSE</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">delete</span><span class="w">      </span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="kt">BOOLEAN</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="kc">FALSE</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">admin</span><span class="w">       </span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="w"> </span><span class="kt">BOOLEAN</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="kc">FALSE</span>
+<span class="p">}</span>
+
+<span class="c1">-- 使用示例</span>
+<span class="nv">adminUser</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="n n-Type">UserPermissions</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">read</span><span class="w">    </span><span class="kc">TRUE</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">write</span><span class="w">   </span><span class="kc">TRUE</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">delete</span><span class="w">  </span><span class="kc">TRUE</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">admin</span><span class="w">   </span><span class="kc">TRUE</span>
+<span class="w">    </span><span class="c1">-- 顺序任意，编码时会排序</span>
+<span class="p">}</span>
+</code></pre>
+<h4 id="33-set-of-">3.3 SET OF - 集合数组</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 无序的用户ID集合</span>
+<span class="n n-Type">UserIdSet</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SET OF</span><span class="w"> </span><span class="kt">INTEGER</span>
+
+<span class="c1">-- 无序的字符串集合</span>
+<span class="n n-Type">TagSet</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SET OF</span><span class="w"> </span><span class="kt">IA5String</span>
+
+<span class="c1">-- 注意：SET OF要求元素类型相同</span>
+<span class="c1">-- 编码时元素会按值排序</span>
+</code></pre>
+<h4 id="34-rbac">3.4 实际应用：RBAC权限系统</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="n n-Type">RBACSystem</span><span class="w"> </span><span class="k">DEFINITIONS</span><span class="w"> </span><span class="k">AUTOMATIC</span><span class="w"> </span><span class="k">TAGS</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="k">BEGIN</span>
+
+<span class="c1">-- 权限类型</span>
+<span class="n n-Type">Permission</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">view</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">create</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">edit</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">delete</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">approve</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">export</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">-- 资源类型</span>
+<span class="n n-Type">ResourceType</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">document</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">user</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">role</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">log</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">config</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">-- 权限条目（无序集合）</span>
+<span class="n n-Type">PermissionEntry</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SET</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">-- 标签用于区分字段</span>
+<span class="w">    </span><span class="nv">resource</span><span class="w">    </span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">ResourceType</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">permission</span><span class="w">  </span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">Permission</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">scope</span><span class="w">       </span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="c1">-- 角色定义</span>
+<span class="n n-Type">Role</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">roleId</span><span class="w">      </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">UNIQUE</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">roleName</span><span class="w">    </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">description</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">permissions</span><span class="w"> </span><span class="kd">SET OF</span><span class="w"> </span><span class="n n-Type">PermissionEntry</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 无序权限集合</span>
+<span class="w">    </span><span class="nv">inherits</span><span class="w">    </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="w">  </span><span class="c1">-- 继承的角色ID（有序）</span>
+<span class="p">}</span>
+
+<span class="c1">-- 用户角色分配</span>
+<span class="n n-Type">UserRoleAssignment</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SET</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">userId</span><span class="w">      </span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">roleIds</span><span class="w">     </span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">effectiveFrom</span><span class="w"> </span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="kt">GeneralizedTime</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">effectiveTo</span><span class="w"> </span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="kt">GeneralizedTime</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="k">END</span>
+</code></pre>
+<h3 id="30">四、嵌套和递归结构（30分钟）</h3>
+<h4 id="41">4.1 嵌套结构</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="n n-Type">Organization</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">companyName</span><span class="w">     </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">departments</span><span class="w">     </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="n n-Type">DepartmentInfo</span>
+<span class="p">}</span>
+
+<span class="n n-Type">DepartmentInfo</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">deptId</span><span class="w">          </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">deptName</span><span class="w">        </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">manager</span><span class="w">         </span><span class="n n-Type">EmployeeRef</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">employees</span><span class="w">       </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="n n-Type">EmployeeRef</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">subDepartments</span><span class="w">  </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="n n-Type">DepartmentInfo</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="w">  </span><span class="c1">-- 嵌套！</span>
+<span class="p">}</span>
+
+<span class="n n-Type">EmployeeRef</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">empId</span><span class="w">       </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">name</span><span class="w">        </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">position</span><span class="w">    </span><span class="kt">IA5String</span>
+<span class="p">}</span>
+</code></pre>
+<h4 id="42">4.2 递归结构</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 目录树结构</span>
+<span class="n n-Type">Directory</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">name</span><span class="w">        </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">files</span><span class="w">       </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="n n-Type">File</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">subdirs</span><span class="w">     </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="n n-Type">Directory</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="w">  </span><span class="c1">-- 递归！</span>
+<span class="p">}</span>
+
+<span class="n n-Type">File</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">filename</span><span class="w">    </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">size</span><span class="w">        </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">modified</span><span class="w">    </span><span class="kt">GeneralizedTime</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">data</span><span class="w">        </span><span class="kt">OCTET STRING</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="c1">-- 评论树（论坛、微博）</span>
+<span class="n n-Type">Comment</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">commentId</span><span class="w">   </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">UNIQUE</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">author</span><span class="w">      </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">content</span><span class="w">     </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">timestamp</span><span class="w">   </span><span class="kt">GeneralizedTime</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">replies</span><span class="w">     </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="n n-Type">Comment</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="w">  </span><span class="c1">-- 递归回复！</span>
+<span class="p">}</span>
+</code></pre>
+<h4 id="43">4.3 循环引用（慎用！）</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 前向声明</span>
+<span class="n n-Type">Person2</span><span class="err">;</span>
+
+<span class="c1">-- 朋友圈关系</span>
+<span class="n n-Type">FriendCircle</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">person</span><span class="w">      </span><span class="n n-Type">Person2</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">friends</span><span class="w">     </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="n n-Type">Person2</span><span class="w">  </span><span class="c1">-- 循环引用</span>
+<span class="p">}</span>
+
+<span class="c1">-- 实际定义</span>
+<span class="n n-Type">Person2</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">name</span><span class="w">        </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">age</span><span class="w">         </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">circle</span><span class="w">      </span><span class="n n-Type">FriendCircle</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>警告</strong>：循环引用可能导致无限递归，编码/解码时要小心！</p>
+<h3 id="_3">五、今日练习</h3>
+<h4 id="1">练习1：设计商品库存系统</h4>
+<p>创建<code>Inventory.asn1</code>，包含：
+1. <code>Product</code>：商品信息（ID、名称、价格、库存）
+2. <code>Category</code>：商品分类（支持多级分类）
+3. <code>Supplier</code>：供应商信息
+4. <code>Warehouse</code>：仓库信息（包含库存列表）
+5. <code>Transaction</code>：交易记录（进货、出货、调拨）</p>
+<p>要求：
+- 使用SEQUENCE的完整特性
+- 至少有一个CHOICE类型
+- 使用SET表示无序集合</p>
+<h4 id="2">练习2：优化网络协议</h4>
+<p>修改<code>NetworkProtocol</code>，增加：
+1. 消息压缩支持（CHOICE：未压缩、gzip、zlib）
+2. 加密支持（CHOICE：明文、AES、RSA）
+3. 分片消息支持（大消息分片传输）</p>
+<h4 id="3">练习3：设计配置文件格式</h4>
+<p>创建<code>AppConfig.asn1</code>，支持：
+1. 多版本配置（v1、v2、v3兼容）
+2. 嵌套配置项（数据库、日志、缓存等）
+3. 环境特定配置（开发、测试、生产）
+4. 配置验证规则</p>
+<h3 id="_4">六、学习要点总结</h3>
+<table>
+<thead>
+<tr>
+<th>主题</th>
+<th>关键概念</th>
+<th>实际应用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>SEQUENCE</strong></td>
+<td>有序结构体、可选字段、默认值</td>
+<td>员工记录、消息头</td>
+</tr>
+<tr>
+<td><strong>CHOICE</strong></td>
+<td>多选一、标签系统、IMPLICIT/EXPLICIT</td>
+<td>网络协议、错误处理</td>
+</tr>
+<tr>
+<td><strong>SET</strong></td>
+<td>无序集合、字段排序</td>
+<td>权限集合、配置选项</td>
+</tr>
+<tr>
+<td><strong>嵌套</strong></td>
+<td>结构体包含结构体</td>
+<td>组织架构、目录树</td>
+</tr>
+<tr>
+<td><strong>递归</strong></td>
+<td>类型引用自身</td>
+<td>评论树、文件系统</td>
+</tr>
+<tr>
+<td><strong>标签</strong></td>
+<td>UNIVERSAL/APPLICATION/PRIVATE</td>
+<td>协议兼容、版本控制</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_5">七、今日成就检查</h3>
+<p>✅ <strong>完成标志</strong>：
+- [ ] 能解释SEQUENCE中OPTIONAL和DEFAULT的区别
+- [ ] 能设计包含CHOICE的复杂类型
+- [ ] 理解SEQUENCE和SET的不同应用场景
+- [ ] 能创建嵌套和递归的数据结构
+- [ ] 能回答：为什么CHOICE通常需要标签？</p>
+<h3 id="_6">八、常见问题与解决</h3>
+<p><strong>Q1：OPTIONAL和DEFAULT有什么区别？</strong>
+- OPTIONAL：字段可能不存在，编码时可能省略
+- DEFAULT：字段有默认值，未指定时用默认值，编码时可能省略</p>
+<p><strong>Q2：什么时候用SET，什么时候用SEQUENCE？</strong>
+- 用SEQUENCE：字段顺序有意义（如坐标、时间序列）
+- 用SET：字段顺序无意义（如权限集合、配置选项）</p>
+<p><strong>Q3：CHOICE标签值如何选择？</strong>
+- 从0开始连续编号
+- 避免冲突（不同CHOICE用不同范围）
+- 重要类型用小的标签值</p>
+<h3 id="_7">九、明日预告</h3>
+<p><strong>第3天：约束和模块化</strong>
+- 数据验证：范围、大小、模式约束
+- 模块设计：导入、导出、命名空间
+- 类型继承：FROM约束
+- 大型项目结构组织</p>
+<hr />
+<h2 id="_8">💡 设计模式总结</h2>
+<ol>
+<li><strong>消息模式</strong>：Header + Body(CHOICE)</li>
+<li><strong>配置模式</strong>：多版本CHOICE + 嵌套SEQUENCE</li>
+<li><strong>树形模式</strong>：递归SEQUENCE</li>
+<li><strong>集合模式</strong>：SET + SEQUENCE OF</li>
+<li><strong>状态模式</strong>：ENUMERATED + CHOICE</li>
+</ol>
+<h2 id="_9">🚀 快速参考</h2>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 今日核心技能</span>
+<span class="mi">1</span><span class="p">.</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="o">...</span><span class="w"> </span><span class="p">}</span><span class="w">          </span><span class="c1">-- 有序结构体</span>
+<span class="mi">2</span><span class="p">.</span><span class="w"> </span><span class="kd">CHOICE</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="o">...</span><span class="w"> </span><span class="p">}</span><span class="w">            </span><span class="c1">-- 多选一（需要标签）</span>
+<span class="mi">3</span><span class="p">.</span><span class="w"> </span><span class="kd">SET</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="o">...</span><span class="w"> </span><span class="p">}</span><span class="w">               </span><span class="c1">-- 无序结构体</span>
+<span class="mi">4</span><span class="p">.</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="err">/</span><span class="k">EXPLICIT</span><span class="w">         </span><span class="c1">-- 标签显隐</span>
+<span class="mi">5</span><span class="p">.</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="err">/</span><span class="kd">DEFAULT</span><span class="w">          </span><span class="c1">-- 字段可选性</span>
+</code></pre>
+<p><strong>记住</strong>：好的ASN.1设计就像好的数据库设计。考虑数据的本质，选择最合适的类型。明天学习如何用约束保证数据质量！</p>
+<hr />
+<p><em>如果遇到设计难题，画一张UML图或思维导图，帮助理清结构关系。</em></p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

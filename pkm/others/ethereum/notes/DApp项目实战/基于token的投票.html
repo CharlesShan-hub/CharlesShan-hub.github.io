@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>基于token的投票</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="token">基于token的投票</h1>
+<p>2022.3.11</p>
+<p>[toc]</p>
+<h2 id="_1">前言</h2>
+<p>在课程 “简单投票 Dapp” 中，你已经在一个模拟的区块链(ganache)上 实现了一个投票合约，并且成功地通过 nodejs 控制台和网页与合约进行了交互。 在接下来的项目学习中，我们将会实现以下内容:</p>
+<ol>
+<li>安装叫做 truffle 的以太坊 dapp 框架，它会被用于编译和部署我们的 合约。</li>
+<li>在我们之前简单投票 DApp 上做一些小的更新来适配 truffle。</li>
+<li>编译合约，并将其部署到自己的测试私链。</li>
+<li>通过 truffle 控制台和网页与合约进行交互。</li>
+<li>一旦你熟悉 truffle 以后，我们会对合约进行扩展，加入 token 并能够购买 token 的功能。</li>
+<li>然后我们会对前端进行扩展，通过网页前端购买 token，并用这些token 为候选者投票。</li>
+</ol>
+<p><img src="resources/工作流.png" alt="工作流" style="zoom:50%;" /></p>
+<h2 id="_2">杂项</h2>
+<ol>
+<li>用 Geth 启动私链</li>
+</ol>
+<pre lang="bash"><code class="language-bash md-fencescode"><span class="c1"># Web - Http</span>
+geth<span class="w"> </span>--datadir<span class="w"> </span>./mychain/<span class="w"> </span>--networkid<span class="w"> </span><span class="m">15</span><span class="w"> </span>--dev<span class="w"> </span>--dev.period<span class="w"> </span><span class="m">0</span><span class="w"> </span>--password<span class="w"> </span>password.txt<span class="w"> </span>--http<span class="w"> </span>--http.api<span class="w"> </span>personal,eth,net,web3<span class="w"> </span>--http.corsdomain<span class="w"> </span><span class="s1">'*'</span><span class="w"> </span>console<span class="w"> </span>--allow-insecure-unlock<span class="w"> </span><span class="m">2</span>&gt;output.log
+<span class="c1"># Web - WS</span>
+geth<span class="w"> </span>--datadir<span class="w"> </span>./mychain/<span class="w"> </span>--networkid<span class="w"> </span><span class="m">15</span><span class="w"> </span>--dev<span class="w"> </span>--dev.period<span class="w"> </span><span class="m">0</span><span class="w"> </span>--password<span class="w"> </span>password.txt<span class="w"> </span>--ws<span class="w"> </span>--ws.api<span class="w"> </span>personal,eth,net,web3<span class="w"> </span>--ws.origins<span class="w"> </span><span class="s1">'*'</span><span class="w"> </span>console<span class="w"> </span>--allow-insecure-unlock<span class="w"> </span><span class="m">2</span>&gt;output.log
+<span class="c1"># Web - Ws and Http</span>
+geth<span class="w"> </span>--datadir<span class="w"> </span>./mychain/<span class="w"> </span>--networkid<span class="w"> </span><span class="m">15</span><span class="w"> </span>--dev<span class="w"> </span>--dev.period<span class="w"> </span><span class="m">0</span><span class="w"> </span>--password<span class="w"> </span>password.txt<span class="w"> </span>--http<span class="w"> </span>--http.api<span class="w"> </span>personal,eth,net,web3<span class="w"> </span>--http.corsdomain<span class="w"> </span><span class="s1">'*'</span><span class="w">  </span>--ws<span class="w"> </span>--ws.api<span class="w"> </span>personal,eth,net,web3<span class="w"> </span>--ws.origins<span class="w"> </span><span class="s1">'*'</span><span class="w"> </span>console<span class="w"> </span>--allow-insecure-unlock<span class="w"> </span><span class="m">2</span>&gt;output.log
+<span class="c1"># 如果我们想到直接连接到测试网络，可以用下面的命令:</span>
+nohup<span class="w"> </span>geth<span class="w"> </span>--testnet<span class="w"> </span>--syncmode<span class="w"> </span>fast<span class="w"> </span>--rpc<span class="w"> </span>--rpcapi<span class="w"> </span>db,eth,net,web3,personal<span class="w"> </span>--cache<span class="o">=</span><span class="m">1024</span><span class="w"> </span>--rpcport<span class="w"> </span><span class="m">8545</span><span class="w"> </span>--rpcaddr<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>--rpccorsdomain<span class="w"> </span><span class="s2">"*"</span><span class="w"> </span><span class="m">2</span>&gt;output.log<span class="w"> </span><span class="p">&amp;</span>
+</code></pre>
+<p><code>--testnet</code>: 这是告诉 geth 启动并连接到最新的测试网络。我们所连接的网络是 Ropsten。</p>
+<p><code>--syncmode fast</code>: 我们知道，当用 geth 连接主网或测试网络时，它必须在 本地电脑上下载整个区块链。你需要下载完整的区块链并执行每个块里面的每一 笔交易，这样你就在本地电脑上拥有了整个历史。这非常耗费时间。不过，也有 其他模式或者说优化方法，比如你只需要下载交易收据，而不用执行每一笔交易， 这就是“快速”模式。如果我们并不需要整个区块链历史，就可使用这样的 fast 模式同步区块链。</p>
+<p>一旦你按照指示启动 geth，它会启动以太坊节点，连接到其他对端节点并开始下载区块链。下载区块链的时间取决于很多因素，比如你的网速，内存，硬盘类型等等。一台 8GB 内存，SSD 硬盘和 10 M 网速的电脑大概需要 7~8 个小时。如果你用快速模式同步 Ropsten，大概需要 6-7 GB 的硬盘空间。</p>
+<p>用 Rinkeby 替换 Ropsten</p>
+<p>有些同学在 Ropsten 测试网上运行 geth 会遇到问题。如果耗费时间太长 的话，你可以换一个叫做 Rinkeby 的测试网(300 多万个块，下载区块大约 1 个多小时，同步状态大约需要 4~5 个小时，到 Imported new chain segment 即 已完成同步)。下面是启动 geth 并同步 Rinkeby 网络的命令。</p>
+<pre lang="bash"><code class="language-bash md-fencescode">geth<span class="w"> </span>--rinkeby<span class="w"> </span>--syncmode<span class="w"> </span><span class="s2">"fast"</span><span class="w"> </span>--rpc<span class="w"> </span>--rpcapi<span class="w"> </span>db,eth,net,web3,personal<span class="w"> </span>--cache<span class="o">=</span><span class="m">1024</span><span class="w"> </span>--rpcport<span class="w"> </span><span class="m">8545</span><span class="w"> </span>--rpcaddr<span class="w"> </span><span class="m">127</span>.0.0.1<span class="w"> </span>--rpccorsdomain<span class="w"> </span><span class="s2">"*"</span>
+</code></pre>
+<p>Full Sync: 从周围节点获取 block headers, block bodies, 并且从初始区块 开始重演每一笔交易以验证每一个状态</p>
+<p>Fast Sync: 从周围节点获取 block headers, block bodies, 但不会重演交易 (只拿 receipts). 这样就会拿到所有状态的快照(不验证)，从此跟全节点一 样参与到网络中.</p>
+<p>Light Sync: 只拿当前状态(没有历史账本数据). 如果要验证一笔交易，就必 须从另外的全节点处获取历史数据</p>
+<ol>
+<li>工作流(Workflow)</li>
+</ol>
+<p>如果你正在构建一个基于以太坊的去中心化应用，你的 workflow 可能是像这样</p>
+<p>Development(开发环境): Ganache </p>
+<p>Staging/Testing(模拟/测试环境): Ropsten, Rinkeby, Kovan or your own private network </p>
+<p>Production(生产环境): Mainnet</p>
+<ol>
+<li>
+<p>Truffle</p>
+</li>
+<li>
+<p>安装<code>npm install -g truffle</code></p>
+</li>
+<li>
+<p>然后我们创建一个空目录，在下面创建 truffle 项目</p>
+</li>
+</ol>
+<pre lang="bash"><code class="language-bash md-fencescode">mkdir<span class="w"> </span>simple_voting_by_truffle_dapp
+<span class="nb">cd</span><span class="w"> </span>simple_voting_by_truffle_dapp
+npm<span class="w"> </span>install<span class="w"> </span>-g<span class="w"> </span>webpack
+truffle<span class="w"> </span>unbox<span class="w"> </span>webpack
+</code></pre>
+<pre><code class="md-fencescode">  truffle init: 在当前目录初始化一个新的 truffle 空项目(项目文件只有 truffle-config.js 和 truffle.js;contracts 目录中只有 Migrations.sol;migrations 目录中只有 1_initial_migration.js)
+
+  truffle unbox: 直接下载一个 truffle box，即一个预先构建好的 truffle 项目;
+
+  unbox 的过程相对会长一点，完成之后应该看到提示
+
+  这里的 webpack 就是一个基于 webpack 构建流程的官方项目框架(truffle box)，更多 truffle box 参见 https://truffleframework.com/boxes
+
+  webpack: 一个流行的前端资源依赖管理和打包工具。
+</code></pre>
+<h2 id="truffle">Truffle</h2>
+<ol>
+<li>简介：truffle unbox webpack 一条命令由于要下载众多需要的模块，大概耗时 10 分钟左右，所以我们先来了解一下 Truffle。</li>
+</ol>
+<p>Truffle 是目前最流行的以太坊 DApp 开发框架，(按照官网说法)是一个世界级的开发环境和测试框架，也是所有使用了 EVM 的区块链的资产管理通道，它基于 JavaScript，致力于让以太坊上的开发变得简单。Truffle 有以下功能:</p>
+<ol>
+<li>内置的智能合约编译，链接，部署和二进制文件的管理。 </li>
+<li>合约自动测试，方便快速开发。</li>
+<li>脚本化的、可扩展的部署与发布框架。</li>
+<li>可部署到任意数量公网或私网的网络环境管理功能</li>
+<li>使用 EthPM 和 NPM 提供的包管理，使用 ERC190 标准。</li>
+<li>与合约直接通信的直接交互控制台(写完合约就可以命令行里验证了)。</li>
+<li>可配的构建流程，支持紧密集成。</li>
+<li>
+<p>在 Truffle 环境里支持执行外部的脚本。</p>
+</li>
+<li>
+<p>Truffle 的客户端</p>
+</li>
+</ol>
+<p>我们之后写的智能合约必须要部署到链上进行测试，所以 truffle 构建的 DApp 也必须选择一条链来进行部署。我们可以选择部署到一些公共的测试链比 如 Rinkeby 或者 Ropsten 上，缺点是部署和测试时间比较长，而且需要花费一定的时间赚取假代币防止 out of gas。当然，对于 DApp 发布的正规流程，staging (模拟环境)还是应该用测试公链的。</p>
+<p>还有一种方式就是部署到私链上，这在开发阶段是通常的选择。Truffle 官方推荐使用以下两种客户端:</p>
+<ol>
+<li>Ganache</li>
+<li>truffle develop</li>
+</ol>
+<p>Ganache 我们已经接触过了，之前的简单投票小项目就是用它来做模拟区块链的。这里再介绍一点命名背景。它的前身是大名鼎鼎的 testRPC，网上的很多 truffle 教学的老文章里都是用 testRPC。Ganache 是奶油巧克力的意思，而 Truffle 是松露巧克力，一般是以 Ganache 为核，然后上面撒上可可粉，所以这两个产品的名字还是很贴切的。</p>
+<p>而 truffle develop 是 truffle 内置的客户端，跟命令行版本的 Ganache 基本类似。在 truffle 目录下 bash 输入:<code>truffle develop</code>即可开启客户端，和 ganache 一样，它也会给我们自动生成 10 个账户。</p>
+<p>唯一要注意的是在 truffle develop 里执行 truffle 命令的时候需要省略前面的 “truffle”，比如“truffle compile”只需要敲“compile”就可以了</p>
+<h2 id="voting">创建 Voting 项目</h2>
+<p>初始化一个 truffle 项目时，它会创建运行一个完整 dapp 所有必要的文件和目录。我们直接下载 webpack 这个 truffle box，它里面的目录也是类似的:</p>
+<pre lang="bash"><code class="language-bash md-fencescode">&gt;ls
+README.md<span class="w"> </span>contracts<span class="w"> </span>node_modules<span class="w"> </span><span class="nb">test</span>
+webpack.config.js<span class="w"> </span>truffle.js<span class="w"> </span>app<span class="w"> </span>migrations<span class="w"> </span>package.json
+&gt;ls<span class="w"> </span>app/
+index.html<span class="w"> </span>javascripts<span class="w"> </span>stylesheets<span class="w"> </span>
+&gt;ls<span class="w"> </span>contracts/
+ConvertLib.sol<span class="w"> </span>MetaCoin.sol<span class="w"> </span>Migrations.sol
+&gt;ls<span class="w"> </span>migrations/
+1_initial_migration.js<span class="w"> </span>2_deploy_contracts.js
+</code></pre>
+<ul>
+<li>app/ - 你的应用文件运行的默认目录。这里面包括推荐的 javascript 文件和 css 样式文件目录，但你可以完全决定如何使用这些目录。</li>
+<li>contract/ - Truffle 默认的合约文件存放目录。</li>
+<li>migrations/ - 部署脚本文件的存放目录</li>
+<li>test/ - 用来测试应用和合约的测试文件目录</li>
+<li>truffle.js - Truffle 的配置文件</li>
+</ul>
+<p>truffle 也会创建一个你可以快速上手的示例应用(在本课程中我们并不会用到该示例应用)。你可以放心地删除项目下面 contracts 目录的 ConvertLib.sol 和 MetaCoin.sol 文件。</p>
+<pre lang="bash"><code class="language-bash md-fencescode">rm<span class="w"> </span>contracts/ConvertLib.sol<span class="w"> </span>contracts/MetaCoin.sol
+</code></pre>
+<p>此外，在你的项目目录下查找一个叫做 truffle.js 的配置文件。它里面包含了一个用于开发网络的配置。将端口号从 7545 改为 8545，因为我们的私链及 ganache 默认都会在该端口运行。</p>
+<h2 id="migration">Migration</h2>
+<h3 id="migration_1">migration 的概念</h3>
+<p>理解 migrations(迁移)目录的内容非常重要。这些迁移文件用于将合约部署到区块链上。如果你还记得的话，我们在之前的项目中通过在 node 控制台中调用 VotingContract.new 将投票合约部署到区块链上。以后，我们再也不需要这么做了，truffle 将会部署和跟踪所有的部署。</p>
+<p>Migrations(迁移)是 JavaScript 文件，这些文件负责暂存我们的部署任务，并且假定部署需求会随着时间推移而改变。随着项目的发展，我们应该创建新的迁移脚本，来改变链上的合约状态。所有运行过的 migration 历史记录，都会通过特殊的迁移合约记录在链上。</p>
+<p>第一个迁移 1_initial_migration.js 向区块链部署了一个叫做 Migrations 的合约，并用于存储你已经部署的最新合约。每次你运行 migration 时，truffle会向区块链查询获取最新已部署好的合约，然后部署尚未部署的任何合约。然后它会更新 Migrations 合约中的 last_completed_migration 字段指向最新部署的合约。你可以简单地把它当成是一个数据库表，里面有一列last_completed_migration ，该列总是保持最新状态。</p>
+<p>migration 文件的命名有特殊要求:前缀是一个数字(必需)，用来标记迁移是否运行成功;后缀是一个描述词汇，只是单纯为了提高可读性，方便理解。 </p>
+<p>在脚本的开始，我们用 artifacts.require() 方法告诉 truffle 想要进行部署迁移的合约，这跟 node 里的 require 很类似。不过需要注意，最新的官方文档告 诫，应该传入定义的合约名称，而不要给文件名称——因为一个.sol 文件中可能 包含了多个 contract。</p>
+<p>migration js 里的 exports 的函数，需要接收一个 deployer 对象作为第一个参数。这个对象在部署发布的过程中，主要是用来提供清晰的语法支持，同时提供一些通用的合约部署职责，比如保存部署的文件以备稍后使用。deployer 对象 是用来暂存(stage)部署任务的主要操作接口。</p>
+<p>像所有其它在 Truffle 中的代码一样，Truffle 提供了我们自己代码的合约抽象层(contract abstractions)，并且进行了初始化，以方便你可以便利的与以太坊 的网络交互。这些抽象接口都是部署流程的一部分。</p>
+<h3 id="migration_2">更新 migration 文件</h3>
+<p>将<code>2_deploy_contracts.js</code>内容更新为以下信息:</p>
+<pre lang="js"><code class="language-js md-fencescode"><span class="kd">var</span><span class="w"> </span><span class="nx">Voting</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">artifacts</span><span class="p">.</span><span class="nx">require</span><span class="p">(</span><span class="s2">"./Voting.sol"</span><span class="p">);</span>
+<span class="nx">module</span><span class="p">.</span><span class="nx">exports</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kd">function</span><span class="p">(</span><span class="nx">deployer</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="nx">deployer</span><span class="p">.</span><span class="nx">deploy</span><span class="p">(</span><span class="nx">Voting</span><span class="p">,</span><span class="w"> </span><span class="p">[</span><span class="s1">'Alice'</span><span class="p">,</span><span class="w"> </span><span class="s1">'Bob'</span><span class="p">,</span><span class="w"> </span><span class="s1">'Cary'</span><span class="p">],</span><span class="w"> </span><span class="p">{</span><span class="nx">gas</span><span class="o">:</span>
+<span class="w">               </span><span class="mf">290000</span><span class="p">});</span>
+<span class="p">};</span>
+</code></pre>
+<p>从上面可以看出，部署者希望第一个参数为合约名，跟在构造函数参数后面。</p>
+<p>在我们的例子中，只有一个参数，就是一个候选者数组。第三个参数是一个哈希，我们用来指定部署代码所需的 gas。gas 数量会随着你的合约大小而变化。对于投票合约，290000 就足够了。</p>
+<h3 id="truffle_1">更新 truffle 配置文件</h3>
+<p>修改<code>truffle-config.js</code>:</p>
+<pre lang="js"><code class="language-js md-fencescode"><span class="nx">networks</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Useful for testing. The `development` name is special - truffle uses it by default</span>
+<span class="w">    </span><span class="c1">// if it's defined here and no other network is specified at the command line.</span>
+<span class="w">    </span><span class="c1">// You should run a client (like ganache-cli, geth or parity) in a separate terminal</span>
+<span class="w">    </span><span class="c1">// tab if you use this network and you must also set the `host`, `port` and `network_id`</span>
+<span class="w">    </span><span class="c1">// options below to some value.</span>
+<span class="w">    </span><span class="c1">//</span>
+<span class="w">    </span><span class="nx">development</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="c1">// 改成自己的私链的地址</span>
+<span class="w">      </span><span class="nx">host</span><span class="o">:</span><span class="w"> </span><span class="s2">"127.0.0.1"</span><span class="p">,</span><span class="w">     </span><span class="c1">// Localhost (default: none)</span>
+<span class="w">      </span><span class="nx">port</span><span class="o">:</span><span class="w"> </span><span class="mf">8545</span><span class="p">,</span><span class="w">            </span><span class="c1">// Standard Ethereum port (default: none)</span>
+<span class="w">      </span><span class="nx">network_id</span><span class="o">:</span><span class="w"> </span><span class="s2">"*"</span><span class="p">,</span><span class="w">       </span><span class="c1">// Any network (default: none)</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="p">}</span>
+</code></pre>
+<h2 id="_3">实验记录</h2>
+<p>2022.4.9</p>
+<ol>
+<li>geth命令</li>
+</ol>
+<pre lang="bash"><code class="language-bash md-fencescode">geth<span class="w"> </span>--datadir<span class="w"> </span>./mychain/<span class="w"> </span>--networkid<span class="w"> </span><span class="m">15</span><span class="w"> </span>--dev<span class="w"> </span>--dev.period<span class="w"> </span><span class="m">0</span><span class="w"> </span>--password<span class="w"> </span>password.txt<span class="w"> </span>--http<span class="w"> </span>--http.api<span class="w"> </span>personal,eth,net,web3<span class="w"> </span>--http.corsdomain<span class="w"> </span><span class="s1">'*'</span><span class="w">  </span>--ws<span class="w"> </span>--ws.api<span class="w"> </span>personal,eth,net,web3<span class="w"> </span>--ws.origins<span class="w"> </span><span class="s1">'*'</span><span class="w"> </span>console<span class="w"> </span>--allow-insecure-unlock<span class="w"> </span><span class="m">2</span>&gt;output.log
+</code></pre>
+<ol>
+<li>
+<p>安装环境</p>
+</li>
+<li>
+<p>全局安装truffle：<code>npm install -g truffle@5.1.48</code></p>
+</li>
+<li>truffle安装成功后输入<code>truffle --help</code>可以显示可以输入的命令</li>
+<li>
+<p>为本项目安装webpack：<code>npm install webpack</code>；<code>npm install webpack-cli</code></p>
+</li>
+<li>
+<p>truffle</p>
+</li>
+<li>
+<p><code>truffle unbox webpack</code>，这步会报错，因为无法访问国外DNS.</p>
+<p>我们可以直接去<a href="https://github.com/truffle-box">官网</a>下载资源:https://github.com/truffle-box/webpack-box</p>
+</li>
+<li>
+<p>修改<code>truffle-config.js</code>：</p>
+</li>
+</ol>
+<pre lang="js"><code class="language-js md-fencescode"><span class="nx">networks</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Useful for testing. The `development` name is special - truffle uses it by default</span>
+<span class="w">    </span><span class="c1">// if it's defined here and no other network is specified at the command line.</span>
+<span class="w">    </span><span class="c1">// You should run a client (like ganache-cli, geth or parity) in a separate terminal</span>
+<span class="w">    </span><span class="c1">// tab if you use this network and you must also set the `host`, `port` and `network_id`</span>
+<span class="w">    </span><span class="c1">// options below to some value.</span>
+<span class="w">    </span><span class="c1">//</span>
+<span class="w">    </span><span class="nx">development</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">host</span><span class="o">:</span><span class="w"> </span><span class="s2">"127.0.0.1"</span><span class="p">,</span><span class="w">     </span><span class="c1">// Localhost (default: none)</span>
+<span class="w">      </span><span class="nx">port</span><span class="o">:</span><span class="w"> </span><span class="mf">8545</span><span class="p">,</span><span class="w">            </span><span class="c1">// Standard Ethereum port (default: none)</span>
+<span class="w">      </span><span class="nx">network_id</span><span class="o">:</span><span class="w"> </span><span class="s2">"*"</span><span class="p">,</span><span class="w">       </span><span class="c1">// Any network (default: none)</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="p">}</span>
+</code></pre>
+<ol>
+<li>
+<p>可以运行<code>truffle console</code></p>
+</li>
+<li>
+<p>修改<code>2_deploy_contracts.js</code>:</p>
+</li>
+</ol>
+<pre lang="js"><code class="language-js md-fencescode"><span class="c1">//const ConvertLib = artifacts.require("ConvertLib");// 案例</span>
+<span class="c1">//const MetaCoin = artifacts.require("MetaCoin"); // 案例</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">Voting</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">artifacts</span><span class="p">.</span><span class="nx">require</span><span class="p">(</span><span class="s2">"./Voting"</span><span class="p">);</span>
+
+<span class="nx">module</span><span class="p">.</span><span class="nx">exports</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kd">function</span><span class="p">(</span><span class="nx">deployer</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">//deployer.deploy(ConvertLib);  // 案例</span>
+<span class="w">  </span><span class="c1">//deployer.link(ConvertLib, MetaCoin);  // 案例</span>
+<span class="w">  </span><span class="c1">//deployer.deploy(MetaCoin);  // 案例</span>
+<span class="w">  </span><span class="nx">deployer</span><span class="p">.</span><span class="nx">deploy</span><span class="p">(</span><span class="nx">Voting</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="nx">gas</span><span class="o">:</span><span class="mf">290000</span><span class="p">});</span>
+<span class="p">};</span>
+</code></pre>
+<ol>
+<li>在contract文件夹中创建<code>Voting.sol</code>:</li>
+</ol>
+<pre lang="solidity"><code class="language-solidity md-fencescode"><span class="k">pragma solidity</span><span class="w"> </span><span class="o">^</span><span class="k">0.5.0</span><span class="p">;</span>
+<span class="k">contract</span><span class="w"> </span><span class="ni">Voting</span><span class="p">{</span>
+<span class="w">    </span><span class="kt">mapping</span><span class="w"> </span><span class="p">(</span><span class="kt">string</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="kt">uint8</span><span class="p">)</span><span class="w"> </span><span class="kt">public</span><span class="w"> </span>votesReceived<span class="p">;</span>
+<span class="w">    </span><span class="kt">string</span><span class="p">[]</span><span class="w"> </span><span class="kt">public</span><span class="w"> </span>candidateList<span class="p">;</span>
+<span class="w">    </span><span class="kt">constructor</span><span class="p">()</span><span class="w"> </span><span class="kt">public</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span>candidateList<span class="o">=</span><span class="p">[</span><span class="s2">"Alice"</span><span class="p">,</span><span class="s2">"Bob"</span><span class="p">,</span><span class="s2">"Cary"</span><span class="p">];</span>
+
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kt">function</span><span class="w"> </span><span class="nv">totalVotesFor</span><span class="p">(</span><span class="kt">string</span><span class="w"> </span><span class="nv">memory</span><span class="w"> </span>candidate<span class="p">)</span><span class="w"> </span>view<span class="w"> </span><span class="kt">public</span><span class="w"> </span><span class="kt">returns</span><span class="w"> </span><span class="p">(</span><span class="kt">uint8</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">require</span><span class="p">(</span>validCandidate<span class="p">(</span>candidate<span class="p">));</span>
+<span class="w">        </span><span class="kt">return</span><span class="w"> </span>votesReceived<span class="p">[</span>candidate<span class="p">];</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kt">function</span><span class="w"> </span><span class="nv">voteForCandidate</span><span class="p">(</span><span class="kt">string</span><span class="w"> </span><span class="nv">memory</span><span class="w"> </span>candidate<span class="p">)</span><span class="w"> </span><span class="kt">public</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">require</span><span class="p">(</span>validCandidate<span class="p">(</span>candidate<span class="p">));</span><span class="w"> </span>
+<span class="w">        </span>votesReceived<span class="p">[</span>candidate<span class="p">]</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="m m-Decimal">1</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kt">function</span><span class="w"> </span><span class="nv">validCandidate</span><span class="p">(</span><span class="kt">string</span><span class="w"> </span><span class="nv">memory</span><span class="w"> </span>candidate<span class="p">)</span><span class="w"> </span>view<span class="w"> </span><span class="kt">public</span><span class="w"> </span><span class="kt">returns</span><span class="w"> </span><span class="p">(</span><span class="kt">bool</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">for</span><span class="p">(</span><span class="kt">uint</span><span class="w"> </span><span class="nv">i</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m m-Decimal">0</span><span class="p">;</span><span class="w"> </span>i<span class="w"> </span><span class="o">&lt;</span><span class="w"> </span>candidateList<span class="p">.</span>length<span class="p">;</span><span class="w"> </span>i<span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kt">if</span><span class="w"> </span><span class="p">(</span>compareStr<span class="p">(</span>candidateList<span class="p">[</span>i<span class="p">],</span><span class="w"> </span>candidate<span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="kt">return</span><span class="w"> </span><span class="kt">true</span><span class="p">;</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="kt">return</span><span class="w"> </span><span class="kt">false</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="kt">function</span><span class="w"> </span><span class="nv">compareStr</span><span class="p">(</span><span class="kt">string</span><span class="w"> </span><span class="nv">memory</span><span class="w"> </span>_str1<span class="p">,</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="nv">memory</span><span class="w"> </span>_str2<span class="p">)</span><span class="w"> </span>pure<span class="w"> </span><span class="kt">public</span><span class="w"> </span><span class="kt">returns</span><span class="p">(</span><span class="kt">bool</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kt">if</span><span class="p">(</span><span class="kt">bytes</span><span class="p">(</span>_str1<span class="p">).</span>length<span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kt">bytes</span><span class="p">(</span>_str2<span class="p">).</span>length<span class="p">)</span>
+<span class="w">            </span><span class="kt">if</span><span class="p">(</span><span class="nb">keccak256</span><span class="p">(</span>abi<span class="p">.</span>encodePacked<span class="p">(</span>_str1<span class="p">))</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="nb">keccak256</span><span class="p">(</span>abi<span class="p">.</span>encodePacked<span class="p">(</span>_str2<span class="p">)))</span>
+<span class="w">                </span><span class="kt">return</span><span class="w"> </span><span class="kt">true</span><span class="p">;</span>
+<span class="w">        </span><span class="kt">return</span><span class="w"> </span><span class="kt">false</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<ol>
+<li>编译：<code>truffle compile</code>:</li>
+</ol>
+<pre lang="bash"><code class="language-bash md-fencescode">Compiling<span class="w"> </span>your<span class="w"> </span>contracts...
+<span class="o">===========================</span>
+&gt;<span class="w"> </span>Compiling<span class="w"> </span>./contracts/Voting.sol
+&gt;<span class="w"> </span>Artifacts<span class="w"> </span>written<span class="w"> </span>to<span class="w"> </span>/Users/kimshan/workplace/blockchain/MyTokenVoteDapp/build/contracts
+&gt;<span class="w"> </span>Compiled<span class="w"> </span>successfully<span class="w"> </span>using:
+<span class="w">   </span>-<span class="w"> </span>solc:<span class="w"> </span><span class="m">0</span>.5.16+commit.9c3226ce.Emscripten.clang
+</code></pre>
+<ol>
+<li>部署：<code>truffle migrate</code>：</li>
+</ol>
+<pre lang="bash"><code class="language-bash md-fencescode">truffle<span class="o">(</span>development<span class="o">)</span>&gt;<span class="w"> </span>truffle<span class="w"> </span>migrate
+
+Compiling<span class="w"> </span>your<span class="w"> </span>contracts...
+<span class="o">===========================</span>
+&gt;<span class="w"> </span>Everything<span class="w"> </span>is<span class="w"> </span>up<span class="w"> </span>to<span class="w"> </span>date,<span class="w"> </span>there<span class="w"> </span>is<span class="w"> </span>nothing<span class="w"> </span>to<span class="w"> </span>compile.
+
+
+
+Starting<span class="w"> </span>migrations...
+<span class="o">======================</span>
+&gt;<span class="w"> </span>Network<span class="w"> </span>name:<span class="w">    </span><span class="s1">'development'</span>
+&gt;<span class="w"> </span>Network<span class="w"> </span>id:<span class="w">      </span><span class="m">15</span>
+&gt;<span class="w"> </span>Block<span class="w"> </span>gas<span class="w"> </span>limit:<span class="w"> </span><span class="m">8000000</span><span class="w"> </span><span class="o">(</span>0x7a1200<span class="o">)</span>
+
+
+2_deploy_contracts.js
+<span class="o">=====================</span>
+
+<span class="w">   </span>Deploying<span class="w"> </span><span class="s1">'Voting'</span>
+<span class="w">   </span>------------------
+<span class="w">   </span>&gt;<span class="w"> </span>transaction<span class="w"> </span>hash:<span class="w">    </span>0x84881612efd5c53c02f2f6f2e508999d6cbeb9a19102f36675c5033110d84fcb
+
+Error:<span class="w">  </span>***<span class="w"> </span>Deployment<span class="w"> </span>Failed<span class="w"> </span>***
+
+<span class="s2">"Voting"</span><span class="w"> </span>--<span class="w"> </span>The<span class="w"> </span>contract<span class="w"> </span>code<span class="w"> </span>couldn<span class="err">'</span>t<span class="w"> </span>be<span class="w"> </span>stored,<span class="w"> </span>please<span class="w"> </span>check<span class="w"> </span>your<span class="w"> </span>gas<span class="w"> </span>limit..
+
+<span class="w">    </span>at<span class="w"> </span>/usr/local/lib/node_modules/truffle/build/webpack:/packages/deployer/src/deployment.js:364:1
+<span class="w">    </span>at<span class="w"> </span>processTicksAndRejections<span class="w"> </span><span class="o">(</span>internal/process/task_queues.js:97:5<span class="o">)</span>
+<span class="w">    </span>at<span class="w"> </span>Migration._deploy<span class="w"> </span><span class="o">(</span>/usr/local/lib/node_modules/truffle/build/webpack:/packages/migrate/Migration.js:68:1<span class="o">)</span>
+<span class="w">    </span>at<span class="w"> </span>Migration._load<span class="w"> </span><span class="o">(</span>/usr/local/lib/node_modules/truffle/build/webpack:/packages/migrate/Migration.js:55:1<span class="o">)</span>
+<span class="w">    </span>at<span class="w"> </span>Migration.run<span class="w"> </span><span class="o">(</span>/usr/local/lib/node_modules/truffle/build/webpack:/packages/migrate/Migration.js:171:1<span class="o">)</span>
+<span class="w">    </span>at<span class="w"> </span>Object.runMigrations<span class="w"> </span><span class="o">(</span>/usr/local/lib/node_modules/truffle/build/webpack:/packages/migrate/index.js:150:1<span class="o">)</span>
+<span class="w">    </span>at<span class="w"> </span>Object.runFrom<span class="w"> </span><span class="o">(</span>/usr/local/lib/node_modules/truffle/build/webpack:/packages/migrate/index.js:110:1<span class="o">)</span>
+<span class="w">    </span>at<span class="w"> </span>Object.run<span class="w"> </span><span class="o">(</span>/usr/local/lib/node_modules/truffle/build/webpack:/packages/migrate/index.js:87:1<span class="o">)</span>
+<span class="w">    </span>at<span class="w"> </span>runMigrations<span class="w"> </span><span class="o">(</span>/usr/local/lib/node_modules/truffle/build/webpack:/packages/core/lib/commands/migrate.js:269:1<span class="o">)</span>
+<span class="w">    </span>at<span class="w"> </span>/usr/local/lib/node_modules/truffle/build/webpack:/packages/core/lib/commands/migrate.js:231:1
+</code></pre>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

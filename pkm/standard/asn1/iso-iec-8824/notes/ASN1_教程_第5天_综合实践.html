@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASN1_教程_第5天_综合实践</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="asn1-5">ASN.1 教程 - 第5天：综合实践</h1>
+<h2 id="_1">🎯 学习目标</h2>
+<ul>
+<li>综合运用前4天所学知识，完成一个完整的通讯录项目设计</li>
+<li>掌握实际ASN.1项目的组织架构和模块化设计</li>
+<li>学会使用约束条件进行数据验证</li>
+<li>理解如何将ASN.1设计转化为实际可用的数据结构</li>
+</ul>
+<h2 id="3-4">⏰ 建议时间：3-4小时</h2>
+<h2 id="_2">📖 课程大纲</h2>
+<h3 id="30">一、项目概述：通讯录管理系统（30分钟）</h3>
+<h4 id="11">1.1 项目需求分析</h4>
+<p><strong>核心功能需求</strong>：
+1. <strong>联系人管理</strong>：存储个人基本信息
+2. <strong>联系方式</strong>：支持多种联系方式（手机、邮箱、微信等）
+3. <strong>分组功能</strong>：将联系人分组管理
+4. <strong>通讯录结构</strong>：完整的通讯录包含版本信息、所有者等</p>
+<p><strong>技术需求</strong>：
+- 使用ASN.1语法定义所有数据结构
+- 应用约束条件保证数据有效性
+- 采用模块化设计便于维护
+- 支持扩展和向后兼容</p>
+<h4 id="12">1.2 设计思路</h4>
+<pre lang="mermaid"><code class="language-mermaid md-fencescode">graph TD
+    A[通讯录 AddressBook] --&gt; B[基本信息]
+    A --&gt; C[联系人列表]
+    A --&gt; D[分组信息]
+
+    B --&gt; B1[版本号]
+    B --&gt; B2[创建时间]
+    B --&gt; B3[最后更新时间]
+    B --&gt; B4[所有者信息]
+
+    C --&gt; C1[个人信息]
+    C1 --&gt; C11[基础信息]
+    C1 --&gt; C12[联系方式列表]
+    C1 --&gt; C13[所属分组]
+
+    D --&gt; D1[组信息]
+    D1 --&gt; D11[组ID和名称]
+    D1 --&gt; D12[组描述]
+    D1 --&gt; D13[组成员列表]
+</code></pre>
+<h3 id="60">二、核心数据类型定义（60分钟）</h3>
+<h4 id="21">2.1 基础枚举类型</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 联系方式类型枚举</span>
+<span class="n n-Type">ContactType</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">mobile</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span><span class="w">    </span><span class="c1">-- 手机</span>
+<span class="w">    </span><span class="nv">email</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w">     </span><span class="c1">-- 邮箱</span>
+<span class="w">    </span><span class="nv">wechat</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span><span class="w">    </span><span class="c1">-- 微信</span>
+<span class="w">    </span><span class="nv">qq</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span><span class="w">        </span><span class="c1">-- QQ</span>
+<span class="w">    </span><span class="nv">telephone</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="w">  </span><span class="c1">-- 固定电话</span>
+<span class="p">}</span>
+
+<span class="c1">-- 性别枚举</span>
+<span class="n n-Type">Gender</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">male</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">female</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+<span class="w">    </span><span class="nv">other</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="c1">-- 关系类型</span>
+<span class="n n-Type">Relationship</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">ENUMERATED</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">family</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span><span class="w">     </span><span class="c1">-- 家人</span>
+<span class="w">    </span><span class="nv">friend</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span><span class="w">     </span><span class="c1">-- 朋友</span>
+<span class="w">    </span><span class="nv">colleague</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span><span class="w">  </span><span class="c1">-- 同事</span>
+<span class="w">    </span><span class="nv">business</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span><span class="w">   </span><span class="c1">-- 业务伙伴</span>
+<span class="w">    </span><span class="nv">other</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span><span class="w">       </span><span class="c1">-- 其他</span>
+<span class="p">}</span>
+</code></pre>
+<h4 id="22">2.2 联系方式定义</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 单个联系方式</span>
+<span class="n n-Type">ContactInfo</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">type</span><span class="w">        </span><span class="n n-Type">ContactType</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">value</span><span class="w">       </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">label</span><span class="w">       </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 标签：如"工作手机"、"个人邮箱"</span>
+<span class="w">    </span><span class="nv">isPrimary</span><span class="w">   </span><span class="kt">BOOLEAN</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="kc">FALSE</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">isVerified</span><span class="w">  </span><span class="kt">BOOLEAN</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="kc">FALSE</span>
+<span class="p">}</span>
+
+<span class="c1">-- 联系方式约束</span>
+<span class="n n-Type">ContactInfoList</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="n n-Type">ContactInfo</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">10</span><span class="p">))</span>
+</code></pre>
+<h4 id="23">2.3 个人基本信息</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 基础个人信息</span>
+<span class="n n-Type">Person</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">id</span><span class="w">          </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">UNIQUE</span><span class="p">,</span><span class="w">         </span><span class="c1">-- 唯一标识符</span>
+<span class="w">    </span><span class="nv">firstName</span><span class="w">   </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">50</span><span class="p">)),</span>
+<span class="w">    </span><span class="nv">lastName</span><span class="w">    </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">50</span><span class="p">)),</span>
+<span class="w">    </span><span class="nv">gender</span><span class="w">      </span><span class="n n-Type">Gender</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">birthdate</span><span class="w">   </span><span class="n n-Type">DATE</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">company</span><span class="w">     </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">100</span><span class="p">))</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">position</span><span class="w">    </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">50</span><span class="p">))</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">relationship</span><span class="w"> </span><span class="n n-Type">Relationship</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="nv">friend</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">contacts</span><span class="w">    </span><span class="n n-Type">ContactInfoList</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">note</span><span class="w">        </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="c1">-- 个人约束</span>
+<span class="n n-Type">PersonList</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="n n-Type">Person</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">1000</span><span class="p">))</span>
+</code></pre>
+<h3 id="60_1">三、分组管理系统设计（60分钟）</h3>
+<h4 id="31">3.1 分组信息结构</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 组信息</span>
+<span class="n n-Type">GroupInfo</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">id</span><span class="w">          </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">UNIQUE</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">name</span><span class="w">        </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">50</span><span class="p">)),</span>
+<span class="w">    </span><span class="nv">description</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">0</span><span class="o">..</span><span class="mi">200</span><span class="p">))</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">created</span><span class="w">     </span><span class="kt">GeneralizedTime</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">members</span><span class="w">     </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="kt">INTEGER</span><span class="p">,</span><span class="w">  </span><span class="c1">-- 引用Person的id</span>
+<span class="w">    </span><span class="nv">parentGroup</span><span class="w"> </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="w">      </span><span class="c1">-- 父组ID，支持嵌套</span>
+<span class="p">}</span>
+
+<span class="c1">-- 组角色定义</span>
+<span class="n n-Type">GroupRole</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">groupId</span><span class="w">     </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">role</span><span class="w">        </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="s">"member"</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">joined</span><span class="w">      </span><span class="kt">GeneralizedTime</span>
+<span class="p">}</span>
+
+<span class="c1">-- 组列表</span>
+<span class="n n-Type">GroupInfoList</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SET OF</span><span class="w"> </span><span class="n n-Type">GroupInfo</span><span class="w">  </span><span class="c1">-- 使用SET因为组顺序不重要</span>
+</code></pre>
+<h4 id="32">3.2 人员分组关系</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 个人与分组的关系</span>
+<span class="n n-Type">PersonGroupMembership</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">personId</span><span class="w">    </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">groups</span><span class="w">      </span><span class="kd">SEQUENCE OF</span><span class="w"> </span><span class="n n-Type">GroupRole</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+</code></pre>
+<h3 id="45">四、完整通讯录结构（45分钟）</h3>
+<h4 id="41">4.1 主通讯录定义</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 完整的通讯录定义</span>
+<span class="n n-Type">AddressBookModule</span><span class="w"> </span><span class="k">DEFINITIONS</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="k">BEGIN</span>
+
+<span class="o o-Namespace">EXPORTS</span><span class="w"> </span><span class="n n-Type">AddressBook</span><span class="err">;</span>
+
+<span class="c1">-- 导入基础类型（如果定义在其他模块）</span>
+<span class="c1">-- IMPORTS Date, Time FROM BaseTypes;</span>
+
+<span class="c1">-- 所有者信息</span>
+<span class="n n-Type">OwnerInfo</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">ownerId</span><span class="w">     </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">name</span><span class="w">        </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">email</span><span class="w">       </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">phone</span><span class="w">       </span><span class="kt">IA5String</span>
+<span class="p">}</span>
+
+<span class="c1">-- 通讯录元数据</span>
+<span class="n n-Type">AddressBookMetadata</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">version</span><span class="w">         </span><span class="kt">INTEGER</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">formatVersion</span><span class="w">   </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="s">"1.0"</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">createdAt</span><span class="w">       </span><span class="kt">GeneralizedTime</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">lastUpdated</span><span class="w">     </span><span class="kt">GeneralizedTime</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">owner</span><span class="w">           </span><span class="n n-Type">OwnerInfo</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">description</span><span class="w">     </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="c1">-- 完整的通讯录</span>
+<span class="n n-Type">AddressBook</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">metadata</span><span class="w">    </span><span class="n n-Type">AddressBookMetadata</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">persons</span><span class="w">     </span><span class="n n-Type">PersonList</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">groups</span><span class="w">      </span><span class="n n-Type">GroupInfoList</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">statistics</span><span class="w">  </span><span class="n n-Type">Statistics</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="c1">-- 统计数据</span>
+<span class="n n-Type">Statistics</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">totalPersons</span><span class="w">    </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">totalGroups</span><span class="w">     </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">lastPersonId</span><span class="w">    </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">lastGroupId</span><span class="w">     </span><span class="kt">INTEGER</span>
+<span class="p">}</span>
+
+<span class="k">END</span>
+</code></pre>
+<h4 id="42">4.2 文件结构组织</h4>
+<pre><code class="md-fencescode">通讯录项目结构/
+├── types/
+│   ├── base.asn1      # 基础类型定义
+│   ├── contact.asn1   # 联系方式相关
+│   └── person.asn1    # 个人信息相关
+├── groups/
+│   ├── group.asn1     # 分组定义
+│   └── membership.asn1 # 关系定义
+└── main/
+    └── addressbook.asn1 # 主通讯录定义
+</code></pre>
+<h3 id="45_1">五、实践任务与练习（45分钟）</h3>
+<h4 id="51">5.1 任务一：扩展设计</h4>
+<p><strong>要求</strong>：在现有设计基础上，添加以下功能：</p>
+<ol>
+<li><strong>添加标签功能</strong></li>
+</ol>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 为联系人添加标签系统</span>
+<span class="n n-Type">Tag</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">id</span><span class="w">      </span><span class="kt">INTEGER</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">name</span><span class="w">    </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">SIZE</span><span class="w"> </span><span class="p">(</span><span class="mi">1</span><span class="o">..</span><span class="mi">20</span><span class="p">)),</span>
+<span class="w">    </span><span class="nv">color</span><span class="w">   </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"#[0-9A-Fa-f]{6}"</span><span class="p">)</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+
+<span class="c1">-- 为Person添加tags字段</span>
+<span class="c1">-- 思考：如何修改Person结构？</span>
+</code></pre>
+<ol>
+<li><strong>添加地址信息</strong></li>
+</ol>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 地址结构</span>
+<span class="n n-Type">Address</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">country</span><span class="w">     </span><span class="kt">IA5String</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="s">"China"</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">province</span><span class="w">    </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">city</span><span class="w">        </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">street</span><span class="w">      </span><span class="kt">IA5String</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">postalCode</span><span class="w">  </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"\\d{6}"</span><span class="p">)</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+</code></pre>
+<h4 id="52">5.2 任务二：约束优化</h4>
+<p><strong>要求</strong>：为现有设计添加更多约束条件：</p>
+<ol>
+<li><strong>邮箱验证</strong>：确保邮箱格式正确</li>
+</ol>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 修改ContactInfo中的email类型</span>
+<span class="n n-Type">EmailContact</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}"</span><span class="p">)</span>
+</code></pre>
+<ol>
+<li><strong>手机号验证</strong>：确保手机号格式</li>
+</ol>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="n n-Type">MobileContact</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kt">IA5String</span><span class="w"> </span><span class="p">(</span><span class="kd">PATTERN</span><span class="w"> </span><span class="s">"1[3-9]\\d{9}"</span><span class="p">)</span>
+</code></pre>
+<ol>
+<li><strong>日期范围</strong>：确保出生日期合理</li>
+</ol>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- 修改Person的birthdate字段</span>
+<span class="nv">birthdate</span><span class="w">   </span><span class="n n-Type">DATE</span><span class="w"> </span><span class="p">(</span><span class="kc">MIN</span><span class="w"> </span><span class="s">"1900-01-01"</span><span class="p">,</span><span class="w"> </span><span class="kc">MAX</span><span class="w"> </span><span class="n n-Type">CURRENT-DATE</span><span class="p">)</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+</code></pre>
+<h4 id="53">5.3 任务三：模块化重构</h4>
+<p><strong>要求</strong>：将现有的大模块拆分为多个小模块：</p>
+<ol>
+<li><strong>创建base.asn1模块</strong>：包含基础类型</li>
+<li><strong>创建contact.asn1模块</strong>：包含联系方式相关定义</li>
+<li><strong>创建person.asn1模块</strong>：包含个人信息定义</li>
+<li><strong>使用IMPORTS/EXPORTS</strong>：实现模块间依赖</li>
+</ol>
+<h3 id="30_1">六、最佳实践与调试（30分钟）</h3>
+<h4 id="61">6.1 语法检查工具</h4>
+<p><strong>推荐工具</strong>：
+1. <strong>ASN.1 Playground</strong>：在线语法检查
+2. <strong>asn1c编译器</strong>：本地编译检查
+3. <strong>文本编辑器插件</strong>：实时语法高亮</p>
+<p><strong>检查步骤</strong>：</p>
+<pre lang="bash"><code class="language-bash md-fencescode"><span class="c1"># 使用asn1c检查语法</span>
+asn1c<span class="w"> </span>-fskeletons-copy<span class="w"> </span>addressbook.asn1
+
+<span class="c1"># 常见错误</span>
+-<span class="w"> </span>缺少分号
+-<span class="w"> </span>类型未定义
+-<span class="w"> </span>循环引用
+-<span class="w"> </span>约束冲突
+</code></pre>
+<h4 id="62">6.2 设计验证方法</h4>
+<p><strong>验证清单</strong>：
+- [ ] 所有必填字段都有默认值或OPTIONAL标记
+- [ ] 枚举值范围合理
+- [ ] 字符串长度约束合理
+- [ ] 唯一性约束正确应用
+- [ ] 模块间依赖关系清晰
+- [ ] 向后兼容性考虑</p>
+<h4 id="63">6.3 性能优化建议</h4>
+<ol>
+<li><strong>编码大小优化</strong>：</li>
+<li>使用PER编码减少数据大小</li>
+<li>合理使用IMPLICIT标签</li>
+<li>
+<p>避免过多的OPTIONAL字段</p>
+</li>
+<li>
+<p><strong>解析效率优化</strong>：</p>
+</li>
+<li>常用字段放在前面</li>
+<li>减少嵌套层级</li>
+<li>使用整型代替字符串枚举</li>
+</ol>
+<h3 id="30_2">七、真实案例参考（30分钟）</h3>
+<h4 id="71-x509">7.1 X.509证书结构</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- X.509证书的简化版</span>
+<span class="n n-Type">Certificate</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">tbsCertificate</span><span class="w">      </span><span class="n n-Type">TBSCertificate</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">signatureAlgorithm</span><span class="w">  </span><span class="n n-Type">AlgorithmIdentifier</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">signatureValue</span><span class="w">      </span><span class="kt">BIT STRING</span>
+<span class="p">}</span>
+
+<span class="n n-Type">TBSCertificate</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">version</span><span class="w">         </span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="k">EXPLICIT</span><span class="w"> </span><span class="n n-Type">Version</span><span class="w"> </span><span class="kd">DEFAULT</span><span class="w"> </span><span class="nv">v1</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">serialNumber</span><span class="w">    </span><span class="n n-Type">CertificateSerialNumber</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">signature</span><span class="w">       </span><span class="n n-Type">AlgorithmIdentifier</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">issuer</span><span class="w">          </span><span class="n n-Type">Name</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">validity</span><span class="w">        </span><span class="n n-Type">Validity</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">subject</span><span class="w">         </span><span class="n n-Type">Name</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">subjectPublicKeyInfo</span><span class="w"> </span><span class="n n-Type">SubjectPublicKeyInfo</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">issuerUniqueID</span><span class="w">  </span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="n n-Type">UniqueIdentifier</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">subjectUniqueID</span><span class="w"> </span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="w"> </span><span class="k">IMPLICIT</span><span class="w"> </span><span class="n n-Type">UniqueIdentifier</span><span class="w"> </span><span class="kd">OPTIONAL</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">extensions</span><span class="w">      </span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="w"> </span><span class="k">EXPLICIT</span><span class="w"> </span><span class="n n-Type">Extensions</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>学习点</strong>：
+- 标签的使用：<code>[0] EXPLICIT</code>, <code>[1] IMPLICIT</code>
+- OPTIONAL字段的合理应用
+- 版本兼容性设计</p>
+<h4 id="72-ldap">7.2 LDAP协议数据结构</h4>
+<pre lang="asn1"><code class="language-asn1 md-fencescode"><span class="c1">-- LDAP协议的简化的部分定义</span>
+<span class="n n-Type">LDAPMessage</span><span class="w"> </span><span class="o">::=</span><span class="w"> </span><span class="kd">SEQUENCE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nv">messageID</span><span class="w">       </span><span class="n n-Type">MessageID</span><span class="p">,</span>
+<span class="w">    </span><span class="nv">protocolOp</span><span class="w">      </span><span class="kd">CHOICE</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nv">bindRequest</span><span class="w">     </span><span class="n n-Type">BindRequest</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">bindResponse</span><span class="w">    </span><span class="n n-Type">BindResponse</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">searchRequest</span><span class="w">   </span><span class="n n-Type">SearchRequest</span><span class="p">,</span>
+<span class="w">        </span><span class="nv">searchResponse</span><span class="w">  </span><span class="n n-Type">SearchResponse</span><span class="p">,</span>
+<span class="w">        </span><span class="c1">-- ... 其他操作</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="nv">controls</span><span class="w">        </span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="w"> </span><span class="n n-Type">Controls</span><span class="w"> </span><span class="kd">OPTIONAL</span>
+<span class="p">}</span>
+</code></pre>
+<p><strong>学习点</strong>：
+- CHOICE的合理使用
+- 消息ID的设计
+- 控制字段的可选性</p>
+<h3 id="_3">八、学习总结与检查清单</h3>
+<h4 id="81-5">8.1 第5天检查项</h4>
+<ul>
+<li>[ ] 能独立设计一个中等复杂度的数据结构</li>
+<li>[ ] 会合理使用各种约束条件</li>
+<li>[ ] 能把大模块拆分成小模块</li>
+<li>[ ] 理解如何保证向后兼容性</li>
+<li>[ ] 掌握ASN.1项目的最佳实践</li>
+</ul>
+<h4 id="82-5">8.2 5天学习成果总结</h4>
+<p><strong>掌握的核心技能</strong>：
+1. ✅ <strong>基础语法</strong>：7个核心类型 + 语法规则
+2. ✅ <strong>构造类型</strong>：SEQUENCE、CHOICE、SET的深入应用
+3. ✅ <strong>约束系统</strong>：范围、大小、枚举、模式等约束
+4. ✅ <strong>模块化设计</strong>：IMPORTS/EXPORTS、模块划分
+5. ✅ <strong>标签与编码</strong>：标签系统、编码规则、PER重点
+6. ✅ <strong>综合实践</strong>：完整项目设计、最佳实践</p>
+<p><strong>下一步学习建议</strong>：
+1. <strong>深入编码规则</strong>：特别是PER编码的细节
+2. <strong>实际协议分析</strong>：研究X.509、LDAP等真实协议
+3. <strong>工具链掌握</strong>：asn1c、Java ASN.1工具包等
+4. <strong>性能优化</strong>：编码大小、解析效率的优化</p>
+<h3 id="_4">九、常见问题解答</h3>
+<h4 id="q1">Q1：如何选择标签类型？</h4>
+<ul>
+<li><strong>UNIVERSAL</strong>：基础类型，很少需要手动指定</li>
+<li><strong>APPLICATION</strong>：应用特定，同一应用内保持唯一</li>
+<li><strong>PRIVATE</strong>：厂商特定，避免与其他厂商冲突</li>
+<li><strong>CONTEXT-SPECIFIC</strong>：最常见，用于区分同一结构中的不同字段</li>
+</ul>
+<h4 id="q2optional">Q2：OPTIONAL字段太多怎么办？</h4>
+<ul>
+<li>考虑使用CHOICE替代多个OPTIONAL</li>
+<li>将相关字段分组到嵌套结构中</li>
+<li>评估是否真的需要这么多可选字段</li>
+</ul>
+<h4 id="q3">Q3：如何保证向后兼容？</h4>
+<ol>
+<li>新字段添加在末尾</li>
+<li>使用标签区分版本</li>
+<li>新字段设置为OPTIONAL</li>
+<li>避免修改现有字段的类型</li>
+</ol>
+<h3 id="_5">十、资源推荐</h3>
+<h4 id="101">10.1 在线工具</h4>
+<ol>
+<li><strong>ASN.1 Playground</strong>：语法检查和在线编辑</li>
+<li><strong>ASN.1 Lab</strong>：编码查看和测试</li>
+<li><strong>asn1c在线文档</strong>：编译器使用指南</li>
+</ol>
+<h4 id="102">10.2 参考书籍</h4>
+<ol>
+<li><strong>《ASN.1 Complete》</strong>：全面参考书</li>
+<li><strong>《X.690标准文档》</strong>：编码规则官方文档</li>
+<li><strong>《GB/T 16262》</strong>：国家标准文档</li>
+</ol>
+<h4 id="103">10.3 开源项目</h4>
+<ol>
+<li><strong>asn1c项目</strong>：ASN.1到C代码编译器</li>
+<li><strong>BouncyCastle</strong>：Java加密库，包含ASN.1支持</li>
+<li><strong>pyasn1</strong>：Python ASN.1库</li>
+</ol>
+<hr />
+<h2 id="5">🎉 恭喜完成5天学习！</h2>
+<p><strong>你已经掌握了ASN.1的核心技能</strong>，现在可以：
+- 阅读和理解现有的ASN.1定义
+- 设计自己的数据结构
+- 应用约束保证数据有效性
+- 组织模块化的ASN.1项目</p>
+<p><strong>记住</strong>：实际工作中遇到具体需求时，再深入相关部分。保持"小步快跑，持续学习"的心态！</p>
+<p><strong>学习ASN.1的关键</strong>：动手实践 &gt; 理论学习！</p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

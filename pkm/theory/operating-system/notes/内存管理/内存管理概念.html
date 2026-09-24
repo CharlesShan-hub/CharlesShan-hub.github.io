@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>内存管理概念</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="_1">内存管理概念</h1>
+<p>2022.12.21</p>
+<div class="toc">
+<ul>
+<li><a href="#_1">内存管理概念</a><ul>
+<li><a href="#_2">内存管理的基本原理和要求</a><ul>
+<li><a href="#_3">程序的链接和装入</a></li>
+<li><a href="#_4">进程的内存映像</a></li>
+<li><a href="#_5">内存保护</a></li>
+<li><a href="#_6">内存共享</a></li>
+<li><a href="#_7">内存的分配与回收</a></li>
+<li><a href="#_8">小结</a></li>
+</ul>
+</li>
+<li><a href="#_9">连续分配管理方式</a><ul>
+<li><a href="#_10">单一连续分配</a></li>
+<li><a href="#_11">固定分区分配</a></li>
+<li><a href="#_12">动态分区分配</a></li>
+<li><a href="#_13">小结</a></li>
+</ul>
+</li>
+<li><a href="#_14">基本分页存储管理</a><ul>
+<li><a href="#_15">分页存储的几个基本概念</a></li>
+<li><a href="#_16">基本地址变换机构</a></li>
+<li><a href="#_17">具有快表的地址变换机构</a></li>
+<li><a href="#_18">两级页表</a></li>
+</ul>
+</li>
+<li><a href="#_19">基本分段存储管理</a></li>
+<li><a href="#_20">段页式管理</a></li>
+<li><a href="#_21">题目总结</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<h2 id="_2">内存管理的基本原理和要求</h2>
+<p>内存管理 （Memory Management）是操作系统设计中最重要和最复杂的内容之一。虽然计算机硬件技术一直在飞速发展，内存容量也在不断增大，但仍然不可能将所有用户进程和系统所需要的全部程序与数据放入主存，因此操作系统必须对内存空间进行合理的划分和有效的动态分配。<u>操作系统对内存的划分和动态分配，就是内存管理的概念</u>。</p>
+<p>有效的内存管理在多道程序设计中非常重要，它不仅可以方便用户使用存储器、提高内存利用率，还可以通过虚拟技术从逻辑上扩充存储器。</p>
+<p>内存管理的主要功能有：</p>
+<ul>
+<li><u>内存空间的分配与回收</u>。由操作系统完成主存储器空间的分配和管理，使程序员摆脱存储分配的麻烦，提高编程效率。</li>
+<li><u>地址转换</u>。在多道程序环境下，程序中的逻辑地址与内存中的物理地址不可能一致，因此存储管理必须提供地址变换功能，把逻辑地址转换成相应的物理地址。</li>
+<li><u>内存空间的扩充</u>。利用虚拟存储技术或自动覆盖技术，从逻辑上扩充内存。</li>
+<li><u>内存共享</u>。指允许多个进程访问内存的同一部分。例如，多个合作进程可能需要访问同一块数据，因此必须支持对内存共享区域进行受控访问。</li>
+<li><u>存储保扩</u>。保证各道作业在各自的存储空间内运行，互不干扰。</li>
+</ul>
+<p>在进行具体的内存管理之前，需要了解进程运行的基本原理和要求。</p>
+<h3 id="_3">程序的链接和装入</h3>
+<ol>
+<li><strong>编译链接与装入</strong></li>
+</ol>
+<p>创建进程首先要将程序和数据装入内存。将用户源程序变为可在内存中执行的程序，通常需要以下几个步骤：</p>
+<ul>
+<li><u>编译</u>。由编译程序将用户<u>源代码编译成</u>若干目标<u>模块</u>。</li>
+<li><u>链接</u>。由链接程序将编译后形成的一组目标<u>模块</u>及它们所需的库函数<u>链接在一起</u>，形成一个完整的装入模块。</li>
+<li>
+<p><u>装入</u>。由装入程序将装入模块<u>装入内存</u>运行。</p>
+</li>
+<li>
+<p><strong>三种链接方式</strong></p>
+</li>
+<li>
+<p><u>静态链接</u>：</p>
+</li>
+</ul>
+<p>程序运行之前，先将各目标模块及它们所需的库函数链接成一个完整的装配模块，以后不再拆开。将几个目标模块装配成一个装入模块时，需要解决两个问题：①修改相对地址，编译后的所有目标模块都是<u>从0开始的相对地址</u>，当链接成一个装入模块时要修改相对地址。②<u>变换外部调用符号</u>，将每个模块中所用的外部调用符号也都变换为相对地址。</p>
+<ul>
+<li><u>装入时动态链接</u>：</li>
+</ul>
+<p>将用户源程序编译后所得到的一组目标模块，在装入内存时，采用边装入边链接的方式。其优点是便于修改和更新，便于实现对目标模块的共享。</p>
+<ul>
+<li><u>运行时动态链接</u>：</li>
+</ul>
+<p>对某些目标模块的链接，是在程序执行中需要该目标模块时才进行的。凡在执行过程中未被用到的目标模块，都不会被调入内存和被链接到装入模块上。其优点是能加快程序的装入过程，还可节省大量的内存空间。</p>
+<ol>
+<li>
+<p><strong>三种装入方式</strong></p>
+</li>
+<li>
+<p><u>绝对装入</u>：</p>
+</li>
+</ol>
+<p>绝对装入方式只适用于<u>单道</u>程序环境。在编译时，若知道程序将驻留在内存的某个位置，则编译程序将产生绝对地址的目标代码。绝对装入程序按照装入模块中的地址，将程序和数据装入内存。由于程序中的<u>逻辑地址与实际内存地址完全相同</u>，因此不需对程序和数据的地址进行修改。
+  另外，程序中所用的绝对地址，可在编译或汇编时给出，也可由程序员直接赋予。而通常情况下在程序中采用的是符号地址，编译或汇编时再转换为绝对地址。</p>
+<ul>
+<li><u>可重定位装入</u>：</li>
+</ul>
+<p>在多道程序环境下，多个目标模块的起始地址通常都从0开始，程序中的其他地址都是相对于起始地址的，此时应采用可重定位装入方式。根据内存的当前情况，将装入模块装入内存的适当位置。在装入时对目标程序中指令和数据地址的修改过程称为重定位，又因为地址变换通常是在进程装入时一次完成的，故称为<u>静态重定位</u>，如图 3.2(a）所示。
+  一个作业装入内存时，必须给它分配要求的全部内存空间，若没有足够的内存，则无法装入。此外，作业一旦进入内存，整个运行期间就不能在内存中移动，也不能再申请内存空间。</p>
+<ul>
+<li><u>动态运行时装入</u>：</li>
+</ul>
+<p>也称<u>动态重定位</u>。程序在内存中若发生移动，则需要采用动态的装入方式。装入程序把装入模块装入内存后，并不立即把装入模块中的相对地址转换为绝对地址，而是把这种地址转换推迟到程序真正要执行时才进行。因此，装入内存后的所有地址均为相对地址。这种方式需要一个<u>重定位寄存器</u>的支持，如图 3.2（b)所示。
+  动态重定位的优点：<u>可以将程序分配到不连续的存储区</u>：在程序运行之前可以只装入部分代码即可投入运行，然后在程序运行期间，根据需要动态申请分配内存；便于程序段的共享．</p>
+<p><img alt="img" src="resources/pic.png" /></p>
+<h3 id="_4">进程的内存映像</h3>
+<ul>
+<li><u>代码段</u>：即程序的二进制代码，代码段是<u>只读</u>的，可以被多个进程共享。</li>
+<li><u>数据段</u>：即程序运行时加工处理的对象，包括<u>全局变量和静态变量</u>。</li>
+<li><u>进程控制块 （PCB)</u>：存放在系统区。操作系统通过 PCB 来控制和管理进程。</li>
+<li><u>堆</u>：用来存放动态分配的变量。通过调用 <u>malloc</u> 函数动态地<u>向高地址分配空间</u>。</li>
+<li><u>栈</u>：用来实现<u>函数</u>调用。从用户空间的最大地址往低地址方向增长。</li>
+<li>代码段和数据段在程序调入内存时就指定了大小，而堆和栈不一样。当调用像malloc 和 free这样的C标准库函数时，堆可以在运行时动态地扩展和收缩。用户栈在程序运行期间也可以动态地扩展和收缩，每次调用一个函数，栈就会增长；从一个函数返回时，栈就会收缩。</li>
+</ul>
+<p><img alt="img" src="resources/pic2.png" /></p>
+<h3 id="_5">内存保护</h3>
+<p>确保每个进程都有一个单独的内存空间。内存分配前，需要保护操作系统不受用户进程的响，同时保护用户进程不受其他用户进程的影响。内存保护可采取两种方法：</p>
+<p>1）在CPU 中设置一对<u>上、下限寄存器</u>，存放用户作业在主存中的下限和上限地址，每当CPU 要访问一个地址时，分别和两个寄存器的值相比，判断有无越界。</p>
+<p>2）采用<u>重定位寄存器（又称基地址寄存器）和界地址寄存器（又称限长寄存器）</u>来实现这种保护。重定位寄存器含最小的物理地址值，界地址寄存器含逻辑地址的最大值。内存管理机构动态地将逻辑地址与界地址寄存器进行比较，若未发生地址越界，则加上重定位寄存器的值后映射成物理地址，再送交内存单元。</p>
+<p>实现内存保护需要重定位寄存器和界地址寄存器，因此要注意两者的区别。重定位寄存器是用来“加”的，逻辑地址加上重定位寄存器中的值就能得到物理地址：界地址寄存器是用来“比”的，通过比较界地址寄存器中的值与逻辑地址的值来判断是否越界。</p>
+<p><u>加载重定位寄存器和界地址寄存器时必须使用特权指令</u>，只有操作系统内核才可以加载这两个存储器。这种方案允许操作系统内核修改这两个寄存器的值，而不允许用户程序修改。</p>
+<h3 id="_6">内存共享</h3>
+<p>不是所有的进程内存空间都适合共享，只有那些<u>只读</u>的区域才可以共享。<u>可重入代码又称纯代码</u>，是一种允许多个进程同时访问但不允许被任何进程修改的代码。但在实际执行时，也可以为每个进程配以局部数据区，把在执行中可能改变的部分复制到该数据区，这样，程序在执行时只需对该私有数据区中的内存进行修改，并不去改变共享的代码。</p>
+<p>下面通过一个例子来说明内存共享的实现方式。考虑一个可以同时容纳 40 个用户的多用户系统，他们同时执行一个文本编辑程序，若该程序有160KB 代码区 和40KB 数据区，则共需8000KB的内存空间来支持 40 个用户。如果 160KB 代码是可分享的纯代码，则不论是在分页系统中还是在分段系统中，整个系统只需保留一份副本即可，此时所需的内存空问仅为 40KBx40 + 160KB = 1760KB。对于分页系统，假设页面大小为 4KB，则代码区占用 40 个页面、数据区占用 10个页面。为实现代码共享，应在每个进程的页表中都建立 40 个页表项，它们都指向共享代码区的物理页号。此外，每个进程还要为自己的数据区建立 10 个页表项，指向私有数据区的物理页号。对于分段系统，由于是以段为分配单位的，不管该段有多大，都只需为该段设置一个段表项（指向共享代码段始址，以及段长 160KB）。由此可见，段的共享非常简单易行。</p>
+<p>此外，在第2章中我们介绍过基于共享内存的进程通信，由操作系统提供同步互斥工具。在本章的后面，还将介绍一种内存共享的实现——内存映射文件。</p>
+<h3 id="_7">内存的分配与回收</h3>
+<p>存储管理方式随着操作系统的发展而发展。在操作系统由单道向多道发展时，存储管理方式便由单一连续分配发展为固定分区分配。为了能更好地适应不同大小的程序要求，又从固定分区分配发展到动态分区分配。为了更好地提高内存的利用率，进而从连续分配方式发展到离散分配方式——页式存储管理。引入分段存储管理的目的，主要是为了满足用户在编程和使用方面的要求，其中某些要求是其他几种存储管理方式难以满足的。</p>
+<h3 id="_8">小结</h3>
+<blockquote>
+<p>精要总结</p>
+<ul>
+<li><strong>编译链接与装入</strong></li>
+<li><strong>编译</strong>：源代码变成机器码（很多模块）</li>
+<li><strong>链接</strong>：很多模块组成一个整体</li>
+<li><strong>装入</strong>：整体装入内存</li>
+<li><strong>链接方式</strong></li>
+<li><strong>静态链接</strong>：组成不可变化的整体（相对地址从0开始）</li>
+<li><strong>装入时动态链接</strong>：装入时动态链接（顾名思义）</li>
+<li><strong>运行时动态链接</strong>：程序执行时动态链接</li>
+<li><strong>装入方式</strong></li>
+<li><strong>绝对装入</strong>：逻辑地址与实际内存地址完全相同。“一就是一，二就是二，这不是欺负老实人嘛”</li>
+<li><strong>可重定位装入</strong>：静态重定位，地址变换装入时一次完成</li>
+<li><strong>动态运行时装入</strong>：动态重定位，可以将程序分配到不连续的存储区，需要重定位寄存器</li>
+<li><strong>进程的内存映像</strong></li>
+<li><strong>代码段</strong>：只读</li>
+<li><strong>数据段</strong>：全局变量与静态变量</li>
+<li><strong>PCB</strong></li>
+<li><strong>堆</strong>：malloc，从低地址向高地址</li>
+<li><strong>栈</strong>：函数，从高地址向低地址</li>
+<li><strong>内存保护</strong></li>
+<li><strong>上、下限寄存器</strong>：p∈[a,b] </li>
+<li><strong>重定位寄存器（基地址寄存器）、界地址寄存器（限长寄存器）</strong>：p∈[a,a+n]</li>
+<li><strong>内存共享</strong></li>
+<li>共享“纯代码”，数据部分在自己的进程中。共享的代码系统仅存一份，每个进程的页表项指向共享区域</li>
+<li><strong>内存的分配与回收</strong></li>
+</ul>
+</blockquote>
+<h2 id="_9">连续分配管理方式</h2>
+<h3 id="_10">单一连续分配</h3>
+<p>内存在此方式下分为系统区和用户区，<strong>系统区</strong>仅供<strong>操作系统</strong>使用，通常在<strong>低</strong>地址部分；在<strong>用户区</strong>内存中，仅有<strong>一道用户程序</strong>，即整个内存的用户空间由该程序独占。
+这种方式的优点是简单、无外部碎片，无须进行内存保护，因为内存中永远只有一道程序。缺点是只能用于单用户、单任务的操作系统中，有<strong>内部碎片</strong>，存储器的利用率极低。</p>
+<h3 id="_11">固定分区分配</h3>
+<p>固定分区分配是最简单的一种多道程序存储管理方式，它将用户内存空间划分为若干固定大小的区域，<u>每个分区只装入一道作业</u>。当有空闲分区时，便可再从外存的后备作业队列中选择适当大小的作业装入该分区，如此循环。在划分分区时有两种不同的方法。</p>
+<ul>
+<li><u>分区大小相等</u>。程序太小会造成浪费，程序太大又无法装入，缺乏灵活性。</li>
+<li><u>分区大小不等</u>。划分为多个较小的分区、适量的中等分区和少量大分区。为便手内存分配，通常将分区按大小排队，并为之建立一张<strong>分区说明表</strong>，其中各表项包括每个分区的始址、大小及状态。当有用户程序要装入时，便检索该表，以找到合适的分区给予分配并将其状态置为“已分配”，未找到合适分区时，则拒绝为该程序分配内存。</li>
+</ul>
+<p>这种方式存在两个问题：一是程序可能太大而放不进任何一个分区，这时就需要采用<strong>覆盖技术</strong>来使用内存空间；二是当程序小于固定分区大小时，也要占用一个完整的内存分区，这样分区内部就存在空间浪费，这种现象称为<strong>内部碎片</strong>。固定分区是可用于多道程序设计的最简单的存储分配，无外部碎片，但不能实现多进程共享一个主存区，所以存储空间利用率低。</p>
+<p>在固定分区分配中，为了便于分配，建立一张分区使用表，通常按分区大小排队，各表项包括每个分区的起始地址、大小及状态（是否已分配）。分配内存时，检索分区使用表，找到一个能满足要求且尚未分配的分区分配给装入程序，并将对应表项的状态置为“已分配”，若找不到这样的分区，则拒绝分配。回收内存时，只需将对应表项的状态置为“未分配”即可。</p>
+<p>分区说明表举例：</p>
+<p><img alt="img" src="resources/分区说明表.png" /></p>
+<h3 id="_12">动态分区分配</h3>
+<p>又称<strong>可变分区分配</strong>，它是在进程装入内存时，根据进程的实际需要，动态地为之分配内存，并使分区的大小正好适合进程的需要。因此，系统中分区的大小和数目是可变的。</p>
+<p>如图所示，系统有 64MB 内存空间，其中低 8MB 固定分配给操作系统，其余为用户可用内存。开始时装入前三个进程，它们分别分配到所需的空间后，内存仅剩 4MB，进程4 无法装入。在某个时刻，内存中没有一个就绪进程，CPU 出现空闲，操作系统就换出进程2，换入进程4。由于进程4 比进程2小，这样在主存中就产生了一个6MB 的内存块。之后 CPU 又出现空闲，需要换入进程2，而主存无法容纳进程2，操作系统就换出进程 1，换入进程2。</p>
+<p><img alt="IMG_47AF442F5322-1" src="resources/动态分区分配.png" /></p>
+<p>动态分区在开始时是很好的，但随着时间的推移，内存中会产生越来越多小的内存块，内存的利用率也随之下降。这些小的内存块称为<strong>外部碎片</strong>，它存在于所有分区的外部，这与固定分区中的内部碎片正好相对。克服外部碎片可以通过<strong>紧凑技术</strong>来解决，即操作系统不时地对进程进行移动和整理。但这需要动态重定位奇存器的支持，且相对费时。 紧凑的过程实际上类似于 Windows系统中的磁盘碎片整理程序，只不过后者是对外存空间的紧凑在进程装入或换入主存时，若内存中有多个足够大的空闲块，则操作系统必须确定分配哪个内存块给讲程使用这就是动态分区的分配策略考虑以下几种算法：</p>
+<ul>
+<li><strong>首次适应(First Fit) 算法</strong>。空闲分区以地址递增的次序链接。分配内存时，从链首开始顺序查找，找到大小能满足要求的第一个空闲分区分配给作业。</li>
+<li><strong>邻近适应(Next Fit） 算法</strong>。又称循环首次适应算法，由首次适应算法演变而成。不同之处是，<u>分配内存时从上次查找结束的位置开始继续查找</u>。</li>
+<li><strong>最佳适应（Best Fit） 算法</strong>。空闲分区按容量递增的次序形成空闲分区链，找到第一个能满足要求且最小的空闲分区分配给作业，避免“大材小用”</li>
+<li><strong>最坏适应(Worst Fit) 算法</strong>。空闲分区以容量递减的次序链接，找到第一个能满足要求的，即最大的分区，从中分割一部分存储空间给作业。</li>
+<li>首次适应算法最简单，通常也是最好和最快的。不过，首次适应算法会使得内存的低地址部分出现很多小的空闲分区，而每次分配查找时都要经过这些分区，因此增加了开销。</li>
+<li>邻近适应算法试图解决这个问题。但它常常导致在内存空间的尾部（因为在一遍扫描中，内存前面部分使用后再释放时，不会参与分配）分裂成小碎片。通常比首次适应算法要差。</li>
+<li>最佳适应算法量然称为“最佳”，但是性能通常很差，因为每次最佳的分配会留下很小的难以利用的内存块，会产生最多的外部碎片。</li>
+<li>最坏适应算法与最佳适应算法相反，它选择最大的可用块，这看起来最不容易产生碎片，但是却把最大的连续内存划分开，会很快导致没有可用的大内存块，因此性能也非常差。</li>
+<li>（四个性能都差😭😁🍮🇩🇪哭笑不得）</li>
+</ul>
+<p>在动态分区分配中，与固定分区分配类似，设置一张<strong>空闲分区链（表)</strong>，并按始址排序。分配内存时，检索空闲分区链，找到所需的分区，若其大小大于请求大小，便从该分区中按请求大小分割一块空间分配给装入进程（若剩余部分小到不足以划分，则无须分割），余下部分仍留在空闲分区链中。回收内存时，系统根据回收分区的始址，从空闲分区链中找到相应的插入点，此时可能出现四种情况：</p>
+<p>①回收区与插入点的前一空闲分区相邻，将这两个分区合并，并修改前分区表项的大小为两者之和</p>
+<p>②回收区与插入点的后一空闲分区相邻，将这两个分区合并，并修改后一分区表项的始址和大小</p>
+<p>③回收区同时与插入点的前、后两个分区相邻，此时将这三个分区合并，修改前一分区表项的大小为三者之和，取消后一分区表项</p>
+<p>④回收区没有相邻的空闲分区，此时应为回收区新建一个表项，填写始址和大小，并插入空闲分区链。</p>
+<h3 id="_13">小结</h3>
+<blockquote>
+<p>精要总结：</p>
+<ul>
+<li>
+<p>单一连续分配：单道程序，内部碎片</p>
+</li>
+<li>
+<p>固定分区分配：最简单的多道程序，内部碎片</p>
+</li>
+<li>
+<p>动态分区分配：外部碎片</p>
+</li>
+<li>首次适应(First Fit) 算法</li>
+<li>邻近适应(Next Fit) 算法:（从上次查找结束的位置继续查找的First Fit）</li>
+<li>最佳适应(Best Fit)算法：找最小块</li>
+<li>
+<p>最坏适应(Worst Fit) 算法：找最大块</p>
+</li>
+<li>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;"></th>
+<th style="text-align: center;">内部碎片</th>
+<th style="text-align: left;">外部碎片</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">固定分区分配</td>
+<td style="text-align: center;">是</td>
+<td style="text-align: left;">否</td>
+</tr>
+<tr>
+<td style="text-align: right;">可变分区分配</td>
+<td style="text-align: center;">否</td>
+<td style="text-align: left;">是</td>
+</tr>
+<tr>
+<td style="text-align: right;">页式分配</td>
+<td style="text-align: center;">是</td>
+<td style="text-align: left;">否</td>
+</tr>
+<tr>
+<td style="text-align: right;">段式分配</td>
+<td style="text-align: center;">否</td>
+<td style="text-align: left;">是</td>
+</tr>
+<tr>
+<td style="text-align: right;">段页式分配</td>
+<td style="text-align: center;">是</td>
+<td style="text-align: left;">否（内存被分成了页框</td>
+</tr>
+</tbody>
+</table>
+</li>
+</ul>
+</blockquote>
+<h2 id="_14">基本分页存储管理</h2>
+<h3 id="_15">分页存储的几个基本概念</h3>
+<p>页面和页面大小</p>
+<p>页号 = 逻辑地址 / 页面长度</p>
+<p>页内偏移量 = 逻辑地址 % 页面长度</p>
+<p>物理地址 = 页面始址 + 页内偏移量</p>
+<p>逻辑地址 = [页号(k位)，页内偏移量(m位)]</p>
+<p>页面数量 = 2^k个</p>
+<p>页面大小 = 2^m个内存单元</p>
+<blockquote>
+<p>[页号(k位)，页内偏移量(m位)] -&gt; 拿到前k位，去找页表换成页面始址。</p>
+</blockquote>
+<h3 id="_16">基本地址变换机构</h3>
+<ol>
+<li>计算页号与页内偏移量</li>
+<li>判断是否越界</li>
+<li>计算页表项地址：页表始址+页号x页表项长度</li>
+<li>得到内容+偏移量 = 物理地址</li>
+</ol>
+<p><img alt="image-20221221195149882" src="resources/image-20221221195149882.png" /></p>
+<h3 id="_17">具有快表的地址变换机构</h3>
+<p>快表内部是页表的一些数据的备份。快表加入后，CPU查询页表前，先查快表（也可能快表页表一起查）。</p>
+<p>注意：访问快表（未命中）+访问页表+访问内存，然后将页表内容复制到快表中。这个过程是<strong>两次访存</strong>，如果快表命中，可以节约一次访存时间。</p>
+<p><img alt="image-20221221195722643" src="resources/image-20221221195722643.png" /></p>
+<h3 id="_18">两级页表</h3>
+<ul>
+<li>单级页表存在什么问题？</li>
+</ul>
+<p>问题一：页表必须连续存放，因此当页表很大时，需要占用很多个连续的页框。
+  问题二：没有必要让整个页表常驻内存，因为进程在一段时间内可能只需要访问某几个特定的页面</p>
+<ul>
+<li>
+<p>两级页表的原理、逻辑地址结构？</p>
+</li>
+<li>
+<p>页目录表（页表的页表）</p>
+</li>
+<li>
+<p><strong>逻辑地址 = [一级页号 | 二级页号 | 页内偏移量]</strong></p>
+</li>
+<li>
+<p>如何实现地址变换？ </p>
+</li>
+</ul>
+<p>使用的时候，一级页号去找页目录表，得到页表地址然后拿二级页号去找物理地址，然后那物理地址加上页内偏移量。</p>
+<h2 id="_19">基本分段存储管理</h2>
+<ol>
+<li>用户编程的时候指定段名，每段大小不一样。CPU将段名转化成地址。</li>
+<li>逻辑地址：[段号 ｜ 段内地址]</li>
+<li>段表：[段号、<strong>段长</strong>、基址]</li>
+<li>运行的时候有两次检查越界：第一次是检查段号是否越界，<strong>第二次检查段内地址是否越界</strong></li>
+</ol>
+<h2 id="_20">段页式管理</h2>
+<ol>
+<li>
+<p>分页分段的优缺点</p>
+</li>
+<li>
+<p>分页：内存利用率高，不会产生外部碎片，产生少量内部碎片。但是不方便按照逻辑模块进行信息保护与共享</p>
+</li>
+<li>
+<p>分段：方便按照逻辑模块实现信息的共享与保护。如果段长过大，其分配很大的连续空间不方便管理。会产生外部碎片。</p>
+</li>
+<li>
+<p>段页式管理的方法</p>
+</li>
+<li>
+<p>先分段，每段再分页</p>
+</li>
+<li>
+<p>逻辑地址：[段号 | 页号 | 页内偏移量]</p>
+<p>其中用户编程的角度看，页号+页内偏移量组成了段内地址。是系统对段内地址进行了分页，分页过程用户不可见。</p>
+</li>
+</ol>
+<h2 id="_21">题目总结</h2>
+<ol>
+<li>在可变分区分配方案中，某一进程完成后，系统回收其主存空间并与相邻空闲区含并，为此需修改空闲区表，造成空闲区数减1的情況是（）。
+   A. 无上邻空闲区也无下邻空闲区
+   B. 有上邻空闲区但无下邻空闲区
+   C. 有下邻空闲区但无上邻空闲区
+   D. 有上邻空闲区也有下邻空闲区</li>
+</ol>
+<p>答案：【D】。空闲区数减1，说明前后都有空闲区。</p>
+<ol>
+<li>（）方式可以采用静态重定位</li>
+</ol>
+<p>A 固定分区 B 可变分区 C 页式 D 段式</p>
+<p>答案：【A】</p>
+<ol>
+<li>不会产生内部碎片的是（）</li>
+</ol>
+<p>A 分页 B 分段 C 段页 D 固定</p>
+<p>答案：【B】</p>
+<blockquote>
+<p>分页就会有内部碎片</p>
+</blockquote>
+<ol>
+<li>重定位存做管理方式，应（）。
+   A. 在整个系统中设置一个重定位寄存器
+   B. 为每道程序设置一个重定位寄存器
+   C.为每道程序设置两个重定位寄存器
+   D.为每道程序和数据都设置一个重定位寄存器</li>
+</ol>
+<p>答案：【A】</p>
+<ol>
+<li>对外存对换区的管理应以（），为主要目标：
+   A 提高系统吞吐量
+   B. 提高存储空间的利用率
+   C.降低存储费用
+   D.提高换入、换出速度</li>
+</ol>
+<p>答案：【D】</p>
+<ol>
+<li>引入段式存体管理方式，主要是为了更好地满足用户的一系列要求。下西选项中不属于这一系列要求的是（）.
+   A. 方便操作
+   C共享和保护
+   B方便编程
+   D.动态链接和增长</li>
+</ol>
+<p>答案：【A】引入段式存储管理方式，主要是为了满足用户的下列要求：<u>方便编程、分段共享、分段保护、动态链接和动态增长</u>。</p>
+<ol>
+<li>（）存储管理方式提供<strong>一维地址结构</strong>。
+   A. 分段
+   B.分页
+   C.分段和段页式
+   D. 以上答案都不正确</li>
+</ol>
+<p>答案：【B】分页存储管理中，作业地址空间是一维的，即单一的线性地址空间，程序员只需要一个记忆符来表示地址。在分段存储分配管理中，段之间是独立的，而且段长不定长，而页长是固定的因此作业地址空间是二维的，程序员在标识一个地址时，既需给出段名，又需给出段内地址。简言之，确定一个地址需要几个参数，作业地址空间就是几维的。</p>
+<ol>
+<li>操作系统来用分页存储管理方式（）。
+   A. 每个进程拥有一张页表，且进程的页表驻留在内存中
+   B. 每个进程拥有一张页表，但只有执行进程的页表驻留在内存中
+   C.所有进程共享一张页表，以节约有限的内存空间，但页表必须驻留在内存中
+   D.所有进程共享一张页表，只有页表中当前使用的页面必须驻留在内存中，以最大限度地节省有限的内存空间</li>
+</ol>
+<p>答案：【A】</p>
+<ol>
+<li>
+<p>以下存储管理方式中，会产生内部碎片的是(）。
+   I. 分段虛拟存储管理
+   II. 段页式分区管理
+   III. 分页虛拟存储管理
+   IV. 固定式分区管理
+   答案：【2，3，4】</p>
+</li>
+<li>
+<p>【2009统考真题】分区分配内存管理方式的主要保护措施是（）。
+    A. 界地址保护
+    B. 程序代码保护
+    C. 数据保护
+    D. 栈保护</p>
+<p>答案：【A】</p>
+</li>
+<li>
+<p>【2011统考真题】在虚拟内存管理中，地址变换机构将逻辑地址变换为物理地址，形成概逻辑地址的阶段是（）</p>
+<p>答案：【链接阶段】</p>
+<p>https://www.nowcoder.com/questionTerminal/49f353d2fd124c5ba66e32f90587da5c</p>
+</li>
+<li>
+<p>【2014年统考真题】写列选项中，属于多级页表的优点的是</p>
+<p>A. 加快地址变换速度</p>
+<p>B. 减少却也中断次数</p>
+<p>C. 减少页表项所展字节数</p>
+<p>D. 减少也表所占的连续内存空间</p>
+<p>答案：【C】</p>
+</li>
+<li>
+<p>【2019 统考真题】在分段存储管理系统中，用共享段表描迷所有被共享的段。若进程P1和P2,共享段S，则下列叙述中，错误的是（）。
+    A. 在物理内存中仅保存一份段S的内容
+    B. 段S在P1和P2中应该具有相同的段号
+    C. P1和已共享段S在共享段表中的段表项
+    D. P1和P2都不再使用段S时才回收段S 所占的内存空间</p>
+<p>答案：【B】</p>
+<p>段的共享是通过两个作业的段表中相应表项指向被共享的段的同一个物理副本来实现的，因此在内存中仅保存一份段S的内容，A正确。段S对于进程P，P,来说，使用位置可能不同，所以在不同进程中的逻辑段号可能不同，B错误。段表项存放的是段的物理地址（包括段姶址和段长度），对于共享段§来说物理地址唯一，C正确。为了保证进程可以顺利使用段S，段S必须确保在没有任何进程使用它（可在段表项中设置共享进程计数）后才能被删除，D正确。</p>
+<blockquote>
+<p>段号是逻辑地址对应过来的</p>
+<p>段表项是表明物理地址的</p>
+</blockquote>
+</li>
+</ol>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

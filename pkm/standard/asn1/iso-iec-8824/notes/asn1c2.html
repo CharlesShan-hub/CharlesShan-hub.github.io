@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>asn1c2</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="iec-61850-mms-asn1-c">IEC 61850 MMS ASN.1 转换 C 快速指南</h1>
+<h2 id="_1">已完成的工作</h2>
+<ol>
+<li>✅ 使用 asn1c v0.9.21 将 <code>mms.asn</code> 转换为 C 代码</li>
+<li>✅ 解决 Windows/MSYS2 环境所有编译问题</li>
+<li>✅ 编译完成：0 错误，0 警告</li>
+<li>✅ 生成 68 个 <code>.o</code> 对象文件</li>
+</ol>
+<h2 id="_2">核心问题与解决方案</h2>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>解决方案</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bool 字段冲突</td>
+<td><code>-Dbool=mms_bool</code></td>
+<td>GCC -std=gnu11 下 bool 是关键字</td>
+</tr>
+<tr>
+<td>Windows symlink</td>
+<td>手动复制骨架文件</td>
+<td>复制 <code>asn1c/skeletons/</code> 下所有文件</td>
+</tr>
+<tr>
+<td>ntohl 未定义</td>
+<td><code>-lws2_32</code></td>
+<td>链接 Windows Socket 库</td>
+</tr>
+<tr>
+<td>POSIX API 缺失</td>
+<td>排除 <code>GeneralizedTime.c</code> <code>UTCTime.c</code></td>
+<td>不影响 MMS 核心功能</td>
+</tr>
+</tbody>
+</table>
+<h2 id="10-asn1c">1.0 从asn1文件生成c</h2>
+<p>（技术备份，后边有更新的脚本，这个版本不能进行静态代码库的打包）</p>
+<pre lang="powershell"><code class="language-powershell md-fencescode"><span class="c"># 1. 进入 mms_c 目录</span>
+<span class="nb">cd </span><span class="n">d</span><span class="p">:\</span><span class="n">program</span><span class="p">\</span><span class="n">msys64</span><span class="p">\</span><span class="n">home</span><span class="p">\</span><span class="n">17428</span><span class="p">\</span><span class="n">temp</span><span class="p">\</span><span class="n">mms_c</span>
+
+<span class="c"># 2. 编译所有代码</span>
+<span class="p">.\</span><span class="n">build_mms</span><span class="p">.</span><span class="n">ps1</span>
+
+<span class="c"># 3. 在您的项目中使用</span>
+<span class="n">gcc</span> <span class="n">-I</span><span class="p">./</span><span class="n">mms_c</span> <span class="n">your_app</span><span class="p">.</span><span class="n">c</span> <span class="n">mms_c</span><span class="p">/*.</span><span class="n">o</span> <span class="n">-lws2_32</span> <span class="n">-Dbool</span><span class="p">=</span><span class="n">mms_bool</span>
+</code></pre>
+<p><code>build_mms.ps1</code></p>
+<pre lang="powershell"><code class="language-powershell md-fencescode"><span class="c"># IEC 61850 MMS ASN.1 C 代码构建脚本 (Windows/MSYS2)</span>
+<span class="c"># 针对 Windows UCRT/MSYS2 环境，解决 asn1c 生成代码的编译问题</span>
+
+<span class="nv">$env:PATH</span> <span class="p">=</span> <span class="s2">"D:\program\msys64\ucrt64\bin;"</span> <span class="p">+</span> <span class="nv">$env:PATH</span>
+
+<span class="c"># 需要排除的文件（POSIX API 在 Windows 上不可用）</span>
+<span class="nv">$EXCLUDE</span> <span class="p">=</span> <span class="p">@(</span><span class="s2">"converter-sample.c"</span><span class="p">,</span> <span class="s2">"GeneralizedTime.c"</span><span class="p">,</span> <span class="s2">"UTCTime.c"</span><span class="p">)</span>
+
+<span class="c"># 获取所有需要编译的 .c 文件</span>
+<span class="nv">$c_files</span> <span class="p">=</span> <span class="p">(</span><span class="nb">Get-ChildItem</span> <span class="s2">"."</span> <span class="n">-Filter</span> <span class="s2">"*.c"</span> <span class="p">|</span> <span class="nb">Where-Object</span> <span class="p">{</span> <span class="nv">$_</span><span class="p">.</span><span class="n">Name</span> <span class="n">-notin</span> <span class="nv">$EXCLUDE</span> <span class="p">}</span> <span class="p">|</span> <span class="k">ForEach</span><span class="n">-Object</span> <span class="p">{</span> <span class="nv">$_</span><span class="p">.</span><span class="n">Name</span> <span class="p">})</span> <span class="n">-join</span> <span class="s2">" "</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="nv">$c_files</span><span class="p">.</span><span class="n">Length</span> <span class="o">-eq</span> <span class="n">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">Write-Host</span> <span class="s2">"错误：未找到 .c 文件"</span> <span class="n">-ForegroundColor</span> <span class="n">Red</span>
+    <span class="n">exit</span> <span class="n">1</span>
+<span class="p">}</span>
+
+<span class="c"># 编译命令</span>
+<span class="c"># 关键：-Dbool=mms_bool 解决 bool 字段名与 GCC 关键字冲突问题</span>
+<span class="c"># -lws2_32 链接 Windows Socket 库（ntohl 等函数）</span>
+<span class="nv">$cmd</span> <span class="p">=</span> <span class="s2">"gcc -I. -c $c_files -Dbool=mms_bool -Wall -Wno-unused-variable -Wno-pointer-to-int-cast -Wno-tautological-compare -Wno-unused-value"</span>
+
+<span class="nb">Write-Host</span> <span class="s2">"正在编译 MMS ASN.1 C 代码..."</span> <span class="n">-ForegroundColor</span> <span class="n">Cyan</span>
+<span class="nb">Write-Host</span> <span class="s2">"命令: $cmd"</span> <span class="n">-ForegroundColor</span> <span class="n">Gray</span>
+
+<span class="c"># 执行编译</span>
+<span class="nb">Invoke-Expression</span> <span class="s2">"$cmd 2&gt;&amp;1"</span> <span class="p">|</span> <span class="k">ForEach</span><span class="n">-Object</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nv">$_</span> <span class="o">-match</span> <span class="s2">"error|错误"</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nb">Write-Host</span> <span class="nv">$_</span> <span class="n">-ForegroundColor</span> <span class="n">Red</span>
+    <span class="p">}</span> <span class="k">elseif</span> <span class="p">(</span><span class="nv">$_</span> <span class="o">-match</span> <span class="s2">"warning|警告"</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nb">Write-Host</span> <span class="nv">$_</span> <span class="n">-ForegroundColor</span> <span class="n">Yellow</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="nb">Write-Host</span> <span class="nv">$_</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c"># 检查编译结果</span>
+<span class="nv">$object_count</span> <span class="p">=</span> <span class="p">(</span><span class="nb">Get-ChildItem</span> <span class="n">-Filter</span> <span class="s2">"*.o"</span> <span class="p">|</span> <span class="nb">Measure-Object</span><span class="p">).</span><span class="n">Count</span>
+<span class="nb">Write-Host</span> <span class="s2">"</span><span class="se">`n</span><span class="s2">编译完成，生成 $object_count 个 .o 文件"</span> <span class="n">-ForegroundColor</span> <span class="n">Green</span>
+
+<span class="c"># 创建静态库（可选）</span>
+<span class="nb">Write-Host</span> <span class="s2">"</span><span class="se">`n</span><span class="s2">创建静态库 mms_c.a ..."</span> <span class="n">-ForegroundColor</span> <span class="n">Cyan</span>
+<span class="nv">$ar_cmd</span> <span class="p">=</span> <span class="s2">"ar rcs mms_c.a *.o"</span>
+<span class="nb">Invoke-Expression</span> <span class="s2">"$ar_cmd 2&gt;&amp;1"</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="nb">Test-Path</span> <span class="s2">"mms_c.a"</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$lib_size</span> <span class="p">=</span> <span class="p">(</span><span class="nb">Get-Item</span> <span class="s2">"mms_c.a"</span><span class="p">).</span><span class="n">Length</span> <span class="p">/</span> <span class="n">1KB</span>
+    <span class="nb">Write-Host</span> <span class="s2">"静态库创建成功: mms_c.a (</span><span class="p">$(</span><span class="no">[math]</span><span class="p">::</span><span class="n">Round</span><span class="p">(</span><span class="nv">$lib_size</span><span class="p">,</span> <span class="n">2</span><span class="p">))</span><span class="s2"> KB)"</span> <span class="n">-ForegroundColor</span> <span class="n">Green</span>
+<span class="p">}</span>
+
+<span class="c"># 验证编译结果</span>
+<span class="nb">Write-Host</span> <span class="s2">"</span><span class="se">`n</span><span class="s2">验证关键头文件..."</span> <span class="n">-ForegroundColor</span> <span class="n">Cyan</span>
+<span class="k">if</span> <span class="p">(</span><span class="nb">Test-Path</span> <span class="s2">"MMSpdu.h"</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">Write-Host</span> <span class="s2">"✓ MMSpdu.h 存在 - 主 PDU 定义"</span> <span class="n">-ForegroundColor</span> <span class="n">Green</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="p">(</span><span class="nb">Test-Path</span> <span class="s2">"Data.h"</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">Write-Host</span> <span class="s2">"✓ Data.h 存在 - 数据类型定义"</span> <span class="n">-ForegroundColor</span> <span class="n">Green</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="p">(</span><span class="nb">Test-Path</span> <span class="s2">"constr_SEQUENCE.h"</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">Write-Host</span> <span class="s2">"✓ constr_SEQUENCE.h 存在 - ASN.1 结构支持"</span> <span class="n">-ForegroundColor</span> <span class="n">Green</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="p">(</span><span class="nb">Test-Path</span> <span class="s2">"per_encoder.h"</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">Write-Host</span> <span class="s2">"✓ per_encoder.h 存在 - PER 编码器"</span> <span class="n">-ForegroundColor</span> <span class="n">Green</span>
+<span class="p">}</span>
+<span class="k">if</span> <span class="p">(</span><span class="nb">Test-Path</span> <span class="s2">"per_decoder.h"</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">Write-Host</span> <span class="s2">"✓ per_decoder.h 存在 - PER 解码器"</span> <span class="n">-ForegroundColor</span> <span class="n">Green</span>
+<span class="p">}</span>
+
+<span class="nb">Write-Host</span> <span class="s2">"</span><span class="se">`n</span><span class="s2">构建完成！"</span> <span class="n">-ForegroundColor</span> <span class="n">Cyan</span>
+<span class="nb">Write-Host</span> <span class="s2">"生成的 C 代码已准备就绪，可用于您的 IEC 61850 MMS 项目。"</span> <span class="n">-ForegroundColor</span> <span class="n">Cyan</span>
+<span class="nb">Write-Host</span> <span class="s2">""</span>
+<span class="nb">Write-Host</span> <span class="s2">"使用说明："</span> <span class="n">-ForegroundColor</span> <span class="n">Yellow</span>
+<span class="nb">Write-Host</span> <span class="s2">"1. 在您的项目中包含 mms_c/ 目录中的所有 .h 文件"</span> <span class="n">-ForegroundColor</span> <span class="n">White</span>
+<span class="nb">Write-Host</span> <span class="s2">"2. 链接时使用: -L/path/to/mms_c -lmms_c -lws2_32"</span> <span class="n">-ForegroundColor</span> <span class="n">White</span>
+<span class="nb">Write-Host</span> <span class="s2">"3. 或者直接使用编译好的 .o 文件: gcc -I/path/to/mms_c your_app.c *.o -lws2_32"</span> <span class="n">-ForegroundColor</span> <span class="n">White</span>
+<span class="nb">Write-Host</span> <span class="s2">"4. 关键编译标志: -Dbool=mms_bool (必须添加！)"</span> <span class="n">-ForegroundColor</span> <span class="n">White</span>
+</code></pre>
+<h2 id="20-asn1cdll">2.0 asn1生成c并打包dll</h2>
+<p>下边第二个脚本我进行了简化，从asn1文件，编译成c文件，然后打包成动态链接库，方便后续java调用</p>
+<pre lang="powershell"><code class="language-powershell md-fencescode"><span class="c"># ASN.1 → DLL 构建脚本</span>
+<span class="c"># 一键从 ASN.1 文件生成可用的 DLL</span>
+
+<span class="c"># ============ 配置参数 ============</span>
+<span class="nv">$asn1_file</span> <span class="p">=</span> <span class="s2">"D:\program\msys64\home\17428\temp\mms.asn"</span>
+<span class="nv">$asn1c_path</span> <span class="p">=</span> <span class="s2">"D:\program\asn1c\bin\asn1c.exe"</span>
+<span class="nv">$skeletons_dir</span> <span class="p">=</span> <span class="s2">"D:\program\asn1c\skeletons"</span>
+<span class="nv">$output_dir</span> <span class="p">=</span> <span class="s2">"D:\program\msys64\home\17428\temp\mms_dll_output"</span>
+
+<span class="nv">$env:PATH</span> <span class="p">=</span> <span class="s2">"D:\program\msys64\ucrt64\bin;"</span> <span class="p">+</span> <span class="nv">$env:PATH</span>
+
+<span class="c"># ============ 清理输出目录 ============</span>
+<span class="nb">Write-Host</span> <span class="s2">"清理输出目录..."</span> <span class="n">-ForegroundColor</span> <span class="n">Yellow</span>
+<span class="k">if</span> <span class="p">(</span><span class="nb">Test-Path</span> <span class="nv">$output_dir</span><span class="p">)</span> <span class="p">{</span> <span class="nb">Remove-Item</span> <span class="nv">$output_dir</span> <span class="n">-Recurse</span> <span class="n">-Force</span> <span class="p">}</span>
+<span class="nb">New-Item</span> <span class="n">-ItemType</span> <span class="n">Directory</span> <span class="n">-Path</span> <span class="nv">$output_dir</span> <span class="p">|</span> <span class="nb">Out-Null</span>
+
+<span class="c"># ============ 生成 C 代码 ============</span>
+<span class="nb">Write-Host</span> <span class="s2">"生成 C 代码..."</span> <span class="n">-ForegroundColor</span> <span class="n">Yellow</span>
+<span class="nv">$gen_cmd</span> <span class="p">=</span> <span class="s2">"$asn1c_path -gen-PER -pdu=all -S $skeletons_dir -D $output_dir $asn1_file"</span>
+<span class="nb">Invoke-Expression</span> <span class="nv">$gen_cmd</span> <span class="n">2</span><span class="p">&gt;&amp;</span><span class="n">1</span> <span class="p">|</span> <span class="nb">Out-Null</span>
+
+<span class="c"># ============ 复制骨架文件 ============</span>
+<span class="nb">Write-Host</span> <span class="s2">"复制骨架文件..."</span> <span class="n">-ForegroundColor</span> <span class="n">Yellow</span>
+<span class="nb">Copy-Item</span> <span class="s2">"$skeletons_dir\*.c"</span> <span class="nv">$output_dir</span>
+<span class="nb">Copy-Item</span> <span class="s2">"$skeletons_dir\*.h"</span> <span class="nv">$output_dir</span>
+
+<span class="c"># ============ 编译所有 .c 文件 ============</span>
+<span class="nb">Set-Location</span> <span class="nv">$output_dir</span>
+
+<span class="nb">Write-Host</span> <span class="s2">"编译所有 C 文件..."</span> <span class="n">-ForegroundColor</span> <span class="n">Yellow</span>
+<span class="nv">$exclude_files</span> <span class="p">=</span> <span class="s2">"converter-sample.c"</span><span class="p">,</span> <span class="s2">"GeneralizedTime.c"</span><span class="p">,</span> <span class="s2">"UTCTime.c"</span>
+<span class="nv">$c_files</span> <span class="p">=</span> <span class="nb">Get-ChildItem</span> <span class="n">-Filter</span> <span class="s2">"*.c"</span> <span class="p">|</span> <span class="nb">Where-Object</span> <span class="p">{</span> <span class="nv">$_</span><span class="p">.</span><span class="n">Name</span> <span class="n">-notin</span> <span class="nv">$exclude_files</span> <span class="p">}</span>
+<span class="nv">$c_file_names</span> <span class="p">=</span> <span class="p">(</span><span class="nv">$c_files</span> <span class="p">|</span> <span class="k">ForEach</span><span class="n">-Object</span> <span class="p">{</span> <span class="nv">$_</span><span class="p">.</span><span class="n">Name</span> <span class="p">})</span> <span class="n">-join</span> <span class="s2">" "</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="nv">$c_file_names</span><span class="p">.</span><span class="n">Length</span> <span class="o">-eq</span> <span class="n">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nb">Write-Host</span> <span class="s2">"错误：未找到 .c 文件"</span> <span class="n">-ForegroundColor</span> <span class="n">Red</span>
+    <span class="n">exit</span> <span class="n">1</span>
+<span class="p">}</span>
+
+<span class="nv">$compile_cmd</span> <span class="p">=</span> <span class="s2">"gcc -I. -c $c_file_names -Dbool=mms_bool -fPIC -Wall"</span>
+<span class="nb">Invoke-Expression</span> <span class="nv">$compile_cmd</span> <span class="n">2</span><span class="p">&gt;&amp;</span><span class="n">1</span> <span class="p">|</span> <span class="nb">Out-Null</span>
+
+<span class="c"># ============ 创建 DLL ============</span>
+<span class="nb">Write-Host</span> <span class="s2">"创建 mms.dll..."</span> <span class="n">-ForegroundColor</span> <span class="n">Yellow</span>
+<span class="nv">$dll_cmd</span> <span class="p">=</span> <span class="s2">"gcc -shared -o mms.dll *.o -lws2_32"</span>
+<span class="nb">Invoke-Expression</span> <span class="nv">$dll_cmd</span> <span class="n">2</span><span class="p">&gt;&amp;</span><span class="n">1</span> <span class="p">|</span> <span class="nb">Out-Null</span>
+
+<span class="c"># ============ 验证结果 ============</span>
+<span class="k">if</span> <span class="p">(</span><span class="nb">Test-Path</span> <span class="s2">"mms.dll"</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$size</span> <span class="p">=</span> <span class="p">(</span><span class="nb">Get-Item</span> <span class="s2">"mms.dll"</span><span class="p">).</span><span class="n">Length</span> <span class="p">/</span> <span class="n">1KB</span>
+    <span class="nb">Write-Host</span> <span class="s2">"</span><span class="se">`n</span><span class="s2">✅ 成功创建: mms.dll (</span><span class="p">$(</span><span class="no">[math]</span><span class="p">::</span><span class="n">Round</span><span class="p">(</span><span class="nv">$size</span><span class="p">,</span> <span class="n">2</span><span class="p">))</span><span class="s2"> KB)"</span> <span class="n">-ForegroundColor</span> <span class="n">Green</span>
+    <span class="nb">Write-Host</span> <span class="s2">"   位置: $output_dir\mms.dll"</span> <span class="n">-ForegroundColor</span> <span class="n">Gray</span>
+
+    <span class="nv">$object_count</span> <span class="p">=</span> <span class="p">(</span><span class="nb">Get-ChildItem</span> <span class="n">-Filter</span> <span class="s2">"*.o"</span> <span class="p">|</span> <span class="nb">Measure-Object</span><span class="p">).</span><span class="n">Count</span>
+    <span class="nb">Write-Host</span> <span class="s2">"   编译文件: $object_count 个 .o 文件"</span> <span class="n">-ForegroundColor</span> <span class="n">Gray</span>
+    <span class="nb">Write-Host</span> <span class="s2">"   头文件: </span><span class="p">$(</span> <span class="p">(</span><span class="nb">Get-ChildItem</span> <span class="n">-Filter</span> <span class="s2">"*.h"</span> <span class="p">|</span> <span class="nb">Measure-Object</span><span class="p">).</span><span class="n">Count</span> <span class="p">)</span><span class="s2"> 个 .h 文件"</span> <span class="n">-ForegroundColor</span> <span class="n">Gray</span>
+
+    <span class="nb">Write-Host</span> <span class="s2">"</span><span class="se">`n</span><span class="s2">🚀 Java JNI 使用:"</span> <span class="n">-ForegroundColor</span> <span class="n">Cyan</span>
+    <span class="nb">Write-Host</span> <span class="s2">"   System.loadLibrary(</span><span class="se">`"</span><span class="s2">mms</span><span class="se">`"</span><span class="s2">)"</span> <span class="n">-ForegroundColor</span> <span class="n">White</span>
+    <span class="nb">Write-Host</span> <span class="s2">"   DLL 路径添加到 JVM: -Djava.library.path=$output_dir"</span> <span class="n">-ForegroundColor</span> <span class="n">White</span>
+    <span class="nb">Write-Host</span> <span class="s2">"   JNI 头文件: #include </span><span class="se">`"</span><span class="s2">MMSpdu.h</span><span class="se">`"</span><span class="s2">"</span> <span class="n">-ForegroundColor</span> <span class="n">White</span>
+<span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="nb">Write-Host</span> <span class="s2">"</span><span class="se">`n</span><span class="s2">❌ 创建 DLL 失败"</span> <span class="n">-ForegroundColor</span> <span class="n">Red</span>
+<span class="p">}</span>
+
+<span class="nb">Write-Host</span> <span class="s2">"</span><span class="se">`n</span><span class="s2">🏁 构建完成"</span> <span class="n">-ForegroundColor</span> <span class="n">Cyan</span>
+</code></pre>
+<h2 id="_3">关键文件</h2>
+<ul>
+<li><code>MMSpdu.h</code> - 主 PDU 定义入口</li>
+<li><code>Data.h</code> - 数据类型定义</li>
+<li><code>per_encoder.h/per_decoder.h</code> - PER 编解码器</li>
+</ul>
+<h2 id="_4">内存管理</h2>
+<pre lang="c"><code class="language-c md-fencescode"><span class="c1">// 分配</span>
+<span class="n">MMSpdu_t</span><span class="w"> </span><span class="o">*</span><span class="n">pdu</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">calloc</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="k">sizeof</span><span class="p">(</span><span class="n">MMSpdu_t</span><span class="p">));</span>
+
+<span class="c1">// 释放</span>
+<span class="n">ASN_STRUCT_FREE</span><span class="p">(</span><span class="n">asn_DEF_MMSpdu</span><span class="p">,</span><span class="w"> </span><span class="n">pdu</span><span class="p">);</span>
+</code></pre>
+<h2 id="_5">编码示例</h2>
+<pre lang="c"><code class="language-c md-fencescode"><span class="cp">#include</span><span class="w"> </span><span class="cpf">"MMSpdu.h"</span>
+<span class="cp">#include</span><span class="w"> </span><span class="cpf">"per_encoder.h"</span>
+
+<span class="c1">// 填充 pdu...</span>
+<span class="n">DynBuf</span><span class="w"> </span><span class="n">buf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nb">NULL</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="p">};</span>
+<span class="n">asn_enc_rval_t</span><span class="w"> </span><span class="n">r</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">uper_encode</span><span class="p">(</span><span class="o">&amp;</span><span class="n">asn_DEF_MMSpdu</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">pdu</span><span class="p">,</span><span class="w"> </span><span class="n">encode_cb</span><span class="p">,</span><span class="w"> </span><span class="o">&amp;</span><span class="n">buf</span><span class="p">);</span>
+</code></pre>
+<h2 id="_6">下一步建议</h2>
+<ol>
+<li>编写简单的 MMS 消息测试程序</li>
+<li>集成到您的 IEC 61850 项目</li>
+<li>验证协议一致性</li>
+<li>性能调优和内存优化</li>
+</ol>
+<hr />
+<p><strong>生成时间</strong>: 2026-04-14<br />
+<strong>状态</strong>: 准备就绪 ✅</p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

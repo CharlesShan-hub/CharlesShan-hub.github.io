@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>README</title>
+<link id="theme-css" rel="stylesheet" href="../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="rfc-6-conversation-with-bob-kahn-bob-kahn-steve-crocker">RFC 6 — Conversation with Bob Kahn（与 Bob Kahn 的谈话）· Steve Crocker</h1>
+<blockquote>
+<p><strong>一句话定位</strong>：这是一份<strong>会议纪要</strong>。RFC 1 发布 3 天后，Crocker 跑去波士顿见了 BB&amp;N 的 Bob Kahn——两家公司里"写协议的人"和"造硬件的人"第一次面对面，把 IMP 的编码转换和 HOST-IMP 通信接口当面敲定。</p>
+<p>📄 原文见 <a href="./rfc6.txt">rfc6.txt</a> ｜ 中英对照见 <a href="./zh.html">zh.md</a></p>
+</blockquote>
+<hr />
+<h2 id="_1">〇、背景：设计者与制造商的第一次对表</h2>
+<p>1969 年 4 月，网络上有两拨人：
+- <strong>NWG（协议设计者）</strong>：UCLA/SRI/UCSB/Utah 写 HOST 软件的，负责"说什么"
+- <strong>BB&amp;N（IMP 制造商）</strong>：Bolt, Beranek and Newman 公司，负责"怎么传"，正在造 IMP 的硬件</p>
+<p>两边各写各的规格，但 IMP 和 HOST 之间那根线缆上的<strong>物理细节</strong>（字符怎么编码、消息怎么切分、出了错怎么办）必须两边对齐。于是 Crocker 去 BB&amp;N 找 Bob Kahn——<strong>就是后来和 Vint Cerf 一起发明 TCP 的那位 Bob Kahn</strong>——聊了一个下午。</p>
+<p>这份 RFC 就是那场谈话的备忘录。<strong>1969 年的"会议纪要"直接进标准文档库</strong>——这就是 RFC 文化的日常。</p>
+<hr />
+<h2 id="_2">一、内容细读</h2>
+<h3 id="1-host">1. 编码转换：每台 HOST 一张表</h3>
+<pre><code class="md-fencescode">BB&amp;N 准备把 6/7/8/9 位字符码都转成 8 位 ASCII 再传输，
+到达目的 IMP 后按同样的表转回来。
+方案：一对一转换，每台 HOST 一张独特的转换表。
+</code></pre>
+<p>关键讨论点：
+- Crocker 建议：用 6 位码的机器可能还想做<strong>大小写切换（case shifting）</strong>
+- Kahn 回应：切换太频繁可能<strong>溢出（overflow）</strong>
+- Crocker 让步：这种情况很少见，<strong>"我们可以用溢出指示来代替保证"</strong>——出错了给你个标记，但不保证一定能处理</p>
+<p>这就是 1969 年的工程谈判：<strong>设计者提需求，制造商报成本，最后拍板"能处理 99% 的情况 + 留个错误标记"</strong>。和今天加需求时 PM 与开发的讨价还价一模一样。</p>
+<h3 id="2-host-imp">2. HOST-IMP 通信：消息头里加了转换位</h3>
+<pre><code class="md-fencescode">现在有了 5 位链路字段 + 1 位转换指示位。
+还考虑加一个 2 位转换指示器（一位管发送前转换、一位管接收后转换），
+这样系统就多了一个检查/控制的抓手。
+</code></pre>
+<h3 id="3">3. 两张清单：控制面的消息类型（本节精华）</h3>
+<p>RFC 6 列出了 IMP 接口的控制消息清单：</p>
+<p><strong>HOST → IMP 可以指定 9 件事：</strong>
+1. 追踪（Tracing）
+2. 转换（Conversion）
+3. 消息是给目的 IMP 还是 HOST
+4. 发送 RFNM
+5. HOST 开机/关机
+6. 同步（Synchronization）
+7. 格式错误消息
+8. 主链路清除（Master Link Clear）
+9. 请求状态（Status Requested）</p>
+<p><strong>IMP → HOST 可以发 7 种信息：</strong>
+1. 转换（Conversion）
+2. RFNM 已到（REFNM Arrived）
+3. IMP 开机/关机
+4. 同步
+5. 被叫 HOST 无响应（Called HOST not Responding）
+6. 格式错误（Format Error）
+7. IMP 内状态（Status in IMP）</p>
+<p><strong>这两张清单就是最早的"控制面协议消息类型定义"</strong>——相当于你后来在 IP 协议里见到的 ICMP 消息类型清单、或者在 USB 里见到的控制请求清单的直系祖先。你数一下就会发现：<strong>"状态查询/响应"、"通断通知"、"错误报告"、"同步"——今天所有控制协议的四梁八柱，1969 年 4 月的这份会议纪要里就都有了。</strong></p>
+<h3 id="4">4. 结尾</h3>
+<p>最后一句：Crocker 给 Kahn 总结了 NWG 笔记 1、2、3 号的内容（就是 RFC 1/2/3）——<strong>设计者给制造商补课。</strong></p>
+<hr />
+<h2 id="_3">二、🔷 本质升华</h2>
+<blockquote>
+<ul>
+<li><strong>「人类发明的实现」</strong>：5 位链路字段、2 位转换指示器、"9 件事 + 7 种信息"的具体清单——全是 1969 年 4 月这次会谈的产物。换成 4 位链路、或把清单合并成 6 条，一样成立。</li>
+<li><strong>「先于人类存在的规律」</strong>：
+  ① <strong>最小正交接口律</strong>（你在 RFC 1 认过）：这两张清单就是"控制面的系统调用 API"——用最小的一组消息类型，覆盖所有"HOST 与 IMP 之间需要说的控制话"。9+7=16 种消息，今天 ICMP 有 40 多种类型，本质还是这 16 种的细化。
+  ② <strong>异构互操作的前提是"每端一张转换表"</strong>：编码转换用"每台 HOST 一张表"而不是"统一规定一种编码"——这是"共同分母律"的务实版：不强制改编码，只在边界做翻译。今天网关做协议转换、i18n 做 locale 映射、序列化做 adapter，全是这个思路。
+  ③ <strong>工程谈判的取舍本质</strong>："用溢出指示代替保证"——<strong>当"完美保证"的成本远超"罕见故障"的损失时，正确决策是接受错误并用显式信号标记它，而不是死磕 100%。</strong> 这就是所有可靠性工程里"尽力而为 + 错误码"模式的诞生瞬间。</li>
+<li><strong>后世重现</strong>：ICMP 消息类型（目的不可达/超时/回显应答）≈ IMP→HOST 的"被叫 HOST 无响应/格式错误"；USB 控制传输 + 状态请求 ≈ "Master Link Clear + Status Requested"；Linux netlink 的 RTM_NEWLINK/DELLINK 通知 ≈ "HOST up/down"；云服务健康检查探针 ≈ "IMP up/down + Status in IMP"。<strong>16 条消息穿越了 57 年，至今还是控制面的骨架。</strong></li>
+</ul>
+</blockquote>
+<hr />
+<h2 id="_4">三、亮点速览</h2>
+<ol>
+<li><strong>一份会议纪要直接当 RFC 发</strong>——"谈话记录也是标准文档"，开放协作的极致。</li>
+<li><strong>9+7 控制消息清单</strong>——最早的协议控制面类型定义。</li>
+<li><strong>"每台 HOST 一张转换表"</strong>——边界翻译而非统一改造，务实到极致。</li>
+<li><strong>"可以用溢出指示代替保证"</strong>——教科书级的工程取舍谈判。</li>
+<li><strong>Bob Kahn 亲自出镜</strong>——TCP 之父在 IMP 阶段就在第一线对表。</li>
+</ol>
+<hr />
+<h2 id="_5">四、成败与后续</h2>
+<ul>
+<li><strong>即时生效的</strong>：编码转换方案（6/7/8/9 位 → 8 位 ASCII + 每机一表）进入了 IMP 的正式规范；5 位链路字段 + 转换位的消息头设计被 RFC 7 的 16-bit HOST 头继承（1 位追踪 + 2 位备用 + 8 位链路 + 5 位目的，见 <a href="../rfc7/README.html">RFC 7</a>）。</li>
+<li><strong>被取代的</strong>：2 位转换指示器最终没有保留（后来的 NCP/TCP 都假设 8 位字节）；"每机一张转换表"在 ASCII 一统天下后自然消失。</li>
+<li><strong>历史意义</strong>：这次会面确立了<strong>"协议设计者 ↔ 硬件制造商面对面定接口"</strong>的工作模式——比任何正式流程都更直接。Bob Kahn 后来成为 ARPANET 最关键的工程师之一，这次"被补课"的经历对他理解 HOST 侧需求帮助巨大。</li>
+</ul>
+<hr />
+<h2 id="_6">五、思想传承对照表</h2>
+<table>
+<thead>
+<tr>
+<th>RFC 6 的内容</th>
+<th>今天的对应物</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>每台 HOST 一张字符转换表</td>
+<td>网关协议转换 / i18n locale 映射</td>
+</tr>
+<tr>
+<td>6/7/8/9 位 → 8 位 ASCII</td>
+<td>统一字符集（后 ASCII 胜出、再被 UTF-8 继承）</td>
+</tr>
+<tr>
+<td>5 位链路字段 + 转换位</td>
+<td>IP 头字段设计 / TCP 标志位</td>
+</tr>
+<tr>
+<td>HOST→IMP 的 9 条指令</td>
+<td>控制请求（USB Control Request / netlink）</td>
+</tr>
+<tr>
+<td>IMP→HOST 的 7 种消息</td>
+<td>ICMP 消息类型 / 设备状态通知</td>
+</tr>
+<tr>
+<td>"溢出指示代替保证"</td>
+<td>尽力而为 + 错误码 / 优雅降级</td>
+</tr>
+<tr>
+<td>会议纪要作为 RFC</td>
+<td>设计讨论记录 / ADR（架构决策记录）</td>
+</tr>
+</tbody>
+</table>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

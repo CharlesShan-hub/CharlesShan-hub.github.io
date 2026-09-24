@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IO接口</title>
+<link id="theme-css" rel="stylesheet" href="../../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="io">IO接口</h1>
+<p>2022.08.22</p>
+<div class="toc">
+<ul>
+<li><a href="#io">IO接口</a><ul>
+<li><a href="#io_1">IO接口的功能</a></li>
+<li><a href="#io_2">IO接口的基本结构</a></li>
+<li><a href="#io_3">IO操作的一般过程</a></li>
+<li><a href="#_1">例题</a><ul>
+<li><a href="#_2">端口的编址</a></li>
+<li><a href="#io_4">IO接口功能与结构</a></li>
+<li><a href="#io_5">IO操作的一般过程</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<h2 id="io_1">IO接口的功能</h2>
+<p><img alt="image-20220822140354208" src="resources/IO接口简介.png" /></p>
+<ul>
+<li>数据缓冲:通过数据缓冲寄存器(DBR)达到主机和外设工作速度的匹配</li>
+<li>错误或状态监测:通过状态寄存器反馈设备的各种错误、状态信息，供CPU查用</li>
+<li>控制和定时:接收从控制总线发来的控制信号、时钟信号</li>
+<li>数据格式转换:串-并、并-串等格式转换</li>
+<li>与主机和设备通信:实现主机—I/O接口—I/O设备之间的通信</li>
+</ul>
+<h2 id="io_2">IO接口的基本结构</h2>
+<p>I/O 接口是由半导体介质构成的逻辑电路，它作为一个转换器，保证外部设备用计算机系统特性所要求的形式发送或接收信息。为了与 CPU 交互信息的方便，在接口内部一般要设置一些可以被 CPU 直接访问的寄存器。这些寄存器称为<strong>端口(Port)</strong>。</p>
+<ul>
+<li>接口内用于接收来自 CPU 等主控设备的控制命令的寄存器称为<strong>命令端口</strong>，简称命令口</li>
+<li>接口内向 CPU 报告 I/O 设备的工作状态的寄存器称为<strong>状态端口</strong>或状态口</li>
+<li>接口内在外设和总线间交换数据的缓冲寄存器称为<strong>数据端口</strong>或数据口。</li>
+</ul>
+<p>为便于 CPU 访问端口，也需对端口安排地址。通常有两种不同的编址方式。</p>
+<ul>
+<li><strong>统一编址方式</strong>:输入/输出设备接口中的控制寄存器、数据寄存器、状态寄存器等和内存单元一样看待，它们和内存单元联合在一起编排地址。这样就可用访问内存的指令(读、写指令) 去访问 I/O 设备接口内的某个寄存器，因而不需要专门的 I/O 指令组。</li>
+<li><strong>I/O 独立编址方式</strong>:内存地址和 I/O 设备地址是分开的，访问内存和访问 I/O 设备使用不同的指令，即访问 I/O 设备有专门的 I/O 指令组。</li>
+</ul>
+<p><img alt="image-20220822154339173" src="resources/IO接口基本结构.png" /></p>
+<h2 id="io_3">IO操作的一般过程</h2>
+<p>由于接口与 CPU 的速度大致相当，仅从 CPU 读写接口内寄存器的角度看，CPU 读写端口的方式与 CPU 读写内存单元是相似的。但是，内存单元的功能是存储数据，而端口的功能则是辅助 CPU 与外设交互，故端口中的数据并不是静态的，而是动态变化的。CPU 写入控制口的信息要由接口内的逻辑电路转换成相关控制信号发送给外设，外设的状态信息则由接口的逻辑电路转换成状态字存入状态口供 CPU 读取。CPU 写入输出数据口的信息要由外设取走。外设发送给 CPU 的数据则通过输入数据口缓冲。外设状态信息可能是时刻变化的，给外设的控制命令也往往会不断改变，CPU 与外设交互数据一般情况下也是成批连续进行的。因此，对端口的连续访问必须确保信息的有效性。</p>
+<p>首先我们看看输入/输出设备同 CPU 交换数据的一般过程。 如果是输入过程，一般需要以下三个步骤:
+ (1)CPU 把一个地址值放在地址总线上，选择某一输入设备; (2)CPU 等候输入设备的数据成为有效;</p>
+<p>(3)CPU 从数据总线读入数据，并放在一个相应的寄存器中。 如果是输出过程，一般需要以下三个步骤:
+ (1)CPU 把一个地址值放在地址总线上，选择一个输出设备;
+ (2)CPU 把数据放在数据总线上;
+ (3)输出设备认为数据有效，从而把数据取走。 从上述输入/输出过程看出，问题的关键就在于:究竟什么时候数据才成为有效? 事实</p>
+<p>上，各种外围设备的数据传输速率相差甚大。如果把高速工作的处理器同按照不同速度工 作的外围设备相连接，那么首先遇到的一个问题，就是如何保证处理器与外围设备在时间 上同步? 这就是我们要讨论的外围设备的定时问题。很显然，由于输入/输出设备本身的速 度差异很大，因此，对于不同速度的外围设备，需要有不同的定时方式。</p>
+<p>一个计算机系统，即使 CPU 有极高的速度，如果忽略 I/O 速度的提升，对整个系统的 性能仍然影响极大。下面通过一个例子说明 I/O 对系统性能的影响。</p>
+<h2 id="_1">例题</h2>
+<h3 id="_2">端口的编址</h3>
+<ul>
+<li>在统一编址的方式下，区分存储单元和IO设备是靠（）.
+  A. 不同的地址码
+  B. 不同的地址线
+  C. 不同的控制线
+  D. 不同的数据线</li>
+</ul>
+<p>【答案】：A</p>
+<ul>
+<li>下列关于IO端口和接口的说法中，正确的是（ ）。
+  A. 按照不同的数据传送格式，可将接口分为同步传送接口和异步传送接口
+  B. 在统一编址方式下，存储单元和I/O设备是靠不同的地址线来区分的
+  C. 在独立编址方式下，存储单元和I/O设备是靠不同的地址线来区分的
+  D. 在独立编址方式下，CPU 需要设置专门的输入/输出指令访问端口</li>
+</ul>
+<p>【答案】：D。注意B，考地址码！不是地址线！</p>
+<ul>
+<li>I/O 的编址方式采用统一编址方式时，进行输入/输出的操作的指令是（ ）.
+  A. 控制指令
+  B. 访存指令
+  C. 输入/输出指令 
+  D. 都不对</li>
+</ul>
+<p>【答案】：B</p>
+<ul>
+<li>下列叙述中，正确的是()。
+  A. 只有I/O指令可以访问I/O 设备
+  B. 在统一编址下，不能直接访问I/O设备
+  C. 访问存储器的指令一定不能访问I/O设备
+  D. 只有在具有专门I/O 指令的计算机中，I/O设备才可以单独编址</li>
+</ul>
+<p>【答案】：D</p>
+<ul>
+<li>在统一编址情况下，就IO 设备而言，其对应的IO 地址说法错误的是()。
+  A. 要求固定在地址高端
+  B. 要求固定在地址低端
+  C. 要求相对固定在地址的某部分
+  D. 可以随意在地址的任何地方</li>
+</ul>
+<p>【答案】：D</p>
+<h3 id="io_4">IO接口功能与结构</h3>
+<ul>
+<li>下列功能中，属于I/0接口的功能的是（）。
+  I. 数据格式的转换
+  II.I/O过程中错误与状态检测
+  III. I/O操作的控制与定时
+  IV. 与主机和外设通信
+  A. I、 IV
+  B. I、III、 IV
+  C. I、II、IV
+  D. I、II、III、IV</li>
+</ul>
+<p>【答案】：D</p>
+<h3 id="io_5">IO操作的一般过程</h3>
+<ul>
+<li>磁盘驱动器向盘片磁道记录数据时采用（ ）方式写入．
+  A.并行
+  B.串行
+  C.并行-串行
+  D.串行-并行</li>
+</ul>
+<p><strong>【答案】：B</strong>，磁盘驱动器向盘片磁道记录数据时采用串行方式写入。</p>
+<ul>
+<li>程序员进行系统调用访问设备使用的是（）
+  A.逻辑地址
+  B.物理地址
+  C.主设备地址
+  D.从设备地址</li>
+</ul>
+<p>【答案】：A</p>
+<ul>
+<li>【2012统考真题】下列选项中，在IO总线的<strong>数据线</strong>上传输的信息包括（ ）。
+  I. IO接口中的命令字
+  II. IO接口中的状态字
+  III. 中断类型号
+  A.仅II
+  B.仅I、III
+  C.仅II、III
+  D. I、II、III</li>
+</ul>
+<p>【答案】：D。总线分为三类：数据线、控制线和地址线。<strong>数据缓冲寄存器和命令/状态寄存器的内容都是通过数据线来传送的；地址线用以传送与 CPU 交换数据的端口地址；而控制线用以给 I/O 端口发送读/写信号，只是用来对端口进行读/写控制的</strong>。因此1，2，3均正确。</p>
+<ul>
+<li>【2014 统考真题】下列有关IO接口的叙述中，错误的是（）.
+  A.<strong>状态端口和控制端口可以合用同一个寄存器</strong>（对！）
+  B. IO接口中 CPU 可访问的寄存器称为IO 端口
+  C.采用独立编址方式时，I/0端口地址和主存地址可能相同
+  D.采用统一编址方式时，CPU 不能用访存指令访问IO 端口</li>
+</ul>
+<p>【答案】：D</p>
+<ul>
+<li><strong>【2017 统考真题】</strong>IO 指令实现的数据传送通常发生在（）
+  A. IO设备和IO端口之间
+  B. 通用寄存器和IO设备之间
+  C. IO端口和IO端口之间
+  D.通用寄存器和I0端口之间</li>
+</ul>
+<p>【答案】：D</p>
+<ul>
+<li>【2021 统考真题】下列选项中，不属于IO接口的是（）。
+  A磁盘驱动器
+  B.打印机适配器
+  C.网络控制器
+  D可编程中断控制器</li>
+</ul>
+<p>【答案】：D。磁盘驱动器在磁盘中！！</p>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>

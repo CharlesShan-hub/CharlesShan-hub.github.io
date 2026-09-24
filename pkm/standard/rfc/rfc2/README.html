@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>README</title>
+<link id="theme-css" rel="stylesheet" href="../../../themes/github.css">
+</head>
+<body class="done">
+<h1 id="rfc-2-host-software-bill-duvall">RFC 2 — Host Software（主机软件）· Bill Duvall</h1>
+<blockquote>
+<p><strong>一句话定位</strong>：RFC 1 的"姊妹篇"——同一个议题（主机软件），Crocker 从 UCLA 写了第 1 号，Duvall 从 SRI 独立写了第 2 号。如果说 RFC 1 是"设计宣言"，RFC 2 就是"实现者的施工图纸"：编号条款、状态机、错误处理、系统调用清单，全是干货。</p>
+<p>📄 原文见 <a href="./rfc2.txt">rfc2.txt</a> ｜ 中英对照见 <a href="./zh.html">zh.md</a></p>
+</blockquote>
+<hr />
+<h2 id="_1">〇、背景：为什么同一主题会有两份文档？</h2>
+<p>1969 年 4 月，网络工作组（NWG）是一个<strong>松散、开放</strong>的小组（RFC 3 里明确写了 "Membership is not closed"——成员资格不封闭）。四个站点各自选代表，分头想问题，然后再把想法寄到 UCLA 汇总编号。所以：</p>
+<ul>
+<li><strong>RFC 1</strong>（Crocker，4 月 7 日）：从"我们要达成什么体验"出发，讲需求层次和 DEL 构想——设计师视角。</li>
+<li><strong>RFC 2</strong>（Duvall，4 月 10 日）：从"这个操作系统到底要怎么写"出发，把链路管理、错误处理、系统调用一条条列出来——实现者视角。</li>
+</ul>
+<p>两人<strong>互相不知道对方在写什么</strong>（文档标题栏甚至都叫 HOST Software），结果却在关键决策上惊人地一致：链路 0 当控制、ID 小的让、端到端校验。这就是 1969 年的"并行开发"——没有 version control，靠邮件和面基对齐。</p>
+<hr />
+<h2 id="_2">一、内容细读</h2>
+<h3 id="1-links-rfc-1">1. 三种链路（LINKS）——比 RFC 1 更细的分层</h3>
+<p>RFC 1 只说了"0 号控制 + 31 条数据"。RFC 2 把"数据链路"进一步拆成了两种：</p>
+<table>
+<thead>
+<tr>
+<th>链路类型</th>
+<th>数量限制</th>
+<th>生命周期</th>
+<th>用途</th>
+<th>类比</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>控制链路</strong>（Control Link）</td>
+<td>每对 HOST <strong>只有 1 条</strong>（n 台主机 → 每个 HOST 有 n-1 条控制链路）</td>
+<td>系统加载时建立，永远在</td>
+<td>建立/断开用户链路、传递中断、监控通信</td>
+<td>交换机总机</td>
+</tr>
+<tr>
+<td><strong>主链路</strong>（Primary Link）</td>
+<td>每个用户对每个远端 HOST <strong>至多 1 条</strong></td>
+<td>全局，直到显式关闭</td>
+<td>像一台 TTY 直连远端，用于登录（走远端标准登录流程）</td>
+<td>你的"专线"</td>
+</tr>
+<tr>
+<td><strong>辅助链路</strong>（Auxiliary Link）</td>
+<td><strong>任意数量</strong></td>
+<td>局部于某个子系统，离开即关闭</td>
+<td>二进制或字符传输，用于传文件等</td>
+<td>临时开的管道</td>
+</tr>
+</tbody>
+</table>
+<p>注意两个细节：
+- <strong>"n-1 条控制链路"</strong>——你在 RFC 1 里观察到的「1 管理 + N-1 数据」结构，在这里再次出现，而且这次是文档里白纸黑字写出来的。
+- <strong>主链路像 TTY</strong>：<code>1b1c</code> 说"远端 HOST 把主链路当成一台通过数据电话拨进来的普通电传打字机用户"——RFC 1 里"远程使用要像 TTY"的目标，被 RFC 2 落实成了具体机制。</p>
+<h3 id="2-getlink">2. getlink 协议：建立链路的完整状态机</h3>
+<p>RFC 1 只画了流程图，RFC 2 把状态机写全了（第 2b1d 节）：</p>
+<pre><code class="md-fencescode">A 要连 B：
+  ① A 从自己的分配表里挑一条没在用的链路
+  ② A 通过链路 0 给 B 发「链路连接消息」
+  ③ A 等待：B 的回应 / 超时
+  ④ 收到 B 的回应，分三种情况：
+     a. B 确认了这条链路 → 成功，返回链路号给调用者
+     b. B 也在请求建这条链路（撞车了！）→ 冲突仲裁（见下）
+     c. 其他消息 → 错误：A 发断开消息 + 进入 panic 例程
+  ⑤ 超时没回应 → B 被视为出错：发断开消息 + 调 panic 例程
+</code></pre>
+<p><strong>冲突仲裁规则</strong>（2b1d4b）——和 RFC 1 完全一致：如果 A 的 ID 比 B 大（Na &gt; Nb），A 无视 B 的请求继续等；如果 A 的 ID 比 B 小（Na &lt; Nb），A <strong>成全 B 的请求</strong>、发确认、然后放弃自己的请求重新分配。<strong>ID 小的让。</strong> 一条确定规则，分布式解决冲突，不需要中心协调。</p>
+<h3 id="3-folding-checksum">3. 折叠校验和（Folding Checksum）：异构机器的最大公约数</h3>
+<p>RFC 2 第 3 节把校验和算法定得比 RFC 1 更具体。最精彩的是字段长度：</p>
+<blockquote>
+<p><strong>字段长度 288 bits = lcm(24, 32, 36)</strong></p>
+</blockquote>
+<p>为什么是这三个数？因为四站主机字长不同：
+- UCLA 的 SDS Sigma 7：32 bit
+- SRI 的 SDS 940：24 bit
+- Utah 的 PDP-10：36 bit</p>
+<p><strong>288 是三种字长的最小公倍数</strong>——这样每台机器都能用自己最顺手的字长整数次对齐地切分字段，校验算法在每台机器上都是相对最优的。校验和本身取 <strong>8 bits</strong>（所有机器都方便处理的长度）。</p>
+<p>这就是"标准化"最纯粹的形式：<strong>不是选一个赢家，而是找一个所有人都不吃亏的共同分母。</strong> 而校验和是<strong>顺序相关</strong>的（order dependent）——每算完一组字段，把结果循环移动再和下一组叠加（和 RFC 1 的"每 1152 bits 右旋一位"是同一家族的设计），专门对付"包顺序调换"这类 bug。</p>
+<p>另外 3c 提供一种<strong>正验证模式</strong>：两个 HOST 可以约定所有消息都要确认，确认走控制链路发。</p>
+<h3 id="4-monitor-executive-1969">4. Monitor 功能与 Executive 原语：1969 年版的操作系统网络模块</h3>
+<ul>
+<li><strong>Monitor（监控程序）</strong> = 操作系统核心。RFC 2 第 4 节规定了它要干的活：</li>
+<li>输入：从 IMP 收消息 → 校验 → <strong>字符翻译</strong>（EBCDIC↔ASCII 这类，还没定，要跟 BB&amp;N 商量）→ 解码头部 → 按源和链路号分发给正确接收者</li>
+<li>输出：建头部 → 字符翻译 → 算校验和 → <strong>检查链路状态（上一条 RFNM 还没回来就等着）</strong> → 发给 IMP</li>
+<li>网络状态维护：维护其他 HOST 的状态表（IMP 挂了就算 HOST 挂了）、维护控制链路状态、响应状态查询、中断时主动通知其他 HOST 各链路/程序状态</li>
+<li><strong>Executive Primitives（执行原语）</strong> = 系统调用。第 5 节列了给用户程序用的 API：建立/杀死主链路、把控制 TTY 接到主链路、主链路 I/O、状态查询；辅助链路的建立（返回一个类似文件句柄的逻辑链路号）、I/O、杀死。还有个 <strong>Transparent I/O</strong>（透明传输）：不经过任何处理直接把缓冲交给 IMP，标注"主要用于网络调试"——这就是后来"raw socket"的祖先。</li>
+</ul>
+<h3 id="5-initial-checkout-ddt-ddt">5. 初始联调（Initial Checkout）：从 DDT 到 DDT</h3>
+<p>第 6 节给出了第一个测试方案：先用<strong>模拟电话线模式</strong>跑，所有消息<strong>一次只发 1 个字符</strong>，链路对 Monitor 透明、由用户程序用特殊原语控制。测试程序就是两个不同 HOST 上的 <strong>DDT 到 DDT</strong>（DDT 是那个年代的调试器），旁边并行开一条电话线人肉对照。</p>
+<hr />
+<h2 id="_3">二、🔷 本质升华</h2>
+<blockquote>
+<ul>
+<li><strong>「人类发明的实现」</strong>：288 bits、8 bits、三种链路的名字（Primary/Auxiliary/Control）、getlink 的五步流程——全是 1969 年工程师的选择。换成 128 位对齐、叫法改成 session/stream/control，一样成立。</li>
+<li><strong>「先于人类存在的规律」</strong>：这里藏着好几条你已经在 RFC 1 里认出来的规律，RFC 2 是它们的<strong>制度化版本</strong>：
+  ① <strong>「1 管理 + N-1 数据」律</strong>——控制链路 n-1 条、主链路 1 条，白纸黑字写进了规格；
+  ② <strong>对称冲突仲裁律</strong>——"ID 小的让"被写成了 2b1d4b1 的 if-else 条款；
+  ③ <strong>大物拆分律 + 冗余指纹律</strong>——288 位分块 + 顺序相关折叠校验和；
+  ④ <strong>最小正交接口律</strong>——第 5 节那 8 个原语，就是最早的 POSIX socket API 胚胎。</li>
+<li><strong>新增的一条观察——「共同分母律」</strong>：288 = lcm(24,32,36) 这个故事的本质是：<strong>当一群异构实体必须互操作时，最优策略不是选一个"标准赢家"，而是找一个所有人都不吃亏的最小公倍数作为公共接口。</strong> 这和 UNICODE 统一了各国编码、USB-C 统一了充电口、TCP/IP 统一了各厂商网络协议是同一件事——<strong>标准化 = 找最小公倍数，不是选最优解。</strong></li>
+<li><strong>后世重现</strong>：控制链路 → TCP 连接 + 会话层；主链路像 TTY → telnet/SSH 的虚拟终端模型；辅助链路 → FTP 数据通道 / QUIC 的多流；Transparent I/O → raw socket / AF_PACKET；Monitor 状态表 → 路由表 + 邻居发现；「ID 小的让」→ TCP 同时打开的冲突处理。每一行 1969 年的条款，都能在今天的协议栈里找到投胎后的位置。</li>
+</ul>
+</blockquote>
+<hr />
+<h2 id="_4">三、亮点速览</h2>
+<ol>
+<li><strong>同一主题两份文档的"并行发现"</strong>——RFC 1 和 2 独立写却结论一致，说明有些答案不依赖于个人，是问题本身逼出来的。</li>
+<li><strong>三种链路的分层</strong>——把"连接"从逻辑上彻底拆开，比 RFC 1 的"32 条平均主义"精确得多。</li>
+<li><strong>288 = lcm(24,32,36)</strong>——教科书级的异构互操作解法。</li>
+<li><strong>完整的错误路径</strong>——超时、panic、撞车仲裁，状态机全覆盖。RFC 1 说"这样挺好"，RFC 2 说"出错了你该怎么办"。</li>
+<li><strong>Transparent I/O 的远见</strong>——"网络调试用的裸管道"，四十年后成为 raw socket 和 SDN 数据面的精神源头。</li>
+</ol>
+<hr />
+<h2 id="_5">四、成败与后续</h2>
+<ul>
+<li><strong>活下来的</strong>：控制/主/辅三类链路的概念整合进了 NCP 协议（RFC 33 起，1970 年）；"像 TTY 一样登录远端"成为 telnet（RFC 15 提出）的直接蓝图；端到端顺序相关校验一路传到 TCP 的 checksum。</li>
+<li><strong>被埋葬的</strong>：模拟电话线模式（一次一个字符）上线后立刻被真实带宽需求取代；8-bit 校验和太弱，后来换成了 16-bit；"Transparent I/O"在 NCP 时代没成为主流，raw socket 要等 BSD 才有。</li>
+<li><strong>历史彩蛋</strong>：RFC 2 开头写着 <strong>[page 1 missing]——第一页丢了</strong>，所以这份文档从"1 LINKS"直接开始。1969 年的文档管理就是这么野：缺页、笔误（"elaspse"）、重复编号（14b3 出现两次）到处都是——但内容依然完整可读。这也是 RFC 文化的一部分：<strong>不完美也要发，发了再改。</strong></li>
+</ul>
+<hr />
+<h2 id="_6">五、思想传承对照表</h2>
+<table>
+<thead>
+<tr>
+<th>RFC 2 的条款</th>
+<th>今天的对应物</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>控制链路（每对 1 条，系统加载时建立）</td>
+<td>TCP 连接 / 控制面（SDN、K8s API Server）</td>
+</tr>
+<tr>
+<td>主链路 = 远端把你看成一台 TTY</td>
+<td>telnet / SSH 伪终端</td>
+</tr>
+<tr>
+<td>辅助链路（任意数量、二进制或字符）</td>
+<td>FTP 数据通道 / QUIC Stream</td>
+</tr>
+<tr>
+<td>getlink 五步状态机 + 超时 panic</td>
+<td>三次握手 + SYN 重传超时</td>
+</tr>
+<tr>
+<td>Na &gt; Nb 时小的让</td>
+<td>TCP simultaneous open 的冲突处理</td>
+</tr>
+<tr>
+<td>折叠校验和（顺序相关、288-bit 分块）</td>
+<td>TCP checksum（含伪头部，顺序相关）</td>
+</tr>
+<tr>
+<td>Monitor 维护其他 HOST 状态</td>
+<td>邻居发现 / ARP 缓存 / 路由表</td>
+</tr>
+<tr>
+<td>Transparent I/O（调试裸管道）</td>
+<td>raw socket / AF_PACKET / eBPF</td>
+</tr>
+<tr>
+<td>模拟电话线模式（1 字符/消息）</td>
+<td>串口调试 / loopback 测试</td>
+</tr>
+</tbody>
+</table>
+<style>
+#nav-btn {
+  position: fixed; top: 10px; left: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#nav-btn:hover, #nav-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#nav-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#nav-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 999;
+  width: 260px; transform: translateX(-100%);
+  visibility: hidden;
+  /* 收回时 transform 动画结束后再隐藏，避免移出后边缘残留 1px 竖线 */
+  transition: transform .25s ease, visibility 0s .25s;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 2px 0 16px rgba(0,0,0,.18);
+  display: flex; flex-direction: column;
+  font-size: 13px; font-family: Arial, sans-serif;
+}
+#nav-panel.open {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform .25s ease, visibility 0s;
+}
+#nav-panel .nav-head {
+  padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
+  color: var(--nav-fg, #555);
+  border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
+}
+#nav-panel .nav-tree {
+  flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
+  list-style: none; box-sizing: border-box;
+}
+#nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+#nav-panel .nav-dir {
+  padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label::before {
+  content: "▾"; display: inline-block; width: 14px;
+  color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
+  font-size: 10px; vertical-align: 1px;
+}
+#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+#nav-panel .nav-dir.collapsed > ul { display: none; }
+#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-file {
+  display: block; padding: 3px 6px; margin: 1px 0;
+  border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.45;
+}
+#nav-panel .nav-file:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#nav-panel .nav-file.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#nav-panel .nav-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="nav-btn" type="button" aria-label="文件树" title="文件树">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+</svg>
+</button>
+<div id="nav-panel">
+<div class="nav-head">&nbsp;</div>
+<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>
+</div>
+<script>
+(function () {
+  var btn = document.getElementById("nav-btn");
+  var panel = document.getElementById("nav-panel");
+  if (!btn || !panel) return;
+  // 复用当前主题的 --bg-color / --text-color 给面板配色（没有则回退默认浅色）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshNavTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshNavTheme();
+  window.addEventListener("pkm-theme-applied", refreshNavTheme);
+  var toggle = function () {
+    panel.classList.toggle("open");
+    btn.classList.toggle("open");
+  };
+  btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) toggle();
+  });
+  // 当前页面到站点根的相对前缀（由 site-tree.json 的相对路径反推）
+  var base = "../../../site-tree.json".replace(/site-tree\.json$/, "");
+  // 当前页面相对站点根的路径（用于高亮）
+  var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+  fetch("../../../site-tree.json")
+    .then(function (r) { return r.json(); })
+    .then(function (root) {
+      var box = panel.querySelector(".nav-tree");
+      box.innerHTML = "";
+      if (!root.children || !root.children.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
+      expandActive(box);
+    })
+    .catch(function () {
+      panel.querySelector(".nav-tree").innerHTML =
+        '<li class="nav-empty">文件树加载失败</li>';
+    });
+  function buildNode(node, depth) {
+    var li = document.createElement("li");
+    if (node.type === "dir") {
+      li.className = "nav-dir" + (depth > 0 ? " collapsed" : "");
+      var label = document.createElement("span");
+      label.className = "nav-dir-label";
+      label.textContent = node.name;
+      label.addEventListener("click", function () {
+        li.classList.toggle("collapsed");
+      });
+      li.appendChild(label);
+      var ul = document.createElement("ul");
+      (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+      li.appendChild(ul);
+    } else {
+      var a = document.createElement("a");
+      a.className = "nav-file";
+      a.href = base + node.rel;
+      a.textContent = node.name;
+      if (node.rel === curRel) a.classList.add("active");
+      li.appendChild(a);
+    }
+    return li;
+  }
+  function expandActive(box) {
+    var a = box.querySelector("a.active");
+    if (!a) return;
+    var p = a.parentElement;
+    while (p && p !== box) {
+      if (p.classList && p.classList.contains("nav-dir")) {
+        p.classList.remove("collapsed");
+      }
+      p = p.parentElement;
+    }
+  }
+})();
+</script>
+<style>
+#toc-btn {
+  position: fixed; top: 10px; left: 56px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#toc-btn:hover, #toc-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#toc-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#toc-panel {
+  position: fixed; top: 58px; left: 10px; z-index: 1000;
+  width: 240px; max-height: 60vh; overflow-y: auto;
+  background: var(--nav-bg, rgba(255,255,255,.95));
+  color: var(--nav-fg, #555);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  box-shadow: 0 4px 24px rgba(0,0,0,.18);
+  border-radius: 10px; padding: 6px;
+  display: none; font-size: 13px; font-family: Arial, sans-serif;
+}
+#toc-panel.open { display: block; }
+#toc-panel .toc-list {
+  list-style: none; margin: 0; padding: 0;
+}
+#toc-panel ul { list-style: none; margin: 0; padding: 0 0 0 12px; }
+#toc-panel li { margin: 1px 0; }
+#toc-panel a {
+  display: block; padding: 3px 8px; border-radius: 5px;
+  color: var(--nav-fg, #444); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#toc-panel a:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
+#toc-panel a.active {
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: var(--nav-fg, #111); font-weight: 600;
+}
+#toc-panel .toc-empty {
+  padding: 8px; color: color-mix(in srgb, var(--nav-fg, #888) 70%, transparent);
+}
+</style>
+<button id="toc-btn" type="button" aria-label="页面目录" title="页面目录">
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M3 6h12M3 12h12M3 18h12"/>
+<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/>
+</svg>
+</button>
+<div id="toc-panel"></div>
+<script>
+(function () {
+  var btn = document.getElementById("toc-btn");
+  var panel = document.getElementById("toc-panel");
+  if (!btn || !panel) return;
+
+  // 复用当前主题背景色给大纲面板配色（与导航面板同一套变量名）
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshTocTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    if (rgb) panel.style.setProperty("--nav-bg", "rgba(" + rgb + ",.92)");
+    if (fg) panel.style.setProperty("--nav-fg", fg);
+  };
+  refreshTocTheme();
+  window.addEventListener("pkm-theme-applied", refreshTocTheme);
+
+  var headings = Array.prototype.slice.call(
+    document.querySelectorAll("h1,h2,h3,h4,h5,h6")
+  ).filter(function (el) { return el.id; });
+  if (!headings.length) {
+    btn.style.display = "none";
+    return;
+  }
+
+  var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+  var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function (e) {
+    e.stopPropagation();
+    if (panel.classList.contains("open")) close(); else open();
+  });
+  document.addEventListener("click", function (e) {
+    if (panel.classList.contains("open") &&
+        !panel.contains(e.target) && e.target !== btn) close();
+  });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") close();
+  });
+
+  // 按标题级别构建嵌套目录（栈式算法：h1 > h2 > h3 层级缩进）
+  var root = document.createElement("ul");
+  root.className = "toc-list";
+  var stack = [{ level: 0, ul: root }];
+  headings.forEach(function (h) {
+    var level = parseInt(h.tagName.slice(1), 10);
+    var li = document.createElement("li");
+    var a = document.createElement("a");
+    a.href = "#" + h.id;
+    a.textContent = h.textContent;
+    li.appendChild(a);
+    while (stack.length && stack[stack.length - 1].level >= level) stack.pop();
+    var parent = stack[stack.length - 1] || { ul: root };
+    parent.ul.appendChild(li);
+    var sub = document.createElement("ul");
+    li.appendChild(sub);
+    stack.push({ level: level, ul: sub });
+  });
+  panel.appendChild(root);
+
+  // 点击目录项平滑滚动到标题，并更新高亮
+  var cur = null;
+  var setActive = function (a) {
+    if (cur) cur.classList.remove("active");
+    cur = a;
+    if (cur) cur.classList.add("active");
+  };
+  panel.addEventListener("click", function (e) {
+    var a = e.target.closest("a");
+    if (!a) return;
+    e.preventDefault();
+    var el = document.getElementById(decodeURIComponent(a.getAttribute("href").slice(1)));
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "start" });
+    setActive(a);
+  });
+  // 滚动时跟随当前章节高亮
+  var updateActive = function () {
+    var pos = window.scrollY + 80;
+    var idx = -1;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].offsetTop <= pos) idx = i; else break;
+    }
+    var target = idx >= 0 ? root.querySelector('a[href="#' + headings[idx].id + '"]') : null;
+    if (target && target !== cur) setActive(target);
+  };
+  window.addEventListener("scroll", updateActive, { passive: true });
+  updateActive();
+})();
+</script>
+<button id="theme-btn" type="button" aria-label="切换主题" title="切换主题"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/><circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg></button><div id="theme-menu"></div>
+<style>
+#theme-btn {
+  position: fixed; top: 10px; right: 10px; z-index: 1000;
+  width: 38px; height: 38px; border-radius: 50%;
+  background: rgba(127,127,127,.3);
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .2s ease;
+  border: 1px solid rgba(255,255,255,.25);
+}
+#theme-btn:hover, #theme-btn.open {
+  background: rgba(0,0,0,.7); border-color: rgba(255,255,255,.5);
+}
+#theme-btn svg {
+  width: 20px; height: 20px; fill: none; stroke: #fff; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+#theme-menu {
+  position: fixed; top: 56px; right: 10px; z-index: 1000;
+  display: none; min-width: 160px; max-height: 70vh; overflow-y: auto;
+  background: rgba(255,255,255,.95);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,.2);
+  padding: 6px; font-size: 13px; font-family: Arial, sans-serif;
+}
+#theme-menu.open { display: block; }
+.theme-item {
+  padding: 6px 10px; border-radius: 6px; cursor: pointer;
+  color: #333; white-space: nowrap;
+}
+.theme-item:hover { background: rgba(0,0,0,.08); }
+.theme-item.active { background: rgba(0,0,0,.15); font-weight: 600; }
+</style>
+<script>
+(function () {
+  var themes = ["github", "newsprint", "night", "phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "pixyll", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-solaris", "vlook-thinking", "whitey"];
+  var base = "../../../themes/";
+  var link = document.getElementById("theme-css");
+  var btn = document.getElementById("theme-btn");
+  var menu = document.getElementById("theme-menu");
+  var saved = null;
+  try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+  var current = (saved && themes.indexOf(saved) > -1) ? saved : "github";
+  themes.forEach(function (name) {
+    var item = document.createElement("div");
+    item.className = "theme-item";
+    item.textContent = name;
+    item.addEventListener("click", function () { apply(name); hide(); });
+    menu.appendChild(item);
+  });
+  var apply = function (name) {
+    current = name;
+    link.href = base + name + ".css";
+    link.onload = function () {
+      try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+    };
+    try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+    refreshActive();
+  };
+  var refreshActive = function () {
+    var items = menu.querySelectorAll(".theme-item");
+    for (var i = 0; i < items.length; i++) {
+      items[i].classList.toggle("active", items[i].textContent === current);
+    }
+  };
+  var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+  var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+  btn.addEventListener("click", function () {
+    if (menu.classList.contains("open")) { hide(); } else { show(); }
+  });
+  document.addEventListener("click", function (e) {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) { hide(); }
+  });
+  apply(current);
+})();
+</script>
+<style>
+#pkm-lightbox {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0, 0, 0, .85);
+  display: none; align-items: center; justify-content: center;
+  cursor: zoom-out; padding: 4vh 4vw;
+}
+#pkm-lightbox.open {
+  display: flex;
+}
+#pkm-lightbox img {
+  max-width: 92vw; max-height: 92vh;
+  box-shadow: 0 8px 48px rgba(0, 0, 0, .55);
+  border-radius: 4px;
+  background: #fff;
+}
+</style>
+<script>
+(function () {
+  var box = document.createElement('div');
+  box.id = 'pkm-lightbox';
+  var boxImg = document.createElement('img');
+  box.appendChild(boxImg);
+  document.body.appendChild(box);
+
+  function open(src, alt) {
+    boxImg.src = src;
+    boxImg.alt = alt || '';
+    box.classList.add('open');
+  }
+  function close() {
+    box.classList.remove('open');
+  }
+
+  box.addEventListener('click', close);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') close();
+  });
+  document.addEventListener('dblclick', function (e) {
+    var t = e.target;
+    if (t && t.tagName === 'IMG' && !t.closest('nav, #nav-btn, #theme-btn, #theme-menu, #pkm-lightbox')) {
+      e.preventDefault();
+      open(t.currentSrc || t.src, t.alt);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
