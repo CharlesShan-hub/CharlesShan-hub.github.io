@@ -9,39 +9,39 @@
 </head>
 <body class="done">
 <div id="pkm-content">
-<p>第一幅图（3×4 的综合对比图）是在“解剖”双边滤波的卷积核。左上角是一块模拟的灰度边缘区域，中间有一条从暗到亮的垂直过渡线，红色十字标记的是当前像素位置。第一行右侧的三张热力图展示了在不同 σ_r（值域标准差）下， 仅由灰度差决定的值域权重 ：σ_r 越小，只有与中心像素灰度非常接近的位置才会有较高权重；σ_r 越大，灰度差异被“容忍”，高权重区域变宽。第二行展示的是三维视角下的核形状：左边是只考虑空间距离的高斯核，右边三张是“空间高斯 × 值域高斯”得到的双边核，可以看到在边缘一侧（灰度不同的一边）权重被明显压低。第三行左图给出了水平方向中心行的权重曲线，对比了高斯和三个双边核的形状；第三行右侧三张图则直接画出“高斯核 − 双边核”的差值热图，用红蓝两色强调：双边滤波在边缘另一侧削弱了多少权重，从而定量地体现出它的“保边”能力。
+<p>第一幅图（3×4 的综合对比图）是在“解剖”双边滤波的卷积核。左上角是一块模拟的灰度边缘区域，中间有一条从暗到亮的垂直过渡线，红色十字标记的是当前像素位置。第一行右侧的三张热力图展示了在不同 σ_r（值域标准差）下， 仅由灰度差决定的值域权重 ：σ_r 越小，只有与中心像素灰度非常接近的位置才会有较高权重；σ_r 越大，灰度差异被“容忍”，高权重区域变宽。第二行展示的是三维视角下的核形状：左边是只考虑空间距离的高斯核，右边三张是“空间高斯 × 值域高斯”得到的双边核，可以看到在边缘一侧（灰度不同的一边）权重被明显压低。第三行左图给出了水平方向中心行的权重曲线，对比了高斯和三个双边核的形状；第三行右侧三张图则直接画出“高斯核 − 双边核”的差值热图，用红蓝两色强调：双边滤波在边缘另一侧削弱了多少权重，从而定量地体现出它的“保边”能力。<br />
 <img alt="bilateral-kernel01" src="../assets/bilateral-kernel01.png" /></p>
-<p>第二幅图是对双边核的一个“信息化总结”，重点解释 σ_r 如何在整体上改变权重分布 。第一行三张图是不同 σ_r 下双边核的 2D 热力图，直观展示随着 σ_r 增大，核从“沿着边缘一侧收缩的瘦峰”逐渐变成类似普通高斯的宽峰。第二行左图再次用曲线叠加的方式对比高斯核和三种双边核在水平方向上的中心行权重，同时用灰色与红色的填充区域分别标出“同一侧”（灰度相近的一边）和“另一侧”（灰度不同的一边）的权重区间。第二行中间的柱状图统计了高斯与各个双边核在边缘两侧的总权重，把“左/右两侧权重比例”可视化；第二行右侧的柱状图则给出在“不同值一侧”上，双边核相对于高斯核削弱权重的百分比。综合来看，这幅图说明：σ_r 越小，跨越边缘的权重削弱得越厉害（边缘保留越强）；σ_r 越大，双边核越接近普通高斯，跨边缘的模糊越明显。
+<p>第二幅图是对双边核的一个“信息化总结”，重点解释 σ_r 如何在整体上改变权重分布 。第一行三张图是不同 σ_r 下双边核的 2D 热力图，直观展示随着 σ_r 增大，核从“沿着边缘一侧收缩的瘦峰”逐渐变成类似普通高斯的宽峰。第二行左图再次用曲线叠加的方式对比高斯核和三种双边核在水平方向上的中心行权重，同时用灰色与红色的填充区域分别标出“同一侧”（灰度相近的一边）和“另一侧”（灰度不同的一边）的权重区间。第二行中间的柱状图统计了高斯与各个双边核在边缘两侧的总权重，把“左/右两侧权重比例”可视化；第二行右侧的柱状图则给出在“不同值一侧”上，双边核相对于高斯核削弱权重的百分比。综合来看，这幅图说明：σ_r 越小，跨越边缘的权重削弱得越厉害（边缘保留越强）；σ_r 越大，双边核越接近普通高斯，跨边缘的模糊越明显。<br />
 <img alt="bilateral-kernel02" src="../assets/bilateral-kernel02.png" /></p>
-<p>```python
-import numpy as np
-import matplotlib.pyplot as plt
+<p>```python<br />
+import numpy as np<br />
+import matplotlib.pyplot as plt<br />
 from matplotlib import cm</p>
 <h1 id="1">1. 创建模拟的"边缘"图像块</h1>
-<p>patch_size = 31
+<p>patch_size = 31<br />
 center = patch_size // 2</p>
 <h1 id="0255">创建一个从0到255的垂直渐变，模拟边缘</h1>
-<p>edge_patch = np.zeros((patch_size, patch_size))
-for i in range(patch_size):
+<p>edge_patch = np.zeros((patch_size, patch_size))<br />
+for i in range(patch_size):<br />
     edge_patch[i, :] = np.linspace(50, 200, patch_size)  # 从左(50)到右(200)渐变</p>
 <h1 id="_1">中心像素的坐标和值</h1>
 <p>center_pixel_value = edge_patch[center, center]</p>
 <h1 id="2">2. 参数设置</h1>
-<p>sigma_s = 5.0  # 空间标准差
-sigma_r_values = [3.0, 8.0, 30.0]  # 三个不同的值域标准差：小、中、大
+<p>sigma_s = 5.0  # 空间标准差<br />
+sigma_r_values = [3.0, 8.0, 30.0]  # 三个不同的值域标准差：小、中、大<br />
 kernel_radius = 15</p>
 <h1 id="_2">生成坐标网格</h1>
-<p>y, x = np.meshgrid(np.arange(-kernel_radius, kernel_radius+1),
+<p>y, x = np.meshgrid(np.arange(-kernel_radius, kernel_radius+1),<br />
                    np.arange(-kernel_radius, kernel_radius+1))</p>
 <h1 id="3">3. 计算高斯核 (仅空间权重)</h1>
-<p>gaussian_kernel = np.exp(-(x<strong>2 + y</strong>2) / (2 * sigma_s**2))
+<p>gaussian_kernel = np.exp(-(x<strong>2 + y</strong>2) / (2 * sigma_s**2))<br />
 gaussian_kernel /= gaussian_kernel.sum()  # 归一化</p>
 <h1 id="4-sigma_r">4. 计算不同sigma_r的双边滤波核</h1>
-<p>bilateral_kernels = []
+<p>bilateral_kernels = []<br />
 range_kernels = []</p>
-<p>for sigma_r in sigma_r_values:
-    # 提取以中心像素为中心的局部区域
-    local_patch = edge_patch[center-kernel_radius:center+kernel_radius+1,
+<p>for sigma_r in sigma_r_values:<br />
+    # 提取以中心像素为中心的局部区域<br />
+    local_patch = edge_patch[center-kernel_radius:center+kernel_radius+1,<br />
                              center-kernel_radius:center+kernel_radius+1]</p>
 <pre><code class="md-fencescode"># 计算值域权重
 intensity_diff = local_patch - center_pixel_value
@@ -56,42 +56,42 @@ bilateral_kernels.append(bilateral_kernel)
 <h1 id="5">5. 创建综合对比图</h1>
 <p>fig = plt.figure(figsize=(16, 10))</p>
 <h1 id="51">5.1 第一行：原始图像和值域权重</h1>
-<p>ax1 = plt.subplot(3, 4, 1)
-im1 = ax1.imshow(edge_patch, cmap='gray', vmin=0, vmax=255)
-ax1.set_title('Simulated Edge Patch', fontsize=12)
-ax1.axvline(x=center, color='r', linestyle='--', alpha=0.7)
-ax1.axhline(y=center, color='r', linestyle='--', alpha=0.7)
-ax1.scatter(center, center, c='red', s=50, marker='x')
+<p>ax1 = plt.subplot(3, 4, 1)<br />
+im1 = ax1.imshow(edge_patch, cmap='gray', vmin=0, vmax=255)<br />
+ax1.set_title('Simulated Edge Patch', fontsize=12)<br />
+ax1.axvline(x=center, color='r', linestyle='--', alpha=0.7)<br />
+ax1.axhline(y=center, color='r', linestyle='--', alpha=0.7)<br />
+ax1.scatter(center, center, c='red', s=50, marker='x')<br />
 plt.colorbar(im1, ax=ax1, shrink=0.8)</p>
 <h1 id="_3">值域权重热图</h1>
-<p>for idx, (sigma_r, range_kernel) in enumerate(zip(sigma_r_values, range_kernels)):
-    ax = plt.subplot(3, 4, idx+2)
-    im = ax.imshow(range_kernel, cmap='hot', vmin=0, vmax=1)
-    ax.set_title(f'Range Kernel\nσ_r = {sigma_r}', fontsize=12)
-    ax.axvline(x=kernel_radius, color='w', linestyle='--', alpha=0.7)
-    ax.axhline(y=kernel_radius, color='w', linestyle='--', alpha=0.7)
-    ax.scatter(kernel_radius, kernel_radius, c='white', s=30, marker='x')
+<p>for idx, (sigma_r, range_kernel) in enumerate(zip(sigma_r_values, range_kernels)):<br />
+    ax = plt.subplot(3, 4, idx+2)<br />
+    im = ax.imshow(range_kernel, cmap='hot', vmin=0, vmax=1)<br />
+    ax.set_title(f'Range Kernel\nσ_r = {sigma_r}', fontsize=12)<br />
+    ax.axvline(x=kernel_radius, color='w', linestyle='--', alpha=0.7)<br />
+    ax.axhline(y=kernel_radius, color='w', linestyle='--', alpha=0.7)<br />
+    ax.scatter(kernel_radius, kernel_radius, c='white', s=30, marker='x')<br />
     plt.colorbar(im, ax=ax, shrink=0.8)</p>
 <h1 id="52-3d">5.2 第二行：高斯核和双边核的3D视图</h1>
 <h1 id="_4">高斯核</h1>
-<p>ax_gauss_3d = fig.add_subplot(3, 4, 5, projection='3d')
-surf_gauss = ax_gauss_3d.plot_surface(x, y, gaussian_kernel, cmap=cm.viridis,
-                                     linewidth=0, antialiased=True, alpha=0.8)
-ax_gauss_3d.set_title(f'Gaussian Kernel\nσ_s = {sigma_s}', fontsize=12)
-ax_gauss_3d.set_xlabel('X')
-ax_gauss_3d.set_ylabel('Y')
-ax_gauss_3d.set_zlabel('Weight')
+<p>ax_gauss_3d = fig.add_subplot(3, 4, 5, projection='3d')<br />
+surf_gauss = ax_gauss_3d.plot_surface(x, y, gaussian_kernel, cmap=cm.viridis,<br />
+                                     linewidth=0, antialiased=True, alpha=0.8)<br />
+ax_gauss_3d.set_title(f'Gaussian Kernel\nσ_s = {sigma_s}', fontsize=12)<br />
+ax_gauss_3d.set_xlabel('X')<br />
+ax_gauss_3d.set_ylabel('Y')<br />
+ax_gauss_3d.set_zlabel('Weight')<br />
 ax_gauss_3d.view_init(elev=30, azim=-60)</p>
 <h1 id="sigma_r3d">不同sigma_r的双边核3D视图</h1>
-<p>for idx, (sigma_r, bilateral_kernel) in enumerate(zip(sigma_r_values, bilateral_kernels)):
-    ax = fig.add_subplot(3, 4, 6+idx, projection='3d')
-    surf = ax.plot_surface(x, y, bilateral_kernel,
-                          cmap=cm.plasma if idx==0 else cm.magma if idx==1 else cm.inferno,
-                          linewidth=0, antialiased=True, alpha=0.8)
-    ax.set_title(f'Bilateral Kernel\nσ_s={sigma_s}, σ_r={sigma_r}', fontsize=12)
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Weight')
+<p>for idx, (sigma_r, bilateral_kernel) in enumerate(zip(sigma_r_values, bilateral_kernels)):<br />
+    ax = fig.add_subplot(3, 4, 6+idx, projection='3d')<br />
+    surf = ax.plot_surface(x, y, bilateral_kernel,<br />
+                          cmap=cm.plasma if idx==0 else cm.magma if idx==1 else cm.inferno,<br />
+                          linewidth=0, antialiased=True, alpha=0.8)<br />
+    ax.set_title(f'Bilateral Kernel\nσ_s={sigma_s}, σ_r={sigma_r}', fontsize=12)<br />
+    ax.set_xlabel('X')<br />
+    ax.set_ylabel('Y')<br />
+    ax.set_zlabel('Weight')<br />
     ax.view_init(elev=30, azim=-60)</p>
 <pre><code class="md-fencescode"># 统一z轴范围
 z_max = max(gaussian_kernel.max(), max([k.max() for k in bilateral_kernels]))
@@ -100,124 +100,124 @@ ax.set_zlim(0, z_max * 1.2)
 <h1 id="53">5.3 第三行：水平中心线权重分布对比</h1>
 <p>ax_profile = plt.subplot(3, 4, 9)</p>
 <h1 id="_5">获取水平中心线的权重分布</h1>
-<p>center_row_gaussian = gaussian_kernel[kernel_radius, :]
-center_row_bilateral_small = bilateral_kernels[0][kernel_radius, :]
-center_row_bilateral_medium = bilateral_kernels[1][kernel_radius, :]
+<p>center_row_gaussian = gaussian_kernel[kernel_radius, :]<br />
+center_row_bilateral_small = bilateral_kernels[0][kernel_radius, :]<br />
+center_row_bilateral_medium = bilateral_kernels[1][kernel_radius, :]<br />
 center_row_bilateral_large = bilateral_kernels[2][kernel_radius, :]</p>
 <p>x_positions = np.arange(-kernel_radius, kernel_radius + 1)</p>
 <h1 id="_6">绘制所有曲线</h1>
-<p>ax_profile.plot(x_positions, center_row_gaussian, 'k-', linewidth=3, label='Gaussian (σ_r=∞)')
-ax_profile.plot(x_positions, center_row_bilateral_large, 'b--', linewidth=2, label=f'Bilateral σ_r={sigma_r_values[2]}')
-ax_profile.plot(x_positions, center_row_bilateral_medium, 'g-.', linewidth=2, label=f'Bilateral σ_r={sigma_r_values[1]}')
-ax_profile.plot(x_positions, center_row_bilateral_small, 'r:', linewidth=2, label=f'Bilateral σ_r={sigma_r_values[0]}')
-ax_profile.axvline(x=0, color='gray', linestyle='--', alpha=0.5)
-ax_profile.set_xlabel('Horizontal Position')
-ax_profile.set_ylabel('Weight')
-ax_profile.set_title('Weight Distribution Along Center Line', fontsize=12)
-ax_profile.legend(fontsize=9)
+<p>ax_profile.plot(x_positions, center_row_gaussian, 'k-', linewidth=3, label='Gaussian (σ_r=∞)')<br />
+ax_profile.plot(x_positions, center_row_bilateral_large, 'b--', linewidth=2, label=f'Bilateral σ_r={sigma_r_values[2]}')<br />
+ax_profile.plot(x_positions, center_row_bilateral_medium, 'g-.', linewidth=2, label=f'Bilateral σ_r={sigma_r_values[1]}')<br />
+ax_profile.plot(x_positions, center_row_bilateral_small, 'r:', linewidth=2, label=f'Bilateral σ_r={sigma_r_values[0]}')<br />
+ax_profile.axvline(x=0, color='gray', linestyle='--', alpha=0.5)<br />
+ax_profile.set_xlabel('Horizontal Position')<br />
+ax_profile.set_ylabel('Weight')<br />
+ax_profile.set_title('Weight Distribution Along Center Line', fontsize=12)<br />
+ax_profile.legend(fontsize=9)<br />
 ax_profile.grid(True, alpha=0.3)</p>
 <h1 id="54">5.4 第三行右侧：权重差异热图</h1>
-<p>for idx, (sigma_r, bilateral_kernel) in enumerate(zip(sigma_r_values, bilateral_kernels)):
-    ax = plt.subplot(3, 4, 10+idx)
-    weight_diff = gaussian_kernel - bilateral_kernel
-    im = ax.imshow(weight_diff, cmap='RdBu_r', vmin=-weight_diff.max(), vmax=weight_diff.max())
-    ax.set_title(f'Weight Difference\nGaussian - Bilateral (σ_r={sigma_r})', fontsize=10)
-    ax.axvline(x=kernel_radius, color='k', linestyle='--', alpha=0.7)
-    ax.axhline(y=kernel_radius, color='k', linestyle='--', alpha=0.7)
+<p>for idx, (sigma_r, bilateral_kernel) in enumerate(zip(sigma_r_values, bilateral_kernels)):<br />
+    ax = plt.subplot(3, 4, 10+idx)<br />
+    weight_diff = gaussian_kernel - bilateral_kernel<br />
+    im = ax.imshow(weight_diff, cmap='RdBu_r', vmin=-weight_diff.max(), vmax=weight_diff.max())<br />
+    ax.set_title(f'Weight Difference\nGaussian - Bilateral (σ_r={sigma_r})', fontsize=10)<br />
+    ax.axvline(x=kernel_radius, color='k', linestyle='--', alpha=0.7)<br />
+    ax.axhline(y=kernel_radius, color='k', linestyle='--', alpha=0.7)<br />
     plt.colorbar(im, ax=ax, shrink=0.8)</p>
-<p>fig.suptitle(f'Bilateral Filter Kernel Comparison: Effect of σ_r (σ_s = {sigma_s})',
-             fontsize=16, fontweight='bold')
-plt.tight_layout(rect=[0, 0, 1, 0.94])
+<p>fig.suptitle(f'Bilateral Filter Kernel Comparison: Effect of σ_r (σ_s = {sigma_s})',<br />
+             fontsize=16, fontweight='bold')<br />
+plt.tight_layout(rect=[0, 0, 1, 0.94])<br />
 plt.show()</p>
 <h1 id="6-_r">6. 创建简化版对比图（重点展示σ_r的影响）</h1>
 <p>fig2, axes2 = plt.subplots(2, 3, figsize=(15, 8))</p>
 <h1 id="_r2d">第一行：不同σ_r的双边核2D视图</h1>
-<p>for idx, (sigma_r, bilateral_kernel) in enumerate(zip(sigma_r_values, bilateral_kernels)):
-    ax = axes2[0, idx]
-    im = ax.imshow(bilateral_kernel, cmap='plasma')
-    ax.set_title(f'Bilateral Kernel\nσ_s={sigma_s}, σ_r={sigma_r}', fontsize=12)
-    ax.axvline(x=kernel_radius, color='w', linestyle='--', alpha=0.7)
-    ax.axhline(y=kernel_radius, color='w', linestyle='--', alpha=0.7)
-    ax.scatter(kernel_radius, kernel_radius, c='white', s=30, marker='x')
+<p>for idx, (sigma_r, bilateral_kernel) in enumerate(zip(sigma_r_values, bilateral_kernels)):<br />
+    ax = axes2[0, idx]<br />
+    im = ax.imshow(bilateral_kernel, cmap='plasma')<br />
+    ax.set_title(f'Bilateral Kernel\nσ_s={sigma_s}, σ_r={sigma_r}', fontsize=12)<br />
+    ax.axvline(x=kernel_radius, color='w', linestyle='--', alpha=0.7)<br />
+    ax.axhline(y=kernel_radius, color='w', linestyle='--', alpha=0.7)<br />
+    ax.scatter(kernel_radius, kernel_radius, c='white', s=30, marker='x')<br />
     plt.colorbar(im, ax=ax, shrink=0.8)</p>
 <h1 id="_7">第二行：权重分布和统计</h1>
 <h1 id="_8">左：权重分布曲线</h1>
-<p>ax_curve = axes2[1, 0]
-ax_curve.plot(x_positions, center_row_gaussian, 'k-', linewidth=3, label='Gaussian')
-colors = ['r', 'g', 'b']
-for idx, (sigma_r, bilateral_kernel) in enumerate(zip(sigma_r_values, bilateral_kernels)):
-    center_row = bilateral_kernel[kernel_radius, :]
-    ax_curve.plot(x_positions, center_row, colors[idx]+'-', linewidth=2,
-                 label=f'σ_r={sigma_r}')
-ax_curve.axvline(x=0, color='gray', linestyle='--', alpha=0.5)
-ax_curve.fill_between(x_positions[x_positions&lt;0], 0, center_row_gaussian[x_positions&lt;0],
-                     alpha=0.2, color='gray', label='Left side (similar)')
-ax_curve.fill_between(x_positions[x_positions&gt;0], 0, center_row_gaussian[x_positions&gt;0],
-                     alpha=0.2, color='red', label='Right side (different)')
-ax_curve.set_xlabel('Horizontal Position')
-ax_curve.set_ylabel('Weight')
-ax_curve.set_title('Weight Distribution Comparison', fontsize=12)
-ax_curve.legend(fontsize=9)
+<p>ax_curve = axes2[1, 0]<br />
+ax_curve.plot(x_positions, center_row_gaussian, 'k-', linewidth=3, label='Gaussian')<br />
+colors = ['r', 'g', 'b']<br />
+for idx, (sigma_r, bilateral_kernel) in enumerate(zip(sigma_r_values, bilateral_kernels)):<br />
+    center_row = bilateral_kernel[kernel_radius, :]<br />
+    ax_curve.plot(x_positions, center_row, colors[idx]+'-', linewidth=2,<br />
+                 label=f'σ_r={sigma_r}')<br />
+ax_curve.axvline(x=0, color='gray', linestyle='--', alpha=0.5)<br />
+ax_curve.fill_between(x_positions[x_positions&lt;0], 0, center_row_gaussian[x_positions&lt;0],<br />
+                     alpha=0.2, color='gray', label='Left side (similar)')<br />
+ax_curve.fill_between(x_positions[x_positions&gt;0], 0, center_row_gaussian[x_positions&gt;0],<br />
+                     alpha=0.2, color='red', label='Right side (different)')<br />
+ax_curve.set_xlabel('Horizontal Position')<br />
+ax_curve.set_ylabel('Weight')<br />
+ax_curve.set_title('Weight Distribution Comparison', fontsize=12)<br />
+ax_curve.legend(fontsize=9)<br />
 ax_curve.grid(True, alpha=0.3)</p>
 <h1 id="_9">中：左右权重比例</h1>
-<p>ax_ratio = axes2[1, 1]
-categories = ['Gaussian'] + [f'σ_r={r}' for r in sigma_r_values]
-left_weights = [gaussian_kernel[:, :kernel_radius].sum()] + \
-               [k[:, :kernel_radius].sum() for k in bilateral_kernels]
-right_weights = [gaussian_kernel[:, kernel_radius+1:].sum()] + \
+<p>ax_ratio = axes2[1, 1]<br />
+categories = ['Gaussian'] + [f'σ_r={r}' for r in sigma_r_values]<br />
+left_weights = [gaussian_kernel[:, :kernel_radius].sum()] + \<br />
+               [k[:, :kernel_radius].sum() for k in bilateral_kernels]<br />
+right_weights = [gaussian_kernel[:, kernel_radius+1:].sum()] + \<br />
                 [k[:, kernel_radius+1:].sum() for k in bilateral_kernels]</p>
-<p>x_pos = np.arange(len(categories))
-width = 0.35
-ax_ratio.bar(x_pos - width/2, left_weights, width, label='Left side', color='skyblue')
-ax_ratio.bar(x_pos + width/2, right_weights, width, label='Right side', color='lightcoral')
-ax_ratio.set_xlabel('Filter Type')
-ax_ratio.set_ylabel('Total Weight')
-ax_ratio.set_title('Left vs Right Side Weights', fontsize=12)
-ax_ratio.set_xticks(x_pos)
-ax_ratio.set_xticklabels(categories, rotation=45)
-ax_ratio.legend()
+<p>x_pos = np.arange(len(categories))<br />
+width = 0.35<br />
+ax_ratio.bar(x_pos - width/2, left_weights, width, label='Left side', color='skyblue')<br />
+ax_ratio.bar(x_pos + width/2, right_weights, width, label='Right side', color='lightcoral')<br />
+ax_ratio.set_xlabel('Filter Type')<br />
+ax_ratio.set_ylabel('Total Weight')<br />
+ax_ratio.set_title('Left vs Right Side Weights', fontsize=12)<br />
+ax_ratio.set_xticks(x_pos)<br />
+ax_ratio.set_xticklabels(categories, rotation=45)<br />
+ax_ratio.legend()<br />
 ax_ratio.grid(True, alpha=0.3, axis='y')</p>
 <h1 id="_10">右：权重减少百分比</h1>
-<p>ax_reduction = axes2[1, 2]
-reduction_percent = []
-for bilateral_kernel in bilateral_kernels:
-    gauss_right = gaussian_kernel[:, kernel_radius+1:].sum()
-    bilateral_right = bilateral_kernel[:, kernel_radius+1:].sum()
-    reduction = (1 - bilateral_right/gauss_right) * 100
+<p>ax_reduction = axes2[1, 2]<br />
+reduction_percent = []<br />
+for bilateral_kernel in bilateral_kernels:<br />
+    gauss_right = gaussian_kernel[:, kernel_radius+1:].sum()<br />
+    bilateral_right = bilateral_kernel[:, kernel_radius+1:].sum()<br />
+    reduction = (1 - bilateral_right/gauss_right) * 100<br />
     reduction_percent.append(reduction)</p>
-<p>bars = ax_reduction.bar([f'σ_r={r}' for r in sigma_r_values], reduction_percent,
-                       color=['red', 'green', 'blue'])
-ax_reduction.set_xlabel('σ_r Value')
-ax_reduction.set_ylabel('Weight Reduction (%)')
-ax_reduction.set_title('Right Side Weight Reduction\n(Different Value Side)', fontsize=12)
+<p>bars = ax_reduction.bar([f'σ_r={r}' for r in sigma_r_values], reduction_percent,<br />
+                       color=['red', 'green', 'blue'])<br />
+ax_reduction.set_xlabel('σ_r Value')<br />
+ax_reduction.set_ylabel('Weight Reduction (%)')<br />
+ax_reduction.set_title('Right Side Weight Reduction\n(Different Value Side)', fontsize=12)<br />
 ax_reduction.grid(True, alpha=0.3, axis='y')</p>
 <h1 id="_11">在柱子上添加数值标签</h1>
-<p>for bar, val in zip(bars, reduction_percent):
-    height = bar.get_height()
-    ax_reduction.text(bar.get_x() + bar.get_width()/2., height + 1,
+<p>for bar, val in zip(bars, reduction_percent):<br />
+    height = bar.get_height()<br />
+    ax_reduction.text(bar.get_x() + bar.get_width()/2., height + 1,<br />
                      f'{val:.1f}%', ha='center', va='bottom', fontsize=10)</p>
-<p>fig2.suptitle('Effect of σ_r on Bilateral Filter Kernels', fontsize=16, fontweight='bold')
-plt.tight_layout(rect=[0, 0, 1, 0.93])
+<p>fig2.suptitle('Effect of σ_r on Bilateral Filter Kernels', fontsize=16, fontweight='bold')<br />
+plt.tight_layout(rect=[0, 0, 1, 0.93])<br />
 plt.show()</p>
 <h1 id="7">7. 打印关键数据对比</h1>
-<p>print("="<em>80)
-print("BILATERAL FILTER: EFFECT OF σ_r PARAMETER")
-print("="</em>80)
-print(f"Edge characteristics:")
-print(f"  Center pixel value: {center_pixel_value:.1f}")
-print(f"  Left side average: {edge_patch[:, :center].mean():.1f}")
-print(f"  Right side average: {edge_patch[:, center:].mean():.1f}")
-print(f"  Value difference: {edge_patch[:, center:].mean() - edge_patch[:, :center].mean():.1f}")
+<p>print("="<em>80)<br />
+print("BILATERAL FILTER: EFFECT OF σ_r PARAMETER")<br />
+print("="</em>80)<br />
+print(f"Edge characteristics:")<br />
+print(f"  Center pixel value: {center_pixel_value:.1f}")<br />
+print(f"  Left side average: {edge_patch[:, :center].mean():.1f}")<br />
+print(f"  Right side average: {edge_patch[:, center:].mean():.1f}")<br />
+print(f"  Value difference: {edge_patch[:, center:].mean() - edge_patch[:, :center].mean():.1f}")<br />
 print()</p>
-<p>print("GAUSSIAN FILTER (baseline):")
-print(f"  Left weight: {gaussian_kernel[:, :kernel_radius].sum():.6f} ({gaussian_kernel[:, :kernel_radius].sum()/gaussian_kernel.sum()<em>100:.1f}%)")
-print(f"  Right weight: {gaussian_kernel[:, kernel_radius+1:].sum():.6f} ({gaussian_kernel[:, kernel_radius+1:].sum()/gaussian_kernel.sum()</em>100:.1f}%)")
-print(f"  Left/Right ratio: 1.00:1 (perfectly symmetric)")
+<p>print("GAUSSIAN FILTER (baseline):")<br />
+print(f"  Left weight: {gaussian_kernel[:, :kernel_radius].sum():.6f} ({gaussian_kernel[:, :kernel_radius].sum()/gaussian_kernel.sum()<em>100:.1f}%)")<br />
+print(f"  Right weight: {gaussian_kernel[:, kernel_radius+1:].sum():.6f} ({gaussian_kernel[:, kernel_radius+1:].sum()/gaussian_kernel.sum()</em>100:.1f}%)")<br />
+print(f"  Left/Right ratio: 1.00:1 (perfectly symmetric)")<br />
 print()</p>
-<p>for idx, (sigma_r, bilateral_kernel) in enumerate(zip(sigma_r_values, bilateral_kernels)):
-    print(f"BILATERAL FILTER (σ_r = {sigma_r}):")
-    left_weight = bilateral_kernel[:, :kernel_radius].sum()
-    right_weight = bilateral_kernel[:, kernel_radius+1:].sum()
+<p>for idx, (sigma_r, bilateral_kernel) in enumerate(zip(sigma_r_values, bilateral_kernels)):<br />
+    print(f"BILATERAL FILTER (σ_r = {sigma_r}):")<br />
+    left_weight = bilateral_kernel[:, :kernel_radius].sum()<br />
+    right_weight = bilateral_kernel[:, kernel_radius+1:].sum()<br />
     total_weight = bilateral_kernel.sum()</p>
 <pre><code class="md-fencescode">print(f"  Left weight: {left_weight:.6f} ({left_weight/total_weight*100:.1f}%)")
 print(f"  Right weight: {right_weight:.6f} ({right_weight/total_weight*100:.1f}%)")

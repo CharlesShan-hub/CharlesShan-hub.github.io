@@ -34,11 +34,11 @@
                           ▲                   ▲
                           └────── 缓冲池 + 接口表 ──────┘
 </code></pre>
-<p><strong>Network 程序</strong>（网络程序）：承载用户的传输请求——多路复用、构建消息头、分包、转码、填缓冲。
+<p><strong>Network 程序</strong>（网络程序）：承载用户的传输请求——多路复用、构建消息头、分包、转码、填缓冲。<br />
 <strong>Handler 程序</strong>（处理器程序）：驱动通道硬件——发起发送、数据链式传输（data chaining）、处理中断。</p>
 <p>这两个程序就是今天网卡驱动 + 协议栈的 1969 版分工：<strong>上层管"发什么"，下层管"怎么把比特送出去"。</strong></p>
-<p>关键设计点：
-- 通信是<strong>全双工</strong>的，两个程序各自再拆成"输出半部 + 输入半部"（图里只画了输出半部）
+<p>关键设计点：<br />
+- 通信是<strong>全双工</strong>的，两个程序各自再拆成"输出半部 + 输入半部"（图里只画了输出半部）<br />
 - 两个程序之间通过<strong>缓冲池</strong>交换数据、通过<strong>接口表</strong>交换逻辑信息——生产者/消费者模型的完美实现</p>
 <h3 id="2-network-ii-1">2. Network 程序：多路复用 + 消息组装（II-1）</h3>
 <p><strong>多路复用</strong>：把所有用户的请求堆起来，把缓冲池填满，让 Handler 一直有活干（keep the handler busy emitting）。多路复用/分发<strong>基于链路号</strong>（Link = 两个用户之间的逻辑连接）。</p>
@@ -79,9 +79,9 @@
 </code></pre>
 <p><strong>这就是教科书级的环形缓冲 + 双指针生产者-消费者队列</strong>——1969 年 5 月，Deloche 在 UCLA 把它写进了 ARPANET 主机软件规格。今天 Linux 的 sk_buff 队列、Kafka 的分区、React 的 fiber 队列，全是它的远房后代。</p>
 <h3 id="5-iii">5. 三个待解问题（III）</h3>
-<p>Deloche 诚实地列了三个问题：
-1. <strong>为什么 HOST 和 IMP 之间没有一个简单的控制规程？</strong> 如果 HOST 发出的消息在传输中出错，BBN 规格里说错误会一路传到接收 HOST——那是不是需要 HOST-HOST 的控制规程？
-2. <strong>特殊通道硬件单元接在哪（MIOP/SIOP）？</strong> 硬件怎么知道消息什么时候结束、好开始填充（padding）？反向：Handler 怎么知道进来的消息有多长——从上一条的内容推断，还是永远按最大长度准备接收？
+<p>Deloche 诚实地列了三个问题：<br />
+1. <strong>为什么 HOST 和 IMP 之间没有一个简单的控制规程？</strong> 如果 HOST 发出的消息在传输中出错，BBN 规格里说错误会一路传到接收 HOST——那是不是需要 HOST-HOST 的控制规程？<br />
+2. <strong>特殊通道硬件单元接在哪（MIOP/SIOP）？</strong> 硬件怎么知道消息什么时候结束、好开始填充（padding）？反向：Handler 怎么知道进来的消息有多长——从上一条的内容推断，还是永远按最大长度准备接收？<br />
 3. <strong>"Gordo"文档什么时候出？</strong> 用于设计用户-网络程序接口（程序启动机制、参数传递……）。</p>
 <p>第 2 个问题的两难（"按最大长度准备 vs 从内容推断长度"）——今天每一个流式解析器都在面对同样的选择。第 3 个问题里的 "Gordo" 是 UCLA Sigma 7 的操作系统，Deloche 在等操作系统的接口文档才能定用户-网络接口。<strong>架构师依赖操作系统的文档，操作系统又依赖架构师的需求——1969 年的依赖地狱。</strong></p>
 <hr />
@@ -89,10 +89,10 @@
 <blockquote>
 <ul>
 <li><strong>「人类发明的实现」</strong>：16 位头（1+2+8+5 的分配）、1006 字节、256 字缓冲、环形表双指针——全是 Deloche 为 Sigma 7 定的具体参数。换成 32 位头、MTU 1500、无锁队列，一样成立。</li>
-<li><strong>「先于人类存在的规律」</strong>：
-  ① <strong>生产者-消费者律</strong>：一个生产数据、一个消费数据，两者速率不同步——<strong>唯一的正确解法就是中间放一个"缓冲 + 同步指针"</strong>，让双方互不阻塞。这是从水坝蓄水、工厂流水线缓冲区、到 CPU 生产者和内存消费者之间 cache，再到网络协议栈，<strong>所有异步系统共同的结构</strong>。Deloche 的"缓冲池 + 环形接口表"是这条律在 1969 年的一次标准实现。
-  ② <strong>内核态/用户态分离律</strong>：Network 程序管逻辑、Handler 程序管硬件，后者"短小、特权、中断驱动"——<strong>把"必须信任的硬件搬运代码"和"可以不信任的业务代码"分开</strong>，是操作系统安全模型的原点。今天的 eBPF 把网络处理下沉到内核、DPDK 把数据面移出内核，本质上都是在调整这条分界线的位置——<strong>分界线怎么画是人为的，分界线必须存在是必然的。</strong>
-  ③ <strong>内存对齐律</strong>：头部和正文之间塞 16 位填充让正文对齐字边界——<strong>硬件喜欢对齐、软件喜欢紧凑，折中方案就是"小填充 + 明确规则"</strong>。C 语言的 struct padding、数据库的页对齐、SSD 的扇区对齐，全是同一件事。
+<li><strong>「先于人类存在的规律」</strong>：<br />
+  ① <strong>生产者-消费者律</strong>：一个生产数据、一个消费数据，两者速率不同步——<strong>唯一的正确解法就是中间放一个"缓冲 + 同步指针"</strong>，让双方互不阻塞。这是从水坝蓄水、工厂流水线缓冲区、到 CPU 生产者和内存消费者之间 cache，再到网络协议栈，<strong>所有异步系统共同的结构</strong>。Deloche 的"缓冲池 + 环形接口表"是这条律在 1969 年的一次标准实现。<br />
+  ② <strong>内核态/用户态分离律</strong>：Network 程序管逻辑、Handler 程序管硬件，后者"短小、特权、中断驱动"——<strong>把"必须信任的硬件搬运代码"和"可以不信任的业务代码"分开</strong>，是操作系统安全模型的原点。今天的 eBPF 把网络处理下沉到内核、DPDK 把数据面移出内核，本质上都是在调整这条分界线的位置——<strong>分界线怎么画是人为的，分界线必须存在是必然的。</strong><br />
+  ③ <strong>内存对齐律</strong>：头部和正文之间塞 16 位填充让正文对齐字边界——<strong>硬件喜欢对齐、软件喜欢紧凑，折中方案就是"小填充 + 明确规则"</strong>。C 语言的 struct padding、数据库的页对齐、SSD 的扇区对齐，全是同一件事。<br />
   ④ <strong>文档残缺不阻碍思想传播</strong>：手写稿 + 无法辨认 + 重建——但整份设计依然被读懂、被实现（UCLA 的 Sigma 7 后来真的连上了网）。<strong>思想的传播不依赖载体的完美</strong>，这本身又是一条规律。</li>
 <li><strong>后世重现</strong>：Network/Handler 分工 → 协议栈 vs 网卡驱动；主模式特权 → 内核态驱动；环形表双指针 → 无锁环形队列 / ring buffer（内核网络栈的经典结构）；1006 字节切片 → TCP 分段 / 分帧；字边界对齐 → struct padding；"按最大长度准备接收" → 固定大小 receive buffer；"Gordo 文档依赖" → API 依赖管理。<strong>RFC 7 是这批文档里最"像现代操作系统教材"的一篇。</strong></li>
 </ul>

@@ -20,31 +20,31 @@
 <h2 id="_2">原理</h2>
 <p>作者认为，虽然 BLF 在平滑强度的微小变化同时保留强边缘方面非常有效，但它实现渐进粗化的能力相当有限。如下图所示，左上角是合成示例，拥有几个不同步长幅度的边缘，并且包含两个不同尺度的噪声。</p>
 <p><img alt="wls-contract" src="../assets/wls-contract.png" /></p>
-<p>WLS将图像分解为<strong>基底层</strong>（大尺度强度变化）和<strong>细节层</strong>（小尺度细节），进而提出了一种基于<strong>加权最小二乘法</strong>（Weighted Least Squares, WLS）的新方法。
-* WLS方法将图像平滑过程转化为一个<strong>最小化能量函数</strong>的数学问题。该函数包含两个目标：
-    - <strong>保真度（Fidelity）</strong>：平滑后的图像 u要尽量接近原始图像 g。
-    - <strong>平滑度（Smoothness）</strong>：图像 u要尽量平滑，但<strong>在原始图像的强边缘处允许不连续</strong>。
-* 能量函数：
-    $$E(u)=p∑​((up​−gp​)2+λ(ax,p​(g)(∂x∂u​)p2​+ay,p​(g)(∂y∂u​)p2​))$$
-    - up​,gp​：像素 p在平滑后图像和原始图像中的值。
-    - λ：<strong>平滑系数</strong>。λ越大，图像越平滑。
-    - ax,p​(g),ay,p​(g)：<strong>权重函数</strong>。这是实现“保边”的关键，它根据原始图像 g的梯度动态调整平滑力度。
-* 权重函数（Edge-Aware Weights）权重函数的设计决定了算法是“无脑模糊”还是“智能保边”。文章采用如下定义：
-    $$ax,p​(g)=(​∂x∂ℓ​(p)​α+ϵ)−1$$
-    - ℓ：原始图像的对数亮度（log-luminance）。
-    - α：<strong>敏感度参数</strong>（通常取1.2-2.0）。α越大，对边缘越敏感，越不容易模糊。
-    - ϵ：极小常数（如0.0001），防止分母为零。
-* 逻辑解释
-    - 在<strong>平坦区域</strong>：梯度 ∂x∂ℓ​很小，权重 a很大，此时算法会大力平滑（即允许模糊）。
-    - 在<strong>边缘处</strong>：梯度很大，权重 a很小，此时算法会限制平滑，从而<strong>保留边缘</strong>。
-* 求解方法：线性系统。将上述能量函数最小化，最终转化为求解一个大型<strong>稀疏线性系统</strong>
-    $$(I+λLg​)u=g$$
-    - I：单位矩阵。
-    - Lg​：由权重 a构造的拉普拉斯矩阵。
-    - g：原始图像向量。
-    由于矩阵 (I+λLg​)是稀疏且对称正定的，文章建议使用<strong>预条件共轭梯度法</strong>（Preconditioned Conjugate Gradient）来高效求解。
-* 多尺度分解，为了提取不同尺度的细节，文章提出两种构建多尺度金字塔的方法：
-    - <strong>直接法</strong>：直接对原始图像 g应用不同 λ的WLS滤波，得到不同尺度的平滑结果 ui。细节层 di=ui−1−ui。
+<p>WLS将图像分解为<strong>基底层</strong>（大尺度强度变化）和<strong>细节层</strong>（小尺度细节），进而提出了一种基于<strong>加权最小二乘法</strong>（Weighted Least Squares, WLS）的新方法。<br />
+* WLS方法将图像平滑过程转化为一个<strong>最小化能量函数</strong>的数学问题。该函数包含两个目标：<br />
+    - <strong>保真度（Fidelity）</strong>：平滑后的图像 u要尽量接近原始图像 g。<br />
+    - <strong>平滑度（Smoothness）</strong>：图像 u要尽量平滑，但<strong>在原始图像的强边缘处允许不连续</strong>。<br />
+* 能量函数：<br />
+    $$E(u)=p∑​((up​−gp​)2+λ(ax,p​(g)(∂x∂u​)p2​+ay,p​(g)(∂y∂u​)p2​))$$<br />
+    - up​,gp​：像素 p在平滑后图像和原始图像中的值。<br />
+    - λ：<strong>平滑系数</strong>。λ越大，图像越平滑。<br />
+    - ax,p​(g),ay,p​(g)：<strong>权重函数</strong>。这是实现“保边”的关键，它根据原始图像 g的梯度动态调整平滑力度。<br />
+* 权重函数（Edge-Aware Weights）权重函数的设计决定了算法是“无脑模糊”还是“智能保边”。文章采用如下定义：<br />
+    $$ax,p​(g)=(​∂x∂ℓ​(p)​α+ϵ)−1$$<br />
+    - ℓ：原始图像的对数亮度（log-luminance）。<br />
+    - α：<strong>敏感度参数</strong>（通常取1.2-2.0）。α越大，对边缘越敏感，越不容易模糊。<br />
+    - ϵ：极小常数（如0.0001），防止分母为零。<br />
+* 逻辑解释<br />
+    - 在<strong>平坦区域</strong>：梯度 ∂x∂ℓ​很小，权重 a很大，此时算法会大力平滑（即允许模糊）。<br />
+    - 在<strong>边缘处</strong>：梯度很大，权重 a很小，此时算法会限制平滑，从而<strong>保留边缘</strong>。<br />
+* 求解方法：线性系统。将上述能量函数最小化，最终转化为求解一个大型<strong>稀疏线性系统</strong><br />
+    $$(I+λLg​)u=g$$<br />
+    - I：单位矩阵。<br />
+    - Lg​：由权重 a构造的拉普拉斯矩阵。<br />
+    - g：原始图像向量。<br />
+    由于矩阵 (I+λLg​)是稀疏且对称正定的，文章建议使用<strong>预条件共轭梯度法</strong>（Preconditioned Conjugate Gradient）来高效求解。<br />
+* 多尺度分解，为了提取不同尺度的细节，文章提出两种构建多尺度金字塔的方法：<br />
+    - <strong>直接法</strong>：直接对原始图像 g应用不同 λ的WLS滤波，得到不同尺度的平滑结果 ui。细节层 di=ui−1−ui。<br />
     - <strong>迭代法</strong>：对上一层的平滑结果 ui再次应用WLS滤波。这种方法更倾向于产生分片常数（piecewise constant）的结果，适合图像抽象化（Abstraction）应用。</p>
 <hr />
 <h2 id="_3">代码</h2>
