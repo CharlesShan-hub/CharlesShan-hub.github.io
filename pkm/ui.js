@@ -7,6 +7,30 @@
   var DEFAULT_THEME = C.defaultTheme || (THEMES[0] || "");
   var SITE_TREE = C.siteTree || "site-tree.json";
 
+  /* ===== 左侧按钮组（文件树 / TOC / 搜索）=====
+     桌面端默认收成 “…” 主按钮：鼠标悬浮整组临时展开，点击主按钮固定展开/收起；
+     手机端由 CSS 覆盖为常显平铺，主按钮隐藏。 */
+  var pkmBtns = null;
+  var addSideBtn = function (btn) {
+    if (!pkmBtns) {
+      pkmBtns = document.createElement("div");
+      pkmBtns.id = "pkm-side-btns";
+      pkmBtns.className = "collapsed";
+      var moreBtn = document.createElement("button");
+      moreBtn.id = "more-btn"; moreBtn.type = "button";
+      moreBtn.setAttribute("aria-label", "更多工具"); moreBtn.setAttribute("title", "更多工具");
+      moreBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
+        '<circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>';
+      moreBtn.addEventListener("click", function () {
+        var pinned = pkmBtns.classList.toggle("pinned");
+        moreBtn.classList.toggle("open", pinned);
+      });
+      pkmBtns.appendChild(moreBtn);
+      document.body.appendChild(pkmBtns);
+    }
+    pkmBtns.appendChild(btn);
+  };
+
   var hexToRgb = function (hex) {
     var h = String(hex).trim().replace("#", "");
     if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
@@ -38,9 +62,26 @@
     document.body.appendChild(btn);
     document.body.appendChild(menu);
 
+    var AUTO = "__auto__";
     var saved = null;
     try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
-    var current = (saved && THEMES.indexOf(saved) > -1) ? saved : DEFAULT_THEME;
+    if (saved === AUTO) saved = null;
+    var current = (saved && THEMES.indexOf(saved) > -1) ? saved : AUTO;
+    var KIND = C.themesKind || {};
+    var pickAuto = function () {
+      var dark = !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      var kind = dark ? "dark" : "light";
+      for (var i = 0; i < THEMES.length; i++) {
+        if (KIND[THEMES[i]] === kind) return THEMES[i];
+      }
+      return DEFAULT_THEME;
+    };
+    var resolveName = function (name) { return name === AUTO ? pickAuto() : name; };
+    var autoItem = document.createElement("div");
+    autoItem.className = "theme-item";
+    autoItem.textContent = "自动";
+    autoItem.addEventListener("click", function () { apply(AUTO); hide(); });
+    menu.appendChild(autoItem);
     THEMES.forEach(function (name) {
       var item = document.createElement("div");
       item.className = "theme-item";
@@ -50,11 +91,12 @@
     });
     var apply = function (name) {
       current = name;
-      link.href = THEMES_BASE + name + ".css";
+      link.href = THEMES_BASE + resolveName(name) + ".css";
       link.onload = function () {
         try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
       };
-      try { localStorage.setItem("pkm-theme", name); } catch (e) {}
+      if (name === AUTO) { try { localStorage.removeItem("pkm-theme"); } catch (e) {} }
+      else { try { localStorage.setItem("pkm-theme", name); } catch (e) {} }
       refreshActive();
     };
     var refreshActive = function () {
@@ -63,6 +105,18 @@
         items[i].classList.toggle("active", items[i].textContent === current);
       }
     };
+    if (window.matchMedia) {
+      var mq = window.matchMedia("(prefers-color-scheme: dark)");
+      var mqChange = function () {
+        if (current !== AUTO) return;
+        link.href = THEMES_BASE + pickAuto() + ".css";
+        link.onload = function () {
+          try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+        };
+      };
+      if (mq.addEventListener) mq.addEventListener("change", mqChange);
+      else if (mq.addListener) mq.addListener(mqChange);
+    }
     var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
     var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
     btn.addEventListener("click", function () {
@@ -85,7 +139,7 @@
     panel.id = "nav-panel";
     panel.innerHTML = '<div class="nav-head">&nbsp;</div>' +
       '<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>';
-    document.body.appendChild(btn);
+    addSideBtn(btn);
     document.body.appendChild(panel);
 
     refreshPanelTheme();
@@ -183,7 +237,7 @@
       '<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/></svg>';
     var panel = document.createElement("div");
     panel.id = "toc-panel";
-    document.body.appendChild(btn);
+    addSideBtn(btn);
     document.body.appendChild(panel);
 
     refreshPanelTheme();
@@ -273,7 +327,7 @@
     var list = document.createElement("div");
     panel.appendChild(input);
     panel.appendChild(list);
-    document.body.appendChild(btn);
+    addSideBtn(btn);
     document.body.appendChild(panel);
 
     refreshPanelTheme();
