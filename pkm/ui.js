@@ -376,4 +376,30 @@
       }
     });
   })();
+
+  /* ===== LaTeX 数学渲染（KaTeX，仅 hasMath 页面按需加载）===== */
+  (function () {
+    if (!C.hasMath) return;
+    var delims = [
+      { left: "$$", right: "$$", display: true },
+      { left: "$", right: "$", display: false }
+    ];
+    var render = function () {
+      renderMathInElement(document.body, { delimiters: delims, throwOnError: false });
+    };
+    if (window.renderMathInElement) { render(); return; }
+    var css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css";
+    document.head.appendChild(css);
+    var js = document.createElement("script");
+    js.src = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js";
+    js.onload = function () {
+      var ar = document.createElement("script");
+      ar.src = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js";
+      ar.onload = render;
+      document.head.appendChild(ar);
+    };
+    document.head.appendChild(js);
+  })();
 })();
