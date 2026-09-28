@@ -47,86 +47,7 @@
     document.documentElement.style.setProperty("--nav-fg", fg || "");
   };
 
-  /* ===== 主题切换 ===== */
-  (function () {
-    if (!THEMES.length) return;
-    var link = document.getElementById("theme-css");
-    var btn = document.createElement("button");
-    btn.id = "theme-btn"; btn.type = "button";
-    btn.setAttribute("aria-label", "切换主题"); btn.setAttribute("title", "切换主题");
-    btn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
-      '<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/>' +
-      '<circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg>';
-    var menu = document.createElement("div");
-    menu.id = "theme-menu";
-    document.body.appendChild(btn);
-    document.body.appendChild(menu);
-
-    var AUTO = "__auto__";
-    var saved = null;
-    try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
-    if (saved === AUTO) saved = null;
-    var current = (saved && THEMES.indexOf(saved) > -1) ? saved : AUTO;
-    var KIND = C.themesKind || {};
-    var pickAuto = function () {
-      var dark = !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
-      var kind = dark ? "dark" : "light";
-      for (var i = 0; i < THEMES.length; i++) {
-        if (KIND[THEMES[i]] === kind) return THEMES[i];
-      }
-      return DEFAULT_THEME;
-    };
-    var resolveName = function (name) { return name === AUTO ? pickAuto() : name; };
-    var autoItem = document.createElement("div");
-    autoItem.className = "theme-item";
-    autoItem.textContent = "自动";
-    autoItem.addEventListener("click", function () { apply(AUTO); hide(); });
-    menu.appendChild(autoItem);
-    THEMES.forEach(function (name) {
-      var item = document.createElement("div");
-      item.className = "theme-item";
-      item.textContent = name;
-      item.addEventListener("click", function () { apply(name); hide(); });
-      menu.appendChild(item);
-    });
-    var apply = function (name) {
-      current = name;
-      link.href = THEMES_BASE + resolveName(name) + ".css";
-      link.onload = function () {
-        try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
-      };
-      if (name === AUTO) { try { localStorage.removeItem("pkm-theme"); } catch (e) {} }
-      else { try { localStorage.setItem("pkm-theme", name); } catch (e) {} }
-      refreshActive();
-    };
-    var refreshActive = function () {
-      var items = menu.querySelectorAll(".theme-item");
-      for (var i = 0; i < items.length; i++) {
-        items[i].classList.toggle("active", items[i].textContent === current);
-      }
-    };
-    if (window.matchMedia) {
-      var mq = window.matchMedia("(prefers-color-scheme: dark)");
-      var mqChange = function () {
-        if (current !== AUTO) return;
-        link.href = THEMES_BASE + pickAuto() + ".css";
-        link.onload = function () {
-          try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
-        };
-      };
-      if (mq.addEventListener) mq.addEventListener("change", mqChange);
-      else if (mq.addListener) mq.addListener(mqChange);
-    }
-    var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
-    var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
-    btn.addEventListener("click", function () {
-      if (menu.classList.contains("open")) hide(); else show();
-    });
-    document.addEventListener("click", function (e) {
-      if (!btn.contains(e.target) && !menu.contains(e.target)) hide();
-    });
-    apply(current);
-  })();
+  /* ===== 主题切换 + 本页大纲 TOC：共享组件（ui_widgets.js），调用见文件树之后的共享挂载 ===== */
 
   /* ===== 左侧文件树 ===== */
   (function () {
@@ -227,6 +148,119 @@
     }
   })();
 
+  /* ===== 共享组件（主题切换 + 本页大纲 TOC）：ui_widgets.js 单点维护，ui.js 与私密页加密外壳共用 ===== */
+  /* pkmizer 共享组件：主题切换 + 本页大纲（TOC）
+ * 站点 ui.js 与私密页加密外壳（encrypt.mjs 模板）共用同一份实现，单点维护。
+ * 依赖 window.PKM: themes / themesBase / defaultTheme / themesKind。
+ * 调用时机：ui.js 页面加载即调用；加密页在解锁成功、正文注入后调用。
+ * TOC 按钮挂载：站点页进左侧按钮组（#pkm-side-btns），私密页无按钮组时独立 fixed 左上。
+ */
+window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
+  "use strict";
+  var C = window.PKM || {};
+  var THEMES = C.themes || [];
+  if (!THEMES.length) return;
+  var THEMES_BASE = C.themesBase || "themes/";
+  var DEFAULT_THEME = C.defaultTheme || (THEMES[0] || "");
+  var KIND = C.themesKind || {};
+
+  var hexToRgb = function (hex) {
+    var h = String(hex).trim().replace("#", "");
+    if (h.length === 3) { h = h[0] + h[0] + h[1] + h[1] + h[2] + h[2]; }
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    var n = parseInt(h, 16);
+    return (n >> 16 & 255) + "," + (n >> 8 & 255) + "," + (n & 255);
+  };
+  var refreshPanelTheme = function () {
+    var cs = getComputedStyle(document.body);
+    var bg = cs.getPropertyValue("--bg-color").trim();
+    var fg = cs.getPropertyValue("--text-color").trim();
+    var rgb = hexToRgb(bg);
+    document.documentElement.style.setProperty("--nav-bg", rgb ? "rgba(" + rgb + ",.92)" : "");
+    document.documentElement.style.setProperty("--nav-fg", fg || "");
+  };
+
+  /* ===== 主题切换 ===== */
+  (function () {
+    var link = document.getElementById("theme-css");
+    var btn = document.createElement("button");
+    btn.id = "theme-btn"; btn.type = "button";
+    btn.setAttribute("aria-label", "切换主题"); btn.setAttribute("title", "切换主题");
+    btn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5S13 18 13.5 18H15a3 3 0 0 0 3-3c0-4.5-3.6-12-6-12z"/>' +
+      '<circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg>';
+    var menu = document.createElement("div");
+    menu.id = "theme-menu";
+    document.body.appendChild(btn);
+    document.body.appendChild(menu);
+
+    var AUTO = "__auto__";
+    var saved = null;
+    try { saved = localStorage.getItem("pkm-theme"); } catch (e) {}
+    if (saved === AUTO) saved = null;
+    var current = (saved && THEMES.indexOf(saved) > -1) ? saved : AUTO;
+    var pickAuto = function () {
+      var dark = !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      var kind = dark ? "dark" : "light";
+      for (var i = 0; i < THEMES.length; i++) {
+        if (KIND[THEMES[i]] === kind) return THEMES[i];
+      }
+      return DEFAULT_THEME;
+    };
+    var resolveName = function (name) { return name === AUTO ? pickAuto() : name; };
+    var autoItem = document.createElement("div");
+    autoItem.className = "theme-item";
+    autoItem.textContent = "自动";
+    autoItem.addEventListener("click", function () { apply(AUTO); hide(); });
+    menu.appendChild(autoItem);
+    THEMES.forEach(function (name) {
+      var item = document.createElement("div");
+      item.className = "theme-item";
+      item.textContent = name;
+      item.addEventListener("click", function () { apply(name); hide(); });
+      menu.appendChild(item);
+    });
+    var apply = function (name) {
+      current = name;
+      link.href = THEMES_BASE + resolveName(name) + ".css";
+      link.onload = function () {
+        refreshPanelTheme();
+        try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+      };
+      if (name === AUTO) { try { localStorage.removeItem("pkm-theme"); } catch (e) {} }
+      else { try { localStorage.setItem("pkm-theme", name); } catch (e) {} }
+      refreshActive();
+    };
+    var refreshActive = function () {
+      var items = menu.querySelectorAll(".theme-item");
+      for (var i = 0; i < items.length; i++) {
+        items[i].classList.toggle("active", items[i].textContent === current);
+      }
+    };
+    if (window.matchMedia) {
+      var mq = window.matchMedia("(prefers-color-scheme: dark)");
+      var mqChange = function () {
+        if (current !== AUTO) return;
+        link.href = THEMES_BASE + pickAuto() + ".css";
+        link.onload = function () {
+          refreshPanelTheme();
+          try { window.dispatchEvent(new Event("pkm-theme-applied")); } catch (e) {}
+        };
+      };
+      if (mq.addEventListener) mq.addEventListener("change", mqChange);
+      else if (mq.addListener) mq.addListener(mqChange);
+    }
+    var show = function () { menu.classList.add("open"); btn.classList.add("open"); };
+    var hide = function () { menu.classList.remove("open"); btn.classList.remove("open"); };
+    btn.addEventListener("click", function () {
+      if (menu.classList.contains("open")) hide(); else show();
+    });
+    document.addEventListener("click", function (e) {
+      if (!btn.contains(e.target) && !menu.contains(e.target)) hide();
+    });
+    apply(current);
+  })();
+
   /* ===== 页面目录 TOC ===== */
   (function () {
     var btn = document.createElement("button");
@@ -237,7 +271,8 @@
       '<path d="M17 4l3 3-3 3M17 10l3 3-3 3M17 16l3 3-3 3"/></svg>';
     var panel = document.createElement("div");
     panel.id = "toc-panel";
-    addSideBtn(btn);
+    var sideGroup = document.getElementById("pkm-side-btns");
+    if (sideGroup) { sideGroup.appendChild(btn); } else { document.body.appendChild(btn); }
     document.body.appendChild(panel);
 
     refreshPanelTheme();
@@ -311,6 +346,9 @@
     window.addEventListener("scroll", updateActive, { passive: true });
     updateActive();
   })();
+};
+
+  window.__pkmInitWidgets();
 
   /* ===== 全站搜索 ===== */
   (function () {
