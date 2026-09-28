@@ -16,19 +16,19 @@
 <p>虽然文件事件处理器以单线程方式运行，但通过使用I/O多路复用程序来监听多个套接字，文件事件处理器既实现了高性能的网络通信模型，又可以很好地与Redis服务器中其他同样以单线程方式运行的模块进行对接，这保持了Redis内部单线程设计的简单性。</p>
 <p>12.1.1 文件事件处理器的构成</p>
 <p>图12-1展示了文件事件处理器的四个组成部分，它们分别是套接字、I/O多路复用程序、文件事件分派器（dispatcher），以及事件处理器。</p>
-<p><img alt="" src="./images/00015.jpg" /></p>
+<p><img alt="" src="./images/00015.webp" /></p>
 <p>图12-1 文件事件处理器的四个组成部分</p>
 <p>文件事件是对套接字操作的抽象，每当一个套接字准备好执行连接应答（accept）、写入、读取、关闭等操作时，就会产生一个文件事件。因为一个服务器通常会连接多个套接字，所以多个文件事件有可能会并发地出现。</p>
 <p>I/O多路复用程序负责监听多个套接字，并向文件事件分派器传送那些产生了事件的套接字。</p>
 <p>尽管多个文件事件可能会并发地出现，但I/O多路复用程序总是会将所有产生事件的套接字都放到一个队列里面，然后通过这个队列，以有序（sequentially）、同步（synchronously）、每次一个套接字的方式向文件事件分派器传送套接字。当上一个套接字产生的事件被处理完毕之后（该套接字为事件所关联的事件处理器执行完毕），I/O多路复用程序才会继续向文件事件分派器传送下一个套接字，如图12-2所示。</p>
-<p><img alt="" src="./images/00019.jpg" /></p>
+<p><img alt="" src="./images/00019.webp" /></p>
 <p>图12-2 I/O多路复用程序通过队列向文件事件分派器传送套接字</p>
 <p>文件事件分派器接收I/O多路复用程序传来的套接字，并根据套接字产生的事件的类型，调用相应的事件处理器。</p>
 <p>服务器会为执行不同任务的套接字关联不同的事件处理器，这些处理器是一个个函数，它们定义了某个事件发生时，服务器应该执行的动作。</p>
 <p>12.1.2 I/O多路复用程序的实现</p>
 <p>Redis的I/O多路复用程序的所有功能都是通过包装常见的select、epoll、evport和kqueue这些I/O多路复用函数库来实现的，每个I/O多路复用函数库在Redis源码中都对应一个单独的文件，比如ae_select.c、ae_epoll.c、ae_kqueue.c，诸如此类。</p>
 <p>因为Redis为每个I/O多路复用函数库都实现了相同的API，所以I/O多路复用程序的底层实现是可以互换的，如图12-3所示。</p>
-<p><img alt="" src="./images/00021.jpg" /></p>
+<p><img alt="" src="./images/00021.webp" /></p>
 <p>图12-3 Redis的I/O多路复用程序有多个I/O多路复用库实现可选</p>
 <p>Redis在I/O多路复用程序的实现源码中用#include宏定义了相应的规则，程序会在编译时自动选择系统中性能最高的I/O多路复用函数库来作为Redis的I/O多路复用程序的底层实现：</p>
 <hr />
@@ -78,18 +78,18 @@
 <p>1.连接应答处理器</p>
 <p>networking.c/acceptTcpHandler函数是Redis的连接应答处理器，这个处理器用于对连接服务器监听套接字的客户端进行应答，具体实现为sys/socket.h/accept函数的包装。</p>
 <p>当Redis服务器进行初始化的时候，程序会将这个连接应答处理器和服务器监听套接字的AE_READABLE事件关联起来，当有客户端用sys/socket.h/connect函数连接服务器监听套接字的时候，套接字就会产生AE_READABLE事件，引发连接应答处理器执行，并执行相应的套接字应答操作，如图12-4所示。</p>
-<p><img alt="" src="./images/00024.jpg" /></p>
+<p><img alt="" src="./images/00024.webp" /></p>
 <p>图12-4 服务器对客户端的连接请求进行应答</p>
 <p>2.命令请求处理器</p>
 <p>networking.c/readQueryFromClient函数是Redis的命令请求处理器，这个处理器负责从套接字中读入客户端发送的命令请求内容，具体实现为unistd.h/read函数的包装。</p>
 <p>当一个客户端通过连接应答处理器成功连接到服务器之后，服务器会将客户端套接字的AE_READABLE事件和命令请求处理器关联起来，当客户端向服务器发送命令请求的时候，套接字就会产生AE_READABLE事件，引发命令请求处理器执行，并执行相应的套接字读入操作，如图12-5所示。</p>
-<p><img alt="" src="./images/00026.jpg" /></p>
+<p><img alt="" src="./images/00026.webp" /></p>
 <p>图12-5 服务器接收客户端发来的命令请求</p>
 <p>在客户端连接服务器的整个过程中，服务器都会一直为客户端套接字的AE_READABLE事件关联命令请求处理器。</p>
 <p>3.命令回复处理器</p>
 <p>networking.c/sendReplyToClient函数是Redis的命令回复处理器，这个处理器负责将服务器执行命令后得到的命令回复通过套接字返回给客户端，具体实现为unistd.h/write函数的包装。</p>
 <p>当服务器有命令回复需要传送给客户端的时候，服务器会将客户端套接字的AE_WRITABLE事件和命令回复处理器关联起来，当客户端准备好接收服务器传回的命令回复时，就会产生AE_WRITABLE事件，引发命令回复处理器执行，并执行相应的套接字写入操作，如图12-6所示。</p>
-<p><img alt="" src="./images/00028.jpg" /></p>
+<p><img alt="" src="./images/00028.webp" /></p>
 <p>图12-6 服务器向客户端发送命令回复</p>
 <p>当命令回复发送完毕之后，服务器就会解除命令回复处理器与客户端套接字的AE_WRITABLE事件之间的关联。</p>
 <p>4.一次完整的客户端与服务器连接事件示例</p>
@@ -99,7 +99,7 @@
 <p>之后，假设客户端向主服务器发送一个命令请求，那么客户端套接字将产生AE_READABLE事件，引发命令请求处理器执行，处理器读取客户端的命令内容，然后传给相关程序去执行。</p>
 <p>执行命令将产生相应的命令回复，为了将这些命令回复传送回客户端，服务器会将客户端套接字的AE_WRITABLE事件与命令回复处理器进行关联。当客户端尝试读取命令回复的时候，客户端套接字将产生AE_WRITABLE事件，触发命令回复处理器执行，当命令回复处理器将命令回复全部写入到套接字之后，服务器就会解除客户端套接字的AE_WRITABLE事件与命令回复处理器之间的关联。</p>
 <p>图12-7总结了上面描述的整个通信过程，以及通信时用到的事件处理器。</p>
-<p><img alt="" src="./images/00181.jpg" /></p>
+<p><img alt="" src="./images/00181.webp" /></p>
 <p>图12-7 客户端和服务器的通信过程</p>
 </div>
 <script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../../site-tree.json", "hasMath": false};</script>
