@@ -4,7 +4,7 @@
   var C = window.PKM || {};
   var THEMES = C.themes || [];
   var THEMES_BASE = C.themesBase || "themes/";
-  var DEFAULT_THEME = C.defaultTheme || (THEMES[0] || "github");
+  var DEFAULT_THEME = C.defaultTheme || (THEMES[0] || "");
   var SITE_TREE = C.siteTree || "site-tree.json";
 
   var hexToRgb = function (hex) {
@@ -355,9 +355,27 @@
     box.appendChild(boxImg);
     document.body.appendChild(box);
 
+    // 判断当前主题是否为深色（按 body 背景色亮度）
+    var isDarkTheme = function () {
+      var cs = getComputedStyle(document.body);
+      var rgb = hexToRgb(cs.getPropertyValue("--bg-color").trim());
+      if (!rgb) return false;
+      var p = rgb.split(",").map(function (n) { return Number(n); });
+      return (0.299 * p[0] + 0.587 * p[1] + 0.114 * p[2]) < 128;
+    };
+    var isSvg = function (src) {
+      return /\.svg($|\?)/i.test(src);
+    };
     function open(src, alt) {
       boxImg.src = src;
       boxImg.alt = alt || "";
+      // 深色主题下 SVG 是透明背景：换深色底避免弹出一大块白底晃眼；
+      // 内容本身是彩色（画布避开纯黑白文字），保持原色不做反色
+      if (isSvg(src) && isDarkTheme()) {
+        boxImg.style.background = "var(--bg-color, #1e1e1e)";
+      } else {
+        boxImg.style.background = "#fff";
+      }
       box.classList.add("open");
     }
     function close() {
