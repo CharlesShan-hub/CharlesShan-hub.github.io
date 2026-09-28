@@ -474,4 +474,65 @@
     };
     document.head.appendChild(js);
   })();
+
+  /* ===== 代码框操作栏：语言标签点击复制 + 复制 / 自动换行切换（默认水平滚动）===== */
+  (function () {
+    var flash = function (el, text, ms) {
+      var old = el.textContent;
+      el.textContent = text;
+      setTimeout(function () { el.textContent = old; }, ms || 1200);
+    };
+    var copyText = function (text, el) {
+      var ok = function () { flash(el, "✓ 已复制"); };
+      var fail = function () {
+        var t = document.createElement("textarea");
+        t.value = text; t.style.position = "fixed"; t.style.opacity = "0";
+        document.body.appendChild(t); t.select();
+        try { document.execCommand("copy"); ok(); } catch (e) {}
+        document.body.removeChild(t);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(ok, fail);
+      } else { fail(); }
+    };
+    var init = function () {
+      var pres = document.querySelectorAll("#pkm-content pre[lang]");
+      for (var i = 0; i < pres.length; i++) {
+        var pre = pres[i];
+        if (pre.querySelector(".pkm-code-tools")) continue;
+        var code = pre.querySelector("code");
+        if (!code) continue;
+        var tools = document.createElement("div");
+        tools.className = "pkm-code-tools";
+        var lang = document.createElement("button");
+        lang.type = "button"; lang.className = "pkm-code-lang";
+        lang.setAttribute("title", "点击复制代码");
+        lang.textContent = pre.getAttribute("lang");
+        lang.addEventListener("click", function () { copyText(code.textContent, lang); });
+        tools.appendChild(lang);
+        var copyBtn = document.createElement("button");
+        copyBtn.type = "button"; copyBtn.className = "pkm-code-btn";
+        copyBtn.setAttribute("title", "复制代码"); copyBtn.setAttribute("aria-label", "复制代码");
+        copyBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
+          '<rect x="9" y="9" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>' +
+          '<path d="M5 15V5a2 2 0 0 1 2-2h8" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+        copyBtn.addEventListener("click", function () { copyText(code.textContent, copyBtn); });
+        tools.appendChild(copyBtn);
+        var wrapBtn = document.createElement("button");
+        wrapBtn.type = "button"; wrapBtn.className = "pkm-code-btn";
+        wrapBtn.setAttribute("title", "自动换行"); wrapBtn.setAttribute("aria-label", "自动换行");
+        wrapBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
+          '<path d="M4 6h16M4 12h10M4 18h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>' +
+          '<path d="M17 16l-3 2 3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        wrapBtn.addEventListener("click", function () {
+          var on = pre.classList.toggle("pkm-wrap");
+          wrapBtn.setAttribute("title", on ? "恢复水平滚动" : "自动换行");
+          wrapBtn.setAttribute("aria-label", wrapBtn.getAttribute("title"));
+        });
+        tools.appendChild(wrapBtn);
+        pre.insertBefore(tools, pre.firstChild);
+      }
+    };
+    init();
+  })();
 })();
