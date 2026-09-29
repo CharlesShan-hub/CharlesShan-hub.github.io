@@ -450,6 +450,109 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
     });
   })();
 
+  /* ===== 调试面板（localStorage 缓存查看 / 增删改） ===== */
+  (function () {
+    // 仅首页显示：子页面 / 私密页不创建，保持界面干净（与 ui_main.js 的首页判定一致）
+    var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+    if (!(/index\.html$/.test(curRel) || curRel.replace(/\/$/, "").split("/").length === 1)) return;
+    var btn = document.createElement("button");
+    btn.id = "debug-btn"; btn.type = "button";
+    btn.setAttribute("aria-label", "调试缓存"); btn.setAttribute("title", "调试缓存");
+    btn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="m8 2 1.88 1.88"/><path d="M14.12 3.88 16 2"/>' +
+      '<path d="M9 7.13v-1a3.003 3.003 0 1 1 6 0v1"/>' +
+      '<path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v3c0 3.3-2.7 6-6 6"/>' +
+      '<path d="M12 20v-9"/>' +
+      '<path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-3.9"/>' +
+      '<path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></svg>';
+    var panel = document.createElement("div");
+    panel.id = "debug-panel";
+    addTopBtn(btn);
+    document.body.appendChild(panel);
+    var title = document.createElement("div");
+    title.className = "debug-title";
+    title.textContent = "调试：浏览器缓存";
+    var list = document.createElement("div");
+    list.className = "debug-list";
+    panel.appendChild(title);
+    panel.appendChild(list);
+    var render = function () {
+      list.innerHTML = "";
+      var keys = [];
+      for (var i = 0; i < localStorage.length; i++) keys.push(localStorage.key(i));
+      // 密钥缓存（pkm.key.*）是 base64 乱码且无修改价值，不展示，只看有意义的项
+      keys = keys.filter(function (k) { return k.indexOf("pkm.key.") !== 0; }).sort();
+      if (!keys.length) {
+        var empty = document.createElement("div");
+        empty.className = "debug-empty";
+        empty.textContent = "暂无缓存";
+        list.appendChild(empty);
+        return;
+      }
+      keys.forEach(function (k) { list.appendChild(row(k)); });
+    };
+    var row = function (k) {
+      var r = document.createElement("div");
+      r.className = "debug-row";
+      var key = document.createElement("div");
+      key.className = "debug-key";
+      key.textContent = k;
+      key.title = k;
+      // 记住的密码（pkm.pass.*）存的是 base64 编码，直接看是乱码；
+      // 面板里解码成明文显示/编辑，保存时再编码回去，方便修改密码
+      var isPass = k.indexOf("pkm.pass.") === 0;
+      var raw = localStorage.getItem(k) || "";
+      var display = raw;
+      if (isPass) {
+        try { display = decodeURIComponent(escape(atob(raw))); }
+        catch (e) {}
+      }
+      var val = document.createElement("input");
+      val.type = "text"; val.className = "debug-val"; val.spellcheck = false;
+      val.value = display;
+      val.addEventListener("change", function () {
+        localStorage.setItem(k, isPass ? btoa(unescape(encodeURIComponent(val.value))) : val.value);
+      });
+      var del = document.createElement("button");
+      del.type = "button"; del.className = "debug-del"; del.textContent = "删除";
+      del.addEventListener("click", function () { localStorage.removeItem(k); render(); });
+      r.appendChild(key); r.appendChild(val); r.appendChild(del);
+      return r;
+    };
+    // 新增缓存项：键名 + 值 + 添加
+    var addRow = document.createElement("div");
+    addRow.className = "debug-add";
+    var addKey = document.createElement("input");
+    addKey.type = "text"; addKey.className = "debug-new-key"; addKey.placeholder = "新键名";
+    var addVal = document.createElement("input");
+    addVal.type = "text"; addVal.className = "debug-new-val"; addVal.placeholder = "新值";
+    var addBtn = document.createElement("button");
+    addBtn.type = "button"; addBtn.className = "debug-add-btn"; addBtn.textContent = "添加";
+    addBtn.addEventListener("click", function () {
+      var k = addKey.value.trim();
+      if (!k) { addKey.focus(); return; }
+      localStorage.setItem(k, addVal.value);
+      addKey.value = ""; addVal.value = "";
+      render();
+    });
+    addRow.appendChild(addKey);
+    addRow.appendChild(addVal);
+    addRow.appendChild(addBtn);
+    panel.appendChild(addRow);
+    var open = function () { render(); panel.classList.add("open"); btn.classList.add("open"); };
+    var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (panel.classList.contains("open")) close(); else open();
+    });
+    document.addEventListener("click", function (e) {
+      if (panel.classList.contains("open") && !panel.contains(e.target) && e.target !== btn) close();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") close();
+    });
+  })();
+
   /* ===== 页面目录 TOC ===== */
   (function () {
     var btn = document.createElement("button");
