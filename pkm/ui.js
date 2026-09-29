@@ -15,9 +15,9 @@
     if (!pkmBtns) {
       pkmBtns = document.createElement("div");
       pkmBtns.id = "pkm-side-btns";
-      pkmBtns.className = "collapsed";
+      pkmBtns.className = "pkm-btns collapsed";
       var moreBtn = document.createElement("button");
-      moreBtn.id = "more-btn"; moreBtn.type = "button";
+      moreBtn.id = "more-btn"; moreBtn.type = "button"; moreBtn.className = "pkm-more";
       moreBtn.setAttribute("aria-label", "更多工具"); moreBtn.setAttribute("title", "更多工具");
       moreBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
         '<circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>';
@@ -180,6 +180,26 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
     document.documentElement.style.setProperty("--nav-fg", fg || "");
   };
 
+  /* ===== 右上按钮组（主题 / 下载等）：与左侧按钮组同款 “…” 折叠 ===== */
+  var topGroup = document.getElementById("pkm-top-btns");
+  if (!topGroup) {
+    topGroup = document.createElement("div");
+    topGroup.id = "pkm-top-btns";
+    topGroup.className = "pkm-btns collapsed";
+    var moreBtn = document.createElement("button");
+    moreBtn.type = "button"; moreBtn.className = "pkm-more";
+    moreBtn.setAttribute("aria-label", "更多工具"); moreBtn.setAttribute("title", "更多工具");
+    moreBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
+      '<circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>';
+    moreBtn.addEventListener("click", function () {
+      var pinned = topGroup.classList.toggle("pinned");
+      moreBtn.classList.toggle("open", pinned);
+    });
+    topGroup.appendChild(moreBtn);
+    document.body.appendChild(topGroup);
+  }
+  var addTopBtn = function (btn) { topGroup.appendChild(btn); };
+
   /* ===== 主题切换 ===== */
   (function () {
     var link = document.getElementById("theme-css");
@@ -191,7 +211,7 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
       '<circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg>';
     var menu = document.createElement("div");
     menu.id = "theme-menu";
-    document.body.appendChild(btn);
+    addTopBtn(btn);
     document.body.appendChild(menu);
 
     var AUTO = "__auto__";
@@ -349,6 +369,121 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
 };
 
   window.__pkmInitWidgets();
+
+  /* ===== 下载 Markdown（右上按钮组）===== */
+  (function () {
+    var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+    // 首页（站点根 index.html 等根目录页）没有对应 md 副本，不显示下载
+    if (/index\.html$/.test(curRel) || curRel.replace(/\/$/, "").split("/").length === 1) return;
+    var btn = document.createElement("button");
+    btn.id = "dl-btn"; btn.type = "button";
+    btn.setAttribute("aria-label", "下载 Markdown"); btn.setAttribute("title", "下载 Markdown");
+    btn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M12 3v10m0 0l-4-4m4 4l4-4"/>' +
+      '<path d="M5 19h14"/></svg>';
+    var mdUrl = SITE_TREE.replace(/site-tree\.json$/, "") + curRel.replace(/\.html$/, ".md");
+    btn.addEventListener("click", function () {
+      var a = document.createElement("a");
+      a.href = mdUrl; a.download = "";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    });
+    var g = document.getElementById("pkm-top-btns");
+    if (g) { g.appendChild(btn); } else { document.body.appendChild(btn); }
+  })();
+
+  /* ===== 主页面背景明暗切换（仅首页，左按钮组最左边）=====
+     按钮由 ui.js 动态创建，暗色状态（body.black / #pkm-bg.black / 图标切换）
+     与 localStorage pkm-bg-mode 一起维护；子页面无 #pkm-bg，直接跳过。 */
+  (function () {
+    var bg = document.getElementById("pkm-bg");
+    if (!bg) return;
+    var btn = document.createElement("button");
+    btn.id = "bg-mode-btn"; btn.type = "button";
+    btn.setAttribute("aria-label", "背景明暗"); btn.setAttribute("title", "背景明暗");
+    btn.innerHTML = '<svg class="icon-moon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>' +
+      '<svg class="icon-sun" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-15v3m0 14v3M2 12h3m14 0h3M4.9 4.9l2.1 2.1m10 10 2.1 2.1M4.9 19.1l2.1-2.1m10-10 2.1-2.1"/></svg>';
+    var g = document.getElementById("pkm-side-btns");
+    if (g && g.children.length > 1) { g.insertBefore(btn, g.children[1]); }
+    else if (g) { g.appendChild(btn); }
+    else { document.body.appendChild(btn); }
+    var applyMode = function (m) {
+      bg.classList.toggle("black", m === "dark");
+      document.body.classList.toggle("black", m === "dark");
+      btn.classList.toggle("dark", m === "dark");
+      try { localStorage.setItem("pkm-bg-mode", m); } catch (e) {}
+    };
+    btn.addEventListener("click", function () {
+      applyMode(document.body.classList.contains("black") ? "light" : "dark");
+    });
+    var sm = null;
+    try { sm = localStorage.getItem("pkm-bg-mode"); } catch (e) {}
+    var sysDark = !!(window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches);
+    applyMode(sm === "dark" ? "dark" : (sm === "light" ? "light" : (sysDark ? "dark" : "light")));
+  })();
+
+  /* ===== 子页面正文宽度调节（仅非首页，右侧按钮组）=====
+     点击弹出页面居中的滑块浮层，动态改 #pkm-content 的 max-width 并居中，
+     localStorage 持久化；手机端（<=900px）由 CSS 整体隐藏。 */
+  (function () {
+    var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+    // 首页没有对应 md 副本且正文宽度已由内联样式固定，不显示该功能
+    if (/index\.html$/.test(curRel) || curRel.replace(/\/$/, "").split("/").length === 1) return;
+    var content = document.getElementById("pkm-content");
+    if (!content) return;
+    var btn = document.createElement("button");
+    btn.id = "pkm-width-btn"; btn.type = "button";
+    btn.setAttribute("aria-label", "正文宽度"); btn.setAttribute("title", "正文宽度");
+    btn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M3 12h18M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>';
+    var pop = document.createElement("div");
+    pop.id = "pkm-width-pop";
+    var title = document.createElement("div");
+    title.className = "pkm-width-title";
+    title.textContent = "正文宽度";
+    var range = document.createElement("input");
+    range.type = "range"; range.id = "pkm-width-range";
+    range.min = "40"; range.max = "100"; range.step = "1";
+    var val = document.createElement("div");
+    val.className = "pkm-width-value";
+    pop.appendChild(title);
+    pop.appendChild(range);
+    pop.appendChild(val);
+    document.body.appendChild(pop);
+
+    var WIDTH_KEY = "pkm-content-width";
+    var saved = null;
+    try { saved = localStorage.getItem(WIDTH_KEY); } catch (e) {}
+    var savedPct = saved === null ? null : parseInt(saved, 10);
+    if (savedPct !== null && (isNaN(savedPct) || savedPct < 40 || savedPct > 100)) savedPct = null;
+    range.value = savedPct === null ? "100" : String(savedPct);
+    val.textContent = range.value + "%";
+    var apply = function (pct) {
+      content.style.maxWidth = pct + "%";
+      content.style.margin = "0 auto";
+      try { localStorage.setItem(WIDTH_KEY, String(pct)); } catch (e) {}
+    };
+    if (savedPct !== null) apply(savedPct);
+    range.addEventListener("input", function () {
+      val.textContent = range.value + "%";
+      apply(parseInt(range.value, 10));
+    });
+    var open = function () { pop.classList.add("open"); btn.classList.add("open"); };
+    var close = function () { pop.classList.remove("open"); btn.classList.remove("open"); };
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (pop.classList.contains("open")) close(); else open();
+    });
+    document.addEventListener("click", function (e) {
+      if (pop.classList.contains("open") && !pop.contains(e.target) && e.target !== btn) close();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") close();
+    });
+    var g = document.getElementById("pkm-top-btns");
+    if (g) { g.appendChild(btn); } else { document.body.appendChild(btn); }
+  })();
 
   /* ===== 全站搜索 ===== */
   (function () {

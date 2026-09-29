@@ -21,7 +21,7 @@ if (-not $adapter) {
 
 # Get current IP
 $currentIP = (Get-NetIPAddress -InterfaceAlias $adapter.Name -AddressFamily IPv4 -ErrorAction SilentlyContinue).IPAddress
-if (-not $currentIP) { $currentIP = "10.15.1.100" }
+if (-not $currentIP) { $currentIP = "10.15.0.27" }
 
 Write-Host "Adapter: $($adapter.Name)" -ForegroundColor Yellow
 Write-Host "Current IP: $currentIP" -ForegroundColor Cyan

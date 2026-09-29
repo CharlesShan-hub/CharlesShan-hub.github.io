@@ -3,10 +3,10 @@
 
 ---
 
-Scoop 统管工具链：
-  包管理 → 版本管理 → 项目管理 → C → Java → Python
-Docker 管服务：
-  数据库 → node → redis
+* Scoop 统管工具链：
+    包管理 → 版本管理 → 项目管理 → C → Java → Python
+* Docker 管服务：
+    数据库 → node → redis
 
 ---
 
@@ -34,7 +34,28 @@ scoop install terminal-icons
 notepad $PROFILE
 ```
 
-```txt
+```powershell
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::InputEncoding = [System.Text.Encoding]::UTF8
+$OutputEncoding = [System.Text.Encoding]::UTF8
+chcp 65001 | Out-Null
+
+# ============ Oh My Posh 主题 ============
+# 【重要】把下面的路径换成你电脑上真实的路径
+oh-my-posh init pwsh --config "C:\Users\你的用户名\AppData\Local\Programs\oh-my-posh\themes\jandedobbeleer.omp.json" | Invoke-Expression
+
+# ============ 文件图标 ============
+Import-Module Terminal-Icons
+
+# ============ PSReadLine 智能补全 ============
+Import-Module PSReadLine
+Set-PSReadLineOption -Colors @{ 
+    Command = '#FF79C6'
+    Parameter = '#50FA7B'
+    String = '#F1FA8C'
+}
+Set-PSReadLineOption -PredictionSource History
+Set-PSReadLineKeyHandler -Key Tab -Function MenuComplete
 # ============ 编码设置 ============
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 [Console]::InputEncoding = [System.Text.Encoding]::UTF8

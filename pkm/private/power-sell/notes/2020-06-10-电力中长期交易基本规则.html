@@ -102,6 +102,26 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
     document.documentElement.style.setProperty("--nav-fg", fg || "");
   };
 
+  /* ===== 右上按钮组（主题 / 下载等）：与左侧按钮组同款 “…” 折叠 ===== */
+  var topGroup = document.getElementById("pkm-top-btns");
+  if (!topGroup) {
+    topGroup = document.createElement("div");
+    topGroup.id = "pkm-top-btns";
+    topGroup.className = "pkm-btns collapsed";
+    var moreBtn = document.createElement("button");
+    moreBtn.type = "button"; moreBtn.className = "pkm-more";
+    moreBtn.setAttribute("aria-label", "更多工具"); moreBtn.setAttribute("title", "更多工具");
+    moreBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
+      '<circle cx="5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="19" cy="12" r="1.9"/></svg>';
+    moreBtn.addEventListener("click", function () {
+      var pinned = topGroup.classList.toggle("pinned");
+      moreBtn.classList.toggle("open", pinned);
+    });
+    topGroup.appendChild(moreBtn);
+    document.body.appendChild(topGroup);
+  }
+  var addTopBtn = function (btn) { topGroup.appendChild(btn); };
+
   /* ===== 主题切换 ===== */
   (function () {
     var link = document.getElementById("theme-css");
@@ -113,7 +133,7 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
       '<circle cx="7.5" cy="10.5" r="1.2"/><circle cx="12" cy="7.5" r="1.2"/><circle cx="16.5" cy="10.5" r="1.2"/></svg>';
     var menu = document.createElement("div");
     menu.id = "theme-menu";
-    document.body.appendChild(btn);
+    addTopBtn(btn);
     document.body.appendChild(menu);
 
     var AUTO = "__auto__";
@@ -270,14 +290,12 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
   })();
 };
 
-  function unlock() {
-    var pass = input.value;
-    btn.disabled = true;
-    err.textContent = '';
-    var ck = 'pkm.key.' + KEY + '.' + data.salt;      // 密钥缓存：键名含 salt，重新导出后自动失效
-    var cached = localStorage.getItem(ck);
-    // 命中缓存密钥则直接解密、跳过 PBKDF2（手机自动解锁秒进）；否则走密码派生
-    var deriving = cached
+  // 原始 .md 加密产物存在时提供「下载 Markdown」（解锁后按需 fetch + 解密，页面加载不加载 .md.enc）
+  var HAS_MD = true;
+  var lastPass = '';
+  function deriveKey(pass, cached) {
+    // 命中缓存密钥则直接 importKey、跳过 PBKDF2（手机自动解锁秒进）；否则走密码派生
+    return cached
       ? crypto.subtle.importKey('raw', b64u(cached), { name: 'AES-GCM' }, false, ['decrypt'])
       : crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey'])
           .then(function (km) {
@@ -285,7 +303,36 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
               { name: 'PBKDF2', salt: b64u(data.salt), iterations: data.iter, hash: 'SHA-256' },
               km, { name: 'AES-GCM', length: 256 }, true, ['decrypt']);
           });
-    deriving
+  }
+  function downloadMd() {
+    if (!HAS_MD) return;
+    var ck = 'pkm.key.' + KEY + '.' + data.salt;
+    var cached = localStorage.getItem(ck);
+    fetch(location.pathname.replace(/.html$/, '.md.enc'))
+      .then(function (r) { return r.json(); })
+      .then(function (mdData) {
+        return deriveKey(lastPass, cached).then(function (k) {
+          return crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64u(mdData.iv) }, k, b64u(mdData.cipher))
+            .then(function (plain) {
+              var name = location.pathname.split('/').pop().replace(/.html$/, '.md');
+              var url = URL.createObjectURL(new Blob([new TextDecoder().decode(plain)], { type: 'text/markdown' }));
+              var a = document.createElement('a');
+              a.href = url; a.download = name;
+              document.body.appendChild(a); a.click(); document.body.removeChild(a);
+              setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+            });
+        });
+      })
+      .catch(function () {});
+  }
+  function unlock() {
+    var pass = input.value;
+    lastPass = pass;
+    btn.disabled = true;
+    err.textContent = '';
+    var ck = 'pkm.key.' + KEY + '.' + data.salt;      // 密钥缓存：键名含 salt，重新导出后自动失效
+    var cached = localStorage.getItem(ck);
+    deriveKey(pass, cached)
       .then(function (key) {
         return crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64u(data.iv) }, key, b64u(data.cipher))
           .then(function (plain) { return { key: key, plain: plain }; });
@@ -327,6 +374,17 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
       document.body.appendChild(js);
     }
         window.__pkmInitWidgets();
+        if (HAS_MD) {
+          var dlBtn = document.createElement('button');
+          dlBtn.id = 'dl-btn'; dlBtn.type = 'button';
+          dlBtn.setAttribute('aria-label', '下载 Markdown'); dlBtn.setAttribute('title', '下载 Markdown');
+          dlBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
+            '<path d="M12 3v10m0 0l-4-4m4 4l4-4"/>' +
+            '<path d="M5 19h14"/></svg>';
+          dlBtn.addEventListener('click', downloadMd);
+          var tg = document.getElementById('pkm-top-btns');
+          if (tg) { tg.appendChild(dlBtn); } else { document.body.appendChild(dlBtn); }
+        }
       })
       .catch(function () { document.documentElement.className = ''; err.textContent = '密码错误，请重试'; input.focus(); input.select(); })
       .finally(function () { btn.disabled = false; });
