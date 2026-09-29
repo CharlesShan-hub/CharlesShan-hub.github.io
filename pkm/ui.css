@@ -14,6 +14,8 @@ body { box-sizing: border-box; }
 #pkm-top-btns {
   position: fixed; top: 10px; right: 10px; z-index: 1000;
   display: flex; align-items: center; gap: 8px;
+  /* 右侧按钮组从右向左展开：主按钮固定在右角，其余按钮向左延伸（与左组镜像） */
+  flex-direction: row-reverse;
 }
 /* 圆形悬浮按钮（按钮组内成员 / 更多折叠钮）共用外观 */
 .pkm-btns button {
@@ -69,6 +71,10 @@ body { box-sizing: border-box; }
 .pkm-btns.collapsed.pinned button:not(.pkm-more) {
   opacity: 1; transform: translateX(0); pointer-events: auto; visibility: visible;
 }
+/* 右侧按钮组镜像：按钮在 “…” 左侧，收起时向右（朝主按钮）偏移，展开时归零 */
+#pkm-top-btns.collapsed button:not(.pkm-more) { transform: translateX(6px); }
+#pkm-top-btns.collapsed:hover button:not(.pkm-more),
+#pkm-top-btns.collapsed.pinned button:not(.pkm-more) { transform: translateX(0); }
 
 /* 主题菜单（与文件树 / TOC 浮层同风格，跟随主题变量） */
 #theme-menu {
@@ -237,15 +243,29 @@ body { box-sizing: border-box; }
 #pkm-content img { max-width: 100%; height: auto; }
 
 /* 代码框：phycat 主题的语言标签条（width:100% + padding 15px 为 content-box）会撑出 15px
-   水平溢出，强制 border-box 让 padding 收进宽度；pre 宽度自适应内容（短代码不撑满整行，
-   右侧不留大块背景空白），长行超过容器时限制在容器宽内横向滚动 */
+   水平溢出，强制 border-box 让 padding 收进宽度；pre 通栏占满容器宽（每行代码再短也整行铺满）。
+   默认 white-space: pre（长行横向滚动）——phycat/vlook 等主题自带 pre-wrap 会让代码默认换行，
+   导致自动换行按钮切换无感；默认统一为滚动，点击按钮才切到 pre-wrap 换行 */
 pre:not([lang=mermaid])::before { box-sizing: border-box; }
-pre { width: fit-content !important; max-width: 100%; overflow-x: auto; }
+pre { width: 100% !important; box-sizing: border-box; overflow-x: auto; white-space: pre; }
+/* 内层 code 通栏铺满：vlook 等主题把代码块背景/边框挂在 code 元素上（pre 本身透明），
+   pre 全宽后内层仍按内容宽度着色，强制 code 铺满容器消除错位；mermaid 不参与 */
+#pkm-content pre:not([lang=mermaid]) > code { display: block; width: 100%; box-sizing: border-box; }
+/* 内层 code 跟随 pre 的 white-space：vlook 等主题把 white-space:pre-wrap 直接设在 code 上
+   （pre 反而未设），与 pre 脱钩导致换行按钮无感；统一由 pre 决定，code 继承（默认滚动、按钮切换行） */
+#pkm-content pre code { white-space: inherit; }
+#pkm-content pre.pkm-wrap code { white-space: pre-wrap; }
+
+/* 代码框语言提示接管：桌面端默认保留主题原生右上角语言条；悬浮时原生提示让位
+   （清空文本，phycat 装饰条保留），改由操作栏（语言+复制+换行）展示，避免两处文字重合 */
+#pkm-content pre:not([lang=mermaid]):hover::before { content: "" !important; }
 
 /* 代码框操作栏：语言标签（点击复制）+ 复制 / 自动换行切换（默认水平滚动） */
 #pkm-content pre { position: relative; }
 .pkm-code-tools {
-  position: absolute; top: 6px; right: 6px; z-index: 2;
+  position: absolute; top: 6px; right: 6px;
+  /* z-index 需盖过主题伪元素（如 vlook pre:before z-index:10），否则按钮被压在下面点不到 */
+  z-index: 1000;
   display: flex; align-items: center; gap: 4px;
   font-size: 12px; line-height: 1; opacity: 0; transition: opacity .18s;
 }
@@ -268,6 +288,11 @@ pre { width: fit-content !important; max-width: 100%; overflow-x: auto; }
   .pkm-btns.collapsed button:not(.pkm-more) {
     opacity: 1; transform: none; pointer-events: auto; visibility: visible;
   }
+  /* 右侧组 ID 规则权重更高，手机端同样取消收起偏移 */
+  #pkm-top-btns.collapsed button:not(.pkm-more) { transform: none; }
+/* 平板/手机：操作栏常显三个按钮（语言+复制+换行），同时隐藏主题原生语言提示 */
+  .pkm-code-tools { opacity: 1; }
+  #pkm-content pre:not([lang=mermaid])::before { content: "" !important; }
   .pkm-more { display: none; }
   #pkm-width-btn, #pkm-width-pop { display: none; }
 }

@@ -651,39 +651,50 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
   /* ===== 代码框操作栏：语言标签点击复制 + 复制 / 自动换行切换（默认水平滚动）===== */
   (function () {
     var flash = function (el, text, ms) {
-      var old = el.textContent;
+      // 原始内容只捕获一次（el.__pkmOldHTML）：连续快速点击时不会把 “✓ 已复制”
+      // 当成原内容恢复，图标/文字永远不会被钉死在反馈文案上
+      if (el.__pkmOldHTML === undefined) el.__pkmOldHTML = el.innerHTML;
       el.textContent = text;
-      setTimeout(function () { el.textContent = old; }, ms || 1200);
+      setTimeout(function () { el.innerHTML = el.__pkmOldHTML; }, ms || 1200);
     };
     var copyText = function (text, el) {
       var ok = function () { flash(el, "✓ 已复制"); };
-      var fail = function () {
+      // 兜底：临时 textarea 方案（兼容非安全上下文/剪贴板 API 拒绝的环境）
+      var fallback = function () {
         var t = document.createElement("textarea");
-        t.value = text; t.style.position = "fixed"; t.style.opacity = "0";
-        document.body.appendChild(t); t.select();
-        try { document.execCommand("copy"); ok(); } catch (e) {}
+        t.value = text;
+        t.setAttribute("readonly", "");
+        t.style.position = "fixed"; t.style.top = "0"; t.style.left = "0"; t.style.opacity = "0";
+        document.body.appendChild(t);
+        t.focus(); t.select();
+        t.setSelectionRange(0, t.value.length);
+        var okFlag = false;
+        try { okFlag = document.execCommand("copy"); } catch (e) {}
         document.body.removeChild(t);
+        if (okFlag) ok();
       };
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text).then(ok, fail);
-      } else { fail(); }
+      if (window.isSecureContext && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(ok, fallback);
+      } else { fallback(); }
     };
     var init = function () {
       var pres = document.querySelectorAll("#pkm-content pre[lang]");
       for (var i = 0; i < pres.length; i++) {
-        var pre = pres[i];
+        // 用 let 块级作用域：var 在循环里只有一份，闭包会把所有按钮的 handler
+        // 都指向最后一个代码块（复制到错误内容、换行加错块）
+        let pre = pres[i];
         if (pre.querySelector(".pkm-code-tools")) continue;
-        var code = pre.querySelector("code");
+        let code = pre.querySelector("code");
         if (!code) continue;
-        var tools = document.createElement("div");
+        let tools = document.createElement("div");
         tools.className = "pkm-code-tools";
-        var lang = document.createElement("button");
+        let lang = document.createElement("button");
         lang.type = "button"; lang.className = "pkm-code-lang";
         lang.setAttribute("title", "点击复制代码");
         lang.textContent = pre.getAttribute("lang");
         lang.addEventListener("click", function () { copyText(code.textContent, lang); });
         tools.appendChild(lang);
-        var copyBtn = document.createElement("button");
+        let copyBtn = document.createElement("button");
         copyBtn.type = "button"; copyBtn.className = "pkm-code-btn";
         copyBtn.setAttribute("title", "复制代码"); copyBtn.setAttribute("aria-label", "复制代码");
         copyBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
@@ -691,7 +702,7 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
           '<path d="M5 15V5a2 2 0 0 1 2-2h8" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
         copyBtn.addEventListener("click", function () { copyText(code.textContent, copyBtn); });
         tools.appendChild(copyBtn);
-        var wrapBtn = document.createElement("button");
+        let wrapBtn = document.createElement("button");
         wrapBtn.type = "button"; wrapBtn.className = "pkm-code-btn";
         wrapBtn.setAttribute("title", "自动换行"); wrapBtn.setAttribute("aria-label", "自动换行");
         wrapBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
