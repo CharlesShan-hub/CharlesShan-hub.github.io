@@ -281,6 +281,175 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
     apply(current);
   })();
 
+  /* ===== 字体选择 ===== */
+  (function () {
+    var btn = document.createElement("button");
+    btn.id = "font-btn"; btn.type = "button";
+    btn.setAttribute("aria-label", "选择字体"); btn.setAttribute("title", "选择字体");
+    btn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
+      '<text x="12" y="16.5" text-anchor="middle" font-size="12" font-family="Georgia,serif" fill="#fff" stroke="none">Aa</text></svg>';
+    var pop = document.createElement("div");
+    pop.id = "font-pop";
+    addTopBtn(btn);
+    document.body.appendChild(pop);
+
+    var GENERIC = {
+      "serif": 1, "sans-serif": 1, "monospace": 1,
+      "cursive": 1, "fantasy": 1, "system-ui": 1, "ui-serif": 1,
+      "ui-sans-serif": 1, "ui-monospace": 1, "ui-rounded": 1
+    };
+    var clean = function (stack) {
+      return (stack || "").split(",").map(function (f) {
+        return f.replace(/^['"]+|['"]+$/g, "").trim();
+      }).filter(Boolean);
+    };
+    var checkFont = function (font) {
+      if (!document.fonts || !document.fonts.check) return null;
+      if (GENERIC[font]) return true;
+      // 字体名含空格/符号时必须加引号，否则 check 抛语法错误 → 显示"?"；
+      // 样例文本只取拉丁字母+数字，避免代码字体没有中文字形导致误判"✗"
+      var quoted = /[\s"'(),/]/.test(font) ? '"' + font + '"' : font;
+      var specs = ['16px ' + quoted, '16px normal ' + quoted];
+      for (var i = 0; i < specs.length; i++) {
+        try { return document.fonts.check(specs[i], "ABCabc0123"); }
+        catch (e) {}
+      }
+      return null;
+    };
+
+    // 主题名与宽度模块一致（theme-css 文件名），选择结果按主题分别记忆
+    var themeName = function () {
+      var link = document.getElementById("theme-css");
+      var href = link ? (link.getAttribute("href") || "") : "";
+      return href.replace(/^.*\//, "").replace(/\.css$/, "");
+    };
+    var HEAD_SEL = "#pkm-content h1, #pkm-content h2, #pkm-content h3, #pkm-content h4, #pkm-content h5, #pkm-content h6";
+    var CATS = {
+      body: { label: "正文", key: "pkm-font-body-" },
+      code: { label: "代码", key: "pkm-font-code-" },
+      head: { label: "标题", key: "pkm-font-head-" }
+    };
+    var stored = function (cat) {
+      var v = null;
+      try { v = localStorage.getItem(cat.key + themeName()); } catch (e) {}
+      return v;
+    };
+    // 应用选择：正文/标题直接改元素字体（!important 覆盖主题），代码走 CSS 变量
+    var applyCat = function (cat, font) {
+      var quoted = font && /[\s"'(),/]/.test(font) ? '"' + font + '"' : font;
+      if (cat === CATS.body) {
+        if (font) document.body.style.setProperty("font-family", quoted, "important");
+        else document.body.style.removeProperty("font-family");
+      } else if (cat === CATS.head) {
+        var heads = document.querySelectorAll(HEAD_SEL);
+        for (var i = 0; i < heads.length; i++) {
+          if (font) heads[i].style.setProperty("font-family", quoted, "important");
+          else heads[i].style.removeProperty("font-family");
+        }
+      } else {
+        if (font) document.documentElement.style.setProperty("--pkm-code-font", quoted);
+        else document.documentElement.style.removeProperty("--pkm-code-font");
+      }
+      try {
+        if (font) localStorage.setItem(cat.key + themeName(), font);
+        else localStorage.removeItem(cat.key + themeName());
+      } catch (e) {}
+    };
+    var applyAll = function () {
+      applyCat(CATS.body, stored(CATS.body));
+      applyCat(CATS.code, stored(CATS.code));
+      applyCat(CATS.head, stored(CATS.head));
+    };
+    var elOf = function (cat) {
+      if (cat === CATS.body) return document.body;
+      if (cat === CATS.code) return document.querySelector("#pkm-content pre code") ||
+        document.querySelector("#pkm-content pre");
+      return document.querySelector(HEAD_SEL);
+    };
+    var row = function (cat) {
+      var wrap = document.createElement("div");
+      wrap.className = "font-row";
+      var head = document.createElement("div");
+      head.className = "font-row-head";
+      var label = document.createElement("div");
+      label.className = "font-row-label";
+      label.textContent = cat.label;
+      head.appendChild(label);
+      var reset = document.createElement("button");
+      reset.type = "button";
+      reset.className = "font-reset";
+      reset.textContent = "重置";
+      reset.addEventListener("click", function (e) {
+        e.stopPropagation();
+        applyCat(cat, null);
+        render();
+      });
+      head.appendChild(reset);
+      wrap.appendChild(head);
+      var el = elOf(cat);
+      if (!el) {
+        var none = document.createElement("div");
+        none.className = "font-row-empty";
+        none.textContent = cat === CATS.code ? "本页无代码块" : "本页无标题";
+        wrap.appendChild(none);
+        return wrap;
+      }
+      var chips = document.createElement("div");
+      chips.className = "font-row-stack";
+      var selected = stored(cat);
+      clean(getComputedStyle(el).fontFamily).forEach(function (font) {
+        var ok = checkFont(font);
+        var isSel = font === selected;
+        var chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "font-chip" + (isSel ? " sel" : "") + (ok === false ? " miss" : "");
+        chip.disabled = ok === false;
+        chip.textContent = font + (isSel ? " ✓" : ok === false ? " ✗" : "");
+        chip.addEventListener("click", function (e) {
+          e.stopPropagation();
+          applyCat(cat, font);
+          render();
+        });
+        chips.appendChild(chip);
+      });
+      wrap.appendChild(chips);
+      return wrap;
+    };
+    var render = function () {
+      pop.innerHTML = "";
+      var title = document.createElement("div");
+      title.className = "font-pop-title";
+      title.textContent = "选择字体";
+      pop.appendChild(title);
+      pop.appendChild(row(CATS.body));
+      pop.appendChild(row(CATS.code));
+      pop.appendChild(row(CATS.head));
+    };
+    var watchFonts = function () {
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(render).catch(function () {});
+      }
+    };
+    applyAll();
+    render();
+    watchFonts();
+    // 主题切换后按新主题记忆的选择重新应用并重刷面板；webfont 加载完再补刷一次
+    window.addEventListener("pkm-theme-applied", function () { applyAll(); render(); watchFonts(); });
+
+    var open = function () { pop.classList.add("open"); btn.classList.add("open"); };
+    var close = function () { pop.classList.remove("open"); btn.classList.remove("open"); };
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (pop.classList.contains("open")) close(); else { render(); open(); }
+    });
+    document.addEventListener("click", function (e) {
+      if (pop.classList.contains("open") && !pop.contains(e.target) && e.target !== btn) close();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") close();
+    });
+  })();
+
   /* ===== 页面目录 TOC ===== */
   (function () {
     var btn = document.createElement("button");
@@ -425,8 +594,9 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
 
   /* ===== 子页面正文宽度调节（仅非首页，右侧按钮组）=====
      点击弹出页面居中的滑块浮层，动态改 #pkm-content 的 max-width 并居中；
-     宽度按主题分别记忆（localStorage key 带主题名），默认 70%，
-     切换主题后各自生效，不会互相串值。手机端（<=900px）由 CSS 整体隐藏。 */
+     宽度按主题分别记忆（localStorage key 带主题名），电脑端默认 70%，
+     切换主题后各自生效，不会互相串值。手机端（<=900px）由 CSS 隐藏按钮，
+     JS 同时不应用宽度（保持主题默认全宽），避免移动端也被压成 70%。 */
   (function () {
     var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
     // 首页没有对应 md 副本且正文宽度已由内联样式固定，不显示该功能
@@ -461,6 +631,10 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
     };
     var WIDTH_KEY = function () { return "pkm-content-width-" + themeName(); };
     var defaultPct = 70;
+    // 移动端（<=900px）与 CSS 的媒体查询一致：不应用宽度，保持主题默认全宽
+    var isMobile = function () {
+      return !!window.matchMedia && window.matchMedia("(max-width: 900px)").matches;
+    };
     var loadPct = function () {
       var saved = null;
       try { saved = localStorage.getItem(WIDTH_KEY()); } catch (e) {}
@@ -474,6 +648,12 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
       try { localStorage.setItem(WIDTH_KEY(), String(pct)); } catch (e) {}
     };
     var refresh = function () {
+      // 手机/平板不应用宽度，清掉内联样式后保持主题默认
+      if (isMobile()) {
+        content.style.maxWidth = "";
+        content.style.margin = "";
+        return;
+      }
       var pct = loadPct();
       range.value = String(pct);
       val.textContent = pct + "%";
@@ -484,6 +664,8 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
       val.textContent = range.value + "%";
       apply(parseInt(range.value, 10));
     });
+    // 窗口在桌面/移动断点间变化时重刷宽度状态
+    if (window.matchMedia) window.matchMedia("(max-width: 900px)").addEventListener("change", refresh);
     // 主题切换后按该主题记忆的宽度重新生效
     window.addEventListener("pkm-theme-applied", refresh);
     var open = function () { pop.classList.add("open"); btn.classList.add("open"); };
