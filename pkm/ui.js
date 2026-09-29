@@ -424,8 +424,9 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
   })();
 
   /* ===== 子页面正文宽度调节（仅非首页，右侧按钮组）=====
-     点击弹出页面居中的滑块浮层，动态改 #pkm-content 的 max-width 并居中，
-     localStorage 持久化；手机端（<=900px）由 CSS 整体隐藏。 */
+     点击弹出页面居中的滑块浮层，动态改 #pkm-content 的 max-width 并居中；
+     宽度按主题分别记忆（localStorage key 带主题名），默认 70%，
+     切换主题后各自生效，不会互相串值。手机端（<=900px）由 CSS 整体隐藏。 */
   (function () {
     var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
     // 首页没有对应 md 副本且正文宽度已由内联样式固定，不显示该功能
@@ -452,23 +453,39 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
     pop.appendChild(val);
     document.body.appendChild(pop);
 
-    var WIDTH_KEY = "pkm-content-width";
-    var saved = null;
-    try { saved = localStorage.getItem(WIDTH_KEY); } catch (e) {}
-    var savedPct = saved === null ? null : parseInt(saved, 10);
-    if (savedPct !== null && (isNaN(savedPct) || savedPct < 40 || savedPct > 100)) savedPct = null;
-    range.value = savedPct === null ? "100" : String(savedPct);
-    val.textContent = range.value + "%";
+    // 当前主题名由 theme-css 的 href 文件名得出（如 vlook-joint / phycat-abyss）
+    var themeName = function () {
+      var link = document.getElementById("theme-css");
+      var href = link ? (link.getAttribute("href") || "") : "";
+      return href.replace(/^.*\//, "").replace(/\.css$/, "");
+    };
+    var WIDTH_KEY = function () { return "pkm-content-width-" + themeName(); };
+    var defaultPct = 70;
+    var loadPct = function () {
+      var saved = null;
+      try { saved = localStorage.getItem(WIDTH_KEY()); } catch (e) {}
+      var pct = saved === null ? null : parseInt(saved, 10);
+      if (pct !== null && (isNaN(pct) || pct < 40 || pct > 100)) pct = null;
+      return pct === null ? defaultPct : pct;
+    };
     var apply = function (pct) {
       content.style.maxWidth = pct + "%";
       content.style.margin = "0 auto";
-      try { localStorage.setItem(WIDTH_KEY, String(pct)); } catch (e) {}
+      try { localStorage.setItem(WIDTH_KEY(), String(pct)); } catch (e) {}
     };
-    if (savedPct !== null) apply(savedPct);
+    var refresh = function () {
+      var pct = loadPct();
+      range.value = String(pct);
+      val.textContent = pct + "%";
+      apply(pct);
+    };
+    refresh();
     range.addEventListener("input", function () {
       val.textContent = range.value + "%";
       apply(parseInt(range.value, 10));
     });
+    // 主题切换后按该主题记忆的宽度重新生效
+    window.addEventListener("pkm-theme-applied", refresh);
     var open = function () { pop.classList.add("open"); btn.classList.add("open"); };
     var close = function () { pop.classList.remove("open"); btn.classList.remove("open"); };
     btn.addEventListener("click", function (e) {
