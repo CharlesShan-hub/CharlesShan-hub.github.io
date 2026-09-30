@@ -396,6 +396,96 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
     });
   })();
 
+  /* ===== 正文宽度调节（右上按钮组，公开页与私密页共用）=====
+     点击弹出页面居中的滑块浮层，动态改宿主的 max-width 并居中；
+     宿主：公开页为 #pkm-content，私密页（解锁后 body.done）为 body 本身。
+     宽度按主题分别记忆（localStorage key 带主题名），电脑端默认 70%，
+     切换主题后各自生效，不会互相串值。手机端（<=900px）由 CSS 隐藏按钮，
+     JS 同时不应用宽度（保持主题默认全宽），避免移动端也被压成 70%。 */
+  (function () {
+    var host = document.getElementById("pkm-content");
+    if (!host && document.body.classList.contains("done")) host = document.body;
+    if (!host) return;
+    var btn = document.createElement("button");
+    btn.id = "pkm-width-btn"; btn.type = "button";
+    btn.setAttribute("aria-label", "正文宽度"); btn.setAttribute("title", "正文宽度");
+    btn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M3 12h18M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>';
+    var pop = document.createElement("div");
+    pop.id = "pkm-width-pop";
+    var title = document.createElement("div");
+    title.className = "pkm-width-title";
+    title.textContent = "正文宽度";
+    var range = document.createElement("input");
+    range.type = "range"; range.id = "pkm-width-range";
+    range.min = "40"; range.max = "100"; range.step = "1";
+    var val = document.createElement("div");
+    val.className = "pkm-width-value";
+    pop.appendChild(title);
+    pop.appendChild(range);
+    pop.appendChild(val);
+    document.body.appendChild(pop);
+    addTopBtn(btn);
+
+    // 当前主题名由 theme-css 的 href 文件名得出（如 vlook-joint / phycat-abyss）
+    var themeName = function () {
+      var link = document.getElementById("theme-css");
+      var href = link ? (link.getAttribute("href") || "") : "";
+      return href.replace(/^.*\//, "").replace(/\.css$/, "");
+    };
+    var WIDTH_KEY = function () { return "pkm-content-width-" + themeName(); };
+    var defaultPct = 70;
+    // 移动端（<=900px）与 CSS 的媒体查询一致：不应用宽度，保持主题默认全宽
+    var isMobile = function () {
+      return !!window.matchMedia && window.matchMedia("(max-width: 900px)").matches;
+    };
+    var loadPct = function () {
+      var saved = null;
+      try { saved = localStorage.getItem(WIDTH_KEY()); } catch (e) {}
+      var pct = saved === null ? null : parseInt(saved, 10);
+      if (pct !== null && (isNaN(pct) || pct < 40 || pct > 100)) pct = null;
+      return pct === null ? defaultPct : pct;
+    };
+    var apply = function (pct) {
+      host.style.maxWidth = pct + "%";
+      host.style.margin = "0 auto";
+      try { localStorage.setItem(WIDTH_KEY(), String(pct)); } catch (e) {}
+    };
+    var refresh = function () {
+      // 手机/平板不应用宽度，清掉内联样式后保持主题默认
+      if (isMobile()) {
+        host.style.maxWidth = "";
+        host.style.margin = "";
+        return;
+      }
+      var pct = loadPct();
+      range.value = String(pct);
+      val.textContent = pct + "%";
+      apply(pct);
+    };
+    refresh();
+    range.addEventListener("input", function () {
+      val.textContent = range.value + "%";
+      apply(parseInt(range.value, 10));
+    });
+    // 窗口在桌面/移动断点间变化时重刷宽度状态
+    if (window.matchMedia) window.matchMedia("(max-width: 900px)").addEventListener("change", refresh);
+    // 主题切换后按该主题记忆的宽度重新生效
+    window.addEventListener("pkm-theme-applied", refresh);
+    var open = function () { pop.classList.add("open"); btn.classList.add("open"); };
+    var close = function () { pop.classList.remove("open"); btn.classList.remove("open"); };
+    btn.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (pop.classList.contains("open")) close(); else open();
+    });
+    document.addEventListener("click", function (e) {
+      if (pop.classList.contains("open") && !pop.contains(e.target) && e.target !== btn) close();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") close();
+    });
+  })();
+
   /* ===== 调试面板（localStorage 缓存查看 / 增删改） ===== */
   (function () {
     // 仅首页显示：子页面 / 私密页不创建，保持界面干净（与 ui_main.js 的首页判定一致）
