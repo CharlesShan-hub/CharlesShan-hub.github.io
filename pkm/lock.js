@@ -671,6 +671,41 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
       };
       document.body.appendChild(js);
     }
+        
+(function () {
+  /* mermaid 图表渲染：按需加载（仅页面存在 mermaid 代码块时 import CDN）。
+     构建期 mermaid 块输出为 <pre lang="mermaid"><code>…</code></pre>（未渲染），
+     这里把源码文本搬进标准容器 div.mermaid，再交给 mermaid.run 渲染成 SVG；
+     主题深浅自动匹配当前站点主题（dark/default），图表与页面观感一致。 */
+  var host = document.querySelector("#pkm-content") || document.body;
+  var pres = host.querySelectorAll('pre[lang="mermaid"]');
+  if (!pres.length) return;
+  var theme = "default";
+  try {
+    var link = document.getElementById("theme-css");
+    var name = (link && link.getAttribute("href") || "").replace(/^.*\//, "").replace(/\.css$/, "");
+    var kinds = (window.PKM && window.PKM.themesKind) || {};
+    if (kinds[name] === "dark") theme = "dark";
+  } catch (e) {}
+  var nodes = [];
+  pres.forEach(function (pre) {
+    var code = pre.querySelector("code");
+    var text = code ? code.textContent : pre.textContent;
+    var div = document.createElement("div");
+    div.className = "mermaid";
+    div.textContent = text;
+    pre.replaceWith(div);
+    nodes.push(div);
+  });
+  import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs")
+    .then(function (mod) {
+      var mermaid = mod.default;
+      mermaid.initialize({ startOnLoad: false, theme: theme, securityLevel: "strict" });
+      mermaid.run({ nodes: nodes });
+    })
+    .catch(function () {});
+})();
+
         window.__pkmInitWidgets();
         if (HAS_MD) {
           var dlBtn = document.createElement('button');
