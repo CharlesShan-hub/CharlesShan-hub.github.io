@@ -329,6 +329,68 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
       code: { label: "代码", key: "pkm-font-code-" },
       head: { label: "标题", key: "pkm-font-head-" }
     };
+
+    /* ===== 段落间距：default（主题自带）/ 0 / 0.5 / 1 行，实时应用 + 按主题记忆 ===== */
+    var GAP_OPTS = [
+      { v: "default", label: "默认" },
+      { v: "0", label: "0 行" },
+      { v: "0.5", label: "0.5 行" },
+      { v: "1", label: "1 行" }
+    ];
+    var GAP_KEY = "pkm-para-gap-";
+    var gapStored = function () {
+      var v = null;
+      try { v = localStorage.getItem(GAP_KEY + themeName()); } catch (e) {}
+      return v;
+    };
+    // 实时应用：注入/移除 <style> 覆盖规则（0.5 行为默认观感，default 还原主题自带间距）
+    var gapApply = function (v) {
+      var em = v === "1" ? "1em" : v === "0.5" ? "0.5em" : v === "0" ? "0" : null;
+      var styleEl = document.getElementById("pkm-para-gap");
+      if (!em) {
+        if (styleEl) styleEl.remove();
+      } else {
+        if (!styleEl) {
+          styleEl = document.createElement("style");
+          styleEl.id = "pkm-para-gap";
+          document.head.appendChild(styleEl);
+        }
+        styleEl.textContent = "#pkm-content p, body.done p { margin-top: " + em + "; margin-bottom: " + em + "; }";
+      }
+      try {
+        if (v !== "default") localStorage.setItem(GAP_KEY + themeName(), v);
+        else localStorage.removeItem(GAP_KEY + themeName());
+      } catch (e) {}
+    };
+    var gapRow = function () {
+      var wrap = document.createElement("div");
+      wrap.className = "font-row";
+      var head = document.createElement("div");
+      head.className = "font-row-head";
+      var label = document.createElement("div");
+      label.className = "font-row-label";
+      label.textContent = "段落间距";
+      head.appendChild(label);
+      wrap.appendChild(head);
+      var chips = document.createElement("div");
+      chips.className = "font-row-stack";
+      var selected = gapStored();
+      GAP_OPTS.forEach(function (o) {
+        var isSel = o.v === (selected || "0.5");
+        var chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "font-chip" + (isSel ? " sel" : "");
+        chip.textContent = o.label + (isSel ? " ✓" : "");
+        chip.addEventListener("click", function (e) {
+          e.stopPropagation();
+          gapApply(o.v);
+          render();
+        });
+        chips.appendChild(chip);
+      });
+      wrap.appendChild(chips);
+      return wrap;
+    };
     var stored = function (cat) {
       var v = null;
       try { v = localStorage.getItem(cat.key + themeName()); } catch (e) {}
@@ -421,6 +483,7 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
       title.className = "font-pop-title";
       title.textContent = "选择字体";
       pop.appendChild(title);
+      pop.appendChild(gapRow());
       pop.appendChild(row(CATS.body));
       pop.appendChild(row(CATS.code));
       pop.appendChild(row(CATS.head));
@@ -431,10 +494,11 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
       }
     };
     applyAll();
+    gapApply(gapStored() || "0.5");
     render();
     watchFonts();
     // 主题切换后按新主题记忆的选择重新应用并重刷面板；webfont 加载完再补刷一次
-    window.addEventListener("pkm-theme-applied", function () { applyAll(); render(); watchFonts(); });
+    window.addEventListener("pkm-theme-applied", function () { applyAll(); gapApply(gapStored() || "0.5"); render(); watchFonts(); });
 
     var open = function () { pop.classList.add("open"); btn.classList.add("open"); };
     var close = function () { pop.classList.remove("open"); btn.classList.remove("open"); };
