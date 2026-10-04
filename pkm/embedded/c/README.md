@@ -16,6 +16,7 @@
 
 ### K&R
 
+* [原书](books/knr/chapter0.md)
 * [目录](details/k-and-r-toc.md)
 
 ### C和指针
