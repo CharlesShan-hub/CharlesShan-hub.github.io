@@ -19,7 +19,7 @@ This is a big hurdle; to leap over it you have to be able to create the program 
 这是一个很大的障碍；要跨越它，您必须能够在某处创建程序文本、成功编译、加载、运行，并找到输出的去向。一旦掌握了这些机械性的细节，其他一切就相对容易了。
 
 In C, the program to print''hello, world" is：
-在C语言中，打印“hello, world”的程序是：
+在C语言中，打印`hello, world`的程序是：
 
 ```c
 #include <stdio.h>
@@ -30,7 +30,7 @@ main()
 ```
 
 Just how to run this program depends on the system you are using. As a specific example, on the UNIX operating system you must create the program in a file whose name ends in''.c'', such as hello.c, then compile it with the command 
-运行这个程序的具体方式取决于您所使用的系统。举一个具体的例子，在UNIX操作系统上，您必须将程序创建在一个以“.c”结尾的文件中，例如 `hello.c`，然后用以下命令进行编译：
+运行这个程序的具体方式取决于您所使用的系统。举一个具体的例子，在UNIX操作系统上，您必须将程序创建在一个以`.c`结尾的文件中，例如 `hello.c`，然后用以下命令进行编译：
 
 ```bash
 cc hello.c 

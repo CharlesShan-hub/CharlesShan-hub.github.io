@@ -351,7 +351,10 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
       { v: "default", label: "默认" },
       { v: "0", label: "0 行" },
       { v: "0.5", label: "0.5 行" },
-      { v: "1", label: "1 行" }
+      { v: "1", label: "1 行" },
+      { v: "2", label: "2 行" },
+      { v: "3", label: "3 行" },
+      { v: "4", label: "4 行" }
     ];
     var GAP_KEY = "pkm-para-gap-";
     var gapStored = function () {
@@ -361,7 +364,7 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
     };
     // 实时应用：注入/移除 <style> 覆盖规则（0.5 行为默认观感，default 还原主题自带间距）
     var gapApply = function (v) {
-      var em = v === "1" ? "1em" : v === "0.5" ? "0.5em" : v === "0" ? "0" : null;
+      var em = v === "default" ? null : v === "0" ? "0" : v + "em";
       var styleEl = document.getElementById("pkm-para-gap");
       if (!em) {
         if (styleEl) styleEl.remove();
@@ -412,12 +415,29 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
       try { v = localStorage.getItem(cat.key + themeName()); } catch (e) {}
       return v;
     };
-    // 应用选择：正文/标题直接改元素字体（!important 覆盖主题），代码走 CSS 变量
+    // 应用选择：标题逐个内联覆盖，代码走 CSS 变量；正文注入 <style> 规则——
+    // 主题常把正文字体显式声明在 #pkm-content/#write/p 等深层，改 body 的继承传不到
+    // （表现为"设了正文只有标题变"），故用 :not 链直接命中正文文本元素，
+    // 排除标题与 pre/code 等宽区域、UI 按钮、字体浮层自身；宿主：公开页 #pkm-content、私密页 body.done
+    var BODY_NOT = ":not(h1):not(h2):not(h3):not(h4):not(h5):not(h6)" +
+      ":not(pre):not(code):not(kbd):not(samp):not(button):not(svg)" +
+      ":not(#font-pop):not(#font-pop *)";
     var applyCat = function (cat, font) {
       var quoted = font && /[\s"'(),/]/.test(font) ? '"' + font + '"' : font;
       if (cat === CATS.body) {
-        if (font) document.body.style.setProperty("font-family", quoted, "important");
-        else document.body.style.removeProperty("font-family");
+        var styleEl = document.getElementById("pkm-font-body");
+        if (!font) {
+          if (styleEl) styleEl.remove();
+        } else {
+          var host = document.getElementById("pkm-content") ? "#pkm-content" : "body.done";
+          if (!styleEl) {
+            styleEl = document.createElement("style");
+            styleEl.id = "pkm-font-body";
+            document.head.appendChild(styleEl);
+          }
+          styleEl.textContent = host + ", " + host + " *" + BODY_NOT +
+            " { font-family: " + quoted + " !important; }";
+        }
       } else if (cat === CATS.head) {
         var heads = document.querySelectorAll(HEAD_SEL);
         for (var i = 0; i < heads.length; i++) {
