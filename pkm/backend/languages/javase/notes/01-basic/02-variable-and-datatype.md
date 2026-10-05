@@ -1,3 +1,12 @@
+---
+title: 变量与数据类型
+tags:
+  - java
+  - basic
+date: 2026-10-05
+comment: 变量、基本类型、进制，自动与强制类型转换规则
+---
+
 # 专题：变量与数据类型
 
 * 基础
@@ -11,6 +20,7 @@
     * 👉 [float](details/float.md): 浮点型
     * 👉 [char](details/char.md): 字符型
     * 👉 [boolean](details/boolean.md): 布尔型
+    * 👉 类型转换
 * 运算符
     * 👉 [operator](operator.md)：运算符概述
     * 👉 [operator-basic](details/operator-basic.md)：基础运算符
@@ -46,9 +56,7 @@ public class Hello{
 }
 ```
 
-* 进制转换工具
-  * [在线转换工具](https://www.sojson.com/hexconvert.html)
-  * [二、八、十、十六进制之间的转换](http://t.csdn.cn/8WKlz)
+* 进制转换工具：[在线转换工具](https://www.sojson.com/hexconvert.html)
 
 ---
 
