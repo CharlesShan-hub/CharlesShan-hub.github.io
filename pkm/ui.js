@@ -922,8 +922,12 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
       var hits = [];
       var walk = function (node, path) {
         if (node.type === "file") {
-          if (node.name.toLowerCase().indexOf(q) > -1) {
-            hits.push({ rel: node.rel, name: node.name, path: path });
+          var tags = node.tags || [];
+          var hitTags = tags.filter(function (t) {
+            return t.toLowerCase().indexOf(q) > -1;
+          });
+          if (node.name.toLowerCase().indexOf(q) > -1 || hitTags.length) {
+            hits.push({ rel: node.rel, name: node.name, path: path, hitTags: hitTags });
           }
         } else {
           var p2 = path ? path + "/" + node.name : node.name;
@@ -941,10 +945,17 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
         var name = document.createElement("div");
         name.className = "search-name";
         name.textContent = h.name;
+        row.appendChild(name);
+        // 标签命中时在标题行展示命中标签，说明为什么搜到
+        (h.hitTags || []).forEach(function (t) {
+          var tag = document.createElement("span");
+          tag.className = "search-tag";
+          tag.textContent = t;
+          name.appendChild(tag);
+        });
         var path = document.createElement("div");
         path.className = "search-path";
         path.textContent = h.path;
-        row.appendChild(name);
         row.appendChild(path);
         row.addEventListener("click", function () { window.open(base + h.rel, "_blank"); });
         list.appendChild(row);

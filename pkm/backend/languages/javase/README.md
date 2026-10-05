@@ -1,6 +1,6 @@
 ---
 title: Javase
-tags: [java]
+tags: [catalog]
 date: 2026-10-05
 comment: Java SE 基础笔记：语法、OOP、集合、IO、多线程、JVM
 ---
