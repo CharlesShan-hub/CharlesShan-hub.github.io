@@ -211,6 +211,22 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
       code: { label: "代码", key: "pkm-font-code-" },
       head: { label: "标题", key: "pkm-font-head-" }
     };
+    // 内置候选字体池：面板在主题字体栈之外补充的常见字体（本机未安装的照常显示红叉并禁用）。
+    // 正文/标题共用阅读池（衬线、无衬线、楷体、常见中文黑体宋体）；代码用等宽池
+    var READ_POOL = [
+      "Georgia", "Palatino", "Times New Roman", "Avenir Next", "Segoe UI", "Verdana",
+      "Songti SC", "STSong", "SimSun", "Kaiti SC", "STKaiti", "KaiTi",
+      "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+      "Noto Serif CJK SC", "Source Han Serif SC", "LXGW WenKai"
+    ];
+    var EXTRA_POOL = {
+      "正文": READ_POOL,
+      "标题": READ_POOL,
+      "代码": [
+        "JetBrains Mono", "Fira Code", "Cascadia Code", "Source Code Pro", "IBM Plex Mono",
+        "SF Mono", "Menlo", "Monaco", "Consolas", "Courier New", "Sarasa Mono SC"
+      ]
+    };
 
     /* ===== 段落间距：default（主题自带）/ 0 / 0.5 / 1 行，实时应用 + 按主题记忆 ===== */
     var GAP_OPTS = [
@@ -341,7 +357,12 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
       var chips = document.createElement("div");
       chips.className = "font-row-stack";
       var selected = stored(cat);
-      clean(getComputedStyle(el).fontFamily).forEach(function (font) {
+      // 候选 = 主题字体栈 + 内置补充池，按字体名去重（主题栈在前，保持默认观感优先）
+      var seen = {};
+      clean(getComputedStyle(el).fontFamily).concat(EXTRA_POOL[cat.label] || []).forEach(function (font) {
+        var key = font.toLowerCase();
+        if (seen[key]) return;
+        seen[key] = 1;
         var ok = checkFont(font);
         var isSel = font === selected;
         var chip = document.createElement("button");
