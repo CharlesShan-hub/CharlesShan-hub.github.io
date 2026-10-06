@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 发布与订阅
 
 **来源**：《Redis设计与实现》第 18 章

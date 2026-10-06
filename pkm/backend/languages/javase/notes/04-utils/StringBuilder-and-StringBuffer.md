@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # StringBuffer & StringBuilder
 
 ![StringBuilder-StringBuffer-drawing.excalidraw|1000](../../assets/StringBuilder-StringBuffer-drawing.excalidraw.md)

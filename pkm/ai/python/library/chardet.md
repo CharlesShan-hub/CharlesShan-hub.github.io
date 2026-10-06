@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # chardet
 
 `chardet` 是一个 Python 库，用于检测字节序列的字符编码。它支持多种编码，包括 ASCII、ISO-8859-1、UTF-8、UTF-16、UTF-32、Base64、HTML 和 many more。`chardet` 是 Python 标准库的一部分，通常在处理文件、网络数据或其他可能包含未知编码的数据时使用。 以下是 `chardet` 的关键特点和用法：

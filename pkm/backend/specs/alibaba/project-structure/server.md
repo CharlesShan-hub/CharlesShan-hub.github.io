@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ## (三) 服务器
 1. 【推荐】高并发服务器建议调小TCP协议的`time_wait`超时时间。 说明：操作系统默认240秒后，才会关闭处于`time_wait`状态的连接，在高并发访问下，服务器端会因为处于`time_wait`的连接数太多，可能无法建立新的连接，所以需要在服务器上调小此等待值。 
 <br><span style="color:green">正例</span>：在linux服务器上请通过变更/etc/sysctl.conf文件去修改该缺省值（秒）：

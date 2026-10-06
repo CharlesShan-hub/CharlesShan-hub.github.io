@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ## cast函数
 
 cast函数用于将值从一种数据类型转换为表达式中指定的另一种数据类型

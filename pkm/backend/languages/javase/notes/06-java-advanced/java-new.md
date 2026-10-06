@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Java新特性
 ---
 

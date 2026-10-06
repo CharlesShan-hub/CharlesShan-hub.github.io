@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # C陷阱与缺陷目录
 
 * [x] 导读：讲个小故事

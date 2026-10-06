@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 
 - 可以使用这个命令：`show profiles;` 这个命令可以查看在mysql中执行的所有SQL以及命令的耗费时长。
 - `show profiles;` 是在mysql5.0.37之后添加的。所以要确保你的mysql版本没问题。

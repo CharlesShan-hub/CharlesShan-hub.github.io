@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 查询工作岗位
 ```sql
 mysql> select job from emp;

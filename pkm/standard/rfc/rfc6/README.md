@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # RFC 6 — Conversation with Bob Kahn（与 Bob Kahn 的谈话）· Steve Crocker
 
 > **一句话定位**：这是一份**会议纪要**。RFC 1 发布 3 天后，Crocker 跑去波士顿见了 BB&N 的 Bob Kahn——两家公司里"写协议的人"和"造硬件的人"第一次面对面，把 IMP 的编码转换和 HOST-IMP 通信接口当面敲定。

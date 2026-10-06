@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # boto3
 
 `boto3` 是 AWS（Amazon Web Services）提供的 Python SDK，用于与 AWS 服务进行交互。它是一个现代、面向对象的 SDK，可以用于管理 AWS 资源，如 S3、EC2、RDS、Lambda 等。`boto3` 是 AWS 的官方 Python SDK，是 `boto` 的后续版本，提供了更简洁的 API 设计和更强大的功能。 以下是 `boto3` 的一些关键特点和用法：

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # RFC 4 — Network Timetable（网络时间表）
 > **中英对照翻译版本**
 > 原文作者：Elmer B. Shapiro（SRI 斯坦福研究院）

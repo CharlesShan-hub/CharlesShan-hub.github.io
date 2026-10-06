@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 静态工具类Db
 
 静态工具类`Db`的功能和`IService接口`功能一样。

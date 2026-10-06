@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # anyio
 
 AnyIO 是一个用于异步网络和并发处理的 Python 库，它可以在 asyncio 或 trio 之上运行。这个库实现了类似于 trio 的结构化并发（SC），并且与 trio 本身的本地 SC 相协调。使用 AnyIO 编写的应用程序和库可以在 asyncio 或 trio 上无修改地运行。此外，AnyIO 也可以集成到其他项目中。 AnyIO 要求 Python 3.8 或更高版本。为了开发或试验 AnyIO，建议设置一个虚拟环境。安装 AnyIO 只需运行 `pip install anyio`。如果你还需要支持 Trio，可以像这样安装：`pip install anyio[trio]`。 AnyIO 的基本用法包括运行异步程序。一个简单的 AnyIO 程序可能如下所示：

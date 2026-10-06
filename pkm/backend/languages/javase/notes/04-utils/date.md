@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 日期类
 
 ![Date-drawing|1000](../../assets/Date-drawing.excalidraw.md)

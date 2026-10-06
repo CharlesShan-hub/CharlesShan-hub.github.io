@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ## THE C PROGRAMMING LANGUAGE - SECOND EDITION
 
 ![886aff78e64a42b10abe3e6c4cadfd4401ec7b4bd272a748d11da0ab1975878e.jpg](assets/886aff78e64a42b10abe3e6c4cadfd4401ec7b4bd272a748d11da0ab1975878e.jpg)

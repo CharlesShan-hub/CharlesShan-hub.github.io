@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # BufferedOutputStream
 
 在案例[BufferedWriter](BufferedWriter.md)中，我们不能备份二进制文件，因为BufferedWriter是字符流，只能处理文本文件。

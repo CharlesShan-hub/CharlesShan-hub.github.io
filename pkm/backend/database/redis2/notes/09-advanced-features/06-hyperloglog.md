@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # HyperLogLog
 
 > 完整原理讲解参见：`d:\project\PKM\pkm\backend\database\redis\notes\other.md`

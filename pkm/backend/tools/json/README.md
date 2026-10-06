@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 @ -1,33 +0,0 @@
 # JSON
 

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # depthai-sdk
 
 `depthai-sdk` 是一个 Python 库，用于与 NVIDIA Jetson TX2、TX1、Xavier 和 Nano 开发板上的深度学习加速器进行交互。这个库提供了与 `depthai-pipeline-graph` 相似的功能，用于运行和调试深度学习模型，但它可能提供更多的功能和更高级的接口。 以下是 `depthai-sdk` 的关键特点和用法：

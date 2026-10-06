@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Mapper 代理
 
 * 【黑马mybatis教程全套视频教程，2天Mybatis框架从入门到精通】 https://www.bilibili.com/video/BV1MT4y1k7wZ/?p=4

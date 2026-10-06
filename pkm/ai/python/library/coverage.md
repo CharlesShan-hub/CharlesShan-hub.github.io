@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # coverage
 
 `coverage` 是一个 Python 库，用于测量代码覆盖率。它允许你检查你的 Python 代码中有多少部分被执行，以及这些执行的部分是否涵盖了所有的测试用例。`coverage` 通常用于单元测试和持续集成流程，以确保代码的质量。 以下是 `coverage` 的关键特点和用法：

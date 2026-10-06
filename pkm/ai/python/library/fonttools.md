@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # fonttools
 
 `fonttools` 是一个 Python 库，用于处理字体文件，包括 TrueType、OpenType、CFF、WOFF 和 WOFF2 字体格式。它提供了多种功能，如字体信息的提取、修改、转换和验证。`fonttools` 广泛用于字体开发、字体设计和字体修复等领域。 以下是 `fonttools` 的关键特点和用法：

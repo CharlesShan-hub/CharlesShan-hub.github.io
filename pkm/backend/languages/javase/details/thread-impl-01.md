@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 继承`Thread`类
 ```java
 package ex_thread;

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # geographiclib
 
 `geographiclib` 是一个Python库，它提供了一个地理坐标系统转换和地理计算的工具集。这个库是对C++库 `GeographicLib` 的封装，后者是一个精确的地理计算库，用于处理地球上的位置和面积计算。 以下是 `geographiclib` 的一些主要特点和功能：

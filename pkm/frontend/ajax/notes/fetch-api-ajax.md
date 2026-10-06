@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Fetch API 实现 AJAX
 
 在之前的课程中，`fetch`函数是我们自己定义的，实际上在 2015 年的时候，浏览器提供了一套原生的 API，称为 Fetch API，基于 Promise 实现的，也就是说 2015 年之后，浏览器内置了 `fetch`函数，可以直接使用。

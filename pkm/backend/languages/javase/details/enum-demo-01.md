@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 按照传统方法创建`Season`类：
 ```java
 package ex_enum;  

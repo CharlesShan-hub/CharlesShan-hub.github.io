@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 1. 初始化，设置隔离级别，开启事务
 	```sql
 	-- session1

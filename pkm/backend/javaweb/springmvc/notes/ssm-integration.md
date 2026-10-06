@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # SSM 整合-全注解式开发
 
 在我们上面 SpringMVC 全注解开发的基础之上添加 Spring+MyBatis 的配置就行了。

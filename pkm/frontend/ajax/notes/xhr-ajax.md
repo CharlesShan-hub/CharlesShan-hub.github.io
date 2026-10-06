@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # **XHR 实现 AJAX**
 
 ---

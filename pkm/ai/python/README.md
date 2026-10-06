@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Python
 
 ![[assets/libraries.excalidraw|1000]]

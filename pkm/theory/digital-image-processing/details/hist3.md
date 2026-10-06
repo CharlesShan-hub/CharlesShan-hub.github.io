@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ![hist3](../assets/hist3.png)
 ![hist3_2](../assets/hist3_2.png)
 

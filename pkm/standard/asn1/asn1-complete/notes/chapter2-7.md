@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Chapter 7 More on classes, constraints, and parameterization 
 第七章 关于类、约束条件以及参数化的更多内容
 

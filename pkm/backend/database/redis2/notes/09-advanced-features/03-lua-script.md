@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Lua 脚本
 
 **来源**：《Redis设计与实现》第 20 章

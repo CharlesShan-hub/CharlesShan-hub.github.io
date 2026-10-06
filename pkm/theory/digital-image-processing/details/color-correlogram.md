@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ![color-correlogram](../assets/color-correlogram.png)
 ```python
 import numpy as np

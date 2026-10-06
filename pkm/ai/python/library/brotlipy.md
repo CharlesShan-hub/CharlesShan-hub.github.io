@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # brotlipy
 
 `brotlipy` 是一个 Python 库，它提供了对 c。Brotli 是一种现代的压缩算法，由 Google 开发，旨在替代传统的 GZIP 压缩格式。Brotli 压缩算法结合了 LZ77 和 Huffman 编码，并且支持字典预览，这使得它能够提供比 GZIP 更高的压缩率。 以下是 `brotlipy` 的一些关键特点和用法：

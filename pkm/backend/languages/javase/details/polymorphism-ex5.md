@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 
 多态数组：有一个Person对象，两个Student对象，两个Teacher对象
 

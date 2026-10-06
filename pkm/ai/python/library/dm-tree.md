@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # dm-tree
 
 `dm-tree` 是一个 Python 库，用于构建和操作决策树。决策树是一种常见的机器学习算法，用于分类和回归任务。`dm-tree` 库提供了一个简单的 API，允许你轻松地构建和操作决策树。 以下是 `dm-tree` 的关键特点和用法：

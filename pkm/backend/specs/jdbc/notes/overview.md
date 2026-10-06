@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 简介与环境配置
 
 1. **JDBC**（Java DataBase Connectivity）是Java操作数据库的标准API规范

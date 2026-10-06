@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # asn1c + PER 编解码完整上手指南
 
 > 工具：`asn1c v0.9.21` · 编译器：MSYS2 ucrt64 GCC · 平台：Windows  

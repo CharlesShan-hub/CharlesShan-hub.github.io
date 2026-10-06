@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ### is null、is not null
 
 在数据库中null不是一个值，不能用等号和不等号衡量，null代表什么也没有，没有数据，没有值

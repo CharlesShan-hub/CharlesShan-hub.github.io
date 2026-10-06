@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # filelock
 
 `filelock` 是一个 Python 库，用于在多进程或多线程环境中锁定文件。当多个进程或线程需要同时访问同一文件时，`filelock` 可以确保只有一个进程或线程可以修改文件，从而避免数据冲突和损坏。 以下是 `filelock` 的关键特点和用法：

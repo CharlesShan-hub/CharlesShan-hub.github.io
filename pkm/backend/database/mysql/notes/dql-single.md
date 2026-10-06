@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # DQL
 > 数据查询语言（Data **Query** Language, DQL）是SQL语言中，负责进行数据查询而不会对数据本身进行修改的语句。查询是SQL语言的核心，用于表达SQL查询的`select`查询命令是功能最强也是最为复杂的SQL语句，它的作用就是从数据库中检索数据，并将查询结果返回给用户。 select语句由：select子句(查询内容)、from子句(查询对象)、where子句(查询条件)、order by子句(排序方式)、group by子句(分组方式)等组成。
 > 本章案例的数据初始化：[powerpoint-init-data](../details/powerpoint-init-data.md)

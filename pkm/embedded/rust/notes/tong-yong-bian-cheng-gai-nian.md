@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 通用编程概念
 
 > https://rustwiki.org/zh-CN/book/ch03-00-common-programming-concepts.html

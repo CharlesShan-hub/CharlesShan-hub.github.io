@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 内容协商时，优先考虑请求参数format方式。
 
 spring.mvc.contentnegotiation.favor-parameter=true

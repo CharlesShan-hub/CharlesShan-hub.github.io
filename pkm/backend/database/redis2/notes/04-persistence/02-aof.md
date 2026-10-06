@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # AOF 持久化
 
 **来源**：《Redis设计与实现》第 11 章；详细配置见 `d:\project\PKM\pkm\backend\database\redis\notes\rdb.md`

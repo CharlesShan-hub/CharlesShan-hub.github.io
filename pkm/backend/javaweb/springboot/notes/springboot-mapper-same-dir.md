@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # mapper配置文件如果和mapper接口在同一个目录下不用配置。
 
 mybatis.mapper-locations=classpath:com/jkweilai/springboot/repository/*.xml

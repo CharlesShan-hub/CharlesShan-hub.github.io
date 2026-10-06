@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 整数集合（Intset）
 
 **来源**：《Redis设计与实现》第 6 章

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # FileReader
 
 `FileReader` 是 Java I/O 体系中**字符输入流（Reader）**的子类，专门用于从文件系统中读取字符数据（文本）。

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # dataclasses
 
 > 官网： https://docs.python.org/3/library/dataclasses.html

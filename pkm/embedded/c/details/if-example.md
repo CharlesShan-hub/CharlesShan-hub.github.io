@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ```c
 // electric.c -- calculates electric bill 
 #include <stdio.h>

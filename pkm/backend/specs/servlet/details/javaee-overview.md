@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # JavaEE 概述
 
 JavaEE（Java Platform, Enterprise Edition）是Sun Microsystems（后被Oracle收购）推出的企业级Java平台，现演变为**Jakarta EE**。以下是详细解答：

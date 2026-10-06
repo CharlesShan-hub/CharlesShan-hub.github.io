@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 入门指南
 
 > https://rustwiki.org/zh-CN/book/ch01-00-getting-started.html

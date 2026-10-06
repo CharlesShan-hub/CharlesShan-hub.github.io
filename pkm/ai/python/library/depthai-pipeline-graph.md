@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # depthai-pipeline-graph
 
 `depthai-pipeline-graph` 是一个 Python 库，用于构建和运行深度学习加速器（如 NVIDIA Jetson TX2 上的 NVIDIA TX2）的深度学习流水线。这个库提供了一种图形化的方式来定义和运行深度学习流水线，包括图像预处理、深度学习推理和后处理等步骤。 以下是 `depthai-pipeline-graph` 的关键特点和用法：

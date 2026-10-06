@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # DataInputStream
 
 `DataInputStream` 是 Java I/O 体系中的**数据输入流**，它允许应用程序以与机器无关的方式从底层输入流中读取基本的 Java 数据类型。

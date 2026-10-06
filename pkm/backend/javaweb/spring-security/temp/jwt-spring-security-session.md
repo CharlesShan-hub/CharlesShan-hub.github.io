@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # JWT
 **<font style="color:rgb(15, 17, 21);">JWT 是一个完全独立的技术标准（RFC 7519）</font>**<font style="color:rgb(15, 17, 21);">，它本身并不隶属于 OAuth2 或 Spring Security，但三者经常一起使用。</font>
 

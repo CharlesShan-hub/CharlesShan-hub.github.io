@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # babel
 
 `Babel` 是一个Python库，主要用于处理国际化（Internationalization，简称i18n）和本地化（Localization，简称l10n）相关的任务。它提供了多种功能，包括但不限于：

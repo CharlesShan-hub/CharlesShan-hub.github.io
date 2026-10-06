@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # RFC 2 — Host Software（主机软件）
 > **中英对照翻译版本**
 > 原文作者：Bill Duvall（SRI 斯坦福研究院）

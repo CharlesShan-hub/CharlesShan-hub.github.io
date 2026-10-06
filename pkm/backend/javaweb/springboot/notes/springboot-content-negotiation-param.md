@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 内容协商时，设置请求参数的名字，默认为format
 
 spring.mvc.contentnegotiation.parameter-name=type

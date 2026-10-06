@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 再次查看，文件就恢复了。
 
 ls 

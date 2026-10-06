@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Spring 集成
 
 > 完整内容参见：`d:\project\PKM\pkm\backend\database\redis\notes\spring.md`

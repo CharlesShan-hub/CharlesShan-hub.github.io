@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # alabaster
 
 `alabaster` 是一个 Python 库，用于创建 Sphinx 项目的文档主题。Sphinx 是一个强大的文档生成系统，广泛用于 Python 项目的文档编写。`alabaster` 提供了一个简洁且现代化的主题，非常适合创建美观的在线文档和手册。 以下是 `alabaster` 的一些主要特点：

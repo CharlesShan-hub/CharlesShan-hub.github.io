@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # flake8
 
 `flake8` 是一个 Python 代码质量检查工具，它是 `pep8`、`pyflakes` 和 `mccabe` 三个工具的集成。它用于检查代码中的语法错误、PEP 8 风格指南违规、代码复杂度等。`flake8` 提供了广泛的插件支持，允许你添加额外的检查规则。 以下是 `flake8` 的关键特点和用法：

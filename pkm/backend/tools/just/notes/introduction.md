@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Just a Introduction
 
 * Rust Crates: https://crates.io/crates/just

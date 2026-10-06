@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # RFC 1 — Host Software（主机软件）
 
 > **文档类型**：Request for Comments（请求评论）· 编号 1

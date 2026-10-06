@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # ObjectOutputStream
 
 * ObjectOutputStream是Java对象序列化的输出流，用于将对象写入字节流

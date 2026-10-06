@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # web请求的路径匹配
 
 在 SpringBoot 的 web 应用中，web 的请求路径仍然支持模糊匹配，默认支持两种主要的路径匹配策略：

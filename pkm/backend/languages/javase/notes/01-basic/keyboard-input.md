@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Java键盘输入
 
 ![Java-basic-sacnner.excalidraw|1000](../../assets/java-basic-sacnner.excalidraw.md)

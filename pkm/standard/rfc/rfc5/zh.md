@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # RFC 5 — DEL（Decode-Encode Language，解码-编码语言）
 > **中英对照翻译版本**
 > 原文作者：Jeff Rulifson（SRI 斯坦福研究院）

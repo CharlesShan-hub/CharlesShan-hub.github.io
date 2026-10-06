@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ```c
 /* animals.c -- uses a switch statement */
 #include <stdio.h>

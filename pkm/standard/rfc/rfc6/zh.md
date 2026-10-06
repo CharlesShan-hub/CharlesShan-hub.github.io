@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # RFC 6 — Conversation with Bob Kahn（与 Bob Kahn 的谈话）
 > **中英对照翻译版本**
 > 原文作者：Steve Crocker（UCLA 加州大学洛杉矶分校）

@@ -1,1 +1,8 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 设置 Tomcat 服务器的基础目录为当前工作目录（. 表示当前目录）。

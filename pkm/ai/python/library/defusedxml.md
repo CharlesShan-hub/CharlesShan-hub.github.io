@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # defusedxml
 
 `defusedxml` 是一个 Python 库，用于安全地处理 XML 数据。它提供了一个安全替代品，用于替换标准 Python 库中的 `xml` 模块，以防止 XML 注入攻击。`defusedxml` 支持多种 XML 解析器，包括 `xml.etree.ElementTree`、`xml.etree.cElementTree` 和 `lxml`。 以下是 `defusedxml` 的关键特点和用法：

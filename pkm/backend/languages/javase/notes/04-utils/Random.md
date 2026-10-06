@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Random
 
 ![1000](../../assets/java-basic-random.excalidraw.md)

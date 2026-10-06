@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 走进电世界 - 阅读笔记
 
 * [01](notes/01.md)

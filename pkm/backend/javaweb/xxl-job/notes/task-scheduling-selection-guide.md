@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 选择任务调度方式的建议
 
 1. **简单需求**：使用`ScheduledExecutorService`

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 流程是：`start()` → `start0()`（JVM）→ 新线程执行 → `run()`
 - `start()`：Java 层面的启动入口（安全检查 + 状态管理）
 - `start0()`：JVM 层面的线程创建和启动（操作系统线程创建）

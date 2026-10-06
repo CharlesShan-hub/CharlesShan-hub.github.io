@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 事件的调度与执行
 
 **来源**：《Redis设计与实现》第 12 章

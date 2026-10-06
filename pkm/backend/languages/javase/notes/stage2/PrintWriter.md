@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # PrintWriter
 
 `PrintWriter` 是 Java I/O 体系中的**字符打印流**，功能与 `PrintStream` 非常相似，但它是基于**字符流（Writer）**实现的，因此更适合处理文本数据的输出，尤其是涉及国际化字符集时。

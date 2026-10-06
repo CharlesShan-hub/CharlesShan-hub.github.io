@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # executing
 
 `executing` 是一个 Python 库，用于简化命令行工具的执行和参数传递。它提供了一个简单的 API，允许你以编程方式执行命令行工具，并捕获其输出和错误。`executing` 库通常用于自动化脚本和 CI/CD 流程中，以提高命令行工具的执行效率和可管理性。 以下是 `executing` 的关键特点和用法：

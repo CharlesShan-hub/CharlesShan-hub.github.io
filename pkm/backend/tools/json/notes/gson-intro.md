@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Part 1：快速上手
 
 > 目标：5 分钟跑通 Gson 基本流程，知道怎么用，不深入原理。

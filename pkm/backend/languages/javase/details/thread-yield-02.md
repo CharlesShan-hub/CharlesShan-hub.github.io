@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 
 如果把`t2.join();`改成了`Thread.yield();`，那就是根据 CPU 资源去礼让，如果资源充足，那么就不会礼让。
 

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 视图
 
 1. 只能将select语句创建为视图。

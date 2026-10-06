@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 字典（Dict）
 
 **来源**：《Redis设计与实现》第 4 章

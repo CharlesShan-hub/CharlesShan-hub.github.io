@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 缓存常见问题与解决方案
 
 > 详细内容参见：`d:\project\PKM\pkm\backend\database\redis\notes\patterns.md`

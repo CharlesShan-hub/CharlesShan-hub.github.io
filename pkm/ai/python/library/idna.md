@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # idna
 
 `idna` 是 "Internationalized Domain Names in Applications" 的缩写，它是一个 Python 库，用于处理国际化的域名（IDNs）。IDNs 允许使用非 ASCII 字符（如拉丁字母以外的字符）来表示域名。 以下是 `idna` 的一些主要特点和功能：

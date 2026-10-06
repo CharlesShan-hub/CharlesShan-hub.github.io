@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # bzip2
 
 `bzip2` 是一个广泛使用的文件压缩和解压缩工具，它使用 Burrows-Wheeler 变换（BWT）和 Huffman 编码来实现高效的压缩。它被设计为快速、可移植且具有高压缩比。`bzip2` 通常用于压缩大文件，如日志文件、归档文件和数据备份。 以下是 `bzip2` 的关键特点和用法：

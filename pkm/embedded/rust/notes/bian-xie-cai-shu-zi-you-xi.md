@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 编写猜数字游戏
 
 > https://rustwiki.org/zh-CN/book/ch02-00-guessing-game-tutorial.html

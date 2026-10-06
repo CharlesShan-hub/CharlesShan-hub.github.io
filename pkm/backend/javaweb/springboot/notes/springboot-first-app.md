@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # First Spring Boot
 
 需求：在浏览器上输入请求路径 http://localhost:8080/hello，在浏览器上显示 HelloWorld!

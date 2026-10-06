@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # XML 解析
 
 <font style="color:rgb(64, 64, 64);">XML解析主要有以下三种方式：DOM 解析、SAX 解析、StAX 解析</font>

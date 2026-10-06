@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Shovel 插件（铲子）
 ## Shovel 插件是干啥的
 **Shovel插件用于在两个RabbitMQ节点间 可靠地 **移动消息队列中的消息**，类似于一个单向的消息搬运工。**

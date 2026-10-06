@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # blas
 
 `BLAS`（Basic Linear Algebra Subprograms）是一个库，它提供了一系列基本的线性代数运算，如向量加法、矩阵乘法、向量点积等。`BLAS` 不是 Python 库，而是一个底层库，通常用 Fortran 或 C 语言编写，用于科学计算和数值分析。 `BLAS` 有三种级别：

@@ -1,5 +1,11 @@
+---
+title:
+tags:
+date: 2022-08-23
+comment:
+---
+
 # IO方式
-2022.08.23
 
 [TOC]
 

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 过期键删除策略
 
 **来源**：《Redis设计与实现》第 9 章

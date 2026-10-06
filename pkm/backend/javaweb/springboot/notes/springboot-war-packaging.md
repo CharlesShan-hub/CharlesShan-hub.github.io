@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # SpringBoot打war包
 
 第一步：将打包方式设置为war

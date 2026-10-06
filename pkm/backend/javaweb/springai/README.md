@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # spring-ai
 
 > Spring AI 是 Spring 生态中专为 AI 工程设计的应用框架，让 Java 开发者用 Spring 方式集成 AI 能力

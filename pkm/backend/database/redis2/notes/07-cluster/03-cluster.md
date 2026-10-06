@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 集群（Cluster）
 
 **来源**：《Redis设计与实现》第 17 章；配置部署参考 `d:\project\PKM\pkm\backend\database\redis\notes\cluster.md`

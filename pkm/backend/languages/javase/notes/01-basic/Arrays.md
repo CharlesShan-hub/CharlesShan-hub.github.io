@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Arrays
 
 数组专题推荐浏览顺序：[array](../01-basic/array.md) 👉 本文

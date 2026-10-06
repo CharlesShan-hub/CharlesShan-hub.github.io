@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # OutputStreamWriter
 
 `OutputStreamWriter` 是 Java I/O 体系中的**转换流**，它是**字符流通向字节流的桥梁**。它接收字符，并使用指定的字符集将其编码为字节写入到底层输出流中。

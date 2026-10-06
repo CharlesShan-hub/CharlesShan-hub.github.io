@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # SpringBoot 整合 RabbitMQ
 开发中最常用的是基于路由模式。因此我们就基于路由模式来编写代码：
 

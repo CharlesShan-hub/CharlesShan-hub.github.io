@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Hello World中的java命令细节
 
 这里有一个非常重要的步骤：首先在DOS命令窗口中将路径切换到class文件所在位置。

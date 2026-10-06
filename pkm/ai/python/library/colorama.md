@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # colorama
 
 `colorama` 是一个 Python 库，用于在 Windows 平台和跨平台环境中为终端文本添加颜色。由于 Windows 默认不支持 ANSI 颜色编码，`colorama` 提供了一个兼容的解决方案，使得在 Windows 和其他支持 ANSI 颜色的平台上输出彩色文本成为可能。 以下是 `colorama` 的关键特点和用法：

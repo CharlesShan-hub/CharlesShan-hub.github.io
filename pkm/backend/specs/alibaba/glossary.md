@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ## 附2：本手册专有名词
 1. POJO（Plain Ordinary Java Object）: 在本手册中，POJO专指只有setter / getter / toString的简单类，包括DO/DTO/BO/VO等。 
 2. GAV（GroupId、ArtifactId、Version）: Maven坐标，是用来唯一标识jar包。

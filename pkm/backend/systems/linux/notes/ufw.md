@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # ufw
 
 `ufw`（​**​Uncomplicated Firewall​**​）是 Ubuntu 系统上默认的防火墙管理工具，用于简化 `iptables`（Linux 内核的防火墙系统）的配置。它通过命令行提供直观的规则管理，适合新手和日常使用。

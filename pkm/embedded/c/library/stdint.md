@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # stdint.h
 
 * _\<stdint.h>_是[_\<inttypes.h>_](https://pubs.opengroup.org/onlinepubs/009695399/basedefs/inttypes.h.html)的子集

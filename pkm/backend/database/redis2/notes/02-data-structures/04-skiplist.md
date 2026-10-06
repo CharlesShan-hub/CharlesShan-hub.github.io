@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 跳跃表（Skiplist）
 
 **来源**：《Redis设计与实现》第 5 章

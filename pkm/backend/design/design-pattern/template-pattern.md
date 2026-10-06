@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 
 # 模板模式
 

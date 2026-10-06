@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # IEC 61850 Part 7-3 解读：公共数据类 CDC
 
 > **对应文件**：`860[1].7-3.pdf`  

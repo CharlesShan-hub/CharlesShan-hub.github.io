@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # DataOutputStream
 
 `DataOutputStream` 是 Java I/O 体系中的**数据输出流**，它允许应用程序以与机器无关的方式将 Java 基本数据类型写入输出流。

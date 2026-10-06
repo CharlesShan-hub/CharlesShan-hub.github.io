@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # eq记录
 
 <https://www.easy-query.com/easy-query-doc/startup/quick-start.html>

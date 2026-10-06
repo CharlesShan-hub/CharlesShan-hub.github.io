@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ## 第二章（第1节）总结：对象标识符
 
 **核心内容**：OBJECT IDENTIFIER（OID）的详细语法、使用规则、值记法及选择类型。

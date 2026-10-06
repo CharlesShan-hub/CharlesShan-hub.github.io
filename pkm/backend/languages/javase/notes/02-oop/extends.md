@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 继承
 
 浏览顺序：[encapsulation](../02-oop/encapsulation.md) 👉 本文 👉 [polymorphism](polymorphism.md)

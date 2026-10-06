@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # gettext
 
 `gettext` 是一个用于国际化和本地化的Python库，它允许程序支持多种语言，使得软件可以被翻译成不同的语言版本，而无需修改源代码。`gettext` 是GNU gettext工具集的一部分，它广泛应用于Linux和其他开源软件中，用于实现多语言支持。 以下是 `gettext` 的一些主要特点和功能：

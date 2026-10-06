@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # argon2-cffi
 
 `argon2-cffi` 是一个用于 Python 的库，它提供了对 Argon2 密码散列算法的支持。Argon2 是一种安全的密码散列算法，它被设计为具有可配置的运行时间和内存消耗。这意味着你可以决定散列密码所需的时间和所需的内存量。Argon2 有三种变体：Argon2d、Argon2i 和 Argon2id。其中，Argon2d 的优势在于抵抗时间内存交易，而 Argon2i 的重点在于抵抗侧信道攻击。因此，Argon2i 最初被认为是密码散列和密码管理的首选。

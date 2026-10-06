@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 练习1：找出公司中所有的工作岗位。
 
 ```sql

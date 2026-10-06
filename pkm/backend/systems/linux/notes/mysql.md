@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Mysql
 
 * 更新软件包列表：`sudo apt update`

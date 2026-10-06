@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Web 的手动配置(静态资源处理)
 
 **手动配置 web 包括两种方式：**

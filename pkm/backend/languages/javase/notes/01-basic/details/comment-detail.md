@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ```java
 /**
  * 演示所有Javadoc标签的最小化示例

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Image Quantization
 
 通过调整量化级别，展示了不同量化程度对图像的影响，反映了量化过程中图像细节的损失。

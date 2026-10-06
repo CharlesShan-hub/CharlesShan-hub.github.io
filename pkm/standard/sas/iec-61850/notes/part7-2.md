@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # IEC 61850 Part 7-2 解读：ACSI 抽象通信服务接口
 
 > **对应文件**：`860[1].7-2.pdf`  

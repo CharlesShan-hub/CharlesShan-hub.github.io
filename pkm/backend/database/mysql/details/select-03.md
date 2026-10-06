@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 案例：查询部门表的所有信息
 
 ```sql

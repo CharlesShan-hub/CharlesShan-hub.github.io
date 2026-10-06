@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ![mean-percentile](../assets/mean-percentile.png)
 
 1. 定义局部区域： 对于每个像素，根据定义的结构元素（由 `selem` 参数指定）确定一个局部区域。

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 BRIAN W KERNIGHAN 
 DENNIS M. RITCHIE 
 

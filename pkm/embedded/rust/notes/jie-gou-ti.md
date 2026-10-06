@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 结构体
 
 https://rustwiki.org/zh-CN/book/ch05-00-structs.html

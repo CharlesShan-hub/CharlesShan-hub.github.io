@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # blobconverter
 
 `blobconverter` 是一个Python库，它提供了一个简单的方式来将图像转换为Blob格式，这通常用于将图像数据转换为可以在机器学习模型中使用的格式。Blob格式通常指的是将图像数据压缩成一个连续的浮点数组，这有助于提高模型的训练和推理效率。 以下是 `blobconverter` 的一些关键特点和用法：

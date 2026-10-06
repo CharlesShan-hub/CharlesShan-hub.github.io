@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Chapter 6 Information Object Classes, Constraints, and Parameterization 
 第六章 信息对象类、约束条件与参数化
 

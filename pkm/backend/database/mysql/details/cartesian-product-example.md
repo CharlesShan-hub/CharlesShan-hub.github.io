@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ```sql
 mysql> select count(*) from emp join dept on emp.deptno = dept.deptno;
 +----------+

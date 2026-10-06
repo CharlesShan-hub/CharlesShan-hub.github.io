@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 专题：Java入门
 * 👉 [Java版本](details/version.md): LTS
 * 👉 [Java类型](details/classes.md): JavaEE, JavaSE, JavaME

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # astroid
 
 `astroid` 是一个 Python 库，主要用于抽象语法树（AST）解析、静态分析和推理。这个库主要用于支持静态代码分析工具，如 `pylint`，帮助它们更好地理解 Python 代码的动态特性。 `astroid` 的主要特点包括：

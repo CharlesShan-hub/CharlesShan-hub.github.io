@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 授权
 ## 两种常见的权限控制方式
 在 Spring Security 中，授权管理非常灵活，可以帮我们实现两种常见的权限控制需求：

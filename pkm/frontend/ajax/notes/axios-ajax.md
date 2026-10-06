@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Axios 实现 AJAX
 
 第三方库，底层基于 Promise+XHR 封装，并不是对 Fetch API 的封装，比 Fetch API 好用。使用它需要引入 `axios.js`库文件。使用国内 CDN 加速引入：

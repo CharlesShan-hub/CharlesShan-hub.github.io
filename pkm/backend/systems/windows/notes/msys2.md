@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # MSYS2 使用指南
 
 ## 安装 MSYS2

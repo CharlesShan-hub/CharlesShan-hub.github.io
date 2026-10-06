@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ### 空处理函数
 
 `ifnull(x, y)`，空处理函数，当x为NULL时，将x当做y处理。

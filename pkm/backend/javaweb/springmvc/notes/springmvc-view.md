@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # SpringMVC 中的视图技术
 
 ---

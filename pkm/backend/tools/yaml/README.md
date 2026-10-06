@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # YAML
 
 本次学习 Yaml 主要解决一下目标

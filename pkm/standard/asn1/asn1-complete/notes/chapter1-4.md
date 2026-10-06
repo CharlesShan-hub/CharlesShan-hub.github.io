@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Chapter 4 The basic data types and construction mechanisms - closure 
 第四章 基本数据类型与构造机制——闭包
 

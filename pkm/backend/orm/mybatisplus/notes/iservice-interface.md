@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # IService接口
 
 mp不仅提供了持久层的代码，还提供了service层的代码。

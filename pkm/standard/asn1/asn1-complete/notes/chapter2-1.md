@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Chapter 1 The object identifier type 
 第一章 对象标识符类型
 

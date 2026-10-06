@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Spring Security + OAuth2 + JWT 三者协作关系
 1. **<font style="color:rgb(15, 17, 21);">OAuth2 负责"你是谁"</font>**<font style="color:rgb(15, 17, 21);">：通过 GitHub 等第三方平台完成用户身份认证，获取用户基本信息</font>
 2. **<font style="color:rgb(15, 17, 21);">JWT 负责"你拿着什么凭证"</font>**<font style="color:rgb(15, 17, 21);">：将 OAuth2 获取的用户信息封装成自包含的令牌，由客户端保存，后续请求携带</font>

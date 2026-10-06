@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # ByteArrayInputStream
 
 `ByteArrayInputStream` 是 Java I/O 体系中**字节输入流（InputStream）**的子类，专门用于从内存中的**字节数组**读取数据。

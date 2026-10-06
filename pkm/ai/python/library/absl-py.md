@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # absl-py
 
 `absl-py` 是一个 Python 库，它提供了来自 Google 的 Abseil Python 常用库（Abseil Common Libraries for Python）的一部分功能。Abseil 是 Google 开发的一个开源的、经过生产环境验证的 Python 库集合，它包含了一系列用于编写 Python 代码的工具和实用程序。

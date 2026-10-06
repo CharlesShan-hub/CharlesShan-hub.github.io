@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # enum
 
 > 官方api文档： https://docs.python.org/3/library/enum.html

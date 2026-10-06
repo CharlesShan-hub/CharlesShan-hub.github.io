@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # beautifulsoup4
 
 `beautifulsoup4`，通常简称为 `BeautifulSoup`，是一个用于解析HTML和XML文档的Python库。它提供了一个简单易用的接口和丰富的解析库，可以用于网页抓取（web scraping）和数据分析等任务。`BeautifulSoup` 与 Python 的内置 HTML 解析器以及第三方解析器如 `lxml` 和 `html5lib` 一起工作。 以下是 `BeautifulSoup` 的一些关键特点和用法：

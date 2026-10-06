@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 直流电场感应的非侵入式出口硬压板状态检测
 >  * 2023年第42卷第6期
 >  * 传感器与微系统（Transducer and Microsystem Technologies）

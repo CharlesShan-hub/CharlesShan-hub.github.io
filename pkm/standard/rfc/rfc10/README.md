@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # RFC 10 — Documentation Conventions（文档约定·修订版）· Steve Crocker
 
 > **一句话定位**：RFC 3 的**修订版**。三个月后（1969 年 7 月 29 日），NWG 从 5 人扩到 9 人，站点从 4 个扩到 7 个，RAND 和 Lincoln Lab 加入了——于是"宪法"需要更新，连每个人的地址电话都附上了。

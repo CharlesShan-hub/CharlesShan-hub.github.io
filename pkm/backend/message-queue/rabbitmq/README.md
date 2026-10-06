@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 生成的笔记
 
 此目录包含从Markdown文件生成的笔记。

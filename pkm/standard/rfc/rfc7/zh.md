@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # RFC 7 — Host-IMP Interface（主机-IMP 接口）
 > **中英对照翻译版本**
 > 原文作者：G. Deloche（UCLA 加州大学洛杉矶分校）

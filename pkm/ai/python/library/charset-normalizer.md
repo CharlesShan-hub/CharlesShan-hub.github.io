@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # charset-normalizer
 
 `charset-normalizer` 是一个 Python 库，用于处理和规范化字符编码。它旨在解决 `chardet` 在某些边缘情况下的不准确性问题，并提供一个更加准确和健壮的字符编码检测解决方案。`charset-normalizer` 使用多个算法和启发式方法来检测字符编码，并尝试在多种可能的编码之间进行选择。 以下是 `charset-normalizer` 的关键特点和用法：

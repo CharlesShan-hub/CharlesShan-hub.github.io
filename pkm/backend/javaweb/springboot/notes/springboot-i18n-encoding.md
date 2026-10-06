@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 指定国际化信息的字符编码方式
 
 spring.messages.encoding=UTF-8

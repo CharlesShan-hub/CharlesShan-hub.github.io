@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ### 获取当前日期和时间
 
 - now()：获取的是执行select语句的时刻。

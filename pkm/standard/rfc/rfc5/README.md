@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # RFC 5 — DEL（Decode-Encode Language，解码-编码语言）· Jeff Rulifson
 
 > **一句话定位**：RFC 1 里那句"发明一种叫 DEL 的语言"的完整兑现——1969 年 6 月，Rulifson 把 DEL 从概念变成了**完整的形式语法规范**。这是人类第一份"远程下发前端代码、本地编译执行"的正式语言规格，比 Web 浏览器早了整整 25 年。

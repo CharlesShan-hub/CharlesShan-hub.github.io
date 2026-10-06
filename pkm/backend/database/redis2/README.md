@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 笔记重构计划
 
 > 来源书籍：《Redis设计与实现》

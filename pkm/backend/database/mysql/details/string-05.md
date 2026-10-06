@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ### 去除字符串前后空白trim
 
 ```sql

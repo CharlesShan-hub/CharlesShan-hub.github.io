@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ### round(x)和round(x,y)四舍五入
 
 * `round(x)` 四舍五入，保留整数位，舍去所有小数

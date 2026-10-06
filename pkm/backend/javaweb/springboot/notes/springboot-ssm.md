@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 整合SpringMVC（SSM整合）
 
 SSM整合：Spring + SpringMVC + MyBatis

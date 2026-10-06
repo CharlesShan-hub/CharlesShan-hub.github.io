@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # contourpy
 
 `contourpy` 是一个 Python 库，用于生成高质量的等高线图。它提供了多种等高线生成算法，包括快速等高线生成（Fast Marching Method）、区域生长法（Region Growing）和最小二乘等高线拟合（Least Squares Contouring）。`contourpy` 支持多种输入格式，如 NumPy 数组、Python 列表和 Pandas DataFrame。 以下是 `contourpy` 的关键特点和用法：

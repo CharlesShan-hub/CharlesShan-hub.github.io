@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 测试一下，在distinct关键字前添加其它字段是否可以？
 
 ```sql

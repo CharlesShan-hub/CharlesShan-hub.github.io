@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Spring Boot核心注解
 
 创建一个新的模块，来学习Spring Boot核心注解：

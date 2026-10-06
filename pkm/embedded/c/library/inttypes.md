@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # inttypes.h
 
 * `inttypes.h` 头文件提供了格式化宏，用于与 `stdint.h` 中定义的整数类型一起使用。这些宏用于确保在不同的平台上，格式化字符串的行为是一致的。

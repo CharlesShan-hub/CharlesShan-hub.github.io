@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 为什么需要分布式的任务调度
 
 Spring框架提供的`@Scheduled`注解不够用吗？为什么还需要专门的分布式任务调度框架。

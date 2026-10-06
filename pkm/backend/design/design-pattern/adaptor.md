@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 适配器模式
 
 ## 适配器设计模式

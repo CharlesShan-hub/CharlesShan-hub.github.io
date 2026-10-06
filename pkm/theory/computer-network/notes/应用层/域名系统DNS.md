@@ -1,5 +1,11 @@
+---
+title:
+tags:
+date: 2022-10-04
+comment:
+---
+
 # 域名系统DNS
-2022.10.04
 
 [toc]
 

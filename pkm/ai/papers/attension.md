@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 自注意力
 ![self-atension-drawing|1000](assets/self-atension-drawing.excalidraw.md)
 

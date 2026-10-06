@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Chapter 0 总结
 
 **核心内容**：全书概览——ASN.1 是什么、为什么用、本书结构。

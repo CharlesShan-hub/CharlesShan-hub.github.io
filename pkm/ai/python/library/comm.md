@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # comm
 
 `comm` 是一个 Python 库，用于处理 Unix 风格的文本文件比较和合并。它提供了与 `uniq` 和 `comm` 命令行工具类似的功能，但以 Python 代码的形式实现。`comm` 库通常用于比较两个文件的内容，并输出它们之间的差异。 以下是 `comm` 的关键特点和用法：

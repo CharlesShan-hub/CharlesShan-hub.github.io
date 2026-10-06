@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # `java.lang.System`类的常用方法
 
 常用属性

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # imageio
 
 `imageio` 是一个 Python 库，用于读取、写入和操作图像和视频文件。它支持多种图像格式，并提供了一个简单的接口，使得处理图像数据变得容易。 以下是 `imageio` 的一些主要特点和功能：

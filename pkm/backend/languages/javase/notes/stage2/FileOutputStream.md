@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # FileOutputStream
 
 `FileOutputStream` 是 Java I/O 体系中**字节输出流（OutputStream）**的子类，专门用于将原始字节数据（8位字节流）写入文件系统。

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 struct in Pascal
 
 ```pascal

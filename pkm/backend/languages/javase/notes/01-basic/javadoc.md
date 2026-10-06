@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # JavaDoc
 ![Java-basic-comment.excalidraw|500](../../assets/java-basic-javadoc.svg)
 

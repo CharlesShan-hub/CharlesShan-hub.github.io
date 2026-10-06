@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 多态
 
 浏览顺序：[encapsulation](../02-oop/encapsulation.md) 👉 [extends](../02-oop/extends.md) 👉 本文

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # depthai
 
 `depthai` 是一个 Python 库，用于与 NVIDIA Jetson TX2、TX1、Xavier 和 Nano 开发板上的深度学习加速器（例如 Jetson TX2 上的 NVIDIA TX2）进行交互。这个库主要用于机器人、自动驾驶汽车和工业自动化等领域，提供了一种高效的方法来运行和调试深度学习模型。 以下是 `depthai` 的关键特点和用法：

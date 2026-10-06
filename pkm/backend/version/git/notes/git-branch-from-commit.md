@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 基于某个历史提交id（61393eb）创建一个分支（hehe）
 
 git checkout -b hehe 61393eb

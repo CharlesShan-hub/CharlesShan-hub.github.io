@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Federation 插件
 这部分内容和之前搭建的集群就没有关系了。
 

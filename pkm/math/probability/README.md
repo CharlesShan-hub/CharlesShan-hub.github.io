@@ -1,6 +1,12 @@
+---
+title:
+tags:
+date: 2022-08-02
+comment:
+---
+
 # PKM - 概率论与数理统计  
 
-2022.08.02
 
 ![image text](resources/概率论与数理统计.png)
 ## 介绍

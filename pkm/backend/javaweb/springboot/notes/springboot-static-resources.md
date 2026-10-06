@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 自动配置中的静态资源处理
 
 web站点中的静态资源指的是：js、css、图片、webjars 等。

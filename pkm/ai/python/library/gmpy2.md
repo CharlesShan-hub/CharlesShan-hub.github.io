@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # gmpy2
 
 抱歉造成了混淆。在Python中，`gmp` 通常指的是 `gmpy2`，这是一个Python扩展模块，它封装了GNU Multiple Precision Arithmetic Library（GMP）、MPFR（Multiple Precision Floating-Point Reliable Library）和MPIR（Multiple Precision Integer and Rational arithmetic library）的功能。`gmpy2` 提供了任意精度算术运算的接口，使得在Python中可以轻松进行大数运算。 以下是 `gmpy2` 的一些主要特点和功能：

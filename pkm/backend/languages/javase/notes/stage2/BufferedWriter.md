@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # BufferedWriter
 
 `BufferedWriter` 是 Java I/O 体系中**带缓冲的字符输出流（Writer）**，用于提高字符写入效率，特别是频繁写入文本数据时。

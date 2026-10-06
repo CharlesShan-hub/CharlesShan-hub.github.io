@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 
 # BS 结构通信流程
 

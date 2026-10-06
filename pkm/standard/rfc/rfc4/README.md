@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # RFC 4 — Network Timetable（网络时间表）· Elmer Shapiro
 
 > **一句话定位**：这不是技术文档，是**项目进度表**——ARPANET 从零到四个节点联网的施工计划。它告诉你 1969 年一整年，四个站点每个月要装什么、测什么、和谁联调。

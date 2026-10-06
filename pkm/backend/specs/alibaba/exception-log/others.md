@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ## (三) 其它 
 1. 【强制】在使用正则表达式时，利用好其预编译功能，可以有效加快正则匹配速度。 
 <br><span style="color:orange">说明</span>：不要在方法体内定义：Pattern pattern = Pattern.compile(规则); 

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # CMD ↔ PowerShell 对照表
 
 ## 核心差异（先记这个）

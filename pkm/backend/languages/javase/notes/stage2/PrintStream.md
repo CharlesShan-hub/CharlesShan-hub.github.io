@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # PrintStream
 
 `PrintStream` 是 Java I/O 体系中的**字节打印流**，它为其他输出流添加了功能，使它们能够方便地打印各种数据值表示形式。我们最熟悉的 `System.out` 就是一个 `PrintStream` 实例。

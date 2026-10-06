@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # IEC 61850 Part 8-1 解读：SCSM-MMS 映射
 
 > **对应文件**：`860[1].8-1.pdf`  

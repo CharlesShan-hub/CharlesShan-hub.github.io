@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # FileWriter
 
 `FileWriter` 是 Java I/O 体系中**字符输出流（Writer）**的子类，专门用于将字符数据写入文件。

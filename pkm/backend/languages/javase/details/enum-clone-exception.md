@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 在这个案例中，我们定义了一个名为 `Color` 的枚举类型，并演示了如何使用枚举的各种方法，包括 `valueOf`、`toString`、`equals`、`hashCode`、`getDeclaringClass`、`name`、`ordinal` 和 `compareTo`。此外，我们还尝试克隆一个枚举常量，以展示 `CloneNotSupportedException` 的异常。
 
 练习，声明 Week 枚举类，定义周一到周日，用增强 for 循环

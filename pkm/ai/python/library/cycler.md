@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # cycler
 
 `cycler` 是一个 Python 库，用于在 Matplotlib 图形库中循环使用不同的样式、标记和颜色。它允许你定义一个样式列表，并在绘图时自动循环使用这些样式，从而创建具有统一风格的图表。 以下是 `cycler` 的关键特点和用法：

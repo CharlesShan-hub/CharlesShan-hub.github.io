@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # pushState()+AJAX 实现无刷新路由
 
 ---

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # SDS — 简单动态字符串
 
 **来源**：《Redis设计与实现》第 2 章

@@ -1,6 +1,12 @@
+---
+title:
+tags:
+date: 2022-02-20
+comment:
+---
+
 # [Solidity基础](https://solidity-cn.readthedocs.io/zh/develop/)
 
-2022.2.20
 
 ## 主要内容
 

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Redis 的其他类型（扩展）
 
 我们已经学习了 string、list、hash、set、zset。其实 Redis 有 9 个类型。剩下的 4 个分别是：**Bitmaps、HyperLogLog、Geospatial、Stream。**

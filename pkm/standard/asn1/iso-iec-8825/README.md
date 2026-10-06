@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # ASN1 编码规则
 
 **ASN1（Abstract Syntax Notation One）** 是一种用于描述数据结构及其编码规则的标准化语言，广泛应用于通信协议（如电信、网络管理、PKI 等）。

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # list（写法和数组一样）
 
 customer-list:

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # cffi
 
 `cffi` 是一个 Python 库，用于编写 C 语言扩展，同时提供了一个抽象层，以避免直接与 C API 交互。它允许 Python 代码通过一个简单的 Python 接口调用 C 代码，而不需要编写任何 C 代码。`cffi` 支持 Python 2 和 Python 3，并且可以与 `Python C API` 以及 `Python 字节码` 兼容。 以下是 `cffi` 的关键特点和用法：

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # c和指针目录
 
   * [ ] 快速上手

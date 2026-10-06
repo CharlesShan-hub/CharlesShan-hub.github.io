@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 Gamma变换（幂次变换）：用于改变亮度。
 
 ![image](../assets/gamma-transform.png)

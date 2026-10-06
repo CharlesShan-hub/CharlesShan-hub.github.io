@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # einops
 
 > 通过不停的对 GPT 提问，结合源码，可以达到怎样的学习体验呢？

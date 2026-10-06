@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ### rand()和rand(x)
 
 * `rand()`生成0到1的随机浮点数。

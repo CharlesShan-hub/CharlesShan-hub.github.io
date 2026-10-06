@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # DBA命令
 
 > 不用特殊记忆，随用随查就可以了

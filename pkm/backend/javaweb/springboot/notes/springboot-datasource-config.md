@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 数据源的配置（默认使用HikariCP）
 
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver

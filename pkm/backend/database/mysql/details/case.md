@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ### case
 
 **上面这个需求也可以使用：case.. when.. then.. when.. then.. else.. end来完成：**

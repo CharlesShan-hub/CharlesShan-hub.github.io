@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 监视器
 
 **来源**：《Redis设计与实现》第 24 章

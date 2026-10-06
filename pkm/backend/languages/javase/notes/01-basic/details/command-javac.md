@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # javac命令
 
 使用javac命令进行编译。javac命令是Java编译器命令，用于将Java源代码文件编译成Java字节码文件。下面是javac命令的详细用法：

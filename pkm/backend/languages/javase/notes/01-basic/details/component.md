@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # JVM、JRE、JDK
 ![Java-basic-core|500](../assets/java-basic-core.svg)
 

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # FileInputStream
 
 `FileInputStream` 是 Java I/O 体系中**字节输入流（InputStream）**的子类，专门用于从文件系统中读取原始字节数据（8位字节流）。

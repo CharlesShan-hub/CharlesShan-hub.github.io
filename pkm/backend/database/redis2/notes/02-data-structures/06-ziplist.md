@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 压缩列表（Ziplist）
 
 **来源**：《Redis设计与实现》第 7 章

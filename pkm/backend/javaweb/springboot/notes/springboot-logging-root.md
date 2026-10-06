@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 全局根日志记录器,影响所有未单独配置的包和类
 
 logging.level.root=DEBUG

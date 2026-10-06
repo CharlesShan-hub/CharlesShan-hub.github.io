@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # InputStreamReader
 
 `InputStreamReader` 是 Java I/O 体系中的**转换流**，它是**字节流通向字符流的桥梁**。它读取字节，并使用指定的字符集将其解码为字符。

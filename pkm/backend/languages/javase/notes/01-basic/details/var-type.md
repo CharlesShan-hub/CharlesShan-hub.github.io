@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 数据类型分类
 ![Java-basic-basicdatatype|1000](../assets/java-basic-basicdatatype.svg)
 

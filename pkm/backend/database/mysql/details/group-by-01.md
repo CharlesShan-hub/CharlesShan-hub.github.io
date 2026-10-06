@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 案例：查找工资大于平均工资的员工
 
 ```sql

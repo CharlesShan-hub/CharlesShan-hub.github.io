@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 案例1：查询员工编号以及员工姓名。
 ```sql
 mysql> select empno, ename from emp;

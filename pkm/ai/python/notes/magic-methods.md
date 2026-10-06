@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Magic Methods
 
 > https://zhuanlan.zhihu.com/p/344951719

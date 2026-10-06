@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Java数组
 
 数组专题推荐浏览顺序：本文 👉 [Arrays](Arrays.md)

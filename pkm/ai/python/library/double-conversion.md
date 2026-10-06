@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # double-conversion
 
 `double-conversion` 是一个用于进行二进制和十进制之间转换的 C++ 库，它特别适用于高性能的浮点数到字符串的转换以及反之。这个库最初是由 Google 开发的，并用于 V8 JavaScript 引擎，用以提高 JavaScript 中数字字符串化的性能。

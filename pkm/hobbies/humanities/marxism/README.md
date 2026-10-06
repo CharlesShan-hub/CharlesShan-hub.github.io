@@ -1,6 +1,12 @@
+---
+title:
+tags:
+date: 2022-11-17
+comment:
+---
+
 # PKM - 马克思主义原理  
 
-2022.11.17
 
 ![image text](resources/马克思主义原理.png)
 ## 介绍

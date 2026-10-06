@@ -1,6 +1,12 @@
+---
+title:
+tags:
+date: 2022-08-02
+comment:
+---
+
 # PKM - 线性代数  
 
-2022.08.02
 
 ![image text](resources/线性代数.png)
 ## 介绍

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # MySQL优化手段
 
 MySQL数据库的优化手段通常包括但不限于：

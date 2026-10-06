@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 找出岗位是MANAGER的员工姓名和薪资，按照薪资升序排列。
 
 ```sql

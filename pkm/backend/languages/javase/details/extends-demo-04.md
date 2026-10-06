@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 super案例
 
 ```java

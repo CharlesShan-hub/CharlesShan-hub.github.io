@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Java版本选择
 - java的诞生与八卦：[interests](../../../details/interests.md)
 - LTS（长期支持）：Java 8、Java 11、Java 17、Java21、Java25

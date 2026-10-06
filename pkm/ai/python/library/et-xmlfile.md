@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # et-xmlfile
 
 `et-xmlfile` 是一个 Python 库，用于处理和分析 Experimental Task (ET) 格式的 XML 文件。ET 格式通常用于记录和分析神经科学实验中的数据，特别是那些涉及脑电图 (EEG) 数据的研究。`et-xmlfile` 提供了读取和解析 ET 格式 XML 文件的功能，以及一些基本的分析工具。 以下是 `et-xmlfile` 的关键特点和用法：

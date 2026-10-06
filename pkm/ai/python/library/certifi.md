@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # certifi
 
 `certifi` 是一个 Python 库，它提供了一组可信的 SSL/TLS 证书。这些证书是从 Mozilla 维护的 CA 证书列表中提取的，以确保在 HTTPS 连接时使用的是可信的证书颁发机构（CA）。`certifi` 是 Python 的 `requests` 库和 `urllib3` 库的官方依赖项，用于处理网络请求。 以下是 `certifi` 的关键特点和用法：

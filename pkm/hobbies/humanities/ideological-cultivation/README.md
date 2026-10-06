@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # PKM - 思想道德修养  
 ![image text](resources/思想道德修养.png)
 ## 介绍

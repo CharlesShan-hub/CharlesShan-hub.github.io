@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Redis
 
 > 来源：<https://www.yuque.com/dujubin/java/uh9181pya4bfxwty?singleDoc#%20%E3%80%8ARedis%E3%80%8B>

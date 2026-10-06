@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # **RabbitMQ 的 6 种工作模式**
 官方文档：[https://www.rabbitmq.com/tutorials](https://www.rabbitmq.com/tutorials)
 

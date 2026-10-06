@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 数据类型与常用命令
 
 > 参考用法笔记：`d:\project\PKM\pkm\backend\database\redis\notes\usage.md`

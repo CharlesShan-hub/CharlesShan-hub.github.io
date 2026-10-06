@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 为何以继承方式引入SpringBoot
 
 ---

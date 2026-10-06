@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 包装类
 
 ![wrapper-drawing|1000](../../assets/wrapper-drawing.excalidraw.md)

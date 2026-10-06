@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # MyBatis-Plus常用配置
 
 mp的配置可以参考官方文档：

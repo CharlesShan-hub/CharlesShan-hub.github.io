@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 第一个MyBatis-Plus
 
 提示：MyBatis-Plus是基于SpringBoot框架的。

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # ca-certificates
 
 `ca-certificates` 是一个 Python 库，它提供了一种简单的方式来处理和验证 SSL/TLS 证书。这个库允许你检查证书的有效性，包括证书是否由可信的 CA（证书颁发机构）签名，以及证书是否在当前日期有效。 以下是 `ca-certificates` 的关键特点和用法：

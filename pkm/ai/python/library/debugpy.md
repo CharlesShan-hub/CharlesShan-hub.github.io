@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # debugpy
 
 `debugpy` 是一个 Python 库，用于调试远程 Python 应用程序。它允许你从远程主机或容器中调试 Python 应用程序，而不需要将应用程序复制到本地机器。`debugpy` 支持多种调试模式，包括交互式调试、断点设置、变量检查和代码执行控制。 以下是 `debugpy` 的关键特点和用法：

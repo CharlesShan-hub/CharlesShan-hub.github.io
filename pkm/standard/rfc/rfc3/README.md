@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # RFC 3 — Documentation Conventions（文档约定）· Steve Crocker
 
 > **一句话定位**：这份 RFC 不讲任何网络技术——它定义的是**整个 RFC 系列自己该怎么存在**。用今天的话说，这是"关于规则的规则"（meta-document）。全文不到一页，却是整个互联网标准化运动的宪法。

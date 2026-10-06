@@ -1,1 +1,8 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 设置 Tomcat 服务器的静态资源缓存时间为 3600 秒（即 1 小时）

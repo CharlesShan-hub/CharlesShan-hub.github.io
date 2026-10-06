@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Starter-启动器
 
 在 Spring Boot 中，启动器（Starter）本质上是一个简化依赖管理的概念。

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # backcall
 
 `backcall` 是一个小的 Python 库，它提供了一个装饰器 `backcall.decorate`，用于将回调函数转换为可以接收额外位置参数和关键字参数的函数。这在编写需要回调函数的代码时非常有用，尤其是在回调函数的签名不匹配所需参数的情况下。 以下是 `backcall` 的一些关键特点和用法：

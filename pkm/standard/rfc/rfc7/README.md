@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # RFC 7 — Host-IMP Interface（主机-IMP 接口）· Gerard Deloche
 
 > **一句话定位**：这是**主机侧操作系统内核**的设计文档——Deloche（UCLA 的法国研究员）写的 HOST-IMP 接口软件方案。别的 RFC 在讨论"协议说什么"，这篇在讨论"内核里那两段驱动代码怎么写"。而且它的原稿是**手写的，部分字迹无法辨认**。

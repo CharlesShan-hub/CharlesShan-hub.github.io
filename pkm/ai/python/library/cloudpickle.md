@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # cloudpickle
 
 `cloudpickle` 是一个 Python 库，用于将 Python 对象序列化为字节流，以便在不同的环境中传输和反序列化。它特别适合于在云计算环境中传输和反序列化 Python 对象，因为它是专门为 AWS Lambda 函数、Docker 容器和其他远程执行环境设计的。 以下是 `cloudpickle` 的关键特点和用法：

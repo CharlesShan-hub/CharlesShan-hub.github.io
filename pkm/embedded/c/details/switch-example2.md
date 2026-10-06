@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ```c
 // vowels.c -- uses multiple labels
 #include <stdio.h>

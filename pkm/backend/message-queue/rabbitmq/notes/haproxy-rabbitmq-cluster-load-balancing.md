@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 集群下的负载均衡
 使用 HAProxy 为 RabbitMQ 集群做负载均衡是一个**非常标准和推荐**的做法。
 

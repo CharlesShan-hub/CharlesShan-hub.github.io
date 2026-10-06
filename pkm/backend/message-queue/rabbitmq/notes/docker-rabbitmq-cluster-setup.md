@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # docker 环境下搭建 RabbitMQ 集群
 **提醒：生产环境下，建议不要在一个物理机上搭建 RabbitMQ，防止物理机宕机，导致数据丢失。**
 

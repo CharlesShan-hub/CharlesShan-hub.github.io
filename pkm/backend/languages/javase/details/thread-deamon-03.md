@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 
 ```java
 package com.powernode.javase.thread07;  

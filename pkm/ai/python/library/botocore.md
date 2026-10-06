@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # botocore
 
 `botocore` 是 AWS（Amazon Web Services）提供的另一个 Python SDK，用于构建 AWS 服务客户端。它为 `boto3` 提供底层支持，使得 `boto3` 能够与 AWS 服务进行交互。`botocore` 是一个低级别的库，它提供了一种更灵活的方式来构建 AWS 服务客户端，但它的使用比 `boto3` 更加复杂。 以下是 `botocore` 的一些关键特点和用法：

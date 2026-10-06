@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 
 ![image](../assets/autocorrelation-function.png)
 ```python

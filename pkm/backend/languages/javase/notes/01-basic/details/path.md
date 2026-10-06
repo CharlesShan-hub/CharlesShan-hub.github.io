@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Path 与 Classpath
 * 二者区分
     * `Path`：windows系统的环境变量

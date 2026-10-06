@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ![image](../assets/gaussian.png)
 
 ```python

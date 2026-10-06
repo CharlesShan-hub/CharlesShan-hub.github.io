@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 异常处理
 
 在controller层如果程序出现了异常，并且这个异常未被捕获，springboot提供的异常处理机制将生效。

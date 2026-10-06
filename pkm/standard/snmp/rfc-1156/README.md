@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # RFC 1156 — Management Information Base for Network Management of TCP/IP-based Internets (MIB-I)
 
 > **原文链接**: [https://datatracker.ietf.org/doc/html/rfc1156](https://datatracker.ietf.org/doc/html/rfc1156)

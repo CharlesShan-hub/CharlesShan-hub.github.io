@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # spring.datasource.type=com.zaxxer.hikari.HikariDataSource # 无需指定，springboot默认就是使用这个连接池。
 
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 对象系统
 
 **来源**：《Redis设计与实现》第 8 章

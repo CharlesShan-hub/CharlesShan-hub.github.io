@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 一般颜色直方图：某个色彩通道的直方图。
 
 ![hist1](../assets/hist1.png)

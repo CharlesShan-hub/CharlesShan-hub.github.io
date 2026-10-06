@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 案例1：查询月薪3000的员工编号及姓名
 ```sql
 mysql> select ename, sal from emp where sal = 3000;

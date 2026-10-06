@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # decorator
 
 `decorator` 是一个 Python 库，用于创建装饰器。装饰器是一种特殊类型的 Python 函数，它可以修改其他函数的行为，而无需修改其源代码。`decorator` 库提供了一种更简单、更灵活的方式来创建装饰器，尤其是当装饰器的参数化或递归使用时。 以下是 `decorator` 的关键特点和用法：

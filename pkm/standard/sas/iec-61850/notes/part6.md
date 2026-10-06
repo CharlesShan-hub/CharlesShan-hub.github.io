@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # IEC 61850 Part 6 解读：SCL 配置语言——系统的 DNA
 
 > **对应文件**：`860[1].6.pdf`  

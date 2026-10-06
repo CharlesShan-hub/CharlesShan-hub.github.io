@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # String
 
 ![String-drawing|1000](../../assets/String-drawing.excalidraw.md)

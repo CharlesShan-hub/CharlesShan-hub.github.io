@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # WDAlgorithmsNote
 
  王道考研机试指南第2版——题目链接、代码

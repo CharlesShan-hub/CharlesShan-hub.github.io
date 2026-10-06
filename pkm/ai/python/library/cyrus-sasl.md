@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # cyrus-sasl
 
 `cyrus-sasl` 是一个 Python 库，用于实现 SASL（简单认证和安全性层）协议。SASL 是一种安全认证协议，它允许客户端和服务器在建立 TCP/IP 连接时进行认证和协商安全参数。`cyrus-sasl` 支持多种 SASL 机制，如 PLAIN、DIGEST-MD5、GSSAPI 等。 以下是 `cyrus-sasl` 的关键特点和用法：

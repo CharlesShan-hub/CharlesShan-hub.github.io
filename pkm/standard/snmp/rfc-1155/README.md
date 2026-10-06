@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # RFC 1155 — Structure and Identification of Management Information (SMIv1)
 
 > **原文链接**: [https://datatracker.ietf.org/doc/html/rfc1155](https://datatracker.ietf.org/doc/html/rfc1155)

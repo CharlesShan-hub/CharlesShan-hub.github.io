@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 慢查询日志
 
 **来源**：《Redis设计与实现》第 23 章

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 网络配置
 ---
 ## DHCP与手动切换

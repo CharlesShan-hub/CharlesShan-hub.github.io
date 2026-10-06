@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ```sql
 mysql> select ename, sal, sal*12, sal+1000, (sal+1000)*12 from emp;
 +--------+---------+----------+----------+---------------+

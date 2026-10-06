@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 所有权
 
 https://rustwiki.org/zh-CN/book/ch04-00-understanding-ownership.html

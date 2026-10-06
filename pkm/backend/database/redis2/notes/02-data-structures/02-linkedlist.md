@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 链表
 
 **来源**：《Redis设计与实现》第 3 章

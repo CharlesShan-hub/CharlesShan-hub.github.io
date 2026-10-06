@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # h5py
 
 `h5py` 是一个用于读写 HDF5 文件的 Python 库。HDF5（Hierarchical Data Format 5）是一种高性能的文件格式，它被广泛用于科学数据存储和分析，特别是在需要存储大量数据时。`h5py` 提供了与 NumPy 数组接口的兼容性，使得使用 HDF5 文件变得简单和直观。 以下是 `h5py` 的一些主要特点和功能：

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 数据处理函数
 > MySQL提供了丰富的内置函数，主要分为以下几类：字符串函数、数值函数、日期时间函数、条件函数、转换函数和加密函数。熟练掌握这些函数可以大大提高SQL查询的灵活性和效率。
 > 本章案例的数据初始化：[powerpoint-init-data](../details/powerpoint-init-data.md)

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # thymeleaf
 
 * [thymeleaf](../details/thymeleaf.md)

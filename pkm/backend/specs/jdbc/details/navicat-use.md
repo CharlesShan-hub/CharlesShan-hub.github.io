@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 
 ## 使用Navicat for MySQL初始化数据
 

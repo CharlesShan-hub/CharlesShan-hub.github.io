@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 4. 是否开启静态资源默认处理方式（默认是：开启）
 
 spring.web.resources.add-mappings=true

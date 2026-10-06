@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # JDBC架构原理
 
 ## 1. 三个核心角色

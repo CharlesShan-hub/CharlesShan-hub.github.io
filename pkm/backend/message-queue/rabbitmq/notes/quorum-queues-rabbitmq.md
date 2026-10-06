@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 仲裁队列（`Quorum`）
 在 RabbitMQ 3.8.x 版本之后支持的新内容。
 

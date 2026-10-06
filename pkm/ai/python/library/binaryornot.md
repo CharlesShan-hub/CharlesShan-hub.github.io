@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # binaryornot
 
 `binaryornot` 是一个简单的Python库，用于检查文件是否为二进制文件。在处理文件时，区分文本文件和二进制文件是很重要的，因为它们需要不同的处理方式。`binaryornot` 通过检查文件内容来确定文件是否可能是二进制文件。 以下是 `binaryornot` 的一些关键特点和用法：

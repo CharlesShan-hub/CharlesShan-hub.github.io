@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # XXL-JOB的介绍
 
 XXL-JOB 是由国内开发者** 许雪里（xu_xueli）**个人开发并开源的任务调度框架，项目托管在 GitHub 和 Gitee 上。

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 案例：找出每个工作岗位的工资排名在前两名的。
 
 substring_index函数的使用：

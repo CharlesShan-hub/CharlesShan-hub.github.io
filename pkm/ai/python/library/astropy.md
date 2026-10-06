@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # astropy
 
 `astropy` 是一个专门为天文学和天体物理学设计的 Python 库。它是 Astropy 项目的一部分，这是一个社区努力开发的核心 Python 天文学包，旨在促进 Python 天文学包之间的互操作性。`astropy` 包包含进行天文学和天体物理学研究所需的许多关键功能和常用工具。 这个库的特点包括：

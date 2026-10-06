@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # RFC 2 — Host Software（主机软件）· Bill Duvall
 
 > **一句话定位**：RFC 1 的"姊妹篇"——同一个议题（主机软件），Crocker 从 UCLA 写了第 1 号，Duvall 从 SRI 独立写了第 2 号。如果说 RFC 1 是"设计宣言"，RFC 2 就是"实现者的施工图纸"：编号条款、状态机、错误处理、系统调用清单，全是干货。

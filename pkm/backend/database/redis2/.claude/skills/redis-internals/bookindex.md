@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Book Index
 
 Generated from EPUB source files. Use these paths when citing source material.

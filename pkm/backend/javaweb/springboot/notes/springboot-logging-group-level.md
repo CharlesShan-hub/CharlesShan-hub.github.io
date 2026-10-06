@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 使用日志组，这是改组的日志级别
 
 logging.level.mybusiness=DEBUG

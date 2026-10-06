@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Java 解析 XML
 
 Java 解析 XML 指的是：Java 读取 XML。

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 提交当前目录下所有被git跟踪的文件
 
 git commit -m 新增文件

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 设计模式
 
 * [单例模式](singleton-pattern.md)：我的理解是，通过构造器私有化，技术上的确保全局只有一个对象

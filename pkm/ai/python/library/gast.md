@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # gast
 
 `gast`（Generated Abstract Syntax Tree）是一个 Python 库，用于生成 Python 抽象语法树（AST）的表示形式。它通常与 Babel 或 TypeScript 一起使用，用于解析 TypeScript 代码并将其转换为 Python AST。`gast` 的主要目的是提供一种中间表示形式，以便于在不同的语言之间进行转换和操作。 以下是 `gast` 的关键特点和用法：

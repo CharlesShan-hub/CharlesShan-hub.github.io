@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ![gabor](../assets/gabor.png)
 
 ```python

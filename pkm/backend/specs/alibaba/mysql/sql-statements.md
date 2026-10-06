@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ## (三) SQL语句 
 1. 【强制】不要使用count(列名)或count(常量)来替代count(*)，count(*)是SQL92定义的标准统计行数的语法，跟数据库无关，跟NULL和非NULL无关。 
 <br><span style="color:orange">说明</span>：count(*)会统计值为NULL的行，而count(列名)不会统计此列为NULL值的行。 

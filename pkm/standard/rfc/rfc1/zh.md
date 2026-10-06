@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # RFC 1 — Host Software（主机软件）
 > **中英对照翻译版本**
 > 原文发布日期：1969 年 4 月 7 日

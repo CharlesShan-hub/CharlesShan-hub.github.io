@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Windows + Scoop 安装 tomcat
 
 ```bash

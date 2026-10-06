@@ -1,5 +1,11 @@
+---
+title:
+tags:
+date: 2022-08-23
+comment:
+---
+
 # CISC和RISC的基本概念
-2022.08.23
 
 [TOC]
 

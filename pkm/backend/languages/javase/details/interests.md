@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 轻松时刻
 
 * **概述**：Java是一种面向对象的编程语言（**Java底层是C++语言实现的**），由Sun Microsystems公司于1995年推出。它是一种通用的、高级的、并发性强的、安全的、可移植的、解释性的、编译性的、动态的、跨平台的编程语言。Sun Microsystems公司于2010年1月被甲骨文（Oracle）公司以74亿美元的价格收购。甲骨文公司成为了Java语言的主要维护者和开发者之一。甲骨文公司官网地址：[http://www.oracle.com](http://www.oracle.com)

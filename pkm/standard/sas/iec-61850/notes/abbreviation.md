@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 名词缩写速查表
 
 ## 技术名词

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 设置静态资源的请求路径的前缀
 
 spring.mvc.static-path-pattern=/static/**

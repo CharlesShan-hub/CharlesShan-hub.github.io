@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 ## (五) 集合处理 
 1. 【强制】关于`hashCode`和`equals`的处理，遵循如下规则： 
 <br>1） 只要重写`equals`，就必须重写`hashCode`。 

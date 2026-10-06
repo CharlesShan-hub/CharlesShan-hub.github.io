@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # RGB
 
 CIE 1931 色空间是具有相同起点的 4 个相互关联的颜色空间\[1]。在 20 世纪 20 年代，W. David Wright \[[2](https://en.wikipedia.org/wiki/CIE_1931_color_space#cite_note-wright-3)] 与 10 名观察者进行了两项独立的人类颜色感知实验，John Guild \[[3](https://en.wikipedia.org/wiki/CIE_1931_color_space#cite_note-guild-4) ]与 7 名观察者进行了实验。本节描述了他们的结果如何为 CIE 1931 色空间奠定了基础。

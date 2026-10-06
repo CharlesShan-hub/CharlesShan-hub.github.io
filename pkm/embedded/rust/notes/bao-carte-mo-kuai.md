@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 包、carte、模块
 
 https://rustwiki.org/zh-CN/book/ch07-00-managing-growing-projects-with-packages-crates-and-modules.html

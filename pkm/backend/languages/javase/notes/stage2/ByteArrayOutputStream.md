@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # ByteArrayOutputStream
 
 `ByteArrayOutputStream` 是 Java I/O 体系中**字节输出流（OutputStream）**的子类，专门用于在内存中创建一个可以增长的缓冲区，并将数据写入其中。

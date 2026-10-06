@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # cookiecutter
 
 `cookiecutter` 是一个 Python 库，用于从模板创建项目。它允许你通过命令行工具或代码来快速生成项目结构、配置文件和代码。`cookiecutter` 广泛用于开发新的 Python 项目，因为它提供了一种简单的方式来创建项目模板，并使用这些模板来生成新的项目实例。 以下是 `cookiecutter` 的关键特点和用法：

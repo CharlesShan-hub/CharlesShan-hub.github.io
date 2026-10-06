@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # fastjsonschema
 
 `fastjsonschema` 是一个 Python 库，用于快速验证 JSON 数据的有效性。它是一个对 `jsonschema` 库的性能优化的版本，提供了与 `jsonschema` 相同的功能，但执行速度更快。`fastjsonschema` 支持所有 `jsonschema` 版本 4 定义的类型和格式，并提供了基于 Python 3.5 以上的 asyncio 支持。 以下是 `fastjsonschema` 的关键特点和用法：

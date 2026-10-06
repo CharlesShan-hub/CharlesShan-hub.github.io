@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # GLUE模式运行
 
 1. 简单来说，就是使用GLUE模式创建任务。

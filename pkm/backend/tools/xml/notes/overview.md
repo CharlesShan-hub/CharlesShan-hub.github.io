@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # XML 概述
 
 XML（eXtensible Markup Language，可扩展标记语言）是一种用于**存储**和**传输**数据的标记语言（相比而言HTML是**展示**数据的，而不是存储的），由万维网联盟（W3C）于1998年推出。

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 封装
 
 浏览顺序：本文 👉 [extends](extends.md) 👉 [polymorphism](polymorphism.md)

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # Ajax
 * [traditional-request-drawbacks](notes/traditional-request-drawbacks.md)
 * [ajax-introduction](notes/ajax-introduction.md)

@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 
 ## Chapter 5 - Pointers and Arrays
 

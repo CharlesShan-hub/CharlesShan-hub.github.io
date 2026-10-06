@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # RFC 3 — Documentation Conventions（文档约定）
 > **中英对照翻译版本**
 > 原文作者：Steve Crocker（UCLA 加州大学洛杉矶分校）

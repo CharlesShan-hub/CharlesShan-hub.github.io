@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # 窗口函数
 
 MySQL 8.0及以上版本中支持如下常用的窗口函数：

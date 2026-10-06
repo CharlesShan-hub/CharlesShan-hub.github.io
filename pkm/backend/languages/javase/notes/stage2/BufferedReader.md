@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 # BufferedReader
 
 `BufferedReader` 是 Java I/O 体系中**带缓冲的字符输入流（Reader）**，用于提高字符读取效率，特别是按行读取文本数据。

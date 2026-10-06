@@ -1,3 +1,10 @@
+---
+title:
+tags:
+date:
+comment:
+---
+
 封装的案例：getter和setter（与构造器结合）
 
 ```java
