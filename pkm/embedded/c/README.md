@@ -1,7 +1,8 @@
 ---
-title:
+title: C语言
 tags:
-date:
+  - catalog
+date: 2026-10-06
 comment:
 ---
 
@@ -23,7 +24,7 @@ comment:
 
 ### K&R
 
-* [原书](books/knr/chapter0.md)
+* [原书](books/knr/catalog.md)
 * [目录](details/k-and-r-toc.md)
 
 ### C和指针

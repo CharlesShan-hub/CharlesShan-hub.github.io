@@ -1,7 +1,8 @@
 ---
-title:
+title: K&R C Appendix C
 tags:
-date:
+  - book
+date: 2026-10-06
 comment:
 ---
 

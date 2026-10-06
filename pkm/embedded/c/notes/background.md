@@ -27,4 +27,4 @@ comment:
 | Windows | MinGW，MSYS2，Cygwin | GDB  | Visual Studio |
 |  Linux  | GCC，Clang，Id，Make  | GDB  |   Emacs，Vim   |
 |  macOS  |       clang        | LLDB |     Xcode     |
-* 👉 [cc命令简介](../details/cc.md)
+
