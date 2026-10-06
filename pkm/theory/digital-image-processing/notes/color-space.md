@@ -1,7 +1,8 @@
 ---
-title:
+title: 色彩空间
 tags:
-date:
+  - 色彩空间
+date: 2026-10-06
 comment:
 ---
 
