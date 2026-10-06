@@ -1,7 +1,7 @@
 ---
 title:
 tags:
-date:
+date: 2026-10-06
 comment:
 ---
 
@@ -14,6 +14,7 @@ comment:
 * **CAFEBABE**：Java中`class`文件的前四个字节为什么是 `CAFEBABE`? 是谁定义的?Java编程语言之父,詹姆斯•高斯林(James Gosling),曾这样说过:关于这一点,我很抱歉。我以前并不知道有 NeXT connection。这些有趣的十六进制数(HEX words)可能是匹配的来源. 至于在Java中使用`CAFEBABE`作为魔数的过程, 说起来有些曲折:我和小伙伴们经常去一个叫圣米歇尔巷(St Michael’s Alley)的地方吃午餐。根据当地传说, 在深暗的过去,感恩而死乐队(Grateful Dead)在出名前曾在此地表演. 这绝对是一个因 Grateful Dead Kinda Place 而闻名的地方。杰瑞(Jerry)去世时, 他们进行了祭奠.我们经常去那里, 称这个地方为 **死亡咖啡**(Cafe Dead)。可以看到,这是一个十六进制数. 那时候我正好需要维护一些文件的编码格式,需要用到两个魔数(magic numbers): 一个用于对象持久化文件, 另一个用于类文件. 于是我就用 `CAFEDEAD` 作为对象持久化文件的魔数, 当然,这两个魔数有着共同的前缀: 4个十六进制字符(`CAFE`, Java和咖啡有一段深沉的虐恋), 我选中了`BABE`(宝贝),于是不知道为什么洪荒之力就爆发了。当时, 这个魔数并没有什么特别的意义, 也看不出来有什么重要的, 或许很快就会消失在历史中。所以 **CAFEBABE** 成为 class 文件的魔数, **CAFEDEAD** 成为持久对象的魔数. 但没多久持久化对象(persistent object)技术真的消失了, 就如同魔数 CAFEDEAD 所蕴含的一样 —— 后来用的是RMI技术。
 * 诞生故事：1992 年，Oak 的雏形有了，但项目组在向硬件生产商进行商演的时候，并没有获得认可，于是 Oak 就被搁置一旁了。1994 年，项目组发现 Java 更适合进行 Internet 编程。随后，项目组用 Oak 语言研发了一种能将小程序嵌入到网页中执行的技术——Applet。Applet 不仅能嵌入网页，还能够随同网页在网络上进行传输。不得不感慨一下，技术的更新迭代是真的快，Applet 拯救了 Oak，并使其蜕变成顶天立地的 Java，但 Applet 很早之前就被无情地拍死在了沙滩上。是不是很残酷？1995 年，Oak 被重新命名为“Java”，因为 Oak 被别的公司注册过了。新的名字最好能够表达出技术的本质：dynamic（动态的）、revolutionary（革命性的）、Silk（像丝绸一样柔软的）、Cool（炫酷的）等等。另外，名字一定要容易拼写，念起来也比较有趣。选来选去，项目组最后选择了“Java”，中文叫“爪哇”。细心的小伙伴可能会发现，**Java 这个单词里有一个敏感词**，所以有段时间微信（文章专辑名这块）为了禁敏感词，竟然把 Java 都禁了，我当时就只能用爪哇来代替 Java，手动狗头。“Java”是印度尼西亚爪哇岛的英文名，因生产咖啡而闻名，所以，小伙伴也看到了，Java 这个单词经常和一杯冒着热气的咖啡一起出现。
 
----
-*  [CAFEBABE](https://developer.aliyun.com/article/444356)
-* [王二博客](https://javabetter.cn/overview/what-is-java.html)
+## 参考资料
+
+1. [CAFEBABE 的故事 - 阿里云开发者社区](https://developer.aliyun.com/article/444356)
+2. [什么是 Java - 王二博客](https://javabetter.cn/overview/what-is-java.html)

@@ -1,11 +1,11 @@
 ---
-title:
+title: Java版本
 tags:
-date:
+date: 2026-10-06
 comment:
 ---
 
-# Java版本选择
+# Java版本
 - java的诞生与八卦：[interests](../../../details/interests.md)
 - LTS（长期支持）：Java 8、Java 11、Java 17、Java21、Java25
 - Java 8、JDK 8、JDK 1.8 是同一个版本

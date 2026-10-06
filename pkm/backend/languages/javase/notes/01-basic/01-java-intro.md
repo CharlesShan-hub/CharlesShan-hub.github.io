@@ -1,7 +1,8 @@
 ---
-title:
+title: 专题：Java入门
 tags:
-date:
+  - catalog
+date: 2026-10-06
 comment:
 ---
 
@@ -14,5 +15,5 @@ comment:
 * 👉 [Java Path](details/path.md): Path/Classpath
 * 👉 [Hello World](details/hello-world.md): public class/class, main function, comment, `java`, `javac`
 * 👉 [Java Doc](javadoc.md): javadoc
-* 👉 [转义字符](escape-character.md)：Escape Character, break line
-* 👉 [Package](package.md)
+* 👉 [转义字符](escape-character.md): Escape Character, break line
+* 👉 [Package](package.md): 包
