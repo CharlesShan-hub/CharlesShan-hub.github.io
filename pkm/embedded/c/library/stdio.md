@@ -445,7 +445,7 @@ char *s_gets(char *st, int n)
 
 
 ---
-## Reference
+## References
 
 \[1] [https://www.runoob.com/cprogramming/c-function-fflush.html](https://www.runoob.com/cprogramming/c-function-fflush.html)
 

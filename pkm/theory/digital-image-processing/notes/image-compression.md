@@ -466,7 +466,7 @@ if __name__ == '__main__':
 
 ***
 
-## Reference
+## References
 
 \[1] [https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Welch](https://en.wikipedia.org/wiki/Lempel%E2%80%93Ziv%E2%80%93Welch)
 

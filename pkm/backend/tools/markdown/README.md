@@ -63,7 +63,7 @@ markdown 语言的目标是使人们能够"使用易于阅读和编写的纯文�
 * 闯关式教程\[6]
 * markdown 中文官网语法介绍\[7]
 
-## Reference
+## References
 
 1. [Wiki of Markdown](https://en.wikipedia.org/wiki/Markdown)
 2. [快速入门](https://www.markdownguide.org/getting-started/)

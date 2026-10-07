@@ -30,6 +30,6 @@ comment:
 
 ***
 
-## Reference
+## References
 
 \[1] [https://www.runoob.com/cprogramming/c-standard-library-ctype-h.html](https://www.runoob.com/cprogramming/c-standard-library-ctype-h.html)

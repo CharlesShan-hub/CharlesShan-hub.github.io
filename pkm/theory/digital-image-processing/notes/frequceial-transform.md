@@ -51,6 +51,6 @@ $$
 ![wavelet](../assets/wavelet.png)[1]
 
 ---
-## Reference
+## References
 
 \[1] [https://mathworld.wolfram.com/HaarFunction.html](https://mathworld.wolfram.com/HaarFunction.html)

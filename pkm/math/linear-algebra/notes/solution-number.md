@@ -35,6 +35,6 @@ comment:
 
 
 
-## Reference
+## References
 
 \[1] [Linear Algebra Lecture 7: How many solutions?](https://www.youtube.com/watch?v=34HlThINCsc\&list=PLJV\_el3uVTsNmr39gwbyV-0KjULUsN7fW\&index=7)

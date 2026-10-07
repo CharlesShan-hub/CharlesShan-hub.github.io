@@ -117,7 +117,7 @@ int main(int argc, char *argv[]) {
    * 所有非选项参数必须出现在所有选项之后，或者在 `--` 分隔符之后
    * 可以通过 `optind` 变量访问第一个非选项参数的索引
 
-## Reference
+## References
 
 1. wiki: https://en.wikipedia.org/wiki/Unistd.h 
 2. unistd官方介绍: https://man7.org/linux/man-pages/man0/unistd.h.0p.html

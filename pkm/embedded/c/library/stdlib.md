@@ -79,6 +79,6 @@ int main()
 
 
 
-## Reference
+## References
 
 \[1] [https://www.runoob.com/cprogramming/c-standard-library-stdlib-h.html](https://www.runoob.com/cprogramming/c-standard-library-stdlib-h.html)

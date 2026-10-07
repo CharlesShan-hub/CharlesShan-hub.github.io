@@ -314,7 +314,7 @@ like this：X\<sup>2\</sup>
 
 ***
 
-## Reference
+## References
 
 \[1] [https://www.markdownguide.org/basic-syntax/](https://www.markdownguide.org/basic-syntax/)
 

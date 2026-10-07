@@ -22,7 +22,7 @@ comment:
 ![[../assets/product-drawing.excalidraw|1000]]
 
 
-## Reference
+## References
 
 \[1] [Linear Algebra Lecture 3: Vector](https://www.youtube.com/watch?v=tpNFMU7KsEU\&list=PLJV\_el3uVTsNmr39gwbyV-0KjULUsN7fW\&index=3)
 

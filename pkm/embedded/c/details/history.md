@@ -42,7 +42,7 @@ comment:
 ![languages](../assets/languages.png)
 
 ---
-## Reference
+## References
 1. BCPL、B、C：https://www.cnblogs.com/ningskyer/articles/7286932.html
 2. 官方C语言历史：https://en.cppreference.com/w/c/language/history
 3. https://comp-think.github.io/

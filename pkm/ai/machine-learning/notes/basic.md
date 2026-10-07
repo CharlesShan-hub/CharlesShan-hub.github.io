@@ -129,7 +129,7 @@ $$
 
 
 
-## Reference
+## References
 
 \[1] [【機器學習2021】預測本頻道觀看人數 (上) - 機器學習基本概念簡介](https://www.youtube.com/watch?v=Ye018rCVvOo\&list=PLJV\_el3uVTsMhtt7\_Y6sgTHGHp1Vb2P2J)
 

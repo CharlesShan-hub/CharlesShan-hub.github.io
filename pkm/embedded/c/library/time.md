@@ -167,7 +167,7 @@ int main()
 ```
 
 
-## Reference
+## References
 
 \[1] [https://cplusplus.com/reference/ctime/](https://cplusplus.com/reference/ctime/)
 

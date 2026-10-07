@@ -20,6 +20,6 @@ comment:
    1. 给定一组向量 $\{v_1,v_2,…,v_n\}$ 和任意一组实数 $\{a_1,a_2,…,a_n\}_i$，生成空间为  $\{b_i, i \in F\}$。
    2. 如果 b 落在这组 a 线性组合生成的空间中，那么就有解。
 
-## Reference
+## References
 
 \[1] [Linear Algebra Lecture 6: Having Solution or Not](https://www.youtube.com/watch?v=-E67rZSjTNI\&list=PLJV\_el3uVTsNmr39gwbyV-0KjULUsN7fW\&index=6)

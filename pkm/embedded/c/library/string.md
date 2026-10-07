@@ -473,7 +473,7 @@ has C++ demo links\[2]
 
 <table><thead><tr><th width="298">Types</th><th>Description</th></tr></thead><tbody><tr><td><a href="https://cplusplus.com/reference/cstring/size_t/"><strong>size_t</strong></a></td><td>Unsigned integral type (type)</td></tr></tbody></table>
 
-## Reference
+## References
 
 \[1] [https://www.runoob.com/cprogramming/c-standard-library-string-h.html](https://www.runoob.com/cprogramming/c-standard-library-string-h.html)
 
