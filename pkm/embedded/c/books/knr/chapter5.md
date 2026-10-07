@@ -38,7 +38,7 @@ The unary operator & gives the address of an object, so the statement
 p = &c;
 ```
 
-assigns the address of c to the variable p, and p is said to ``point to'' c. The & operator only applies to objects in memory: variables and array elements. It cannot be applied to expressions, constants, or register variables. 
+assigns the address of c to the variable p, and p is said to "point to" c. The & operator only applies to objects in memory: variables and array elements. It cannot be applied to expressions, constants, or register variables. 
 
 把 c 的地址赋给变量 p，我们说 p “指向” c。& 运算符只适用于内存中的对象：变量和数组元素。它不能作用于表达式、常量或 register 变量。
 
@@ -78,7 +78,7 @@ says that in an expression *dp and atof(s) have values of double, and that the a
 
 表明在表达式中 *dp 和 atof(s) 的值是 double 类型，并且 atof 的参数是一个指向 char 的指针。
 
-You should also note the implication that a pointer is constrained to point to a particular kind of object: every pointer points to a specific data type. (There is one exception: a ``pointer to void'' is used to hold any type of pointer but cannot be dereferenced itself. We'll come back to it in Section 5.11.) 
+You should also note the implication that a pointer is constrained to point to a particular kind of object: every pointer points to a specific data type. (There is one exception: a "pointer to void" is used to hold any type of pointer but cannot be dereferenced itself. We'll come back to it in Section 5.11.) 
 
 你还应当注意到这样一个含义：指针被约束为只能指向某种特定类型的对象；每个指针都指向一个具体的数据类型。（有一个例外：“指向 void 的指针”可以存放任何类型的指针，但它自身不能被解引用。我们将在 5.11 节再回到这个话题。）
 
@@ -330,7 +330,7 @@ refers to the contents of a[1], pa+i is the address of a[i], and *(pa+i) is the 
 ![0f0c7ada87b94c6ccd27402a71dd07282b354031d1340155a57cc0018b5a2dc6.jpg](assets/0f0c7ada87b94c6ccd27402a71dd07282b354031d1340155a57cc0018b5a2dc6.jpg)
 
 
-These remarks are true regardless of the type or size of the variables in the array a. The meaning of ``adding 1 to a pointer,'' and by extension, all pointer arithmetic, is that pa+1 points to the next object, and pa+i points to the i-th object beyond pa. 
+These remarks are true regardless of the type or size of the variables in the array a. The meaning of "adding 1 to a pointer," and by extension, all pointer arithmetic, is that pa+1 points to the next object, and pa+i points to the i-th object beyond pa. 
 
 以上这些论述对数组 a 中变量无论什么类型、什么大小都成立。“给指针加 1”的含义（推而广之，所有指针算术）是：pa+1 指向下一个对象，pa+i 指向 pa 之后的第 i 个对象。
 
@@ -454,7 +454,7 @@ If p is a pointer to some element of an array, then p++ increments p to point to
 
 如果 p 是指向数组某个元素的指针，那么 p++ 使 p 指向下一个元素，p+=i 使它指向当前位置之后第 i 个元素。这些以及类似的构造是指针或地址算术的最简单形式。
 
-C is consistent and regular in its approach to address arithmetic; its integration of pointers, arrays, and address arithmetic is one of the strengths of the language. Let us illustrate by writing a rudimentary storage allocator. There are two routines. The first, alloc(n), returns a pointer to n consecutive character positions, which can be used by the caller of alloc for storing characters. The second, afree(p), releases the storage thus acquired so it can be reused later. The routines are ``rudimentary'' because the calls to afree must be made in the opposite order to the calls made on alloc. That is, the storage managed by alloc and afree is a stack, or last-in, first-out. The standard library provides analogous functions called malloc and free that have no such restrictions; in Section 8.7 we will show how they can be implemented. 
+C is consistent and regular in its approach to address arithmetic; its integration of pointers, arrays, and address arithmetic is one of the strengths of the language. Let us illustrate by writing a rudimentary storage allocator. There are two routines. The first, alloc(n), returns a pointer to n consecutive character positions, which can be used by the caller of alloc for storing characters. The second, afree(p), releases the storage thus acquired so it can be reused later. The routines are "rudimentary" because the calls to afree must be made in the opposite order to the calls made on alloc. That is, the storage managed by alloc and afree is a stack, or last-in, first-out. The standard library provides analogous functions called malloc and free that have no such restrictions; in Section 8.7 we will show how they can be implemented. 
 
 C 在处理地址算术时是一致而有规律的；它把指针、数组和地址算术紧密地结合在一起，这是这门语言的强项之一。我们来编写一个简陋的存储分配器来说明。有两个例程。第一个是 alloc(n)，它返回一个指向 n 个连续字符位置的指针，alloc 的调用者可以用它来存放字符。第二个是 afree(p)，它释放这样获得的存储空间，以便以后重用。说这两个例程“简陋”，是因为对 afree 的调用必须以与对 alloc 的调用相反的顺序进行。也就是说，由 alloc 和 afree 管理的存储是一个栈，即后进先出。标准库提供了没有这种限制的类似函数 malloc 和 free；在 8.7 节我们将展示它们是如何实现的。
 
@@ -716,6 +716,7 @@ void strcpy(char *s, char *t)
     while ((*s++ = *t++) != '\0')
     ;
 }
+```
 
 This moves the increment of s and t into the test part of the loop. The value of *t++ is the character that t pointed to before t was incremented; the postfix ++ doesn't change t until after this character has been fetched. In the same way, the character is stored into the old s position before s is incremented. This character is also the value that is compared against '\0' to control the loop. The net effect is that characters are copied from t to s, up and including the terminating '\0'. 
 
@@ -1012,7 +1013,7 @@ sets m to 2 and d to 29 (February 29th).
 
 调用后把 m 设为 2、d 设为 29（2 月 29 日）。
 
-These functions both need the same information, a table of the number of days in each month (``thirty days hath September ...''). Since the number of days per month differs for leap years and non-leap years, it's easier to separate them into two rows of a two-dimensional array than to keep track of what happens to February during computation. The array and the functions for performing the transformations are as follows: 
+These functions both need the same information, a table of the number of days in each month ("thirty days hath September ..."). Since the number of days per month differs for leap years and non-leap years, it's easier to separate them into two rows of a two-dimensional array than to keep track of what happens to February during computation. The array and the functions for performing the transformations are as follows: 
 
 这两个函数都需要同样的信息：每个月天数的表（“九月有三十天……”）。由于闰年和非闰年每月的天数不同，把它们分成二维数组的两行，比在计算过程中跟踪二月份的天数变化更容易。该数组以及执行转换的函数如下：
 
@@ -1301,11 +1302,11 @@ The standard library function strstr(s,t) returns a pointer to the first occurre
 
 标准库函数 strstr(s,t) 返回一个指针，指向字符串 t 在字符串 s 中首次出现的位置；如果 t 没有在 s 中出现，则返回 NULL。该函数声明在 <string.h> 中。
 
-The model can now be elaborated to illustrate further pointer constructions. Suppose we want to allow two optional arguments. One says ``print all the lines except those that match the pattern;'' the second says ``precede each printed line by its line number.' 
+The model can now be elaborated to illustrate further pointer constructions. Suppose we want to allow two optional arguments. One says "print all the lines except those that match the pattern;" the second says "precede each printed line by its line number." 
 
 现在可以对这个框架加以扩展，来说明进一步的指针构造。假设我们想允许两个可选参数：一个表示“打印除匹配行之外的所有行”；另一个表示“在打印的每行前面加上行号”。
 
-A common convention for C programs on UNIX systems is that an argument that begins with a minus sign introduces an optional flag or parameter. If we choose -x (for ``except'') to signal the inversion, and -n (``number'') to request line numbering, then the command 
+A common convention for C programs on UNIX systems is that an argument that begins with a minus sign introduces an optional flag or parameter. If we choose -x (for "except") to signal the inversion, and -n ("number") to request line numbering, then the command 
 
 UNIX 系统上 C 程序的一个常见约定是：以减号开头的参数引入一个可选的标志或参数。如果我们选用 -x（表示 except，排除）来指定反选，用 -n（表示 number，行号）来要求显示行号，那么命令
 
@@ -1590,7 +1591,7 @@ Exercise 5-15. Add the option -f to fold upper and lower case together, so that 
 
 练习 5-15. 增加选项 -f，把大小写合在一起处理，这样排序时就不区分大小写；例如 a 和 A 比较结果相等。
 
-Exercise 5-16. Add the -d (``directory order'') option, which makes comparisons only on letters, numbers and blanks. Make sure it works in conjunction with -f. 
+Exercise 5-16. Add the -d ("directory order") option, which makes comparisons only on letters, numbers and blanks. Make sure it works in conjunction with -f. 
 
 练习 5-16. 增加 -d（“目录顺序”）选项，使比较只在字母、数字和空格上进行。要确保它能与 -f 配合使用。
 
@@ -1758,7 +1759,7 @@ main()    /* convert declaration to words */
 } 
 ```
 
-The function gettoken skips blanks and tabs, then finds the next token in the input; a ``token' is a name, a pair of parentheses, a pair of brackets perhaps including a number, or any other single character. 
+The function gettoken skips blanks and tabs, then finds the next token in the input; a "token" is a name, a pair of parentheses, a pair of brackets perhaps including a number, or any other single character. 
 
 函数 gettoken 跳过空格和制表符，然后在输入中寻找下一个记号（token）；所谓“记号”可以是一个名字、一对圆括号、一对可能包含数字的方括号，或者其他任何单个字符。
 
@@ -1799,7 +1800,7 @@ getch and ungetch are discussed in Chapter 4.
 
 getch 和 ungetch 在第 4 章中已经讨论过。
 
-Going in the other direction is easier, especially if we do not worry about generating redundant parentheses. The program undcl converts a word description like ``x is a function returning a pointer to an array of pointers to functions returning char,'' which we will express as 
+Going in the other direction is easier, especially if we do not worry about generating redundant parentheses. The program undcl converts a word description like "x is a function returning a pointer to an array of pointers to functions returning char," which we will express as 
 
 反方向的处理则简单一些，尤其是当我们不必担心生成多余的圆括号时。程序 undcl 把像“x 是一个函数，返回一个指针，指向由指针组成的数组，数组元素指向返回 char 的函数”这样的文字描述——我们把它表示为
 

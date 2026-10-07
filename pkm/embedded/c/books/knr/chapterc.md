@@ -63,7 +63,7 @@ void 类型在大多数实现中已经可用多年。标准引入了 void * 类�
 • Strings are no longer modifiable, and so may be placed in read-only memory. 
 • 字符串不再是可修改的，因此可以放置在只读内存中。
 
-• The ``usual arithmetic conversions'' are changed, essentially from ``for integers, unsigned always wins; for floating point, always use double'' to ``promote to the smallest capacious-enough type.'' See Par.A.6.5. 
+• The "usual arithmetic conversions" are changed, essentially from "for integers, unsigned always wins; for floating point, always use double" to "promote to the smallest capacious-enough type." See Par.A.6.5. 
 • “通常算术转换（usual arithmetic conversions）”发生了变化，基本上从“对整数而言，unsigned 总是获胜；对浮点数而言，总是使用 double”改成了“提升到能够容纳的最小类型”。参见 Par.A.6.5。
 
 • The old assignment operators like =+ are truly gone. Also, assignment operators are now single tokens; in the first edition, they were pairs, and could be separated by white space. 

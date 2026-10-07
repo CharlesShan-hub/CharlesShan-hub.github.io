@@ -31,7 +31,7 @@ C 预处理器也得到了增强。新的预处理器功能包括一套更完整
 
 ## 4.1 Basics of Functions
 
-To begin with, let us design and write a program to print each line of its input that contains a particular ``pattern'' or string of characters. (This is a special case of the UNIX program grep.) For example, searching for the pattern of letters ``ould'' in the set of lines 
+To begin with, let us design and write a program to print each line of its input that contains a particular "pattern" or string of characters. (This is a special case of the UNIX program grep.) For example, searching for the pattern of letters "ould" in the set of lines 
 
 首先，让我们设计并编写一个程序，打印其输入中包含特定"模式"（pattern）或字符串的每一行。（这是 UNIX 程序 grep 的一个特例。）例如，在下面几行中搜索字母模式 "ould"：
 
@@ -64,7 +64,7 @@ while (there's another line)
 
 虽然把所有代码都放在 main 中当然也可以，但更好的办法是利用上述结构，把每一部分做成单独的函数。三小块比一大块更容易处理，因为不相关的细节可以埋藏在函数中，不想要的相互影响的机会也被降到最低。而且这些部分甚至可能在其他程序中派上用场。
 
-``While there's another line'' is getline, a function that we wrote in Chapter 1, and ``print it' is printf, which someone has already provided for us. This means we need only write a routine to decide whether the line contains an occurrence of the pattern. 
+"While there's another line" is getline, a function that we wrote in Chapter 1, and "print it" is printf, which someone has already provided for us. This means we need only write a routine to decide whether the line contains an occurrence of the pattern. 
 
 "还有下一行"就是 getline——第 1 章中我们编写的一个函数；"打印它"则是 printf——别人已经为我们准备好了。这意味着我们只需要编写一个例程来判断行中是否包含该模式。
 
@@ -166,7 +166,7 @@ The expression will be converted to the return type of the function if necessary
 
 必要时，表达式会被转换为函数的返回类型。表达式周围常用圆括号，但这是可选的。
 
-The calling function is free to ignore the returned value. Furthermore, there need to be no expression after return; in that case, no value is returned to the caller. Control also returns to the caller with no value when execution ``falls off the end'' of the function by reaching the closing right brace. It is not illegal, but probably a sign of trouble, if a function returns a value from one place and no value from another. In any case, if a function fails to return a value, its ``value'' is certain to be garbage. 
+The calling function is free to ignore the returned value. Furthermore, there need to be no expression after return; in that case, no value is returned to the caller. Control also returns to the caller with no value when execution "falls off the end" of the function by reaching the closing right brace. It is not illegal, but probably a sign of trouble, if a function returns a value from one place and no value from another. In any case, if a function fails to return a value, its "value" is certain to be garbage. 
 
 调用函数可以随意忽略返回值。此外，return 后面也可以没有表达式；在这种情况下，不向调用者返回值。当执行"从函数末尾掉出"（到达结尾的右花括号）时，控制同样以无值的方式返回调用者。如果一个函数从一个位置返回值而从另一个位置不返回值，这虽然不算非法，但很可能是出问题的迹象。无论如何，如果一个函数没有返回值，它的"值"肯定是垃圾。
 
@@ -190,9 +190,9 @@ compiles the three files, placing the resulting object code in files main.o, get
 cc main.c getline.o strindex.o
 ```
 
-The cc command uses the ``.c'' versus ``.o'' naming convention to distinguish source files from object files. 
+The cc command uses the ".c" versus ".o" naming convention to distinguish source files from object files. 
 
-cc 命令利用 ``.c'' 与 ``.o'' 的命名约定来区分源文件和目标文件。
+cc 命令利用 “.c” 与 “.o” 的命名约定来区分源文件和目标文件。
 
 Exercise 4-1. Write the function strindex(s,t) which returns the position of the rightmost occurrence of t in s, or -1 if there is none. 
 
@@ -334,7 +334,7 @@ where a floating-point number may be followed by e or E and an optionally signed
 
 ## 4.3 External Variables
 
-A C program consists of a set of external objects, which are either variables or functions. The adjective ``external'' is used in contrast to ``internal'', which describes the arguments and variables defined inside functions. External variables are defined outside of any function, and are thus potentionally available to many functions. Functions themselves are always external, because C does not allow functions to be defined inside other functions. By default, external variables and functions have the property that all references to them by the same name, even from functions compiled separately, are references to the same thing. (The standard calls this property external linkage.) In this sense, external variables are analogous to Fortran COMMON blocks or variables in the outermost block in Pascal. We will see later how to define external variables and functions that are visible only within a single source file. Because external variables are globally accessible, they provide an alternative to function arguments and return values for communicating data between functions. Any function may access an external variable by referring to it by name, if the name has been declared somehow. 
+A C program consists of a set of external objects, which are either variables or functions. The adjective "external" is used in contrast to "internal", which describes the arguments and variables defined inside functions. External variables are defined outside of any function, and are thus potentionally available to many functions. Functions themselves are always external, because C does not allow functions to be defined inside other functions. By default, external variables and functions have the property that all references to them by the same name, even from functions compiled separately, are references to the same thing. (The standard calls this property external linkage.) In this sense, external variables are analogous to Fortran COMMON blocks or variables in the outermost block in Pascal. We will see later how to define external variables and functions that are visible only within a single source file. Because external variables are globally accessible, they provide an alternative to function arguments and return values for communicating data between functions. Any function may access an external variable by referring to it by name, if the name has been declared somehow. 
 
 C 程序由一组外部对象组成，它们要么是变量，要么是函数。形容词"外部"（external）与"内部"（internal）相对使用，后者描述在函数内部定义的参数和变量。外部变量定义在任何函数之外，因此可能被许多函数使用。函数本身总是外部的，因为 C 不允许在一个函数内部定义另一个函数。默认情况下，外部变量和函数具有这样的性质：即使它们被分别编译的函数通过相同的名字引用，所引用的也是同一个东西。（标准把这个性质称为外部链接，external linkage。）在这个意义上，外部变量类似于 Fortran 的 COMMON 块或 Pascal 最外层块中的变量。后面我们将看到如何定义只在单个源文件内可见的外部变量和函数。由于外部变量是全局可访问的，它们为函数之间传递数据提供了一种替代函数参数和返回值的方式。只要名字已以某种方式声明过，任何函数都可以通过名字访问外部变量。
 
@@ -561,12 +561,13 @@ int getop(char s[])
     ungetch(c);
     return NUMBER;
 }
+```
 
 What are getch and ungetch? It is often the case that a program cannot determine that it has read enough input until it has read too much. One instance is collecting characters that make up a number: until the first non-digit is seen, the number is not complete. But then the program has read one character too far, a character that it is not prepared for. 
 
 getch 和 ungetch 是什么？经常有这样的情况：程序只有在读了过多输入之后，才能确定它已经读够了。收集组成一个数的字符就是一个例子：在看到第一个非数字字符之前，这个数是不完整的。但此时程序已经多读了一个字符，一个它还没有准备好的字符。
 
-The problem would be solved if it were possible to ``un-read'' the unwanted character. Then, every time the program reads one character too many, it could push it back on the input, so the rest of the code could behave as if it had never been read. Fortunately, it's easy to simulate un-getting a character, by writing a pair of cooperating functions. getch delivers the next input character to be considered; ungetch will return them before reading new input. 
+The problem would be solved if it were possible to "un-read" the unwanted character. Then, every time the program reads one character too many, it could push it back on the input, so the rest of the code could behave as if it had never been read. Fortunately, it's easy to simulate un-getting a character, by writing a pair of cooperating functions. getch delivers the next input character to be considered; ungetch will return them before reading new input. 
 
 如果能够把不需要的字符“退回”（un-read），问题就解决了。这样，每当程序多读了一个字符，就可以把它压回输入中，使程序的其余部分表现得好像从未读过它一样。幸运的是，通过编写一对互相配合的函数，很容易模拟“退回一个字符”的操作。getch 提供下一个要考虑的输入字符；ungetch 则在读取新输入之前把它们退回。
 
@@ -833,7 +834,7 @@ if (n > 0) {
 } 
 ```
 
-the scope of the variable i is the ``true'' branch of the if; this i is unrelated to any i outside the block. An automatic variable declared and initialized in a block is initialized each time the block is entered. 
+the scope of the variable i is the "true" branch of the if; this i is unrelated to any i outside the block. An automatic variable declared and initialized in a block is initialized each time the block is entered. 
 
 变量 i 的作用域是 if 的“真”分支；这个 i 与块之外的任何 i 都没有关系。在块中声明并初始化的自动变量，每次进入该块时都会被初始化一次。
 
@@ -996,6 +997,7 @@ void qsort(int v[], int left, int right)
     qsort(v, left, last-1);
     qsort(v, last+1, right);
 }
+```
 
 We moved the swapping operation into a separate function swap because it occurs three times in qsort. 
 

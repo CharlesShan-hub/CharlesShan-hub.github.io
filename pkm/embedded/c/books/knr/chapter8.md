@@ -31,7 +31,7 @@ In the most general case, before you read and write a file, you must inform the 
 
 在最一般的情况下，在读写文件之前，你必须把你的意图告知系统，这一过程称为打开文件（opening the file）。如果你要写一个文件，可能还需要创建它或丢弃它以前的内容。系统检查你是否有权这样做（文件存在吗？你有访问权限吗？），如果一切正常，就向程序返回一个小的非负整数，称为文件描述符（file descriptor）。今后只要对该文件做输入输出，就用文件描述符（而不是名字）来标识文件。（文件描述符类似于标准库使用的文件指针，或 MS-DOS 的文件句柄。）打开文件的所有信息都由系统维护；用户程序仅通过文件描述符引用文件。
 
-Since input and output involving keyboard and screen is so common, special arrangements exist to make this convenient. When the command interpreter (the ``shell'') runs a program, three files are open, with file descriptors 0, 1, and 2, called the standard input, the standard output, and the standard error. If a program reads 0 and writes 1 and 2, it can do input and output without worrying about opening files. 
+Since input and output involving keyboard and screen is so common, special arrangements exist to make this convenient. When the command interpreter (the "shell") runs a program, three files are open, with file descriptors 0, 1, and 2, called the standard input, the standard output, and the standard error. If a program reads 0 and writes 1 and 2, it can do input and output without worrying about opening files. 
 
 由于涉及键盘和屏幕的输入输出非常普遍，系统做了特殊安排使其便于使用。当命令解释程序（“shell”）运行一个程序时，有三个文件是打开的，其文件描述符为 0、1、2，分别称为标准输入、标准输出和标准错误。如果程序从 0 读并往 1 和 2 写，它就可以做输入输出而不必操心打开文件。
 
@@ -62,7 +62,7 @@ Each call returns a count of the number of bytes transferred. On reading, the nu
 
 每次调用都返回传输的字节数。在读的情况下，返回的字节数可能小于所请求的数量。返回值为零字节意味着文件末尾，-1 表示出现了某种错误。对写而言，返回值是写出的字节数；如果它不等于所请求的数量，就发生了错误。
 
-Any number of bytes can be read or written in one call. The most common values are 1, which means one character at a time (``unbuffered''), and a number like 1024 or 4096 that corresponds to a physical block size on a peripheral device. Larger sizes will be more efficient because fewer system calls will be made. 
+Any number of bytes can be read or written in one call. The most common values are 1, which means one character at a time ("unbuffered"), and a number like 1024 or 4096 that corresponds to a physical block size on a peripheral device. Larger sizes will be more efficient because fewer system calls will be made. 
 
 一次调用可以读或写任意数量的字节。最常见的值是 1，表示每次一个字符（“无缓冲”），以及像 1024 或 4096 这样对应于外围设备物理块大小的数字。更大的长度效率更高，因为系统调用次数更少。
 
@@ -287,7 +287,7 @@ sets the current position in the file whose descriptor is fd to offset, which is
 lseek(fd, 0L, 2); 
 ```
 
-To get back to the beginning (``rewind''), 
+To get back to the beginning ("rewind"), 
 
 要回到开头（“反绕”），
 
@@ -426,9 +426,9 @@ FILE *fopen(char *name, char *mode)
 } 
 ```
 
-This version of fopen does not handle all of the access mode possibilities of the standard, though adding them would not take much code. In particular, our fopen does not recognize the ``b'' that signals binary access, since that is meaningless on UNIX systems, nor the ``+'' that permits both reading and writing. 
+This version of fopen does not handle all of the access mode possibilities of the standard, though adding them would not take much code. In particular, our fopen does not recognize the "b" that signals binary access, since that is meaningless on UNIX systems, nor the "+" that permits both reading and writing. 
 
-这个版本的 fopen 没有处理标准中所有可能的访问模式，不过把它们加上并不需要多少代码。特别是，我们的 fopen 不识别表示二进制访问的 ``b''（这在 UNIX 系统上没有意义），也不识别允许读写的 ``+''。
+这个版本的 fopen 没有处理标准中所有可能的访问模式，不过把它们加上并不需要多少代码。特别是，我们的 fopen 不识别表示二进制访问的 “b”（这在 UNIX 系统上没有意义），也不识别允许读写的 “+”。
 
 The first call to getc for a particular file finds a count of zero, which forces a call of fillbuf. If _fillbuf finds that the file is not open for reading, it returns EOF immediately. Otherwise, it tries to allocate a buffer (if reading is to be buffered). 
 
@@ -516,7 +516,7 @@ We will illustrate some of this by writing a program called fsize. fsize is a sp
 
 我们将通过编写一个名为 fsize 的程序来说明其中的一部分。fsize 是 ls 的一种特殊形式，它打印命令行参数表中列出的所有文件的大小。如果其中某个文件是目录，fsize 就对该目录递归地应用自身。如果完全没有参数，它就处理当前目录。
 
-Let us begin with a short review of UNIX file system structure. A directory is a file that contains a list of filenames and some indication of where they are located. The ``location'' is an index into another table called the ``inode list.'' The inode for a file is where all information about the file except its name is kept. A directory entry generally consists of only two items, the filename and an inode number. 
+Let us begin with a short review of UNIX file system structure. A directory is a file that contains a list of filenames and some indication of where they are located. The "location" is an index into another table called the "inode list." The inode for a file is where all information about the file except its name is kept. A directory entry generally consists of only two items, the filename and an inode number. 
 
 让我们先简要回顾一下 UNIX 文件系统的结构。目录是一个文件，它包含文件名列表以及这些文件位于何处的指示。“位置”是另一个称为“inode 列表”的表中的索引。文件的 inode 保存关于该文件除名字之外的所有信息。目录项一般只由两项组成：文件名和 inode 编号。
 
@@ -705,7 +705,7 @@ struct direct { /* directory entry */
 
 Some versions of the system permit much longer names and have a more complicated directory structure. 
 
-The type ino_t is a typedef that describes the index into the inode list. It happens to be unsigned short on the systems we use regularly, but this is not the sort of information to embed in a program; it might be different on a different system, so the typedef is better. A complete set of ``system'' types is found in <sys/types.h>. 
+The type ino_t is a typedef that describes the index into the inode list. It happens to be unsigned short on the systems we use regularly, but this is not the sort of information to embed in a program; it might be different on a different system, so the typedef is better. A complete set of "system" types is found in <sys/types.h>. 
 
 opendir opens the directory, verifies that the file is a directory (this time by the system call fstat, which is like stat except that it applies to a file descriptor), allocates a directory structure, and records the information: 
 
@@ -765,7 +765,7 @@ Dirent *readdir(DIR *dp)
 } 
 ```
 
-Although the fsize program is rather specialized, it does illustrate a couple of important ideas. First, many programs are not ``system programs''; they merely use information that is maintained by the operating system. For such programs, it is crucial that the representation of the information appear only in standard headers, and that programs include those headers instead of embedding the declarations in themselves. The second observation is that with care it is possible to create an interface to system-dependent objects that is itself relatively systemindependent. The functions of the standard library are good examples. 
+Although the fsize program is rather specialized, it does illustrate a couple of important ideas. First, many programs are not "system programs"; they merely use information that is maintained by the operating system. For such programs, it is crucial that the representation of the information appear only in standard headers, and that programs include those headers instead of embedding the declarations in themselves. The second observation is that with care it is possible to create an interface to system-dependent objects that is itself relatively systemindependent. The functions of the standard library are good examples. 
 
 Exercise 8-5. Modify the fsize program to print the other information contained in the inode entry. 
 
@@ -778,7 +778,7 @@ Rather than allocating from a compiled-in fixed-size array, malloc will request 
 ![114f106c42bfcdc3499e9a1c53b1a1e107c16d3456ddd751384e9a1a3cb309f1.jpg](assets/114f106c42bfcdc3499e9a1c53b1a1e107c16d3456ddd751384e9a1a3cb309f1.jpg)
 
 
-When a request is made, the free list is scanned until a big-enough block is found. This algorithm is called ``first fit,'' by contrast with ``best fit,'' which looks for the smallest block that will satisfy the request. If the block is exactly the size requested it is unlinked from the list and returned to the user. If the block is too big, it is split, and the proper amount is returned to the user while the residue remains on the free list. If no big-enough block is found, another large chunk is obtained by the operating system and linked into the free list. 
+When a request is made, the free list is scanned until a big-enough block is found. This algorithm is called "first fit," by contrast with "best fit," which looks for the smallest block that will satisfy the request. If the block is exactly the size requested it is unlinked from the list and returned to the user. If the block is too big, it is split, and the proper amount is returned to the user while the residue remains on the free list. If no big-enough block is found, another large chunk is obtained by the operating system and linked into the free list. 
 当收到分配请求时，会扫描空闲链表，直到找到一个足够大的块。这种算法称为"首次适应"（first fit），与之相对的是"最佳适应"（best fit），后者会寻找能满足请求的最小块。如果块的大小恰好与请求一致，就把它从链表中摘下并返回给用户。如果块太大，就将其分割，把合适的大小返回给用户，剩余部分则留在空闲链表中。如果找不到足够大的块，就向操作系统再申请一大块内存，并链入空闲链表。
 
 Freeing also causes a search of the free list, to find the proper place to insert the block being freed. If the block being freed is adjacent to a free block on either side, it is coalesced with it into a single bigger block, so storage does not become too fragmented. Determining the adjacency is easy because the free list is maintained in order of decreasing address. 
@@ -787,7 +787,7 @@ Freeing also causes a search of the free list, to find the proper place to inser
 One problem, which we alluded to in Chapter 5, is to ensure that the storage returned by malloc is aligned properly for the objects that will be stored in it. Although machines vary, for each machine there is a most restrictive type: if the most restrictive type can be stored at a particular address, all other types may be also. On some machines, the most restrictive type is a double; on others, int or long suffices. 
 我们在第 5 章中提到过的一个问题是，要确保 malloc 返回的存储空间能满足将要存入其中的对象的对齐要求。虽然机器各不相同，但对每台机器来说都存在一种限制最严格的类型：如果限制最严格的类型能够存放在某个特定的地址上，那么所有其他类型也可以。在某些机器上，限制最严格的类型是 double；在另一些机器上，int 或 long 就足够了。
 
-A free block contains a pointer to the next block in the chain, a record of the size of the block, and then the free space itself; the control information at the beginning is called the ``header.'' To simplify alignment, all blocks are multiples of the header size, and the header is aligned properly. This is achieved by a union that contains the desired header structure and an instance of the most restrictive alignment type, which we have arbitrarily made a long: 
+A free block contains a pointer to the next block in the chain, a record of the size of the block, and then the free space itself; the control information at the beginning is called the "header." To simplify alignment, all blocks are multiples of the header size, and the header is aligned properly. This is achieved by a union that contains the desired header structure and an instance of the most restrictive alignment type, which we have arbitrarily made a long: 
 一个空闲块包含一个指向链中下一个块的指针、一个该块大小的记录，之后是空闲空间本身；位于开头的控制信息称为"头部"（header）。为了简化对齐，所有块的大小都是头部大小的整数倍，而且头部本身也要正确对齐。这是通过一个联合（union）来实现的，该联合包含所需的头部结构和一个限制最严格的对齐类型的实例，我们随意地把后者定为 long：
 
 ```c

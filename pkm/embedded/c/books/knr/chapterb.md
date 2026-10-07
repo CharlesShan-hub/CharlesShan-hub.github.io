@@ -38,7 +38,7 @@ The input and output functions, types, and macros defined in <stdio.h> represent
 A stream is a source or destination of data that may be associated with a disk or other peripheral. The library supports text streams and binary streams, although on some systems, notably UNIX, these are identical. A text stream is a sequence of lines; each line has zero or more characters and is terminated by '\n'. An environment may need to convert a text stream to or from some other representation (such as mapping '\n' to carriage return and linefeed). A binary stream is a sequence of unprocessed bytes that record internal data, with the property that if it is written, then read back on the same system, it will compare equal. 
 流（stream）是可以与磁盘或其他外设关联的数据源或数据目的地。库支持文本流（text stream）和二进制流（binary stream），尽管在某些系统上（尤其是 UNIX）两者相同。文本流是行的序列；每行有零个或多个字符，以 `'\n'` 结尾。环境可能需要把文本流转换到或转换自某种其他表示（如把 `'\n'` 映射为回车和换行）。二进制流是记录内部数据的未经处理的字节序列，具有这样的性质：如果在同一系统上写入后再读回，则比较相等。
 
-A stream is connected to a file or device by opening it; the connection is broken by closing the stream. Opening a file returns a pointer to an object of type FILE, which records whatever information is necessary to control the stream. We will use ``file pointer'' and ``stream'' interchangeably when there is no ambiguity. 
+A stream is connected to a file or device by opening it; the connection is broken by closing the stream. Opening a file returns a pointer to an object of type FILE, which records whatever information is necessary to control the stream. We will use "file pointer" and "stream" interchangeably when there is no ambiguity. 
 流通过打开（open）与文件或设备连接；关闭（close）流则断开连接。打开一个文件返回一个指向 `FILE` 类型对象的指针，该对象记录控制流所需的任何信息。在没有歧义时，"文件指针（file pointer）"与"流（stream）"两个词互换使用。
 
 When a program begins execution, the three streams stdin, stdout, and stderr are already open. 
@@ -162,7 +162,7 @@ A number specifying a minimum field width. The converted argument will be printe
 • A number, the precision, that specifies the maximum number of characters to be printed from a string, or the number of digits to be printed after the decimal point for e, E, or f conversions, or the number of significant digits for g or G conversion, or the number of digits to be printed for an integer (leading 0s will be added to make up the necessary width). 
 • 一个数字，即精度（precision），指定从字符串中打印的字符的最大数目，或者对 `e`、`E` 或 `f` 转换指定小数点后打印的位数，或者对 `g` 或 `G` 转换指定有效数字的位数，或者对整数指定打印的位数（将加上前导 0 以补足所需的宽度）。
 
-• A length modifier h, l (letter ell), or L. ``h'' indicates that the corresponding argument is to be printed as a short or unsigned short; ``l'' indicates that the argument is a long or unsigned long, ``L'' indicates that the argument is a long double. 
+• A length modifier h, l (letter ell), or L. "h" indicates that the corresponding argument is to be printed as a short or unsigned short; "l" indicates that the argument is a long or unsigned long, "L" indicates that the argument is a long double. 
 • 长度修饰符 `h`、`l`（字母 ell）或 `L`。"h" 表示相应参数将按 `short` 或 `unsigned short` 打印；"l" 表示参数是 `long` 或 `unsigned long`；"L" 表示参数是 `long double`。
 
 Width or precision or both may be specified as *, in which case the value is computed by converting the next argument(s), which must be int. 

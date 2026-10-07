@@ -45,9 +45,9 @@ In many environments, a file may be substituted for the keyboard by using the < 
 prog <infile 
 ```
 
-causes prog to read characters from infile instead. The switching of the input is done in such a way that prog itself is oblivious to the change; in particular, the string ``<infile'' is not included in the command-line arguments in argv. Input switching is also invisible if the input comes from another program via a pipe mechanism: on some systems, the command line 
+causes prog to read characters from infile instead. The switching of the input is done in such a way that prog itself is oblivious to the change; in particular, the string "<infile" is not included in the command-line arguments in argv. Input switching is also invisible if the input comes from another program via a pipe mechanism: on some systems, the command line 
 
-这样 prog 将从 infile 而不是键盘读取字符。输入的切换以 prog 察觉不到变化的方式进行；特别是，字符串 ``<infile'' 不会包含在 argv 的命令行参数中。如果输入来自通过管道机制连接的另一个程序，输入切换同样是不可见的：在某些系统上，命令行
+这样 prog 将从 infile 而不是键盘读取字符。输入的切换以 prog 察觉不到变化的方式进行；特别是，字符串 “<infile” 不会包含在 argv 的命令行参数中。如果输入来自通过管道机制连接的另一个程序，输入切换同样是不可见的：在某些系统上，命令行
 
 ```txt
 otherprog | prog 
@@ -117,7 +117,7 @@ main() /* lower: convert input to lower case */
 } 
 ```
 
-The function tolower is defined in <ctype.h>; it converts an upper case letter to lower case, and returns other characters untouched. As we mentioned earlier, ``functions'' like getchar and putchar in <stdio.h> and tolower in <ctype.h> are often macros, thus avoiding the overhead of a function call per character. We will show how this is done in Section 8.5. Regardless of how the <ctype.h> functions are implemented on a given machine, programs that use them are shielded from knowledge of the character set. 
+The function tolower is defined in <ctype.h>; it converts an upper case letter to lower case, and returns other characters untouched. As we mentioned earlier, "functions" like getchar and putchar in <stdio.h> and tolower in <ctype.h> are often macros, thus avoiding the overhead of a function call per character. We will show how this is done in Section 8.5. Regardless of how the <ctype.h> functions are implemented on a given machine, programs that use them are shielded from knowledge of the character set. 
 
 函数 tolower 定义在 <ctype.h> 中；它把大写字母转换为小写，其他字符原样返回。正如我们前面提到的，<stdio.h> 中像 getchar 和 putchar 这样的“函数”以及 <ctype.h> 中的 tolower 通常都是宏，从而避免了每个字符一次函数调用的开销。我们将在 8.5 节展示这是如何做到的。不管 <ctype.h> 中的函数在给定机器上如何实现，使用它们的程序都不必了解字符集的具体细节。
 
@@ -183,9 +183,9 @@ A width or precision may be specified as *, in which case the value is computed 
 printf("%.*s", max, s); 
 ```
 
-Most of the format conversions have been illustrated in earlier chapters. One exception is the precision as it relates to strings. The following table shows the effect of a variety of specifications in printing ``hello, world'' (12 characters). We have put colons around each field so you can see it extent. 
+Most of the format conversions have been illustrated in earlier chapters. One exception is the precision as it relates to strings. The following table shows the effect of a variety of specifications in printing "hello, world" (12 characters). We have put colons around each field so you can see it extent. 
 
-大多数格式转换已在前面各章中示例过。一个例外是与字符串相关的精度。下表展示了用各种说明打印 ``hello, world''（12 个字符）的效果。我们在每个字段两侧放上冒号，以便看清其范围。
+大多数格式转换已在前面各章中示例过。一个例外是与字符串相关的精度。下表展示了用各种说明打印 “hello, world”（12 个字符）的效果。我们在每个字段两侧放上冒号，以便看清其范围。
 
 ```txt
 :%s: :hello, world:
@@ -253,7 +253,7 @@ The tricky bit is how minprintf walks along the argument list when the list does
 
 棘手之处在于：当参数表连名字都没有时，minprintf 如何遍历它。标准头文件 <stdarg.h> 包含一组宏定义，规定了如何遍历参数表。该头文件的实现在不同机器上有所不同，但它提供的接口是统一的。
 
-The type va_list is used to declare a variable that will refer to each argument in turn; in minprintf, this variable is called ap, for ``argument pointer.'' The macro va_start initializes ap to point to the first unnamed argument. It must be called once before ap is used. There must be at least one named argument; the final named argument is used by va_start to get started. 
+The type va_list is used to declare a variable that will refer to each argument in turn; in minprintf, this variable is called ap, for "argument pointer." The macro va_start initializes ap to point to the first unnamed argument. It must be called once before ap is used. There must be at least one named argument; the final named argument is used by va_start to get started. 
 
 类型 va_list 用于声明一个将依次引用每个参数的变量；在 minprintf 中，这个变量称为 ap，即“参数指针”（argument pointer）。宏 va_start 把 ap 初始化为指向第一个无名参数。在使用 ap 之前必须调用它一次。必须至少有一个有名参数；最后一个有名参数由 va_start 用来开始。
 

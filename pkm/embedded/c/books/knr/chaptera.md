@@ -11,7 +11,7 @@ comment:
 
 ## A.1 Introduction
 
-This manual describes the C language specified by the draft submitted to ANSI on 31 October, 1988, for approval as ``American Standard for Information Systems - programming Language C, X3.159-1989.'' The manual is an interpretation of the proposed standard, not the standard itself, although care has been taken to make it a reliable guide to the language. 
+This manual describes the C language specified by the draft submitted to ANSI on 31 October, 1988, for approval as "American Standard for Information Systems - programming Language C, X3.159-1989." The manual is an interpretation of the proposed standard, not the standard itself, although care has been taken to make it a reliable guide to the language. 
 本手册描述的 C 语言以 1988 年 10 月 31 日提交 ANSI 审批的草案为准，该草案即《美国信息系统标准——程序设计语言 C，X3.159-1989》。本手册是对该拟议标准的一种解释，而不是标准本身，尽管已尽力使其成为该语言的可靠指南。
 
 For the most part, this document follows the broad outline of the standard, which in turn follows that of the first edition of this book, although the organization differs in detail. Except for renaming a few productions, and not formalizing the definitions of the lexical tokens or the preprocessor, the grammar given here for the language proper is equivalent to that of the standard. 
@@ -27,7 +27,7 @@ A program consists of one or more translation units stored in files. It is trans
 
 ## A.2.1 Tokens
 
-There are six classes of tokens: identifiers, keywords, constants, string literals, operators, and other separators. Blanks, horizontal and vertical tabs, newlines, formfeeds and comments as described below (collectively, ``white space'') are ignored except as they separate tokens. Some white space is required to separate otherwise adjacent identifiers, keywords, and constants. 
+There are six classes of tokens: identifiers, keywords, constants, string literals, operators, and other separators. Blanks, horizontal and vertical tabs, newlines, formfeeds and comments as described below (collectively, "white space") are ignored except as they separate tokens. Some white space is required to separate otherwise adjacent identifiers, keywords, and constants. 
 记号共有六类：标识符、关键字、常量、字符串字面值、运算符以及其他分隔符。空格、横向与纵向制表符、换行符、换页符以及下文描述的注释（统称为"空白符"）除了用来分隔记号之外都被忽略。某些空白符是必需的，用来分隔原本相邻的标识符、关键字与常量。
 
 If the input stream has been separated into tokens up to a given character, the next token is the longest string of characters that could constitute a token. 
@@ -121,13 +121,13 @@ Identifiers declared as enumerators (see Par.A.8.4) are constants of type int.
 
 ## A.2.6 String Literals
 
-A string literal, also called a string constant, is a sequence of characters surrounded by double quotes as in "...". A string has type ``array of characters'' and storage class static (see Par.A.3 below) and is initialized with the given characters. Whether identical string literals are distinct is implementation-defined, and the behavior of a program that attempts to alter a string literal is undefined. 
+A string literal, also called a string constant, is a sequence of characters surrounded by double quotes as in "...". A string has type "array of characters" and storage class static (see Par.A.3 below) and is initialized with the given characters. Whether identical string literals are distinct is implementation-defined, and the behavior of a program that attempts to alter a string literal is undefined. 
 字符串字面值（string literal）也称为字符串常量，是用双引号括住的字符序列，如 "..."。字符串的类型是"字符数组"，存储类是 static（见下文 Par.A.3），并用给定的字符进行初始化。相同的字符串字面值是否是不同的对象由实现定义；试图修改字符串字面值的程序，其行为是未定义的。
 
 Adjacent string literals are concatenated into a single string. After any concatenation, a null byte \0 is appended to the string so that programs that scan the string can find its end. String literals do not contain newline or double-quote characters; in order to represent them, the same escape sequences as for character constants are available. 
 相邻的字符串字面值会被拼接成一个字符串。任何拼接之后，都会在字符串后附加一个空字节 \0，使得扫描字符串的程序能够找到它的末尾。字符串字面值不包含换行符和双引号字符；为了表示它们，可以使用与字符常量相同的转义序列。
 
-As with character constants, string literals in an extended character set are written with a preceding L, as in L"...". Wide-character string literals have type ``array of wchar_t.'' Concatenation of ordinary and wide string literals is undefined. 
+As with character constants, string literals in an extended character set are written with a preceding L, as in L"...". Wide-character string literals have type "array of wchar_t." Concatenation of ordinary and wide string literals is undefined. 
 与字符常量一样，扩展字符集中的字符串字面值要在前面写一个 L，如 L"..."。宽字符串字面值的类型是"wchar_t 数组"。普通字符串字面值与宽字符串字面值的拼接是未定义的。
 
 The specification that string literals need not be distinct, and the prohibition against modifying them, are new in the ANSI standard, as is the concatenation of adjacent string literals. Wide-character string literals are new. 
@@ -135,7 +135,7 @@ The specification that string literals need not be distinct, and the prohibition
 
 ## A.3 Syntax Notation
 
-In the syntax notation used in this manual, syntactic categories are indicated by italic type, and literal words and characters in typewriter style. Alternative categories are usually listed on separate lines; in a few cases, a long set of narrow alternatives is presented on one line, marked by the phrase ``one of.'' An optional terminal or nonterminal symbol carries the subscript ``opt,'' so that, for example, 
+In the syntax notation used in this manual, syntactic categories are indicated by italic type, and literal words and characters in typewriter style. Alternative categories are usually listed on separate lines; in a few cases, a long set of narrow alternatives is presented on one line, marked by the phrase "one of." An optional terminal or nonterminal symbol carries the subscript "opt," so that, for example, 
 在本手册使用的语法记号中，语法范畴用斜体表示，字面词与字符用打字机体表示。可选项通常分行列出；在少数情况下，一长串简短的可选项会放在一行中，并用短语 "one of" 标注。可选的终结符或非终结符带有下标 "opt"，例如：
 
 $$
@@ -226,7 +226,7 @@ An object's type may have additional qualifiers. Declaring an object const annou
 
 ## A.5 Objects and Lvalues
 
-An Object is a named region of storage; an lvalue is an expression referring to an object. An obvious example of an lvalue expression is an identifier with suitable type and storage class. There are operators that yield lvalues, if E is an expression of pointer type, then *E is an lvalue expression referring to the object to which E points. The name ``lvalue'' comes from the assignment expression E1 = E2 in which the left operand E1 must be an lvalue expression. The discussion of each operator specifies whether it expects lvalue operands and whether it yields an lvalue. 
+An Object is a named region of storage; an lvalue is an expression referring to an object. An obvious example of an lvalue expression is an identifier with suitable type and storage class. There are operators that yield lvalues, if E is an expression of pointer type, then *E is an lvalue expression referring to the object to which E points. The name "lvalue" comes from the assignment expression E1 = E2 in which the left operand E1 must be an lvalue expression. The discussion of each operator specifies whether it expects lvalue operands and whether it yields an lvalue. 
 对象（Object）是存储的一个命名的区域；左值（lvalue）是引用一个对象的表达式。左值表达式的一个明显例子是具有适当类型和存储类的标识符。有些运算符会产生左值：如果 E 是一个指针类型的表达式，那么 *E 就是一个引用 E 所指对象的左值表达式。"lvalue"（左值）这个名字来自赋值表达式 E1 = E2，其中左操作数 E1 必须是左值表达式。对每个运算符的讨论都会说明它是否期望左值操作数，以及它是否产生左值。
 
 ## A.6 Conversions
@@ -309,7 +309,7 @@ Certain other conversions involving pointers are permitted, but have implementat
 A pointer may be converted to an integral type large enough to hold it; the required size is implementation-dependent. The mapping function is also implementation-dependent. 
 指针可以被转换为足以容纳它的大整数类型；所需的大小是与实现相关的。映射函数也是与实现相关的。
 
-A pointer to one type may be converted to a pointer to another type. The resulting pointer may cause addressing exceptions if the subject pointer does not refer to an object suitably aligned in storage. It is guaranteed that a pointer to an object may be converted to a pointer to an object whose type requires less or equally strict storage alignment and back again without change; the notion of ``alignment'' is implementation-dependent, but objects of the char types have least strict alignment requirements. As described in Par.A.6.8, a pointer may also be converted to type void * and back again without change. 
+A pointer to one type may be converted to a pointer to another type. The resulting pointer may cause addressing exceptions if the subject pointer does not refer to an object suitably aligned in storage. It is guaranteed that a pointer to an object may be converted to a pointer to an object whose type requires less or equally strict storage alignment and back again without change; the notion of "alignment" is implementation-dependent, but objects of the char types have least strict alignment requirements. As described in Par.A.6.8, a pointer may also be converted to type void * and back again without change. 
 一种类型的指针可以被转换为另一种类型的指针。如果原来的指针没有指向一个在存储中适当对齐的对象，那么得到的指针可能引起寻址异常。可以保证：指向某对象的指针可以被转换为指向一个其类型对存储对齐要求较松或相同的对象的指针，并且可以再转换回来而不发生改变；"对齐"（alignment）的概念是与实现相关的，但 char 类型的对象的对齐要求最宽松。如 Par.A.6.8 所述，指针也可以被转换为 void * 类型再转换回来而不发生改变。
 
 A pointer may be converted to another pointer whose type is the same except for the addition or removal of qualifiers (Pars.A.4.4, A.8.2) of the object type to which the pointer refers. If qualifiers are added, the new pointer is equivalent to the old except for restrictions implied by the new qualifiers. If qualifiers are removed, operations on the underlying object remain subject to the qualifiers in its actual declaration. 
@@ -353,7 +353,7 @@ The handling of overflow, divide check, and other exceptions in expression evalu
 
 ## A.7.1 Pointer Conversion
 
-If the type of an expression or subexpression is ``array of T'' for some type T, then the value of the expression is a pointer to the first object in the array, and the type of the expression is altered to ``pointer to T.'' This conversion does not take place if the expression is in the operand of the unary & operator, or of ++, --, sizeof, or as the left operand of an assignment operator or the . operator. Similarly, an expression of type ``function returning T,'' except when used as the operand of the & operator, is converted to ``pointer to function returning T.' 
+If the type of an expression or subexpression is "array of T" for some type T, then the value of the expression is a pointer to the first object in the array, and the type of the expression is altered to "pointer to T." This conversion does not take place if the expression is in the operand of the unary & operator, or of ++, --, sizeof, or as the left operand of an assignment operator or the . operator. Similarly, an expression of type "function returning T," except when used as the operand of the & operator, is converted to "pointer to function returning T." 
 如果表达式或子表达式的类型是"T 的数组"（array of T，T 为某个类型），那么该表达式的值就是指向数组中第一个对象的指针，并且表达式的类型被改变为"指向 T 的指针"。如果该表达式是一元 & 运算符或 ++、--、sizeof 运算符的操作数，或者是赋值运算符或 . 运算符的左操作数，这一转换就不会发生。类似地，"返回 T 的函数"类型的表达式，除用作 & 运算符的操作数之外，会被转换为"指向返回 T 的函数的指针"。
 
 ## A.7.2 Primary Expressions
@@ -377,7 +377,7 @@ An identifier is a primary expression, provided it has been suitably declared as
 A constant is a primary expression. Its type depends on its form as discussed in Par.A.2.5. 
 常量是一个基本表达式。它的类型取决于其形式，如 Par.A.2.5 中所讨论的。
 
-A string literal is a primary expression. Its type is originally ``array of char'' (for wide-char strings, ``array of wchar_t''), but following the rule given in Par.A.7.1, this is usually modified to ``pointer to char'' (wchar_t) and the result is a pointer to the first character in the string. The conversion also does not occur in certain initializers; see Par.A.8.7. 
+A string literal is a primary expression. Its type is originally "array of char" (for wide-char strings, "array of wchar_t"), but following the rule given in Par.A.7.1, this is usually modified to "pointer to char" (wchar_t) and the result is a pointer to the first character in the string. The conversion also does not occur in certain initializers; see Par.A.8.7. 
 字符串字面值是一个基本表达式。它的类型本来是"char 数组"（对宽字符串则是"wchar_t 数组"），但按照 Par.A.7.1 中给出的规则，通常被改为"指向 char 的指针"（指向 wchar_t 的指针），结果是指向字符串第一个字符的指针。在某些初始化程序中，这一转换也不发生；见 Par.A.8.7。
 
 A parenthesized expression is a primary expression whose type and value are identical to those of the unadorned expression. The precedence of parentheses does not affect whether the expression is an lvalue. 
@@ -408,7 +408,7 @@ argument-expression-list: assignment-expression assignment-expression-list , ass
 
 ## A.7.3.1 Array References
 
-A postfix expression followed by an expression in square brackets is a postfix expression denoting a subscripted array reference. One of the two expressions must have type ``pointer to T'', where T is some type, and the other must have integral type; the type of the subscript expression is T. The expression E1[E2] is identical (by definition) to *((E1)+(E2)). See Par.A.8.6.2 for further discussion. 
+A postfix expression followed by an expression in square brackets is a postfix expression denoting a subscripted array reference. One of the two expressions must have type "pointer to T", where T is some type, and the other must have integral type; the type of the subscript expression is T. The expression E1[E2] is identical (by definition) to *((E1)+(E2)). See Par.A.8.6.2 for further discussion. 
 一个后缀表达式后跟一个方括号括住的表达式，构成一个表示带下标的数组引用的后缀表达式。两个表达式中必须有一个具有"指向 T 的指针"类型（T 为某个类型），另一个必须具有整数类型；下标表达式的类型是 T。表达式 E1[E2]（按定义）与 *((E1)+(E2)) 完全相同。进一步的讨论见 Par.A.8.6.2。
 
 ## A.7.3.2 Function Calls
@@ -418,13 +418,13 @@ A function call is a postfix expression, called the function designator, followe
 
 extern int identifier(); 
 
-had been given in the innermost block containing the function call. The postfix expression (after possible explicit declaration and pointer generation, Par.A7.1) must be of type ``pointer to function returning T,'' for some type T, and the value of the function call has type T. 
+had been given in the innermost block containing the function call. The postfix expression (after possible explicit declaration and pointer generation, Par.A7.1) must be of type "pointer to function returning T," for some type T, and the value of the function call has type T. 
 已经在包含该函数调用的最内层块中给出一样。后缀表达式（在可能的显式声明和指针生成之后，Par.A.7.1）必须具有"指向返回 T 的函数的指针"类型（T 为某个类型），且函数调用的值具有类型 T。
 
-In the first edition, the type was restricted to ``function,'' and an explicit * operator was required to call through pointers to functions. The ANSI standard blesses the practice of some existing compilers by permitting the same syntax for calls to functions and to functions specified by pointers. The older syntax is still usable. 
+In the first edition, the type was restricted to "function," and an explicit * operator was required to call through pointers to functions. The ANSI standard blesses the practice of some existing compilers by permitting the same syntax for calls to functions and to functions specified by pointers. The older syntax is still usable. 
 在第一版中，类型被限制为"函数"，并且通过函数指针进行调用时需要显式的 * 运算符。ANSI 标准批准了一些现有编译器的做法，允许对函数的调用和通过指针指定的函数的调用使用相同的语法。旧的语法仍然可用。
 
-The term argument is used for an expression passed by a function call; the term parameter is used for an input object (or its identifier) received by a function definition, or described in a function declaration. The terms ``actual argument (parameter)'' and ``formal argument (parameter)'' respectively are sometimes used for the same distinction. 
+The term argument is used for an expression passed by a function call; the term parameter is used for an input object (or its identifier) received by a function definition, or described in a function declaration. The terms "actual argument (parameter)" and "formal argument (parameter)" respectively are sometimes used for the same distinction. 
 术语"实参"（argument）用于函数调用所传递的表达式；术语"形参"（parameter）用于函数定义所接收的输入对象（或其标识符），或在函数声明中所描述的对象。"实际参数（actual argument/parameter）"与"形式参数（formal argument/parameter）"这两个术语有时也分别用来表达同样的区别。
 
 In preparing for the call to a function, a copy is made of each argument; all argument-passing is strictly by value. A function may change the values of its parameter objects, which are copies of the argument expressions, but these changes cannot affect the values of the arguments. However, it is possible to pass a pointer on the understanding that the function may change the value of the object to which the pointer points. 
@@ -489,12 +489,12 @@ A unary expression followed by a ++ or -- operator is a unary expression. The op
 
 ## A.7.4.2 Address Operator
 
-The unary operator & takes the address of its operand. The operand must be an lvalue referring neither to a bit-field nor to an object declared as register, or must be of function type. The result is a pointer to the object or function referred to by the lvalue. If the type of the operand is T, the type of the result is ``pointer to T.'' 
+The unary operator & takes the address of its operand. The operand must be an lvalue referring neither to a bit-field nor to an object declared as register, or must be of function type. The result is a pointer to the object or function referred to by the lvalue. If the type of the operand is T, the type of the result is "pointer to T." 
 一元运算符 & 取其操作数的地址。操作数必须是既不指代位字段也不指代声明为 register 的对象的左值，或者必须是函数类型。结果是指向该左值所指对象或函数的指针。如果操作数的类型是 T，则结果的类型是"指向 T 的指针"。
 
 ## A.7.4.3 Indirection Operator
 
-The unary * operator denotes indirection, and returns the object or function to which its operand points. It is an lvalue if the operand is a pointer to an object of arithmetic, structure, union, or pointer type. If the type of the expression is ``pointer to T,'' the type of the result is T. 
+The unary * operator denotes indirection, and returns the object or function to which its operand points. It is an lvalue if the operand is a pointer to an object of arithmetic, structure, union, or pointer type. If the type of the expression is "pointer to T," the type of the result is T. 
 一元 * 运算符表示间接（indirection），返回其操作数所指向的对象或函数。如果操作数是指向算术类型、结构、联合或指针类型对象的指针，它就是一个左值。如果表达式的类型是"指向 T 的指针"，则结果的类型是 T。
 
 ## A.7.4.4 Unary Plus Operator
@@ -964,7 +964,7 @@ In the first edition of this book, the names of structure and union members were
 A non-field member of a structure or union may have any object type. A field member (which need not have a declarator and thus may be unnamed) has type int, unsigned int, or signed int, and is interpreted as an object of integral type of the specified length in bits; whether an int field is treated as signed is implementation-dependent. Adjacent field members of structures are packed into implementation-dependent storage units in an implementation-dependent direction. When a field following another field will not fit into a partially-filled storage unit, it may be split between units, or the unit may be padded. An unnamed field with width 0 forces this padding, so that the next field will begin at the edge of the next allocation unit. 
 结构或联合的非域成员可以具有任何对象类型。域成员（field member，它不必有声明符，因此可以无名）具有类型 `int`、`unsigned int` 或 `signed int`，并被解释为指定比特长度的整型类型对象；`int` 域是否按带符号处理是与实现相关的。结构的相邻域成员按与实现相关的方向打包进与实现相关的存储单元。当一个域装进前面已被部分填充的存储单元放不下时，它可以在单元间拆分，或者对该单元填充。宽度为 0 的无名域强制这种填充，使下一个域从下一个分配单元的边缘开始。
 
-The ANSI standard makes fields even more implementation-dependent than did the first edition. It is advisable to read the language rules for storing bit-fields as ``implementation-dependent'' without qualification. Structures with bit-fields may be used as a portable way of attempting to reduce the storage required for a structure (with the probable cost of increasing the instruction space, and time, needed to access the fields), or as a non-portable way to describe a storage layout known at the bitlevel. In the second case, it is necessary to understand the rules of the local implementation. 
+The ANSI standard makes fields even more implementation-dependent than did the first edition. It is advisable to read the language rules for storing bit-fields as "implementation-dependent" without qualification. Structures with bit-fields may be used as a portable way of attempting to reduce the storage required for a structure (with the probable cost of increasing the instruction space, and time, needed to access the fields), or as a non-portable way to describe a storage layout known at the bitlevel. In the second case, it is necessary to understand the rules of the local implementation. 
 ANSI 标准使域比第一版更加与实现相关。建议将存储位域的语言规则毫无保留地读作"与实现相关"。带位域的结构可以用作试图减少结构所需存储的可移植方式（可能以增加访问域所需的指令空间和时间为代价），或用作描述比特级已知存储布局的不可移植方式。在后一种情况下，必须了解本地实现的规则。
 
 The members of a structure have addresses increasing in the order of their declarations. A non-field member of a structure is aligned at an addressing boundary depending on its type; therefore, there may be unnamed holes in a structure. If a pointer to a structure is cast to the type of a pointer to its first member, the result refers to the first member. 
@@ -1116,8 +1116,8 @@ The structure of declarators resembles that of indirection, function, and array 
 A list of declarators appears after a sequence of type and storage class specifiers. Each declarator declares a unique main identifier, the one that appears as the first alternative of the production for direct-declarator. The storage class specifiers apply directly to this identifier, but its type depends on the form of its declarator. A declarator is read as an assertion that when its identifier appears in an expression of the same form as the declarator, it yields an object of the specified type. 
 声明符列表出现在类型和存储类说明符的序列之后。每个声明符声明一个唯一的主标识符，即作为 direct-declarator 产生式的第一个候选出现的那个。存储类说明符直接作用于该标识符，但其类型取决于其声明符的形式。声明符可以读作一个断言：当其标识符出现在与声明符同形的表达式中时，它产生一个指定类型的对象。
 
-Considering only the type parts of the declaration specifiers (Par. A.8.2) and a particular declarator, a declaration has the form ``T D,'' where T is a type and D is a declarator. The type attributed to the identifier in the various forms of declarator is described inductively using this notation. 
-只考虑声明说明符（Par.A.8.2）的类型部分和某个特定声明符时，声明具有形式 ``T D''，其中 T 是类型，D 是声明符。各种形式声明符所赋予标识符的类型用这种记号归纳描述。
+Considering only the type parts of the declaration specifiers (Par. A.8.2) and a particular declarator, a declaration has the form "T D," where T is a type and D is a declarator. The type attributed to the identifier in the various forms of declarator is described inductively using this notation. 
+只考虑声明说明符（Par.A.8.2）的类型部分和某个特定声明符时，声明具有形式 “T D”，其中 T 是类型，D 是声明符。各种形式声明符所赋予标识符的类型用这种记号归纳描述。
 
 In a declaration T D where D is an unadored identifier, the type of the identifier is T. 
 在声明 T D 中，如果 D 是无修饰的标识符，则该标识符的类型是 T。
@@ -1136,7 +1136,7 @@ In a declaration T D where D has the form
 
 * type-qualifier-list<sub>opt</sub> D1 
 
-且声明 T D1 中标识符的类型是 ``type-modifier T''，则 D 的标识符的类型是 ``type-modifier type-qualifier-list pointer to T''。跟在 `*` 之后的限定符作用于指针本身，而不是指针所指的对象。
+且声明 T D1 中标识符的类型是 “type-modifier T”，则 D 的标识符的类型是 “type-modifier type-qualifier-list pointer to T”。跟在 `*` 之后的限定符作用于指针本身，而不是指针所指的对象。
 
 For example, consider the declaration 
 例如，考虑声明
@@ -1145,8 +1145,8 @@ For example, consider the declaration
 int *ap[]; 
 ```
 
-Here, ap[] plays the role of D1; a declaration ``int ap[]'' (below) would give ap the type ``array of int,'' the type-qualifier list is empty, and the type-modifier is ``array of.'' Hence the actual declaration gives ap the type ``array to pointers to int.' 
-这里，`ap[]` 充当 D1 的角色；声明 ``int ap[]''（见下文）会给 `ap` 类型 ``array of int''，类型限定符列表为空，类型修饰符是 ``array of''。因此，实际的声明给 `ap` 的类型是 ``array to pointers to int''。
+Here, ap[] plays the role of D1; a declaration "int ap[]" (below) would give ap the type "array of int," the type-qualifier list is empty, and the type-modifier is "array of." Hence the actual declaration gives ap the type "array to pointers to int." 
+这里，`ap[]` 充当 D1 的角色；声明 “int ap[]”（见下文）会给 `ap` 类型 “array of int”，类型限定符列表为空，类型修饰符是 “array of”。因此，实际的声明给 `ap` 的类型是 “array to pointers to int”。
 
 As other examples, the declarations 
 作为其他例子，声明
@@ -1156,8 +1156,8 @@ int i, *pi, *const cpi = &i;
 const int ci = 3, *pci; 
 ```
 
-declare an integer i and a pointer to an integer pi. The value of the constant pointer cpi may not be changed; it will always point to the same location, although the value to which it refers may be altered. The integer ci is constant, and may not be changed (though it may be initialized, as here.) The type of pci is ``pointer to const int,'' and pci itself may be changed to point to another place, but the value to which it points may not be altered by assigning through pci. 
-声明了一个整数 `i` 和一个指向整数的指针 `pi`。常量指针 `cpi` 的值不可改变；它将始终指向同一位置，尽管它所指的值可以被改变。整数 `ci` 是常量，不可改变（不过可以像这里这样初始化）。`pci` 的类型是 ``pointer to const int''，`pci` 本身可以改变为指向别处，但它所指的值不能通过 `pci` 赋值来改变。
+declare an integer i and a pointer to an integer pi. The value of the constant pointer cpi may not be changed; it will always point to the same location, although the value to which it refers may be altered. The integer ci is constant, and may not be changed (though it may be initialized, as here.) The type of pci is "pointer to const int," and pci itself may be changed to point to another place, but the value to which it points may not be altered by assigning through pci. 
+声明了一个整数 `i` 和一个指向整数的指针 `pi`。常量指针 `cpi` 的值不可改变；它将始终指向同一位置，尽管它所指的值可以被改变。整数 `ci` 是常量，不可改变（不过可以像这里这样初始化）。`pci` 的类型是 “pointer to const int”，`pci` 本身可以改变为指向别处，但它所指的值不能通过 `pci` 赋值来改变。
 
 ## A.8.6.2 Array Declarators
 
@@ -1166,7 +1166,7 @@ In a declaration T D where D has the form
 
 D1 [constant-expression $_{opt}$ ] 
 
-且声明 T D1 中标识符的类型是 ``type-modifier T''，则 D 的标识符的类型是 ``type-modifier array of T''。如果存在 constant-expression，它必须具有整型且值大于 0。如果指定边界的常量表达式缺失，则数组具有不完整类型。
+且声明 T D1 中标识符的类型是 “type-modifier T”，则 D 的标识符的类型是 “type-modifier array of T”。如果存在 constant-expression，它必须具有整型且值大于 0。如果指定边界的常量表达式缺失，则数组具有不完整类型。
 
 An array may be constructed from an arithmetic type, from a pointer, from a structure or union, or from another array (to generate a multi-dimensional array). Any type from which an array is constructed must be complete; it must not be an array of structure of incomplete type. This implies that for a multi-dimensional array, only the first dimension may be missing. The type of an object of incomplete aray type is completed by another, complete, declaration for the object (Par.A.10.2), or by initializing it (Par.A.8.7). For example, 
 数组可以由算术类型、指针、结构或联合、或另一个数组（生成多维数组）构成。任何构造成数组的类型都必须是完整的；不能是不完整类型结构的数组。这意味着对多维数组，只有第一维可以缺失。不完整数组类型对象的类型由该对象的另一个完整声明（Par.A.10.2）补全，或通过初始化它（Par.A.8.7）补全。例如，
@@ -1182,14 +1182,14 @@ declares an array of float numbers and an array of pointers to float numbers. Al
 static int x3d[3][5][7]; 
 ```
 
-declares a static three-dimensional array of integers, with rank 3 X 5 X 7. In complete detail, x3d is an array of three items: each item is an array of five arrays; each of the latter arrays is an array of seven integers. Any of the expressions x3d, x3d[i], x3d[i][j], x3d[i][j][k] may reasonably appear in an expression. The first three have type ``array,'', the last has type int. More specifically, x3d[i][j] is an array of 7 integers, and x3d[i] is an array of 5 arrays of 7 integers. 
-声明了一个秩为 3×5×7 的静态三维整数数组。详细地说，`x3d` 是一个三项的数组：每一项是五个数组的数组；后者每个数组是七个整数的数组。表达式 `x3d`、`x3d[i]`、`x3d[i][j]`、`x3d[i][j][k]` 中任何一个都可以合理地出现在表达式中。前三个具有类型 ``array''，最后一个具有类型 `int`。更具体地说，`x3d[i][j]` 是 7 个整数的数组，`x3d[i]` 是 5 个"7 整数数组"的数组。
+declares a static three-dimensional array of integers, with rank 3 X 5 X 7. In complete detail, x3d is an array of three items: each item is an array of five arrays; each of the latter arrays is an array of seven integers. Any of the expressions x3d, x3d[i], x3d[i][j], x3d[i][j][k] may reasonably appear in an expression. The first three have type "array,", the last has type int. More specifically, x3d[i][j] is an array of 7 integers, and x3d[i] is an array of 5 arrays of 7 integers. 
+声明了一个秩为 3×5×7 的静态三维整数数组。详细地说，`x3d` 是一个三项的数组：每一项是五个数组的数组；后者每个数组是七个整数的数组。表达式 `x3d`、`x3d[i]`、`x3d[i][j]`、`x3d[i][j][k]` 中任何一个都可以合理地出现在表达式中。前三个具有类型 “array”，最后一个具有类型 `int`。更具体地说，`x3d[i][j]` 是 7 个整数的数组，`x3d[i]` 是 5 个"7 整数数组"的数组。
 
 The array subscripting operation is defined so that E1[E2] is identical to *(E1+E2). Therefore, despite its asymmetric appearance, subscripting is a commutative operation. Because of the conversion rules that apply to + and to arrays (Pars.A6.6, A.7.1, A.7.7), if E1 is an array and E2 an integer, then E1[E2] refers to the E2-th member of E1. 
 数组下标运算定义为 `E1[E2]` 与 `*(E1+E2)` 等同。因此，尽管外观不对称，下标是可交换的运算。由于适用于 `+` 和数组的转换规则（Par.A.6.6、A.7.1、A.7.7），如果 `E1` 是数组、`E2` 是整数，则 `E1[E2]` 引用 `E1` 的第 `E2` 个成员。
 
-In the example, x3d[i][j][k] is equivalent to *(x3d[i][j] + k). The first subexpression x3d[i][j] is converted by Par.A.7.1 to type ``pointer to array of integers,'' by Par.A.7.7, the addition involves multiplication by the size of an integer. It follows from the rules that arrays are stored by rows (last subscript varies fastest) and that the first subscript in the declaration helps determine the amount of storage consumed by an array, but plays no other part in subscript calculations. 
-在这个例子中，`x3d[i][j][k]` 等价于 `*(x3d[i][j] + k)`。第一个子表达式 `x3d[i][j]` 根据 Par.A.7.1 被转换为类型 ``pointer to array of integers''；根据 Par.A.7.7，加法涉及乘以整数的大小。由这些规则可知，数组按行存储（最后一个下标变化最快），声明中的第一个下标帮助确定数组消耗的存储量，但在下标计算中不起其他作用。
+In the example, x3d[i][j][k] is equivalent to *(x3d[i][j] + k). The first subexpression x3d[i][j] is converted by Par.A.7.1 to type "pointer to array of integers," by Par.A.7.7, the addition involves multiplication by the size of an integer. It follows from the rules that arrays are stored by rows (last subscript varies fastest) and that the first subscript in the declaration helps determine the amount of storage consumed by an array, but plays no other part in subscript calculations. 
+在这个例子中，`x3d[i][j][k]` 等价于 `*(x3d[i][j] + k)`。第一个子表达式 `x3d[i][j]` 根据 Par.A.7.1 被转换为类型 “pointer to array of integers”；根据 Par.A.7.7，加法涉及乘以整数的大小。由这些规则可知，数组按行存储（最后一个下标变化最快），声明中的第一个下标帮助确定数组消耗的存储量，但在下标计算中不起其他作用。
 
 ## A.8.6.3 Function Declarators
 
@@ -1198,7 +1198,7 @@ In a new-style function declaration T D where D has the form
 
 D1 (parameter-type-list) 
 
-且声明 T D1 中标识符的类型是 ``type-modifier T''，则 D 的标识符的类型是 ``type-modifier function with arguments parameter-type-list returning T''。
+且声明 T D1 中标识符的类型是 “type-modifier T”，则 D 的标识符的类型是 “type-modifier function with arguments parameter-type-list returning T”。
 
 The syntax of the parameters is 
 参数的语法是
@@ -1221,8 +1221,8 @@ declaration-specifiers declarator
 
 declaration-specifiers abstract-declarator<sub>opt</sub> 
 
-In the new-style declaration, the parameter list specifies the types of the parameters. As a special case, the declarator for a new-style function with no parameters has a parameter list consisting soley of the keyword void. If the parameter list ends with an ellipsis ``, ...'', then the function may accept more arguments than the number of parameters explicitly described, see Par.A.7.3.2. 
-在新风格声明中，参数列表指定参数的类型。作为一种特殊情况，无参数的新风格函数的声明符有一个仅由关键字 `void` 组成的参数列表。如果参数列表以省略号 ``、 ...'' 结尾，则该函数可以接受比显式描述的参数数量更多的实参，参见 Par.A.7.3.2。
+In the new-style declaration, the parameter list specifies the types of the parameters. As a special case, the declarator for a new-style function with no parameters has a parameter list consisting soley of the keyword void. If the parameter list ends with an ellipsis ", ...", then the function may accept more arguments than the number of parameters explicitly described, see Par.A.7.3.2. 
+在新风格声明中，参数列表指定参数的类型。作为一种特殊情况，无参数的新风格函数的声明符有一个仅由关键字 `void` 组成的参数列表。如果参数列表以省略号 “、 ...” 结尾，则该函数可以接受比显式描述的参数数量更多的实参，参见 Par.A.7.3.2。
 
 The types of parameters that are arrays or functions are altered to pointers, in accordance with the rules for parameter conversions; see Par.A.10.1. The only storage class specifier permitted in a parameter's declaration is register, and this specifier is ignored unless the function declarator heads a function definition. Similarly, if the declarators in the parameter declarations contain identifiers and the function declarator does not head a function definition, the identifiers go out of scope immediately. Abstract declarators, which do not mention the identifiers, are discussed in Par.A.8.8. 
 作为数组或函数的参数类型会被改为指针，遵循参数转换规则；参见 Par.A.10.1。参数声明中唯一允许的存储类说明符是 `register`，除非函数声明符位于函数定义的开头，否则该说明符被忽略。类似地，如果参数声明中的声明符包含标识符，而函数声明符不在函数定义的开头，则这些标识符立即离开作用域。不提及标识符的抽象声明符在 Par.A.8.8 中讨论。
@@ -1232,7 +1232,7 @@ In an old-style function declaration T D where D has the form
 
 D1(identifier-list<sub>opt</sub>) 
 
-且声明 T D1 中标识符的类型是 ``type-modifier T''，则 D 的标识符的类型是 ``type-modifier function of unspecified arguments returning T''。参数（如果存在）具有形式
+且声明 T D1 中标识符的类型是 “type-modifier T”，则 D 的标识符的类型是 “type-modifier function of unspecified arguments returning T”。参数（如果存在）具有形式
 
 identifier-list: 
 
@@ -1261,11 +1261,11 @@ int strcpy(char *dest, const char *source), rand(void);
 strcpy is a function returning int, with two arguments, the first a character pointer, and the second a pointer to constant characters. The parameter names are effectively comments. The second function rand takes no arguments and returns int. 
 `strcpy` 是一个返回 `int` 的函数，带两个实参，第一个是字符指针，第二个是指向常量字符的指针。参数名实际上是注释。第二个函数 `rand` 不带实参并返回 `int`。
 
-Function declarators with parameter prototypes are, by far, the most important language change introduced by the ANSI standard. They offer an advantage over the ``old-style'' declarators of the first edition by providing error-detection and coercion of arguments across function calls, but at a cost: turmoil and confusion during their introduction, and the necessity of accomodating both forms. Some syntactic ugliness was required for the sake of compatibility, namely void as an explicit marker of new-style functions without parameters. 
+Function declarators with parameter prototypes are, by far, the most important language change introduced by the ANSI standard. They offer an advantage over the "old-style" declarators of the first edition by providing error-detection and coercion of arguments across function calls, but at a cost: turmoil and confusion during their introduction, and the necessity of accomodating both forms. Some syntactic ugliness was required for the sake of compatibility, namely void as an explicit marker of new-style functions without parameters. 
 带参数原型的函数声明符是 ANSI 标准引入的最重要的语言变化。与第一版的"旧风格"声明符相比，它们通过在函数调用间提供错误检测和实参强制转换而具有优势，但代价是：引入期间的混乱，以及必须同时容纳两种形式。为了兼容性需要一些语法上的丑陋，即用 `void` 作为无参数新风格函数的显式标记。
 
-The ellipsis notation ``, ...'' for variadic functions is also new, and, together with the macros in the standard header <stdarg.h>, formalizes a mechanism that was officially forbidden but unofficially condoned in the first edition. 
-用于可变参数函数的省略号记法 ``、 ...'' 也是新的，它与标准头文件 `<stdarg.h>` 中的宏一起，将第一版中官方禁止但非官方默许的一种机制形式化了。
+The ellipsis notation ", ..." for variadic functions is also new, and, together with the macros in the standard header <stdarg.h>, formalizes a mechanism that was officially forbidden but unofficially condoned in the first edition. 
+用于可变参数函数的省略号记法 “、 ...” 也是新的，它与标准头文件 `<stdarg.h>` 中的宏一起，将第一版中官方禁止但非官方默许的一种机制形式化了。
 
 These notations were adapted from the C++ language. 
 这些记法借鉴自 C++ 语言。
@@ -1313,7 +1313,7 @@ As a special case, a character array may be initialized by a string literal; suc
 The initializer for a union is either a single expression of the same type, or a brace-enclosed initializer for the first member of the union. 
 联合的初始化程序或者是同类型的单个表达式，或者是对联合第一个成员的花括号括起初始化程序。
 
-The first edition did not allow initialization of unions. The ``first-member'' rule is clumsy, but is hard to generalize without new syntax. Besides allowing unions to be explicitly initialized in at least a primitive way, this ANSI rule makes definite the semantics of static unions not explicitly initialized. 
+The first edition did not allow initialization of unions. The "first-member" rule is clumsy, but is hard to generalize without new syntax. Besides allowing unions to be explicitly initialized in at least a primitive way, this ANSI rule makes definite the semantics of static unions not explicitly initialized. 
 第一版不允许联合的初始化。"第一成员"规则笨拙，但没有新语法难以推广。除了至少以原始方式允许显式初始化联合之外，这条 ANSI 规则还明确了未显式初始化的静态联合的语义。
 
 An aggregate is a structure or array. If an aggregate contains members of aggregate type, the initialization rules apply recursively. Braces may be elided in the initialization as follows: if the initializer for an aggregate's member that itself is an aggregate begins with a left brace, then the succeding comma-separated list of initializers initializes the members of the subaggregate; it is erroneous for there to be more initializers than members. If, however, the initializer for a subaggregate does not begin with a left brace, then only enough elements from the list are taken into account for the members of the subaggregate; any remaining members are left to initialize the next member of the aggregate of which the subaggregate is a part. 
@@ -1399,8 +1399,8 @@ int *()
 int (*[]) (void) 
 ```
 
-name respectively the types ``integer,'' ``pointer to integer,'' ``array of 3 pointers to integers,' ``pointer to an unspecified number of integers,'' ``function of unspecified parameters returning pointer to integer,'' and ``array, of unspecified size, of pointers to functions with no parameters each returning an integer.' 
-它们分别命名这些类型：``integer''、``pointer to integer''、``array of 3 pointers to integers''、``pointer to an unspecified number of integers''、``function of unspecified parameters returning pointer to integer''，以及 ``array, of unspecified size, of pointers to functions with no parameters each returning an integer''。
+name respectively the types "integer," "pointer to integer," "array of 3 pointers to integers," "pointer to an unspecified number of integers," "function of unspecified parameters returning pointer to integer," and "array, of unspecified size, of pointers to functions with no parameters each returning an integer.' 
+它们分别命名这些类型：“integer”、“pointer to integer”、“array of 3 pointers to integers”、“pointer to an unspecified number of integers”、“function of unspecified parameters returning pointer to integer”，以及 “array, of unspecified size, of pointers to functions with no parameters each returning an integer”。
 
 ## A.8.9 Typedef
 
@@ -1430,8 +1430,8 @@ extern Blockptr bp;
 Complex z, *zp; 
 ```
 
-are legal declarations. The type of b is long, that of bp is ``pointer to long,'' and that of z is the specified structure; zp is a pointer to such a structure. 
-是合法声明。`b` 的类型是 `long`，`bp` 的类型是 ``pointer to long''，`z` 的类型是指定的结构；`zp` 是指向这种结构的指针。
+are legal declarations. The type of b is long, that of bp is "pointer to long," and that of z is the specified structure; zp is a pointer to such a structure. 
+是合法声明。`b` 的类型是 `long`，`bp` 的类型是 “pointer to long”，`z` 的类型是指定的结构；`zp` 是指向这种结构的指针。
 
 typedef does not introduce new types, only synonyms for types that could be specified in another way. In the example, b has the same type as any long object. 
 `typedef` 不引入新类型，只是可以用其他方式指定的类型的同义词。在这个例子中，`b` 与任何 `long` 对象具有相同类型。
@@ -1516,7 +1516,7 @@ Most expression statements are assignments or function calls. All side effects f
 
 ## A.9.3 Compound Statement
 
-So that several statements can be used where one is expected, the compound statement (also called ``block'') is provided. The body of a function definition is a compound statement. 
+So that several statements can be used where one is expected, the compound statement (also called "block") is provided. The body of a function definition is a compound statement. 
 为了能在需要一个语句的地方使用多个语句，提供了复合语句（compound statement，也称为"块（block）"）。函数定义的体是一个复合语句。
 
 compound-statement: 
@@ -1663,14 +1663,14 @@ direct-declarator ( parameter-type-list ) direct-declarator ( identifier-list<su
 
 其中 direct-declarator 是标识符或带括号的标识符。特别地，它不得通过 `typedef` 获得函数类型。
 
-In the first form, the definition is a new-style function, and its parameters, together with their types, are declared in its parameter type list; the declaration-list following the function's declarator must be absent. Unless the parameter type list consists solely of void, showing that the function takes no parameters, each declarator in the parameter type list must contain an identifier. If the parameter type list ends with ``, ...'' then the function may be called with more arguments than parameters; the va_arg macro mechanism defined in the standard header <stdarg.h> and described in Appendix B must be used to refer to the extra arguments. Variadic functions must have at least one named parameter. 
-在第一种形式中，定义是新风格函数，其参数连同类型一起在参数类型列表中声明；函数声明符之后的声明列表必须省略。除非参数类型列表仅由 `void` 组成（表示函数不带参数），参数类型列表中的每个声明符必须包含一个标识符。如果参数类型列表以 ``、 ...'' 结尾，则函数可以用比参数更多的实参调用；必须使用标准头文件 `<stdarg.h>` 中定义、附录 B 中描述的 `va_arg` 宏机制来引用额外的实参。可变参数函数必须至少有一个命名参数。
+In the first form, the definition is a new-style function, and its parameters, together with their types, are declared in its parameter type list; the declaration-list following the function's declarator must be absent. Unless the parameter type list consists solely of void, showing that the function takes no parameters, each declarator in the parameter type list must contain an identifier. If the parameter type list ends with ", ..." then the function may be called with more arguments than parameters; the va_arg macro mechanism defined in the standard header <stdarg.h> and described in Appendix B must be used to refer to the extra arguments. Variadic functions must have at least one named parameter. 
+在第一种形式中，定义是新风格函数，其参数连同类型一起在参数类型列表中声明；函数声明符之后的声明列表必须省略。除非参数类型列表仅由 `void` 组成（表示函数不带参数），参数类型列表中的每个声明符必须包含一个标识符。如果参数类型列表以 “、 ...” 结尾，则函数可以用比参数更多的实参调用；必须使用标准头文件 `<stdarg.h>` 中定义、附录 B 中描述的 `va_arg` 宏机制来引用额外的实参。可变参数函数必须至少有一个命名参数。
 
 In the second form, the definition is old-style: the identifier list names the parameters, while the declaration list attributes types to them. If no declaration is given for a parameter, its type is taken to be int. The declaration list must declare only parameters named in the list, initialization is not permitted, and the only storage-class specifier possible is register. 
 在第二种形式中，定义是旧风格的：标识符列表命名参数，而声明列表赋予它们类型。如果参数没有给出声明，其类型被视为 `int`。声明列表必须只声明列表中命名的参数，不允许初始化，唯一可能的存储类说明符是 `register`。
 
-In both styles of function definition, the parameters are understood to be declared just after the beginning of the compound statement constituting the function's body, and thus the same identifiers must not be redeclared there (although they may, like other identifiers, be redeclared in inner blocks). If a parameter is declared to have type ``array of type,'' the declaration is adjusted to read ``pointer to type;'' similarly, if a parameter is declared to have type ``function returning type,'' the declaration is adjusted to read ``pointer to function returning type.'' During the call to a function, the arguments are converted as necessary and assigned to the parameters; see Par.A.7.3.2. 
-在两种风格的函数定义中，参数都被理解为在构成函数体的复合语句开始处紧接着声明，因此同样的标识符不得在那里重新声明（不过与其他标识符一样，可以在内层块中重新声明）。如果参数声明为 ``array of type'' 类型，声明被调整为 ``pointer to type''；类似地，如果参数声明为 ``function returning type'' 类型，声明被调整为 ``pointer to function returning type''。函数调用期间，实参按需转换并赋给参数；参见 Par.A.7.3.2。
+In both styles of function definition, the parameters are understood to be declared just after the beginning of the compound statement constituting the function's body, and thus the same identifiers must not be redeclared there (although they may, like other identifiers, be redeclared in inner blocks). If a parameter is declared to have type "array of type," the declaration is adjusted to read "pointer to type;" similarly, if a parameter is declared to have type "function returning type," the declaration is adjusted to read "pointer to function returning type." During the call to a function, the arguments are converted as necessary and assigned to the parameters; see Par.A.7.3.2. 
+在两种风格的函数定义中，参数都被理解为在构成函数体的复合语句开始处紧接着声明，因此同样的标识符不得在那里重新声明（不过与其他标识符一样，可以在内层块中重新声明）。如果参数声明为 “array of type” 类型，声明被调整为 “pointer to type”；类似地，如果参数声明为 “function returning type” 类型，声明被调整为 “pointer to function returning type”。函数调用期间，实参按需转换并赋给参数；参见 Par.A.7.3.2。
 
 New-style function definitions are new with the ANSI standard. There is also a small change in the details of promotion; the first edition specified that the declarations of float parameters were adjusted to read double. The difference becomes noticable when a pointer to a parameter is generated within a function. 
 新风格函数定义是 ANSI 标准新增的。提升的细节也有小变化；第一版规定 `float` 参数的声明被调整为 `double`。当在函数内部生成指向参数的指针时，这一差异变得明显。
@@ -1702,7 +1702,7 @@ where now int max(a, b, c) is the declarator, and int a, b, c; is the declaratio
 
 ## A.10.2 External Declarations
 
-External declarations specify the characteristics of objects, functions and other identifiers. The term ``external'' refers to their location outside functions, and is not directly connected with the extern keyword; the storage class for an externally-declared object may be left empty, or it may be specified as extern or static. 
+External declarations specify the characteristics of objects, functions and other identifiers. The term "external" refers to their location outside functions, and is not directly connected with the extern keyword; the storage class for an externally-declared object may be left empty, or it may be specified as extern or static. 
 外部声明指明对象、函数和其他标识符的特性。术语"外部"指它们位于函数之外，与 `extern` 关键字没有直接联系；外部声明对象的存储类可以留空，也可以指定为 `extern` 或 `static`。
 
 Several external declarations for the same identifier may exist within the same translation unit if they agree in type and linkage, and if there is at most one definition for the identifier. 
@@ -1834,7 +1834,7 @@ Even if the final value of a macro expansion begins with with #, it is not taken
 The details of the macro-expansion process are described more precisely in the ANSI standard than in the first edition. The most important change is the addition of the # and ## operators, which make quotation and concatenation admissible. Some of the new rules, especially those involving concatenation, are bizarre. (See example below.) 
 宏展开过程的细节在 ANSI 标准中比第一版描述得更精确。最重要的变化是增加了 `#` 和 `##` 运算符，它们使加引号和拼接成为合法。一些新规则，尤其是涉及拼接的规则，非常古怪。（参见下面的例子。）
 
-For example, this facility may be used for ``manifest-constants,'' as in 
+For example, this facility may be used for "manifest-constants," as in 
 例如，这种设施可以用于"显式常量（manifest-constants）"，如
 
 ```txt
@@ -1958,7 +1958,7 @@ else-line text
 
 else-line: #else 
 
-Each of the directives (if-line, elif-line, else-line, and #endif) appears alone on a line. The constant expressions in #if and subsequent #elif lines are evaluated in order until an expression with a non-zero value is found; text following a line with a zero value is discarded. The text following the successful directive line is treated normally. ``Text'' here refers to any material, including preprocessor lines, that is not part of the conditional structure; it may be empty. Once a successful #if or #elif line has been found and its text processed, succeeding #elif and #else lines, together with their text, are discarded. If all the expressions are zero, and there is an #else, the text following the #else is treated normally. Text controlled by inactive arms of the conditional is ignored except for checking the nesting of conditionals. 
+Each of the directives (if-line, elif-line, else-line, and #endif) appears alone on a line. The constant expressions in #if and subsequent #elif lines are evaluated in order until an expression with a non-zero value is found; text following a line with a zero value is discarded. The text following the successful directive line is treated normally. "Text" here refers to any material, including preprocessor lines, that is not part of the conditional structure; it may be empty. Once a successful #if or #elif line has been found and its text processed, succeeding #elif and #else lines, together with their text, are discarded. If all the expressions are zero, and there is an #else, the text following the #else is treated normally. Text controlled by inactive arms of the conditional is ignored except for checking the nesting of conditionals. 
 每个指令（if-line、elif-line、else-line 和 `#endif`）单独出现在一行上。`#if` 和后续 `#elif` 行中的常量表达式按顺序求值，直到找到具有非零值的表达式；值为零的行之后的文本被丢弃。成功的指令行之后的文本被正常处理。这里的"文本"指任何材料，包括不属于条件结构部分的预处理器行；它可以为空。一旦找到成功的 `#if` 或 `#elif` 行并处理了其文本，后续的 `#elif` 和 `#else` 行连同其文本一起被丢弃。如果所有表达式都为零，且存在 `#else`，则 `#else` 之后的文本被正常处理。条件的非活动分支控制的文本被忽略，只检查条件是否嵌套。
 
 The constant expression in #if and #elif is subject to ordinary macro replacement. Moreover, any expressions of the form 
@@ -2061,7 +2061,7 @@ __STDC__ The constant 1. It is intended that this identifier be defined to be 1 
 Below is a recapitulation of the grammar that was given throughout the earlier part of this appendix. It has exactly the same content, but is in different order. 
 下面是本附录前面部分给出的文法的概要。它与前面完全相同，但顺序不同。
 
-The grammar has undefined terminal symbols integer-constant, character-constant, floatingconstant, identifier, string, and enumeration-constant; the typewriter style words and symbols are terminals given literally. This grammar can be transformed mechanically into input acceptable for an automatic parser-generator. Besides adding whatever syntactic marking is used to indicate alternatives in productions, it is necessary to expand the ``one of'' constructions, and (depending on the rules of the parser-generator) to duplicate each production with an opt symbol, once with the symbol and once without. With one further change, namely deleting the production typedef-name: identifier and making typedef-name a terminal symbol, this grammar is acceptable to the YACC parser-generator. It has only one conflict, generated by the if-else ambiguity. 
+The grammar has undefined terminal symbols integer-constant, character-constant, floatingconstant, identifier, string, and enumeration-constant; the typewriter style words and symbols are terminals given literally. This grammar can be transformed mechanically into input acceptable for an automatic parser-generator. Besides adding whatever syntactic marking is used to indicate alternatives in productions, it is necessary to expand the "one of" constructions, and (depending on the rules of the parser-generator) to duplicate each production with an opt symbol, once with the symbol and once without. With one further change, namely deleting the production typedef-name: identifier and making typedef-name a terminal symbol, this grammar is acceptable to the YACC parser-generator. It has only one conflict, generated by the if-else ambiguity. 
 该文法有未定义的终结符 integer-constant、character-constant、floating-constant、identifier、string 和 enumeration-constant；打字机体式的单词和符号是按字面给出的终结符。这个文法可以被机械地转换为自动分析器生成器可接受的输入。除了加上用于指示产生式候选的语法标记之外，还需要展开"one of"构造，并且（取决于分析器生成器的规则）将每个带有 opt 符号的产生式复制两份，一次带符号，一次不带。再做一个改变——删除产生式 typedef-name: identifier 并把 typedef-name 作为终结符——这个文法就可以被 YACC 分析器生成器接受。它只有一个冲突，由 if-else 二义性产生。
 
 external-declaration: 

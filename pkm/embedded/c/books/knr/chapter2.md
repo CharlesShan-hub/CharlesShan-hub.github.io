@@ -19,9 +19,9 @@ ANSI 标准对基本类型与表达式做了许多小的修改和补充。现在
 
 ## 2.1 Variable Names
 
-Although we didn't say so in Chapter 1, there are some restrictions on the names of variables and symbolic constants. Names are made up of letters and digits; the first character must be a letter. The underscore ``_'' counts as a letter; it is sometimes useful for improving the readability of long variable names. Don't begin variable names with underscore, however, since library routines often use such names. Upper and lower case letters are distinct, so x and X are two different names. Traditional C practice is to use lower case for variable names, and all upper case for symbolic constants. 
+Although we didn't say so in Chapter 1, there are some restrictions on the names of variables and symbolic constants. Names are made up of letters and digits; the first character must be a letter. The underscore "_" counts as a letter; it is sometimes useful for improving the readability of long variable names. Don't begin variable names with underscore, however, since library routines often use such names. Upper and lower case letters are distinct, so x and X are two different names. Traditional C practice is to use lower case for variable names, and all upper case for symbolic constants. 
 
-尽管第 1 章没有明说，但变量和符号常量的名字存在一些限制。名字由字母和数字组成，第一个字符必须是字母。下划线 ``_'' 也算作字母；它有时可用于提高长变量名的可读性。不过不要以下划线开头来命名变量，因为库例程常常使用这种名字。大写字母和小写字母是不同的，所以 x 和 X 是两个不同的名字。传统的 C 习惯做法是：变量名用小写字母，符号常量全用大写字母。
+尽管第 1 章没有明说，但变量和符号常量的名字存在一些限制。名字由字母和数字组成，第一个字符必须是字母。下划线 “_” 也算作字母；它有时可用于提高长变量名的可读性。不过不要以下划线开头来命名变量，因为库例程常常使用这种名字。大写字母和小写字母是不同的，所以 x 和 X 是两个不同的名字。传统的 C 习惯做法是：变量名用小写字母，符号常量全用大写字母。
 
 At least the first 31 characters of an internal name are significant. For function names and external variables, the number may be less than 31, because external names may be used by assemblers and loaders over which the language has no control. For external names, the standard guarantees uniqueness only for 6 characters and a single case. Keywords like if, else, int, float, etc., are reserved: you can't use them as variable names. They must be in lower case. 
 
@@ -425,7 +425,7 @@ The unary negation operator ! converts a non-zero operand into 0, and a zero ope
 if (!valid)
 ```
 
-It's hard to generalize about which form is better. Constructions like !valid read nicely (``if not valid''), but more complicated ones can be hard to understand. 
+It's hard to generalize about which form is better. Constructions like !valid read nicely ("if not valid"), but more complicated ones can be hard to understand. 
 
 很难一概而论哪种形式更好。像 !valid 这样的结构读起来很顺（"如果不合法"），但更复杂的结构可能就难以理解了。
 
@@ -435,7 +435,7 @@ Exercise 2-2. Write a loop equivalent to the for loop above without using && or 
 
 ## 2.7 Type Conversions
 
-When an operator has operands of different types, they are converted to a common type according to a small number of rules. In general, the only automatic conversions are those that convert a ``narrower'' operand into a ``wider'' one without losing information, such as converting an integer into floating point in an expression like f + i. Expressions that don't make sense, like using a float as a subscript, are disallowed. Expressions that might lose information, like assigning a longer integer type to a shorter, or a floating-point type to an integer, may draw a warning, but they are not illegal. 
+When an operator has operands of different types, they are converted to a common type according to a small number of rules. In general, the only automatic conversions are those that convert a "narrower" operand into a "wider" one without losing information, such as converting an integer into floating point in an expression like f + i. Expressions that don't make sense, like using a float as a subscript, are disallowed. Expressions that might lose information, like assigning a longer integer type to a shorter, or a floating-point type to an integer, may draw a warning, but they are not illegal. 
 
 当一个运算符的操作数类型不同时，它们会按照少数几条规则被转换为某个共同的类型。一般说来，唯一的自动转换是把"较窄"操作数转换为"较宽"而不丢失信息的转换，比如在 f + i 这样的表达式中把整数转换为浮点数。没有意义的表达式是不允许的，比如把 float 用作下标。可能丢失信息的表达式，比如把较长的整型赋给较短的整型，或把浮点型赋给整型，可能会引发警告，但并不非法。
 
@@ -507,7 +507,7 @@ We will use the <ctype.h> functions from now on.
 
 从现在起我们将使用 <ctype.h> 中的函数。
 
-There is one subtle point about the conversion of characters to integers. The language does not specify whether variables of type char are signed or unsigned quantities. When a char is converted to an int, can it ever produce a negative integer? The answer varies from machine to machine, reflecting differences in architecture. On some machines a char whose leftmost bit is 1 will be converted to a negative integer (``sign extension''). On others, a char is promoted to an int by adding zeros at the left end, and thus is always positive. 
+There is one subtle point about the conversion of characters to integers. The language does not specify whether variables of type char are signed or unsigned quantities. When a char is converted to an int, can it ever produce a negative integer? The answer varies from machine to machine, reflecting differences in architecture. On some machines a char whose leftmost bit is 1 will be converted to a negative integer ("sign extension"). On others, a char is promoted to an int by adding zeros at the left end, and thus is always positive. 
 
 关于字符到整数的转换有一个微妙之处。语言没有说明 char 类型的变量是带符号的还是无符号的量。当把一个 char 转换为 int 时，会不会产生负整数？答案因机器而异，反映了不同体系结构的差异。在某些机器上，最左位为 1 的 char 会被转换成负整数（"符号扩展"）。在另一些机器上，char 通过在左端加零提升为 int，因此总是正的。
 
@@ -523,11 +523,11 @@ Relational expressions like i > j and logical expressions connected by && and ||
 d = c >= '0' && c <= '9' 
 ```
 
-sets d to 1 if c is a digit, and 0 if not. However, functions like isdigit may return any nonzero value for true. In the test part of if, while, for, etc., ``true'' just means ``non-zero'', so this makes no difference. 
+sets d to 1 if c is a digit, and 0 if not. However, functions like isdigit may return any nonzero value for true. In the test part of if, while, for, etc., "true" just means "non-zero", so this makes no difference. 
 
 在 c 是数字时把 d 置为 1，否则置为 0。然而，像 isdigit 这样的函数对"真"可以返回任何非零值。在 if、while、for 等的测试部分，"真"只意味着"非零"，所以这没有什么差别。
 
-Implicit arithmetic conversions work much as expected. In general, if an operator like + or * that takes two operands (a binary operator) has operands of different types, the ``lower'' type is promoted to the ``higher'' type before the operation proceeds. The result is of the integer type. Section 6 of Appendix A states the conversion rules precisely. If there are no unsigned operands, however, the following informal set of rules will suffice: 
+Implicit arithmetic conversions work much as expected. In general, if an operator like + or * that takes two operands (a binary operator) has operands of different types, the "lower" type is promoted to the "higher" type before the operation proceeds. The result is of the integer type. Section 6 of Appendix A states the conversion rules precisely. If there are no unsigned operands, however, the following informal set of rules will suffice: 
 
 隐式算术转换的工作方式基本如人所料。一般说来，如果一个接收两个操作数的运算符（二元运算符，如 + 或 *）的操作数类型不同，那么在运算进行之前，"较低"的类型会被提升为"较高"的类型。结果是整数类型。附录 A 的第 6 节精确地陈述了转换规则。不过，如果没有 unsigned 操作数，下面这套非正式的规则就足够了：
 
@@ -581,7 +581,7 @@ Since an argument of a function call is an expression, type conversion also take
 
 由于函数调用的实参是一个表达式，所以参数传递给函数时也会发生类型转换。在没有函数原型的情况下，char 和 short 变成 int，float 变成 double。这就是为什么即使函数以 char 和 float 实参调用，我们仍把函数参数声明为 int 和 double。
 
-Finally, explicit type conversions can be forced (``coerced'') in any expression, with a unary operator called a cast. In the construction 
+Finally, explicit type conversions can be forced ("coerced") in any expression, with a unary operator called a cast. In the construction 
 
 最后，可以在任何表达式中用称为强制类型转换（cast）的一元运算符显式地进行类型转换（"强制"）。在如下构造中
 
@@ -821,7 +821,7 @@ One must distinguish the bitwise operators & and | from the logical operators &&
 
 必须把位运算符 & 和 | 与逻辑运算符 && 和 || 区分开，后者意味着从左到右对真值进行求值。例如，如果 x 是 1 而 y 是 2，那么 x & y 为零，而 x && y 为一。
 
-The shift operators << and >> perform left and right shifts of their left operand by the number of bit positions given by the right operand, which must be non-negative. Thus x << 2 shifts the value of x by two positions, filling vacated bits with zero; this is equivalent to multiplication by 4. Right shifting an unsigned quantity always fits the vacated bits with zero. Right shifting a signed quantity will fill with bit signs (``arithmetic shift'') on some machines and with 0-bits (``logical shift'') on others. 
+The shift operators << and >> perform left and right shifts of their left operand by the number of bit positions given by the right operand, which must be non-negative. Thus x << 2 shifts the value of x by two positions, filling vacated bits with zero; this is equivalent to multiplication by 4. Right shifting an unsigned quantity always fits the vacated bits with zero. Right shifting a signed quantity will fill with bit signs ("arithmetic shift") on some machines and with 0-bits ("logical shift") on others. 
 
 移位运算符 << 和 >> 把左操作数按右操作数给出的位数进行左移或右移，右操作数必须是非负的。因此 x << 2 把 x 的值左移两位，空出的位用零填充；这等价于乘以 4。对无符号量右移时，空出的位总是用零填充。对带符号量右移时，在某些机器上用符号位填充（"算术移位"），在另一些机器上用 0 位填充（"逻辑移位"）。
 
@@ -956,7 +956,7 @@ Declaring the argument x to be an unsigned ensures that when it is right-shifted
 
 把参数 x 声明为 unsigned 确保了当它右移时，空出的位用零而不是符号位填充，而与程序运行的机器无关。
 
-Quite apart from conciseness, assignment operators have the advantage that they correspond better to the way people think. We say ``add 2 to i'' or ``increment i by 2'', not ``take i, add 2, then put the result back in i''. Thus the expression i += 2 is preferable to i = i+2. In addition, for a complicated expression like 
+Quite apart from conciseness, assignment operators have the advantage that they correspond better to the way people think. We say "add 2 to i" or "increment i by 2", not "take i, add 2, then put the result back in i". Thus the expression i += 2 is preferable to i = i+2. In addition, for a complicated expression like 
 
 除了简洁之外，赋值运算符还有一个优点：它们更符合人们的思维方式。我们说"把 2 加到 i 上"或"把 i 增加 2"，而不是"取 i，加 2，然后把结果放回 i"。因此表达式 i += 2 比 i = i+2 更好。此外，对于像下面这样的复杂表达式
 
@@ -1002,9 +1002,9 @@ else
     z = b; 
 ```
 
-compute in z the maximum of a and b. The conditional expression, written with the ternary operator ``?:'', provides an alternate way to write this and similar constructions. In the expression 
+compute in z the maximum of a and b. The conditional expression, written with the ternary operator "?:", provides an alternate way to write this and similar constructions. In the expression 
 
-在 z 中计算出 a 和 b 的最大值。用三元运算符 ``?:'' 书写的条件表达式提供了编写此类及类似构造的另一种方式。在表达式
+在 z 中计算出 a 和 b 的最大值。用三元运算符 “?:” 书写的条件表达式提供了编写此类及类似构造的另一种方式。在表达式
 
 ```c
 expr1 ? expr2 : expr3
@@ -1057,7 +1057,7 @@ Exercise 2-10. Rewrite the function lower, which converts upper case letters to 
 
 ## 2.12 Precedence and Order of Evaluation
 
-Table 2.1 summarizes the rules for precedence and associativity of all operators, including those that we have not yet discussed. Operators on the same line have the same precedence; rows are in order of decreasing precedence, so, for example, *, /, and % all have the same precedence, which is higher than that of binary + and -. The ``operator'' () refers to function call. The operators -> and . are used to access members of structures; they will be covered in Chapter 6, along with sizeof (size of an object). Chapter 5 discusses * (indirection through a pointer) and & (address of an object), and Chapter 3 discusses the comma operator.
+Table 2.1 summarizes the rules for precedence and associativity of all operators, including those that we have not yet discussed. Operators on the same line have the same precedence; rows are in order of decreasing precedence, so, for example, *, /, and % all have the same precedence, which is higher than that of binary + and -. The "operator" () refers to function call. The operators -> and . are used to access members of structures; they will be covered in Chapter 6, along with sizeof (size of an object). Chapter 5 discusses * (indirection through a pointer) and & (address of an object), and Chapter 3 discusses the comma operator.
 
 表 2.1 总结了所有运算符的优先级和结合性规则，其中包括我们尚未讨论的那些。同一行上的运算符具有相同的优先级；各行按优先级递减的顺序排列，因此，比如 *、/ 和 % 的优先级相同，且高于二元 + 和 -。"运算符" () 指函数调用。运算符 -> 和 . 用于访问结构的成员；它们将与 sizeof（对象的大小）一起在第 6 章讲述。第 5 章讨论 *（通过指针的间接访问）和 &（对象的地址），第 3 章讨论逗号运算符。
 
@@ -1111,7 +1111,7 @@ can produce different results with different compilers, depending on whether n i
 printf("%d %d\n", n, power(2, n));
 ```
 
-Function calls, nested assignment statements, and increment and decrement operators cause ``side effects'' - some variable is changed as a by-product of the evaluation of an expression. In any expression involving side effects, there can be subtle dependencies on the order in which variables taking part in the expression are updated. One unhappy situation is typified by the statement 
+Function calls, nested assignment statements, and increment and decrement operators cause "side effects" - some variable is changed as a by-product of the evaluation of an expression. In any expression involving side effects, there can be subtle dependencies on the order in which variables taking part in the expression are updated. One unhappy situation is typified by the statement 
 
 函数调用、嵌套的赋值语句、以及递增和递减运算符都会产生"副作用"——某些变量作为表达式求值的副产品而被改变。在任何涉及副作用的表达式中，都可能出现对表达式中各变量更新顺序的微妙依赖。一个令人不快的情形可以用下面的语句作为典型：
 

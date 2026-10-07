@@ -9,7 +9,7 @@ comment:
 
 ## Chapter 6 - Structures
 
-A structure is a collection of one or more variables, possibly of different types, grouped together under a single name for convenient handling. (Structures are called ``records'' in some languages, notably Pascal.) Structures help to organize complicated data, particularly in large programs, because they permit a group of related variables to be treated as a unit instead of as separate entities. 
+A structure is a collection of one or more variables, possibly of different types, grouped together under a single name for convenient handling. (Structures are called "records" in some languages, notably Pascal.) Structures help to organize complicated data, particularly in large programs, because they permit a group of related variables to be treated as a unit instead of as separate entities. 
 
 结构是可以把一个或多个变量（类型可以不同）集合在一起、用一个名字方便地处理的数据类型。（结构在某些语言——特别是 Pascal——中称为“记录”。）结构有助于组织复杂的数据，尤其是在大型程序中，因为它允许把一组相关变量当作一个整体来处理，而不是当作彼此独立的实体。
 
@@ -95,7 +95,7 @@ A member of a particular structure is referred to in an expression by a construc
 structure-name.member
 ```
 
-The structure member operator ``.'' connects the structure name and the member name. To print the coordinates of the point pt, for instance, 
+The structure member operator "." connects the structure name and the member name. To print the coordinates of the point pt, for instance, 
 
 结构成员运算符“.”把结构名和成员名连接起来。例如，要打印点 pt 的坐标，
 
@@ -517,7 +517,7 @@ A sizeof can not be used in a #if line, because the preprocessor does not parse 
 
 sizeof 不能用在 #if 行中，因为预处理器不解析类型名。但 #define 中的表达式并不由预处理器求值，所以这里的代码是合法的。
 
-Now for the function getword. We have written a more general getword than is necessary for this program, but it is not complicated. getword fetches the next ``word'' from the input, where a word is either a string of letters and digits beginning with a letter, or a single nonwhite space character. The function value is the first character of the word, or EOF for end of file, or the character itself if it is not alphabetic. 
+Now for the function getword. We have written a more general getword than is necessary for this program, but it is not complicated. getword fetches the next "word" from the input, where a word is either a string of letters and digits beginning with a letter, or a single nonwhite space character. The function value is the first character of the word, or EOF for end of file, or the character itself if it is not alphabetic. 
 
 下面来看函数 getword。我们写了一个比本程序实际需要更通用的 getword，但它并不复杂。getword 从输入中读取下一个“单词”，这里的单词是指以字母开头的一串字母和数字，或者是单个非空白字符。函数返回值是单词的首字符；如果到达文件末尾则返回 EOF；如果该字符不是字母，则返回该字符本身。
 
@@ -659,7 +659,7 @@ If p is a pointer to a structure, arithmetic on p takes into account the size of
 
 如果 p 是指向结构的指针，对 p 的算术运算会考虑结构的大小，因此 p++ 把 p 递增正确的量以得到结构数组的下一个元素，而测试条件也会在恰当的时候终止循环。
 
-Don't assume, however, that the size of a structure is the sum of the sizes of its members. Because of alignment requirements for different objects, there may be unnamed ``holes'' in a structure. Thus, for instance, if a char is one byte and an int four bytes, the structure 
+Don't assume, however, that the size of a structure is the sum of the sizes of its members. Because of alignment requirements for different objects, there may be unnamed "holes" in a structure. Thus, for instance, if a char is one byte and an int four bytes, the structure 
 
 但不要以为结构的大小就等于各成员大小之和。由于不同对象的对齐要求，结构中可能存在未命名的“空洞”。例如，假设 char 占一个字节、int 占四个字节，那么结构
 
@@ -705,7 +705,7 @@ One solution is to keep the set of words seen so far sorted at all times, by pla
 
 一种解决办法是：让已见过的单词集合始终保持有序，每个单词到来时把它插入序列中适当的位置。不过这个操作不能用线性数组中移动单词的方式完成——那也太慢。我们要使用一种称为二叉树（binary tree）的数据结构。
 
-The tree contains one ``node'' per distinct word; each node contains 
+The tree contains one "node" per distinct word; each node contains 
 
 树中每个不同的单词占一个“结点”，每个结点包含：
 
@@ -729,7 +729,7 @@ No node may have more than two children; it might have only zero or one.
 
 任何结点的子结点都不能超过两个；也可以一个都没有，或只有一个。
 
-The nodes are maintained so that at any node the left subtree contains only words that are lexicographically less than the word at the node, and the right subtree contains only words that are greater. This is the tree for the sentence ``now is the time for all good men to come to the aid of their party'', as built by inserting each word as it is encountered: 
+The nodes are maintained so that at any node the left subtree contains only words that are lexicographically less than the word at the node, and the right subtree contains only words that are greater. This is the tree for the sentence "now is the time for all good men to come to the aid of their party", as built by inserting each word as it is encountered: 
 
 结点的维护方式是：在任何结点处，左子树只包含按字典序小于该结点单词的单词，右子树只包含大于该结点单词的单词。下图是按遇到单词的顺序逐个插入而形成的树，对应句子“now is the time for all good men to come to the aid of their party”：
 
@@ -859,7 +859,7 @@ void treeprint(struct tnode *p)
 } 
 ```
 
-A practical note: if the tree becomes ``unbalanced'' because the words don't arrive in random order, the running time of the program can grow too much. As a worst case, if the words are already in order, this program does an expensive simulation of linear search. There are generalizations of the binary tree that do not suffer from this worst-case behavior, but we will not describe them here. 
+A practical note: if the tree becomes "unbalanced" because the words don't arrive in random order, the running time of the program can grow too much. As a worst case, if the words are already in order, this program does an expensive simulation of linear search. There are generalizations of the binary tree that do not suffer from this worst-case behavior, but we will not describe them here. 
 
 一个实用性的提示：如果单词不是随机到达，树可能会变得“不平衡”，程序的运行时间就会大幅增长。最坏情况下，如果单词已经有序，这个程序实际上在模拟代价高昂的线性搜索。二叉树有一些不受这种最坏情况影响的推广形式，这里不作介绍。
 
@@ -913,7 +913,7 @@ Exercise 6-2. Write a program that reads a C program and prints in alphabetical 
 
 练习 6-2. 编写一个程序，读入一个 C 程序，并按字母顺序打印每组变量名，组内变量名前 6 个字符相同、其后某处不同。字符串和注释中的单词不计入。把 6 设计成可以从命令行设定的参数。
 
-Exercise 6-3. Write a cross-referencer that prints a list of all words in a document, and for each word, a list of the line numbers on which it occurs. Remove noise words like ``the,'' ``and,'' and so on. 
+Exercise 6-3. Write a cross-referencer that prints a list of all words in a document, and for each word, a list of the line numbers on which it occurs. Remove noise words like "the," "and," and so on. 
 
 练习 6-3. 编写一个交叉引用程序，打印文档中所有单词的列表，并且对每个单词，打印它出现的行号列表。删除“the”、“and”之类的噪声词。
 
@@ -1133,7 +1133,7 @@ It must be emphasized that a typedef declaration does not create a new type in a
 typedef int (*PFI)(char *, char *);
 ```
 
-creates the type PFI, for ``pointer to function (of two char * arguments) returning int,' which can be used in contexts like 
+creates the type PFI, for "pointer to function (of two char * arguments) returning int," which can be used in contexts like 
 
 创建了类型 PFI，表示“指向（具有两个 char * 参数、返回 int 的）函数的指针”，它可以用在类似下面的场合：
 
@@ -1248,7 +1248,7 @@ or
 symtab[i].u.sval[0]
 ```
 
-In effect, a union is a structure in which all members have offset zero from the base, the structure is big enough to hold the ``widest'' member, and the alignment is appropriate for all of the types in the union. The same operations are permitted on unions as on structures: assignment to or copying as a unit, taking the address, and accessing a member. 
+In effect, a union is a structure in which all members have offset zero from the base, the structure is big enough to hold the "widest" member, and the alignment is appropriate for all of the types in the union. The same operations are permitted on unions as on structures: assignment to or copying as a unit, taking the address, and accessing a member. 
 
 实际上，联合就是一个结构：它的所有成员都相对基地址偏移为 0，结构本身大到足以容纳“最宽的”成员，并且对齐方式适用于联合中的所有类型。联合上允许的操作与结构相同：作为一个整体赋值或复制、取地址、访问成员。
 
@@ -1270,7 +1270,7 @@ Imagine a fragment of a compiler that manipulates a symbol table. Each identifie
 
 设想编译器中操纵符号表的一个片段。程序中的每个标识符都关联着某些信息，例如，它是不是关键字、是不是外部变量和/或静态变量，等等。编码这类信息最紧凑的方式，是在单个 char 或 int 中使用一组单比特标志。
 
-The usual way this is done is to define a set of ``masks'' corresponding to the relevant bit positions, as in 
+The usual way this is done is to define a set of "masks" corresponding to the relevant bit positions, as in 
 
 通常的做法是定义一组与相关位位置对应的“掩码”（mask），如下所示：
 
@@ -1286,7 +1286,7 @@ or
 enum { KEYWORD = 01, EXTERNAL = 02, STATIC = 04 }; 
 ```
 
-The numbers must be powers of two. Then accessing the bits becomes a matter of ``bitfiddling'' with the shifting, masking, and complementing operators that were described in Chapter 2. 
+The numbers must be powers of two. Then accessing the bits becomes a matter of "bitfiddling" with the shifting, masking, and complementing operators that were described in Chapter 2. 
 
 这些数字必须是 2 的幂。此后，访问这些位就变成了用第 2 章讲过的移位、掩码和求补运算符来“摆弄比特”的事情。
 
@@ -1318,7 +1318,7 @@ is true if both bits are off.
 
 在两位都关闭时为真。
 
-Although these idioms are readily mastered, as an alternative C offers the capability of defining and accessing fields within a word directly rather than by bitwise logical operators. A bit-field, or field for short, is a set of adjacent bits within a single implementation-defined storage unit that we will call a ``word.'' For example, the symbol table #defines above could be replaced by the definition of three fields: 
+Although these idioms are readily mastered, as an alternative C offers the capability of defining and accessing fields within a word directly rather than by bitwise logical operators. A bit-field, or field for short, is a set of adjacent bits within a single implementation-defined storage unit that we will call a "word." For example, the symbol table #defines above could be replaced by the definition of three fields: 
 
 尽管这些惯用法不难掌握，但 C 还提供了另一种方式：直接定义和访问字中的字段，而不必使用按位逻辑运算符。位字段（bit-field，简称字段）是单个由实现定义的存储单元（我们称之为“字”）内一组相邻的位。例如，上述符号表的 #define 可以用三个字段的定义来替代：
 

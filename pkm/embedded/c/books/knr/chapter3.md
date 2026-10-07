@@ -125,9 +125,9 @@ else
     z = b; 
 ```
 
-This is because grammatically, a statement follows the if, and an expression statement like ``z = a;'' is always terminated by a semicolon. 
+This is because grammatically, a statement follows the if, and an expression statement like "z = a;" is always terminated by a semicolon. 
 
-这是因为从语法上讲，if 后面跟的是一条语句，而像 ``z = a;'' 这样的表达式语句总是以分号结束。
+这是因为从语法上讲，if 后面跟的是一条语句，而像 “z = a;” 这样的表达式语句总是以分号结束。
 
 ## 3.3 Else-If
 
@@ -152,7 +152,7 @@ occurs so often that it is worth a brief separate discussion. This sequence of i
 
 出现得如此频繁，值得单独简要讨论一下。这种 if 语句序列是编写多路判定最一般的方式。各表达式按顺序求值；如果某个表达式为真，就执行与之关联的语句，并终止整条链。与通常一样，每条语句的代码要么是单条语句，要么是花括号中的一组语句。
 
-The last else part handles the ``none of the above'' or default case where none of the other conditions is satisfied. Sometimes there is no explicit action for the default; in that case the trailing 
+The last else part handles the "none of the above" or default case where none of the other conditions is satisfied. Sometimes there is no explicit action for the default; in that case the trailing 
 
 最后的 else 部分处理"以上皆非"或默认的情况，此时其他条件都不满足。有时对默认情况没有显式的动作；这时尾部的
 
@@ -160,7 +160,7 @@ The last else part handles the ``none of the above'' or default case where none 
 else statement 
 ```
 
-can be omitted, or it may be used for error checking to catch an ``impossible'' condition. 
+can be omitted, or it may be used for error checking to catch an "impossible" condition. 
 
 可以省略；或者也可以把它用于错误检查，以捕捉"不可能"的条件。
 
@@ -325,7 +325,7 @@ for (;;) {
 } 
 ```
 
-is an ``infinite'' loop, presumably to be broken by other means, such as a break or return. 
+is an "infinite" loop, presumably to be broken by other means, such as a break or return. 
 
 就是一个"无限"循环，大概要靠其他手段（如 break 或 return）来打破。
 
@@ -420,9 +420,9 @@ There are three nested loops. The outermost controls the gap between compared el
 
 这里有三个嵌套的循环。最外层控制被比较元素之间的间隔 gap，把它从 n/2 开始每趟缩小一半，直到变为零。中间的循环沿着元素逐个前进。最内层的循环比较每一对相隔 gap 的元素，并逆转任何次序不对的元素对。由于 gap 最终会减到 1，所有元素最终都会正确排序。注意 for 的一般性使得最外层循环也符合与其他循环相同的形式，尽管它并不是算术级数。
 
-One final C operator is the comma ``,'', which most often finds use in the for statement. A pair of expressions separated by a comma is evaluated left to right, and the type and value of the result are the type and value of the right operand. Thus in a for statement, it is possible to place multiple expressions in the various parts, for example to process two indices in parallel. This is illustrated in the function reverse(s), which reverses the string s in place. 
+One final C operator is the comma ",", which most often finds use in the for statement. A pair of expressions separated by a comma is evaluated left to right, and the type and value of the result are the type and value of the right operand. Thus in a for statement, it is possible to place multiple expressions in the various parts, for example to process two indices in parallel. This is illustrated in the function reverse(s), which reverses the string s in place. 
 
-C 的最后一个运算符是逗号运算符 ``,''，它最常在 for 语句中使用。由逗号分隔的一对表达式从左到右求值，结果的类型和值就是右操作数的类型和值。因此在 for 语句中，可以把多个表达式放在各个部分里，例如并行地处理两个下标。函数 reverse(s) 说明了这一点，它把字符串 s 就地反转。
+C 的最后一个运算符是逗号运算符 “,”，它最常在 for 语句中使用。由逗号分隔的一对表达式从左到右求值，结果的类型和值就是右操作数的类型和值。因此在 for 语句中，可以把多个表达式放在各个部分里，例如并行地处理两个下标。函数 reverse(s) 说明了这一点，它把字符串 s 就地反转。
 
 ```c
 #include <string.h>
