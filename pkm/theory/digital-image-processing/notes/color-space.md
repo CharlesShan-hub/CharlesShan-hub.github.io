@@ -71,7 +71,7 @@ comment:
 * 细节：👉 [CMY](../details/CMY.md)
 
 ***
-## Resources and Reference
+## References
 
-* https://www.bilibili.com/video/BV1U34y1G7wa
-* https://www.youtube.com/watch?v=nJlZT5AE9zY
+1. https://www.bilibili.com/video/BV1U34y1G7wa
+2. https://www.youtube.com/watch?v=nJlZT5AE9zY
