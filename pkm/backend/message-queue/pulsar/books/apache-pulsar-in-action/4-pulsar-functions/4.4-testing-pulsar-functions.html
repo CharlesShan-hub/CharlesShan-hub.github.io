@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4.4-testing-pulsar-functions</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h2 id="44-testing-pulsar-functions">4.4 Testing Pulsar functions</h2>
+<p>In this section I will walk you through the process of developing and testing your first Pulsar function. Let’s use the KeywordFilterFunction shown in listing 4.13 to demonstrate the software development lifecycle for a Pulsar function. This function takes in a user-provided keyword and filters out any input string that does not contain that keyword. An example application of this function would be to scan a Twitter feed for tweets related to a particular topic or containing a certain phrase.</p>
+<p>在本节中，我将带你走完开发并测试你的第一个 Pulsar function 的全过程。让我们用清单 4.13 中所示的 KeywordFilterFunction 来演示一个 Pulsar function 的软件开发生命周期。这个函数接收一个由用户提供的关键词，并把任何不包含该关键词的输入字符串过滤掉。该函数的一个应用示例是：扫描 Twitter 信息流，找出与某个特定话题相关或包含某个特定短语的推文。</p>
+<p>Listing 4.13 KeywordFilterFunction</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.manning.pulsar.chapter4.functions.sdk</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.Arrays</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.List</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.Optional</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.pulsar.functions.api.Context</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.pulsar.functions.api.Function</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">KeywordFilterFunction</span>
+<span class="w">  </span><span class="kd">implements</span><span class="w"> </span><span class="n">Function</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">                        </span><span class="n">❶</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">KEYWORD_CONFIG</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"keyword"</span><span class="p">;</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">IGNORE_CONFIG</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"ignore-case"</span><span class="p">;</span>
+
+<span class="nd">@Override</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">input</span><span class="p">,</span><span class="w"> </span><span class="n">Context</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">Optional</span><span class="o">&lt;</span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">keyword</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="n">ctx</span><span class="p">.</span><span class="na">getUserConfigValue</span><span class="p">(</span><span class="n">KEYWORD_CONFIG</span><span class="p">);</span><span class="w">                    </span><span class="n">❷</span>
+<span class="w">  </span><span class="n">Optional</span><span class="o">&lt;</span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">ignoreCfg</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="n">ctx</span><span class="p">.</span><span class="na">getUserConfigValue</span><span class="p">(</span><span class="n">IGNORE_CONFIG</span><span class="p">);</span><span class="w">                     </span><span class="n">❸</span>
+
+<span class="w">  </span><span class="kt">boolean</span><span class="w"> </span><span class="n">ignoreCase</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ignoreCfg</span><span class="p">.</span><span class="na">isPresent</span><span class="p">()</span><span class="w"> </span><span class="o">?</span>
+<span class="w">           </span><span class="p">(</span><span class="kt">boolean</span><span class="p">)</span><span class="w"> </span><span class="n">ignoreConfig</span><span class="p">.</span><span class="na">get</span><span class="p">():</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+
+<span class="w">        </span><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">words</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Arrays</span><span class="p">.</span><span class="na">asList</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="na">split</span><span class="p">(</span><span class="s">"\\s"</span><span class="p">));</span><span class="n">❹</span>
+
+<span class="w">        </span><span class="nf">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">keyword</span><span class="p">.</span><span class="na">isPresent</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span><span class="w">                                       </span><span class="n">❺</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ignoreCase</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">words</span><span class="p">.</span><span class="na">stream</span><span class="p">().</span><span class="na">anyMatch</span><span class="p">(</span><span class="w">      </span><span class="n">❻</span>
+<span class="w">            </span><span class="n">s</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">s</span><span class="p">.</span><span class="na">equalsIgnoreCase</span><span class="p">((</span><span class="n">String</span><span class="p">)</span><span class="w"> </span><span class="n">keyword</span><span class="p">.</span><span class="na">get</span><span class="p">())))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">input</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">words</span><span class="p">.</span><span class="na">contains</span><span class="p">(</span><span class="n">keyword</span><span class="p">.</span><span class="na">get</span><span class="p">()))</span><span class="w"> </span><span class="p">{</span><span class="w">            </span><span class="n">❼</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">input</span><span class="p">;</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ The function takes in a string and returns a string.</p>
+<p>❶ 该函数接收一个字符串并返回一个字符串。</p>
+<p>❸ Get the keyword from the context object.</p>
+<p>❸ 从 context 对象中取出关键词。</p>
+<p>❸ Get the ignore-case setting from the context object.</p>
+<p>❸ 从 context 对象中取出忽略大小写的设置。</p>
+<p>❹ Split the input string into individual words.</p>
+<p>❹ 把输入字符串切分成一个个单词。</p>
+<p>❺ Without a keyword, nothing can match.</p>
+<p>❺ 没有关键词，就无法匹配任何东西。</p>
+<p>❻ Evaluate each word, ignoring case.</p>
+<p>❻ 逐个单词进行判定，忽略大小写。</p>
+<p>❼ Check for an exact match.</p>
+<p>❼ 检查是否存在精确匹配。</p>
+<p>While this code is simplistic, I will walk through the testing process you would typically use when developing a function for production use. Since this is just plain Java code, we can leverage any of the existing unit-testing frameworks, such as JUnit or TestNG, to test the function logic.</p>
+<p>虽然这段代码很简单，但我将带你走一遍你在为生产用途开发一个函数时通常会采用的测试流程。由于这只是普通的 Java 代码，我们可以借助任何现有的单元测试框架，例如 JUnit 或 TestNG，来测试该函数的逻辑。</p>
+<h2 id="_1">子目录</h2>
+<ul>
+<li><a href="4.4-testing-pulsar-functions/4.4.1-unit-testing.html">4.4.1 Unit testing</a></li>
+</ul>
+<p>4.4.1 单元测试</p>
+<ul>
+<li><a href="4.4-testing-pulsar-functions/4.4.2-integration-testing.html">4.4.2 Integration testing</a></li>
+</ul>
+<p>4.4.2 集成测试</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>11.4.2-feature-vector-mapping</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="1142-feature-vector-mapping">11.4.2 Feature vector mapping</h3>
+<p>The data science team must also provide us with a complete definition of the feature vector we need to provide to the ML model, along with a map of where these features reside inside the feature store(s), so we can retrieve these values at runtime and provide them to the model. The development team at GottaEat decided it would be easier to store the feature vector mapping information inside a protobuf object because of its built-in support for associated maps in the protocol. This allows us to store the data in the correct format and easily serialize/deserialize the data into a format that is compatible with the Pulsar state store (i.e., a byte array). The protobuf protocol is also language neutral, so it can be used by any of the programming languages supported by Pulsar Functions, including Java, Python, and Go. The definition of the protobuf object used to store the feature mapping information is shown in listing 11.4 and contains three elements: the name of the table to query inside the feature store, a list of all the features stored in the specified table that are required by the ML model, and an associated map that defines the mapping between the features in the feature store and the fields in the feature vector sent to the model.</p>
+<p>数据科学团队还必须为我们提供一份完整的定义，说明我们需要提供给 ML 模型的那个特征向量是什么样子的，并附上一张映射表，标明这些特征存放在特征存储中的什么位置——这样我们就能在运行时取回这些值并把它们交给模型。GottaEat 的开发团队认为，把特征向量映射信息存放在一个 protobuf 对象里会更省事，因为该协议内置了对关联映射（map）的支持。这让我们能够以正确的格式存放数据，并且很容易把这些数据序列化/反序列化成一种与 Pulsar 状态存储兼容的格式（也就是字节数组）。protobuf 协议同样是语言中立的，因此它可以被 Pulsar Functions 所支持的任何编程语言使用，包括 Java、Python 和 Go。用来存放特征映射信息的那个 protobuf 对象的定义如清单 11.4 所示，它包含三个元素：要在特征存储中查询的那张表的名称、存放在指定表中且为该 ML 模型所需的全部特征的列表，以及一张定义"特征存储中的特征"与"发送给模型的特征向量中的字段"之间映射关系的关联映射表。</p>
+<p>Listing 11.4 The feature vector mapping protocol</p>
+<pre lang="protobuf"><code class="language-protobuf md-fencescode"><span class="k">syntax</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"proto3"</span><span class="p">;</span>
+
+<span class="kd">message</span><span class="w"> </span><span class="nc">FeatureVectorMapping</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kt">string</span><span class="w"> </span><span class="na">featureStoreTable</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">;</span><span class="w">            </span><span class="err">❶</span>
+<span class="w">  </span><span class="k">repeated</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="na">featureStoreFields</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="p">;</span><span class="w">  </span><span class="err">❷</span>
+<span class="w">  </span><span class="n">map</span><span class="p">&lt;</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="kt">string</span><span class="p">&gt;</span><span class="w"> </span><span class="na">fieldMapping</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="p">;</span><span class="w">    </span><span class="err">❸</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ The name of the table inside the feature store that contains the fields specified</p>
+<p>❶ 特征存储中包含所指定字段的那张表的名称。</p>
+<p>❷ A list of all of the fields we need to retrieve from the feature store table</p>
+<p>❷ 我们需要从特征存储那张表中取回的全部字段的列表。</p>
+<p>❸ A mapping of each field name to its corresponding feature name inside the model’s feature vector</p>
+<p>❸ 每个字段名到其在模型特征向量中所对应特征名的映射。</p>
+<p>The list of features is used to dynamically construct the SQL query used to retrieve the features to make the query as efficient as possible by returning only those values that we actually need instead of the entire row. The list also serves as a complete list of all the keys in the map data structure, which allows us to iterate over the list and retrieve all the feature-to-vector mappings contained in the map.</p>
+<p>这个特征列表被用来动态构造那条用于取回特征的 SQL 查询——它只返回我们真正需要的那些值、而不是整行数据，从而让查询尽可能高效。这个列表同时还是那个 map 数据结构中全部键的完整清单，这让我们能够遍历该列表，并取回 map 中所包含的全部"特征到向量"的映射关系。</p>
+<p>Once this information is captured inside a Protobuf object, it should be published to the Pulsar state store using the putstate command. However, the Pulsar function name will be that of the Pulsar function inside the feature collection pipeline that will perform the feature lookup for the deployed model. In the case of the delivery time estimation model, the feature extraction pipeline contains a Pulsar function named RestaurantFeaturesLookup that queries the restaurant table of the feature store using the ID of the restaurant that will be preparing the food for the customer.</p>
+<p>一旦这些信息被收进一个 Protobuf 对象，就应当用 putstate 命令把它发布到 Pulsar 的状态存储中。不过，这里的 Pulsar 函数名将是特征收集流水线中那个为已部署模型执行特征查找的 Pulsar 函数的名字。就送达时间预估模型而言，这条特征提取流水线中包含一个名为 RestaurantFeaturesLookup 的 Pulsar 函数，它用那家将为客户备餐的餐厅的 ID 去查询特征存储中的餐厅表。</p>
+<p>Listing 11.5 The restaurant feature lookup function</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">RestaurantFeaturesLookup</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span>
+<span class="w">  </span><span class="n">Function</span><span class="o">&lt;</span><span class="n">FoodOrder</span><span class="p">,</span><span class="w"> </span><span class="n">RestaurantFeatures</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">CqlSession</span><span class="w"> </span><span class="n">session</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">InetAddress</span><span class="w"> </span><span class="n">node</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">InetSocketAddress</span><span class="w"> </span><span class="n">address</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">SimpleStatement</span><span class="w"> </span><span class="n">queryStatement</span><span class="p">;</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">RestaurantFeatures</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">FoodOrder</span><span class="w"> </span><span class="n">input</span><span class="p">,</span><span class="w"> </span><span class="n">Context</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span>
+<span class="w">      </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">initalized</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">hostName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ctx</span><span class="p">.</span><span class="na">getUserConfigValue</span><span class="p">(</span><span class="n">HOSTNAME_KEY</span><span class="p">).</span><span class="na">toString</span><span class="p">();</span><span class="w">        </span><span class="n">❶</span>
+<span class="w">      </span><span class="n">port</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="w"> </span><span class="n">ctx</span><span class="p">.</span><span class="na">getUserConfigValueOrDefault</span><span class="p">(</span><span class="n">PORT_KEY</span><span class="p">,</span><span class="w"> </span><span class="mi">9042</span><span class="p">);</span><span class="w">      </span><span class="n">❷</span>
+<span class="w">         </span><span class="n">dbUser</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ctx</span><span class="p">.</span><span class="na">getSecret</span><span class="p">(</span><span class="n">DB_USER_KEY</span><span class="p">);</span><span class="w">    </span>
+<span class="w">         </span><span class="n">dbPass</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ctx</span><span class="p">.</span><span class="na">getSecret</span><span class="p">(</span><span class="n">DB_PASS_KEY</span><span class="p">);</span><span class="w">                            </span><span class="n">❸</span>
+<span class="w">         </span><span class="n">table</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ctx</span><span class="p">.</span><span class="na">getUserConfigValue</span><span class="p">(</span><span class="n">TABLE_NAME_KEY</span><span class="p">);</span><span class="w">                 </span><span class="n">❹</span>
+<span class="w">         </span><span class="n">fields</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">String</span><span class="p">(</span><span class="n">ctx</span><span class="p">.</span><span class="na">getState</span><span class="p">(</span><span class="n">FIELDS_KEY</span><span class="p">));</span><span class="w">                  </span><span class="n">❺</span>
+<span class="w">         </span><span class="n">sql</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"select "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">fields</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">" from "</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">table</span><span class="w"> </span><span class="o">+</span><span class="w"> </span>
+<span class="w">            </span><span class="s">" where restaurant_id = ?"</span><span class="w">                                   </span><span class="n">❻</span>
+<span class="w">      </span><span class="n">queryStatement</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">SimpleStatement</span><span class="p">.</span><span class="na">newInstance</span><span class="p">(</span><span class="n">sql</span><span class="p">);</span><span class="w">                 </span><span class="n">❼</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="n">getRestaurantFeatures</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="na">getMeta</span><span class="p">().</span><span class="na">getRestaurantId</span><span class="p">());</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">RestaurantFeatures</span><span class="w"> </span><span class="nf">getRestaurantFeatures</span><span class="w"> </span><span class="p">(</span><span class="n">Long</span><span class="w"> </span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">ResultSet</span><span class="w"> </span><span class="n">rs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">executeStatement</span><span class="p">(</span><span class="n">id</span><span class="p">);</span><span class="w">                               </span><span class="n">❽</span>
+
+<span class="w">       </span><span class="n">Row</span><span class="w"> </span><span class="n">row</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rs</span><span class="p">.</span><span class="na">one</span><span class="p">();</span><span class="w">                                               </span><span class="n">❾</span>
+<span class="w">       </span><span class="nf">if</span><span class="w"> </span><span class="p">(</span><span class="n">row</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">         </span><span class="k">return</span><span class="w"> </span><span class="n">CustomerFeatures</span><span class="p">.</span><span class="na">newBuilder</span><span class="p">().</span><span class="na">setCustomerId</span><span class="p">(</span><span class="n">customerId</span><span class="p">)</span><span class="w">  </span><span class="p">...</span><span class="na">❿</span>
+<span class="w">      </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+<span class="w">   </span><span class="p">}</span>
+<span class="w">   </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="n">ResultSet</span><span class="w"> </span><span class="nf">executeStatement</span><span class="p">(</span><span class="n">Long</span><span class="w"> </span><span class="n">customerId</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">PreparedStatement</span><span class="w"> </span><span class="n">pStmt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getSession</span><span class="p">().</span><span class="na">prepare</span><span class="p">(</span><span class="n">queryStatement</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">getSession</span><span class="p">().</span><span class="na">execute</span><span class="p">(</span><span class="n">pStmt</span><span class="p">.</span><span class="na">bind</span><span class="p">(</span><span class="n">customerId</span><span class="p">));</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="n">CqlSession</span><span class="w"> </span><span class="nf">getSession</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">session</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">session</span><span class="p">.</span><span class="na">isClosed</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">CqlSessionBuilder</span><span class="w"> </span><span class="n">builder</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CqlSession</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="na">addContactPoint</span><span class="p">(</span><span class="n">getAddress</span><span class="p">())</span>
+<span class="w">        </span><span class="p">.</span><span class="na">withLocalDatacenter</span><span class="p">(</span><span class="s">"datacenter1"</span><span class="p">)</span>
+<span class="w">      </span><span class="p">.</span><span class="na">withKeyspace</span><span class="p">(</span><span class="n">CqlIdentifier</span><span class="p">.</span><span class="na">fromCql</span><span class="p">(</span><span class="s">"featurestore"</span><span class="p">));</span>
+
+<span class="w">       </span><span class="n">session</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">builder</span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">     </span><span class="k">return</span><span class="w"> </span><span class="n">session</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ Get the feature store hostname from the configs.</p>
+<p>❶ 从配置中取得特征存储的主机名。</p>
+<p>❷ Get the feature store port from the configs.</p>
+<p>❷ 从配置中取得特征存储的端口。</p>
+<p>❸ Get the credentials for the feature store.</p>
+<p>❸ 取得特征存储的凭据。</p>
+<p>❹ Get the name of the table in the feature store to query.</p>
+<p>❹ 取得特征存储中要查询的那张表的名称。</p>
+<p>❺ Get all of the features we need to retrieve from the feature store.</p>
+<p>❺ 取得我们需要从特征存储中取回的全部特征。</p>
+<p>❻ Construct an SQL statement using the specified fields and table name.</p>
+<p>❻ 用所指定的字段和表名构造一条 SQL 语句。</p>
+<p>❼ Construct a prepared statement using the specified fields.</p>
+<p>❼ 用所指定的字段构造一条预编译语句。</p>
+<p>❽ Execute the prepared statement for the given ID.</p>
+<p>❽ 针对给定的 ID 执行这条预编译语句。</p>
+<p>❾ There is only one record for any given ID.</p>
+<p>❾ 对任何给定的 ID，都只有一条记录。</p>
+<p>❿ Map the fields to the outgoing schema.</p>
+<p>❿ 把这些字段映射到出站的 schema 上。</p>
+<p>The RestaurantFeaturesLookup function will connect to the feature store and retrieve only the features from the feature store that were specified by the data science team when they published them to the state store. Next, it maps those values to the outgoing schema type and publishes the message to the incoming topic of the Pulsar function that will execute the delivery time estimation model.</p>
+<p>RestaurantFeaturesLookup 函数会连接到特征存储，并且只取回数据科学团队在把它们发布到状态存储时所指定的那些特征。接着，它把这些值映射到出站的 schema 类型上，并把该消息发布到那个将执行送达时间预估模型的 Pulsar 函数的输入主题上。</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

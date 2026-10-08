@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5.3.2-integration-testing</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="532-integration-testing">5.3.2 Integration testing</h3>
+<p>After we are satisfied with our unit testing results, we will want to see how the Pulsar function will perform on a Pulsar cluster. The easiest way to test a Pulsar function is to start a Pulsar server and run the Pulsar function locally using the LocalRunner helper class. In this mode, the function runs as a standalone process on the machine it is submitted from. This option is best when you are developing and testing your connectors, as it allows you to attach a debugger to the connector process on the local machine. In order to use the LocalRunner, you must first add a few dependencies to your maven project, which brings in the LocalRunner class that is used to test the function against a running Pulsar cluster, as shown in the following listing.</p>
+<p>在我们对单元测试结果感到满意之后，接下来会想看看这个 Pulsar function 在一个 Pulsar 集群上会有怎样的表现。测试一个 Pulsar function 最简单的方式是：启动一个 Pulsar 服务器，并使用 LocalRunner 这个辅助类在本地运行该 Pulsar function。在这种模式下，该函数作为一个独立进程运行在提交它的那台机器上。当你在开发和测试自己的连接器时，这个选项是最佳选择，因为它允许你把一个调试器挂接到本地机器上的连接器进程上。要使用 LocalRunner，你必须先向你的 maven 项目添加几个依赖，这会引入 LocalRunner 类——它用于针对一个正在运行的 Pulsar 集群来测试该函数，如下面的清单所示。</p>
+<p>Listing 5.10 Including the LocalRunner dependencies</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;dependencies&gt;</span>
+<span class="w">  </span>.<span class="w"> </span>.<span class="w"> </span>.
+<span class="w">  </span><span class="nt">&lt;dependency&gt;</span>
+<span class="w">        </span><span class="nt">&lt;groupId&gt;</span>com.fasterxml.jackson.core<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">        </span><span class="nt">&lt;artifactId&gt;</span>jackson-core<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">        </span><span class="nt">&lt;version&gt;</span>2.11.1<span class="nt">&lt;/version&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/dependency&gt;</span>
+<span class="w">  </span><span class="nt">&lt;dependency&gt;</span>
+<span class="w">    </span><span class="nt">&lt;groupId&gt;</span>org.apache.pulsar<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>pulsar-functions-local-runner-original<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;version&gt;</span>2.6.1<span class="nt">&lt;/version&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/dependency&gt;</span>
+<span class="nt">&lt;/dependencies&gt;</span>
+</code></pre>
+<p>Next, we need to write a class to configure and launch the LocalRunner, as shown in listing 5.11. As you can see, this code must first configure the Pulsar connector to execute on the LocalRunner and specify the address of the actual Pulsar cluster instance that will be used for the testing. The easiest way to gain access to a Pulsar cluster is to launch the Pulsar Docker container like we have done previously by running the following command in a bash window: docker run -d -p 6650:6650 -p 8080:8080 —name pulsar apachepulsar/pulsar-standalone. This will start a Pulsar cluster in standalone mode inside the container. Typically, you would run the LocalRunner test from inside your integrated development environment (IDE) in order to attach a debugger and step through the function code to identify and resolve any errors you have encountered.</p>
+<p>接下来，我们需要编写一个类来配置并启动 LocalRunner，如清单 5.11 所示。正如你所看到的，这段代码必须先把该 Pulsar 连接器配置为在 LocalRunner 上执行，并指定将用于测试的那个真实 Pulsar 集群实例的地址。获得一个 Pulsar 集群访问权的最简单方式，是像我们此前所做的那样启动 Pulsar 的 Docker 容器：在一个 bash 窗口中运行下面这条命令 <code>docker run -d -p 6650:6650 -p 8080:8080 —name pulsar apachepulsar/pulsar-standalone</code>。这会在容器内部以 standalone 模式启动一个 Pulsar 集群。通常情况下，你会在自己的集成开发环境（IDE）内部运行这个 LocalRunner 测试，以便挂接调试器并单步执行函数代码，从而定位和解决你遇到的任何错误。</p>
+<p>Listing 5.11 Testing the DirectorySource with the LocalRunner</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">DirectorySourceLocalRunnerTest</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">final</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">BROKER_URL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"pulsar://localhost:6650"</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">final</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">OUT</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"persistent://public/default/directory-scan"</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">final</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">Path</span><span class="w"> </span><span class="n">SOURCE_DIR</span><span class="w"> </span><span class="o">=</span>
+<span class="w">     </span><span class="n">Paths</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="na">getProperty</span><span class="p">(</span><span class="s">"java.io.tmpdir"</span><span class="p">),</span><span class="w"> </span><span class="s">"source"</span><span class="p">);</span>
+<span class="w">  </span><span class="kd">final</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">Path</span><span class="w"> </span><span class="n">PROCESSED_DIR</span><span class="w"> </span><span class="o">=</span>
+<span class="w">     </span><span class="n">Paths</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="na">getProperty</span><span class="p">(</span><span class="s">"java.io.tmpdir"</span><span class="p">),</span><span class="w"> </span><span class="s">"processed"</span><span class="p">);</span><span class="w">     </span><span class="n">❶</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">LocalRunner</span><span class="w"> </span><span class="n">localRunner</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">Path</span><span class="w"> </span><span class="n">srcPath</span><span class="p">,</span><span class="w"> </span><span class="n">processedPath</span><span class="p">;</span>
+
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">init</span><span class="p">();</span>
+<span class="w">    </span><span class="n">startLocalRunner</span><span class="p">();</span>
+<span class="w">    </span><span class="n">shutdown</span><span class="p">();</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">startLocalRunner</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">localRunner</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LocalRunner</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">            </span><span class="p">.</span><span class="na">brokerServiceUrl</span><span class="p">(</span><span class="n">BROKER_URL</span><span class="p">)</span><span class="w">                              </span><span class="n">❷</span>
+<span class="w">            </span><span class="p">.</span><span class="na">sourceConfig</span><span class="p">(</span><span class="n">getSourceConfig</span><span class="p">())</span><span class="w">                           </span><span class="n">❸</span>
+<span class="w">            </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+<span class="w">    </span><span class="n">localRunner</span><span class="p">.</span><span class="na">start</span><span class="p">(</span><span class="kc">false</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">init</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">IOException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Files</span><span class="p">.</span><span class="na">deleteIfExists</span><span class="p">(</span><span class="n">SOURCE_DIR</span><span class="p">);</span>
+<span class="w">    </span><span class="n">Files</span><span class="p">.</span><span class="na">deleteIfExists</span><span class="p">(</span><span class="n">PROCESSED_DIR</span><span class="p">);</span>
+<span class="w">    </span><span class="n">srcPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Files</span><span class="p">.</span><span class="na">createDirectory</span><span class="p">(</span><span class="n">SOURCE_DIR</span><span class="p">,</span>
+<span class="w">      </span><span class="n">PosixFilePermissions</span><span class="p">.</span><span class="na">asFileAttribute</span><span class="p">(</span>
+<span class="w">         </span><span class="n">PosixFilePermissions</span><span class="p">.</span><span class="na">fromString</span><span class="p">(</span><span class="s">"rwxrwxrwx"</span><span class="p">)));</span>
+<span class="w">    </span><span class="n">processedPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Files</span><span class="p">.</span><span class="na">createDirectory</span><span class="p">(</span><span class="n">PROCESSED_DIR</span><span class="p">,</span>
+<span class="w">      </span><span class="n">PosixFilePermissions</span><span class="p">.</span><span class="na">asFileAttribute</span><span class="p">(</span>
+<span class="w">         </span><span class="n">PosixFilePermissions</span><span class="p">.</span><span class="na">fromString</span><span class="p">(</span><span class="s">"rwxrwxrwx"</span><span class="p">)));</span><span class="w">               </span><span class="n">❹</span>
+
+<span class="w">    </span><span class="n">Files</span><span class="p">.</span><span class="na">copy</span><span class="p">(</span><span class="n">getFile</span><span class="p">(</span><span class="s">"example-1.txt"</span><span class="p">),</span><span class="w"> </span><span class="n">Paths</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="n">srcPath</span><span class="p">.</span><span class="na">toString</span><span class="p">(),</span>
+<span class="w">      </span><span class="s">"example-1.txt"</span><span class="p">),</span><span class="w"> </span><span class="n">COPY_ATTRIBUTES</span><span class="p">);</span><span class="w">                              </span><span class="n">❺</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">shutdown</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span><span class="w">                    </span><span class="n">❻</span>
+<span class="w">    </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">30000</span><span class="p">);</span>
+<span class="w">    </span><span class="n">localRunner</span><span class="p">.</span><span class="na">stop</span><span class="p">();</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">SourceConfig</span><span class="w"> </span><span class="nf">getSourceConfig</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">configs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">HashMap</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="w">    </span><span class="n">configs</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"inputDir"</span><span class="p">,</span><span class="w"> </span><span class="n">srcPath</span><span class="p">.</span><span class="na">toFile</span><span class="p">().</span><span class="na">getAbsolutePath</span><span class="p">());</span>
+<span class="w">    </span><span class="n">configs</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"processedDir"</span><span class="p">,</span><span class="w"> </span><span class="n">processedPath</span><span class="p">.</span><span class="na">toFile</span><span class="p">().</span><span class="na">getAbsolutePath</span><span class="p">());</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">SourceConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="na">className</span><span class="p">(</span><span class="n">DirectorySource</span><span class="p">.</span><span class="na">class</span><span class="p">.</span><span class="na">getName</span><span class="p">())</span><span class="w">                    </span><span class="n">❼</span>
+<span class="w">        </span><span class="p">.</span><span class="na">configs</span><span class="p">(</span><span class="n">configs</span><span class="p">)</span><span class="w">                                              </span><span class="n">❽</span>
+<span class="w">        </span><span class="p">.</span><span class="na">name</span><span class="p">(</span><span class="s">"directory-source"</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">tenant</span><span class="p">(</span><span class="s">"public"</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">namespace</span><span class="p">(</span><span class="s">"default"</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">topicName</span><span class="p">(</span><span class="n">OUT</span><span class="p">)</span><span class="w">                                                </span><span class="n">❾</span>
+<span class="w">        </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">Path</span><span class="w"> </span><span class="nf">getFile</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">fileName</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">IOException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="p">.</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="p">.</span><span class="w">                                                              </span><span class="n">❿</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ Using the tmp folder for testing</p>
+<p>❶ 使用 tmp 文件夹进行测试</p>
+<p>❷ Connect the LocalRunner to the Docker container.</p>
+<p>❷ 把 LocalRunner 连接到那个 Docker 容器。</p>
+<p>❸ Deploy the DirectorySource connector.</p>
+<p>❸ 部署 DirectorySource 连接器。</p>
+<p>❹ Create the source and processed folder used during the test.</p>
+<p>❹ 创建测试期间使用的 source 与 processed 文件夹。</p>
+<p>❺ Copy the test file into the source directory.</p>
+<p>❺ 把测试文件复制到 source 目录中。</p>
+<p>❻ Stops the LocalRunner after 30 seconds</p>
+<p>❻ 30 秒后停止 LocalRunner</p>
+<p>❼ Specify the DirectorySource as the connector we want to run.</p>
+<p>❼ 指定 DirectorySource 作为我们想要运行的连接器。</p>
+<p>❽ Configure the DirectorySource connector.</p>
+<p>❽ 配置 DirectorySource 连接器。</p>
+<p>❾ Specifies the output topic for the source connector</p>
+<p>❾ 指定该 source 连接器的输出主题</p>
+<p>❿ Reads the file from the project resources folder</p>
+<p>❿ 从项目的 resources 文件夹中读取该文件</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

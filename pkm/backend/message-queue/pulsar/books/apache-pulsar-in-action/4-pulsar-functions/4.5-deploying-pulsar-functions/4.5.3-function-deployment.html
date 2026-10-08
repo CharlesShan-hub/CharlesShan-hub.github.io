@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4.5.3-function-deployment</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="453-function-deployment">4.5.3 Function deployment</h3>
+<p>Now that we have defined the configuration we want to use for the function, the next step is to deploy the function onto a running Pulsar cluster. As we mentioned earlier, the Pulsar cluster that we started earlier in the chapter that is running inside a Docker container will do just fine. From inside a bash shell, you can execute the command shown in the following listing to deploy the KeywordFilterFunction on that Pulsar cluster.</p>
+<p>既然我们已经定义好了要用于该函数的配置，下一步就是把该函数部署到一个正在运行的 Pulsar 集群上。正如我们前面提到的，本章前面启动的那个运行在 Docker 容器内的 Pulsar 集群就完全够用。在一个 bash shell 中，你可以执行下面清单中所示的命令，把 KeywordFilterFunction 部署到那个 Pulsar 集群上。</p>
+<p>Listing 4.23 Deploy the KeywordFilterFunction</p>
+<pre lang="bash"><code class="language-bash md-fencescode">$<span class="w"> </span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>pulsar<span class="w"> </span>bin/pulsar-admin<span class="w"> </span>functions<span class="w"> </span>create<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--jar<span class="w"> </span>/pulsar/dropbox/target/chapter4-0.0.1.nar<span class="w"> </span><span class="se">\ </span><span class="w">       </span>❶❷
+<span class="w">  </span>--function-config-file<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>/pulsar/dropbox/src/main/resources/function-config.yaml<span class="w">  </span>❸
+</code></pre>
+<p>❶ Specify the deployment artifact, which must either a locally accessible file or a URL address.</p>
+<p>❶ 指定部署产物，它必须是一个本地可访问的文件或一个 URL 地址。</p>
+<p>❷ Using the pulsar-admin tool inside the Docker container</p>
+<p>❷ 使用 Docker 容器内部的 pulsar-admin 工具</p>
+<p>❸ Specify the function configuration file, which must either a locally accessible file or a URL address.</p>
+<p>❸ 指定函数配置文件，它必须是一个本地可访问的文件或一个 URL 地址。</p>
+<p>If everything went as expected, you should see Created successfully in the output of the command, which indicates that the function was created and deployed on the Pulsar cluster. Let’s take a moment to review what happened and why the command was able to work. First off, we used the pulsar-admin CLI tool, which only exists inside the Docker container. Therefore, we needed to use the Docker exec command to run the pulsar-admin CLI tool inside the Docker container. In the command, we provided two switches: one to specify the location of the deployment artifact (e.g., the NAR file) and the other to specify the location of the function configuration file. Since we were deploying a Java-based Pulsar function, we used the —jar switch to specify the location of the artifact. Had this been a Python-based function, we would have had to use the —py switch instead, and similarly, the —go switch for a Golang-based function. Using the correct switch is critical because Pulsar uses those switch values to determine which runtime execution environment is needed to run the function (i.e., whether to spin up a JVM, a Python interpreter, or a Go runtime for the function to run in).</p>
+<p>如果一切如预期，你应该会在该命令的输出中看到 Created successfully，这表明该函数已在 Pulsar 集群上被创建并部署。让我们花点时间回顾一下发生了什么，以及这条命令为什么能够生效。首先，我们使用的是 pulsar-admin CLI 工具，它只存在于 Docker 容器内部。因此，我们需要使用 Docker 的 exec 命令来在 Docker 容器内部运行 pulsar-admin CLI 工具。在这个命令中，我们提供了两个开关：一个用于指定部署产物的位置（例如那个 NAR 文件），另一个用于指定函数配置文件的位置。由于我们部署的是一个基于 Java 的 Pulsar function，我们使用了 —jar 开关来指定产物的位置。如果这是一个基于 Python 的函数，我们就必须改用 —py 开关；类似地，对于基于 Golang 的函数则使用 —go 开关。使用正确的开关至关重要，因为 Pulsar 正是用这些开关值来判断运行该函数需要哪种运行时执行环境（即，是启动一个 JVM、一个 Python 解释器，还是一个 Go 运行时来供该函数在其中运行）。</p>
+<p>Both the configuration file and the function artifact files must either be on the same machine as the pulsar-admin CLI tool or downloadable via a URL. Therefore, we mounted the $GIT_PROJECT directory to the /pulsar/dropbox folder inside the Docker container. That made both files locally accessible to the pulsar-admin CLI tool. While this is a great trick for local development, bear in mind that in a real production scenario, these files should be physically moved to the Pulsar cluster, preferably as part of the CI/CD release process. We can also check the status of our deployed function using the function getstatus command, as shown in listing 4.24, which will give us useful information about the function, including the status of the function, how many messages it has processed, the average processing latency of the function, and any exceptions that the function may have thrown.</p>
+<p>配置文件和函数产物文件，要么必须与 pulsar-admin CLI 工具位于同一台机器上，要么必须能通过 URL 下载。因此，我们把 $GIT_PROJECT 目录挂载到了 Docker 容器内的 /pulsar/dropbox 文件夹上。这使得这两个文件对 pulsar-admin CLI 工具而言都是本地可访问的。虽然这对本地开发来说是个很棒的技巧，但请记住：在真实的生产场景中，这些文件应当被物理地移到 Pulsar 集群上，最好作为 CI/CD 发布流程的一部分。我们还可以使用 function getstatus 命令来检查已部署函数的状态，如清单 4.24 所示；它会给出关于该函数的有用信息，包括函数的状态、它已处理了多少条消息、函数的平均处理延迟，以及该函数可能抛出的任何异常。</p>
+<p>Listing 4.24 Checking the status of the KeywordFilterFunction</p>
+<pre lang="bash"><code class="language-bash md-fencescode"><span class="c1"># docker exec -it pulsar /pulsar/bin/pulsar-admin functions getstatus -name keyword-filter</span>
+<span class="o">{</span>
+<span class="w">  </span><span class="s2">"numInstances"</span><span class="w"> </span>:<span class="w"> </span><span class="m">1</span>,<span class="w">                             </span>❶
+<span class="w">  </span><span class="s2">"numRunning"</span><span class="w"> </span>:<span class="w"> </span><span class="m">1</span>,<span class="w">                               </span>❷
+<span class="w">  </span><span class="s2">"instances"</span><span class="w"> </span>:<span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="s2">"instanceId"</span><span class="w"> </span>:<span class="w"> </span><span class="m">0</span>,
+<span class="w">    </span><span class="s2">"status"</span><span class="w"> </span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">      </span><span class="s2">"running"</span><span class="w"> </span>:<span class="w"> </span>true,<span class="w">                           </span>❸
+<span class="w">      </span><span class="s2">"error"</span><span class="w"> </span>:<span class="w"> </span><span class="s2">""</span>,<span class="w">                               </span>❹
+<span class="w">      </span><span class="s2">"numRestarts"</span><span class="w"> </span>:<span class="w"> </span><span class="m">0</span>,
+<span class="w">      </span><span class="s2">"numReceived"</span><span class="w"> </span>:<span class="w"> </span><span class="m">0</span>,<span class="w">                          </span>❺
+<span class="w">      </span><span class="s2">"numSuccessfullyProcessed"</span><span class="w"> </span>:<span class="w"> </span><span class="m">0</span>,<span class="w">             </span>❻
+<span class="w">      </span><span class="s2">"numUserExceptions"</span><span class="w"> </span>:<span class="w"> </span><span class="m">0</span>,
+<span class="w">      </span><span class="s2">"latestUserExceptions"</span><span class="w"> </span>:<span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="o">]</span>,
+<span class="w">      </span><span class="s2">"numSystemExceptions"</span><span class="w"> </span>:<span class="w"> </span><span class="m">0</span>,
+<span class="w">      </span><span class="s2">"latestSystemExceptions"</span><span class="w"> </span>:<span class="w"> </span><span class="o">[</span><span class="w"> </span><span class="o">]</span>,
+<span class="w">      </span><span class="s2">"averageLatency"</span><span class="w"> </span>:<span class="w"> </span><span class="m">0</span>.0,<span class="w">                     </span>❼
+<span class="w">      </span><span class="s2">"lastInvocationTime"</span><span class="w"> </span>:<span class="w"> </span><span class="m">0</span>,<span class="w">                   </span>❽
+<span class="w">      </span><span class="s2">"workerId"</span><span class="w"> </span>:<span class="w"> </span><span class="s2">"c-standalone-fw-localhost-8080"</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="w">  </span><span class="o">}</span><span class="w"> </span><span class="o">]</span>
+<span class="o">}</span>
+</code></pre>
+<p>❶ The number of requested instances of the function</p>
+<p>❶ 该函数所请求的实例数量</p>
+<p>❷ The actual number of running instances of the function</p>
+<p>❷ 该函数实际运行的实例数量</p>
+<p>❸ Status indicator</p>
+<p>❸ 状态指示</p>
+<p>❹ If any errors were thrown, they would be displayed here.</p>
+<p>❹ 如果抛出了任何错误，它们会显示在这里。</p>
+<p>❺ The number of messages received by the function</p>
+<p>❺ 该函数已接收到的消息数量</p>
+<p>❻ The number of messages that have been successfully processed by the function</p>
+<p>❻ 该函数已成功处理的消息数量</p>
+<p>❼ The average processing latency per message</p>
+<p>❼ 每条消息的平均处理延迟</p>
+<p>❽ The last time a message was processed by the function</p>
+<p>❽ 该函数最后一次处理消息的时间</p>
+<p>If you ever need to debug a running Pulsar function, the function getstatus command is an excellent place to start. The pulsar-admin functions command provides another command that will show you the configuration settings of a Pulsar function as well. You can check the configuration of a Pulsar function by using the function get command, as shown in the following listing.</p>
+<p>如果你需要调试一个正在运行的 Pulsar function，function getstatus 命令是一个极好的起点。pulsar-admin functions 命令还提供了另一个命令，可以显示某个 Pulsar function 的配置设置。你可以使用 function get 命令来查看一个 Pulsar function 的配置，如下面的清单所示。</p>
+<p>Listing 4.25 Checking the configuration of the KeywordFilterFunction</p>
+<pre lang="bash"><code class="language-bash md-fencescode"><span class="c1"># docker exec -it pulsar /pulsar/bin/pulsar-admin functions get --name keyword-filter</span>
+<span class="o">{</span>
+<span class="w">  </span><span class="s2">"tenant"</span>:<span class="w"> </span><span class="s2">"public"</span>,
+<span class="w">  </span><span class="s2">"namespace"</span>:<span class="w"> </span><span class="s2">"default"</span>,
+<span class="w">  </span><span class="s2">"name"</span>:<span class="w"> </span><span class="s2">"keyword-filter"</span>,
+<span class="w">  </span><span class="s2">"className"</span>:
+<span class="w">   </span><span class="s2">"com.manning.pulsar.chapter4.functions.sdk.KeywordFilterFunction"</span>,
+<span class="w">  </span><span class="s2">"inputSpecs"</span>:<span class="w"> </span><span class="o">{</span>
+<span class="w">    </span><span class="s2">"persistent://public/default/raw-feed"</span>:<span class="w"> </span><span class="o">{</span><span class="w">                   </span>❶
+<span class="w">      </span><span class="s2">"isRegexPattern"</span>:<span class="w"> </span>false,
+<span class="w">      </span><span class="s2">"schemaProperties"</span>:<span class="w"> </span><span class="o">{}</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="w">  </span><span class="o">}</span>,
+<span class="w">  </span><span class="s2">"output"</span>:<span class="w"> </span><span class="s2">"persistent://public/default/filtered-feed"</span>,<span class="w">        </span>❷
+<span class="w">  </span><span class="s2">"logTopic"</span>:<span class="w"> </span><span class="s2">"persistent://public/default/keyword-filter-log"</span>,
+<span class="w">  </span><span class="s2">"processingGuarantees"</span>:<span class="w"> </span><span class="s2">"ATLEAST_ONCE"</span>,<span class="w">                       </span>❸
+<span class="w">  </span><span class="s2">"retainOrdering"</span>:<span class="w"> </span>false,<span class="w">                                      </span>❹
+<span class="w">  </span><span class="s2">"forwardSourceMessageProperty"</span>:<span class="w"> </span>true,
+<span class="w">  </span><span class="s2">"userConfig"</span>:<span class="w"> </span><span class="o">{</span><span class="w">                                               </span>❺
+<span class="w">    </span><span class="s2">"keyword"</span>:<span class="w"> </span><span class="s2">"Director"</span>,
+<span class="w">    </span><span class="s2">"ignore-case"</span>:<span class="w"> </span><span class="nb">false</span>
+<span class="w">  </span><span class="o">}</span>,
+<span class="w">  </span><span class="s2">"runtime"</span>:<span class="w"> </span><span class="s2">"JAVA"</span>,<span class="w">                                            </span>❻
+<span class="w">  </span><span class="s2">"autoAck"</span>:<span class="w"> </span>true,<span class="w">                                              </span>❼
+<span class="w">  </span><span class="s2">"subName"</span>:<span class="w"> </span><span class="s2">"keyword-filter-sub"</span>,
+<span class="w">  </span><span class="s2">"parallelism"</span>:<span class="w"> </span><span class="m">1</span>,<span class="w">                                             </span>❽
+<span class="w">  </span><span class="s2">"resources"</span>:<span class="w"> </span><span class="o">{</span><span class="w">                                                </span>❾
+<span class="w">    </span><span class="s2">"cpu"</span>:<span class="w"> </span><span class="m">1</span>.0,
+<span class="w">    </span><span class="s2">"ram"</span>:<span class="w"> </span><span class="m">1073741824</span>,
+<span class="w">    </span><span class="s2">"disk"</span>:<span class="w"> </span><span class="m">10737418240</span>
+<span class="w">  </span><span class="o">}</span>,
+<span class="w">  </span><span class="s2">"timeoutMs"</span>:<span class="w"> </span><span class="m">30000</span>,
+<span class="w">  </span><span class="s2">"cleanupSubscription"</span>:<span class="w"> </span><span class="nb">true</span>
+<span class="o">}</span>
+</code></pre>
+<p>❶ The input topic(s)</p>
+<p>❶ 输入主题</p>
+<p>❷ The output topic</p>
+<p>❷ 输出主题</p>
+<p>❸ The processing guarantee for the function</p>
+<p>❸ 该函数的处理保证</p>
+<p>❹ Whether or not the messages are to be processed in the order they were published to the topic</p>
+<p>❹ 消息是否要按它们被发布到主题的顺序来处理</p>
+<p>❺ Any user configuration values</p>
+<p>❺ 任何用户配置值</p>
+<p>❻ The runtime environment of functions (e.g., Java, Python, etc.)</p>
+<p>❻ 函数的运行时环境（例如 Java、Python 等）</p>
+<p>❼ Whether the function will automatically acknowledge messages</p>
+<p>❼ 该函数是否会自动确认消息</p>
+<p>❽ The number of parallel instances of the function that were requested</p>
+<p>❽ 该函数所请求的并行实例数量</p>
+<p>❾ The computing resources allocated to the function</p>
+<p>❾ 分配给该函数的计算资源</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

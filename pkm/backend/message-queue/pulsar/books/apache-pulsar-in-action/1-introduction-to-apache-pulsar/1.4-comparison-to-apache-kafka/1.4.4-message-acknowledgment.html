@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1.4.4-message-acknowledgment</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="144-message-acknowledgment">1.4.4 Message acknowledgment</h3>
+<p>Within a distributed messaging system, failures are to be expected. In a distributed message system such as Pulsar, both the consumers consuming the messages and the message brokers serving the messages can fail. When such a failure occurs, it is imperative to resume consumption from exactly the point where the consumers left off once everything recovers to ensure that messages aren’t skipped or reprocessed. This point from which the consumer should resume consumption is often called the topic <em>offset</em>. Kafka and Pulsar take different approaches with respect to maintaining these offsets, which have a direct impact on data durability.</p>
+<p>在分布式消息系统中，故障是可以预期会发生的。在 Pulsar 这样的分布式消息系统中，消费消息的消费者和提供消息服务的 broker 都有可能出现故障。当此类故障发生时，一旦系统恢复，就必须从消费者中断的确切位置恢复消费，以确保消息既不被跳过也不被重复处理。消费者应当从哪个位置恢复消费，这一点通常被称为主题的<em>偏移量（offset）</em>。Kafka 与 Pulsar 在维护这些偏移量上采取了不同的方式，这对数据持久性有着直接影响。</p>
+<p>Message acknowledgment in Kafka</p>
+<p>Kafka 中的消息确认</p>
+<p>The resume point is referred to as the consumer offset in Apache Kafka, which is controlled entirely by the consumer. Typically, a consumer increments its offset in a sequential manner as it reads records from the topic to indicate message acknowledgment. However, keeping this offset solely in the consumer’s memory is dangerous. Therefore, these offsets are also stored as messages in a separate topic named <code>__consumer_offsets</code>. Each consumer commits a message containing its current position into that topic at periodic intervals, which is every five seconds if you use Kafka’s auto-commit capability. While this strategy is better than keeping the offsets solely in memory, there are consequences to this periodic update approach.</p>
+<p>在 Apache Kafka 中，这个恢复点被称为消费者偏移量，它完全由消费者自己控制。通常情况下，消费者在从主题读取记录时会以顺序方式递增其偏移量，以此表示消息确认。然而，仅仅把这个偏移量保存在消费者的内存中是危险的。因此，这些偏移量也会作为消息存储在一个名为 <code>__consumer_offsets</code> 的独立主题中。每个消费者会以固定的时间间隔向该主题提交一条包含其当前位置的消息——如果你使用 Kafka 的自动提交功能，这个间隔是每五秒一次。虽然这种策略比只把偏移量保存在内存中要好，但这种周期性更新的方式也带来了一些后果。</p>
+<p>Consider a single-consumer scenario where automatic commits occur every five seconds and a consumer dies exactly three seconds after the most recent commit to the offset topic. In this case, the offset read from the topic will be three seconds old, so all the events that arrived in that three-second window will be processed twice. While it is possible to configure the commit interval to a smaller value and reduce the window in which records will be duplicated, it is impossible to completely eliminate them.</p>
+<p>考虑一个单消费者的场景：自动提交每五秒发生一次，而某个消费者恰好在最近一次向偏移量主题提交之后的三秒时挂掉。在这种情况下，从主题中读到的偏移量已经滞后了三秒，因此在这三秒窗口内到达的所有事件都会被处理两次。虽然可以把提交间隔配置得更小、从而缩小记录被重复的窗口，但完全消除重复是不可能的。</p>
+<p>The Kafka consumer API provides a method that enables committing the current offset at a point that makes sense to the application developer rather than based on a timer. Therefore, if you really wanted to eliminate duplicate messaging processing, you could use this API to commit the offset after every successfully consumed message. However, this pushes the burden of ensuring accurate recovery offsets onto the application developer and introduces additional latency to the message consumers who now have to commit each offset to a Kafka topic and await an acknowledgment.</p>
+<p>Kafka 消费者 API 提供了一个方法，允许应用开发者在对自己有意义的时点提交当前偏移量，而不是基于定时器。因此，如果你真的想消除重复的消息处理，可以使用这个 API 在每成功消费一条消息之后提交偏移量。然而，这就把确保恢复偏移量准确性的负担转嫁给了应用开发者，并且给消息消费者引入了额外的延迟——它们现在必须把每个偏移量提交到 Kafka 主题并等待确认。</p>
+<p>Message acknowledgment in Pulsar</p>
+<p>Pulsar 中的消息确认</p>
+<p>Apache Pulsar maintains a ledger inside of Apache BookKeeper for each subscriber that is referred to as the cursor ledger for tracking message acknowledgments. When a consumer has read and processed a message, it sends an acknowledgment to the Pulsar broker. Upon receipt of this acknowledgment, the broker immediately updates the cursor ledger for that consumer’s subscription. Since this information is stored on a ledger in BookKeeper, we know that it has been fsynced to disk and multiple copies exist across multiple bookie nodes. Keeping this information on disk ensures that the consumers will not receive the message again even if they crash and restart at a later point in time.</p>
+<p>Apache Pulsar 在 Apache BookKeeper 中为每个订阅者维护一个 ledger，称为游标 ledger（cursor ledger），用于跟踪消息确认。当消费者读取并处理完一条消息后，会向 Pulsar broker 发送一个确认。broker 收到该确认后，会立即更新该消费者订阅对应的游标 ledger。由于这些信息存储在 BookKeeper 的 ledger 上，我们知道它已经被 fsync 到磁盘，并且在多个 bookie 节点上存在多份副本。把这些信息保存在磁盘上，可以确保消费者即使在稍后崩溃并重启的情况下，也不会再次收到该消息。</p>
+<p>In Apache Pulsar, there are two ways that messages can be acknowledged: selectively or cumulatively. With cumulative acknowledgment, the consumer only needs to acknowledge the last message it receives. All the messages in the topic partition up to and including the given message ID will be marked as acknowledged and will not be redelivered to the consumer again. Cumulative acknowledgment is effectively the same as offset update in Apache Kafka.</p>
+<p>在 Apache Pulsar 中，消息有两种确认方式：选择性确认或累积确认。采用累积确认时，消费者只需确认它收到的最后一条消息。主题分区中截至（并包含）该给定消息 ID 的所有消息都会被标记为已确认，不会再被重新投递给消费者。累积确认实际上与 Apache Kafka 中的偏移量更新是等价的。</p>
+<p>The differentiating feature of Apache Pulsar over Kafka is the ability of consumers to acknowledge messages individually (i.e., selective acknowledgment). This capability is critical in supporting multiple consumers per topic because it allows for message redelivery in the event of a single consumer failure.</p>
+<p>Apache Pulsar 区别于 Kafka 的一项特性，是消费者能够逐条确认消息（即选择性确认）。这项能力对于支持每个主题下有多个消费者至关重要，因为它允许在单个消费者发生故障时进行消息重新投递。</p>
+<p>Let’s consider the single-consumer failure scenario again where the consumer individually acknowledges messages after it has successfully processed them. During the time leading up to the failure, the consumer was struggling to process some of the messages while successfully processing others. Figure 1.20 shows an example where only two of the messages (4 and 7) were successfully processed and acknowledged.</p>
+<p>让我们再次考虑单消费者故障的场景：消费者在成功处理每条消息之后逐条进行确认。在故障发生前的那段时间里，消费者处理某些消息时遇到困难，而另一些消息则处理成功了。图 1.20 展示了一个示例，其中只有两条消息（4 和 7）被成功处理并确认。</p>
+<p><img alt="" src="assets/CH01_F20_Kjerrumgaard.webp" />\</p>
+<p>Figure 1.20 Individual message acknowledgment in Pulsar</p>
+<p>图 1.20 Pulsar 中的逐条消息确认</p>
+<p>Given the fact that Kafka’s offset concept treats consumer groups’ offsets as a high-water mark that marks the point up to which all messages are considered acknowledged, in this scenario the offset would have been updated to seven, since that is the highest number message ID that was acknowledged. When the Kafka consumer is restarted on that topic it would start at message 8 and continue onward, skipping messages 1-3, 5, and 6, making them effectively lost because they are never processed.</p>
+<p>鉴于 Kafka 的偏移量概念把消费者组的偏移量当作一个高水位标记——它标示的是"在此之前的所有消息都被视为已确认"的那个点，在这种场景下，偏移量会被更新为七，因为那是已被确认的最大消息 ID。当 Kafka 消费者在该主题上重启时，它会从消息 8 开始继续消费，跳过消息 1-3、5 和 6，使它们实际上丢失了，因为它们从未被处理。</p>
+<p>Under the same scenario with Pulsar’s selective acks, all of the unacknowledged messages would be redelivered, including messages 1-3, 5, and 6, when the consumer is restarted, thereby avoiding message loss due to consumer offset limitations.</p>
+<p>在同样的场景下，借助 Pulsar 的选择性确认，当消费者重启时，所有未确认的消息（包括消息 1-3、5 和 6）都会被重新投递，从而避免了因消费者偏移量限制而导致的消息丢失。</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

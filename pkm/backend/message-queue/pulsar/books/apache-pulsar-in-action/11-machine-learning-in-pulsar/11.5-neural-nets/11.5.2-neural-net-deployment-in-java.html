@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>11.5.2-neural-net-deployment-in-java</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="1152-neural-net-deployment-in-java">11.5.2 Neural net deployment in Java</h3>
+<p>To execute the Keras model within a Java runtime environment, we’ll use the Deeplearning4J (DL4J) library. It provides functionality for deep learning in Java and can load and utilize models trained with Keras. One of the key concepts to become familiar with when using DL4J is <em>tensors</em>. Java does not have a built-in library for efficient tensor options, which is why I included the NDJ4 library in the Maven dependencies, as shown in the following listing.</p>
+<p>为了在 Java 运行时环境中执行这个 Keras 模型，我们将使用 Deeplearning4J（DL4J）库。它提供了在 Java 中进行深度学习的功能，并且能够加载和使用那些用 Keras 训练出来的模型。在使用 DL4J 时，需要熟悉的关键概念之一就是<em>张量</em>（tensor）。Java 并没有一个内置的库来提供高效的张量选项，这正是我把 NDJ4 库加进 Maven 依赖的原因，如下面这份清单所示。</p>
+<p>Listing 11.9 Deeplearning4J library dependencies</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;dependency&gt;</span><span class="w">      </span>
+<span class="w">    </span><span class="nt">&lt;groupId&gt;</span>org.deeplearning4j<span class="nt">&lt;/groupId&gt;</span><span class="w">      </span>
+<span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>deeplearning4j-core<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;version&gt;</span>1.0.0-M1<span class="nt">&lt;/version&gt;</span><span class="w">    </span>
+<span class="w">  </span><span class="nt">&lt;/dependency&gt;</span><span class="w">         </span>
+<span class="w">  </span><span class="nt">&lt;dependency&gt;</span><span class="w">      </span>
+<span class="w">    </span><span class="nt">&lt;groupId&gt;</span>org.deeplearning4j<span class="nt">&lt;/groupId&gt;</span><span class="w">      </span>
+<span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>deeplearning4j-modelimport<span class="nt">&lt;/artifactId&gt;</span><span class="w">      </span>
+<span class="w">    </span><span class="nt">&lt;version&gt;</span>1.0.0-M1<span class="nt">&lt;/version&gt;</span><span class="w">    </span>
+<span class="w">  </span><span class="nt">&lt;/dependency&gt;</span><span class="w">                       </span>
+<span class="w">  </span><span class="nt">&lt;dependency&gt;</span><span class="w">      </span>
+<span class="w">    </span><span class="nt">&lt;groupId&gt;</span>org.nd4j<span class="nt">&lt;/groupId&gt;</span><span class="w">      </span>
+<span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>nd4j-native-platform<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;version&gt;</span>1.0.0-M1<span class="nt">&lt;/version&gt;</span><span class="w">    </span>
+<span class="w">  </span><span class="nt">&lt;/dependency&gt;</span>
+</code></pre>
+<p>Now that we have the DL4J libraries set up, we can start using the neural net in near real-time mode by embedding it inside a Pulsar function, as shown in the following listing.</p>
+<p>既然我们已经把 DL4J 的各个库配置好了，就可以开始以近乎实时模式来使用这个神经网络了——方法是把它嵌入到一个 Pulsar 函数内部，如下面这份清单所示。</p>
+<p>Listing 11.10 Deploying the neural net inside a Java-based Pulsar function</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">import</span><span class="w"> </span><span class="nn">org.deeplearning4j.nn.modelimport.keras.KerasModelImport</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.deeplearning4j.nn.multilayer.MultiLayerNetwork</span><span class="p">;</span><span class="w">        </span><span class="n">❶</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.nd4j.linalg.api.ndarray.INDArray</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.nd4j.linalg.factory.Nd4j</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">FraudDetectionFunction</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span>
+<span class="w">  </span><span class="n">Function</span><span class="o">&lt;</span><span class="n">FraudFeatures</span><span class="p">,</span><span class="w"> </span><span class="n">Double</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">                               </span><span class="n">❷</span>
+
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">MODEL_KEY</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"key"</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="n">MultiLayerNetwork</span><span class="w"> </span><span class="n">model</span><span class="p">;</span><span class="w">                                </span><span class="n">❸</span>
+
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">Double</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">FraudFeatures</span><span class="w"> </span><span class="n">input</span><span class="p">,</span><span class="w"> </span><span class="n">Context</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span>
+<span class="w">    </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">model</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">InputStream</span><span class="w"> </span><span class="n">modelHdf5Stream</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">ByteArrayInputStream</span><span class="p">(</span>
+<span class="w">        </span><span class="n">ctx</span><span class="p">.</span><span class="na">getState</span><span class="p">(</span><span class="n">MODEL_KEY</span><span class="p">).</span><span class="na">array</span><span class="p">());</span><span class="w">                         </span><span class="n">❹</span>
+<span class="w">      </span><span class="n">model</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">KerasModelImport</span><span class="p">.</span><span class="na">importKerasSequentialModelAndWeights</span><span class="p">(</span>
+<span class="w">        </span><span class="n">modelHdf5Stream</span><span class="p">);</span><span class="w">                                         </span><span class="n">❺</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">      </span><span class="n">INDArray</span><span class="w"> </span><span class="n">features</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Nd4j</span><span class="p">.</span><span class="na">zeros</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span><span class="w">                         </span><span class="n">❻</span>
+<span class="w">      </span><span class="n">features</span><span class="p">.</span><span class="na">putScalar</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">input</span><span class="p">.</span><span class="na">getAverageSpend</span><span class="p">());</span>
+<span class="w">      </span><span class="n">features</span><span class="p">.</span><span class="na">putScalar</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">input</span><span class="p">.</span><span class="na">getDistanceFromMainAddress</span><span class="p">());</span>
+<span class="w">      </span><span class="n">features</span><span class="p">.</span><span class="na">putScalar</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="w"> </span><span class="n">input</span><span class="p">.</span><span class="na">getCreditCardScore</span><span class="p">());</span><span class="w">          </span><span class="n">❼</span>
+<span class="w">      </span><span class="p">.</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="p">.</span>
+
+<span class="w">     </span><span class="k">return</span><span class="w"> </span><span class="n">model</span><span class="p">.</span><span class="na">output</span><span class="p">(</span><span class="n">features</span><span class="p">).</span><span class="na">getDouble</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span><span class="w">                  </span><span class="n">❽</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+</code></pre>
+<p>❶ Using the DL4J libraries</p>
+<p>❶ 使用 DL4J 的各个库。</p>
+<p>❷ Input is a collection of features used for fraud detection.</p>
+<p>❷ 输入是一组用于欺诈检测的特征。</p>
+<p>❸ The ML model</p>
+<p>❸ 这个 ML 模型。</p>
+<p>❹ Retrieve the trained model from the state store.</p>
+<p>❹ 从状态存储中取回那个训练好的模型。</p>
+<p>❺ Initalize the model with the HDF5 file.</p>
+<p>❺ 用这个 HDF5 文件初始化模型。</p>
+<p>❻ Create an empty feature vector for 10 features.</p>
+<p>❻ 为 10 个特征创建一个空的特征向量。</p>
+<p>❼ Populate the feature vector with values.</p>
+<p>❼ 用各个值填充这个特征向量。</p>
+<p>❽ Execute the model using the given feature vector, and return the predicted fraud probability.</p>
+<p>❽ 用给定的特征向量执行这个模型，并返回预测出来的欺诈概率。</p>
+<p>The model object provides predict and output methods. The predict method returns a class prediction (fraud or not fraud), while the output method returns a numeric value representing the exact probability. In this case, we will return the numeric value, so we can evaluate it further (e.g., compare it to a configurable threshold used to define our threshold for fraud).</p>
+<p>这个模型对象提供了 predict 和 output 两个方法。predict 方法返回的是一个类别预测（欺诈或非欺诈），而 output 方法返回的是一个代表确切概率的数值。在这里，我们将返回那个数值，以便我们能对它做进一步的评估（例如，把它与我们用来界定欺诈阈值的那个可配置阈值做比较）。</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>9.2.2-circuit-breaker-pattern</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="922-circuit-breaker-pattern">9.2.2 Circuit breaker pattern</h3>
+<p>The retry pattern was designed to handle transient faults because it enables an application to retry an operation in the expectation that it will succeed. The <em>circuit breaker pattern</em>, on the other hand, prevents an application from performing an operation that is likely to fail due to a non-transient fault.</p>
+<p>重试模式是为处理瞬时故障而设计的，因为它让应用能够抱着"这次会成功"的预期去重试某个操作。而<em>熔断器模式</em>（circuit breaker pattern）则相反，它阻止应用去执行一个因非瞬时故障而很可能失败的操作。</p>
+<p>The circuit breaker pattern, which was popularized by Michael Nygard in his book <em>Release It!</em> (Pragmatic Bookshelf, 2nd ed., 2018), is designed to prevent overwhelming a remote service with additional calls when we already know that it is has been unresponsive. Therefore, after a certain number of failed attempts, we will consider that the service is either unavailable or overloaded and reject all subsequent calls to the service. The intent is to prevent the remote service from becoming further overloaded by bombarding it with requests that we already know are unlikely to succeed.</p>
+<p>熔断器模式由 Michael Nygard 在其著作《Release It!》（Pragmatic Bookshelf，第 2 版，2018 年）中推广开来，它的设计目的是：当我们已经知道某个远程服务没有响应时，避免用更多的调用去把它压垮。因此，在若干次失败的尝试之后，我们就会认为该服务要么不可用、要么已过载，并拒绝后续对它的所有调用。其意图在于防止我们用那些早已明知不太可能成功的请求去轰炸远程服务，使它进一步过载。</p>
+<p>The pattern gets its name from the fact that its operation is modelled after the physical electric circuit breakers found inside houses. When the number of faults within a given period of time exceeds a configurable threshold, the circuit breaker <em>trips</em>, and all invocations of the function that is decorated with the circuit breaker will fail immediately. The circuit breaker acts as a state machine that starts in the <em>closed</em> state, which indicates that the data can flow through the circuit breaker.</p>
+<p>这个模式得名于这样一个事实：它的运作方式模仿了房屋内部那种物理的电闸（电路断路器）。当给定时间段内的故障次数超过一个可配置的阈值时，熔断器就会<em>跳闸</em>（trip），而所有对被熔断器装饰过的那个函数的调用都会立即失败。熔断器本身充当着一个状态机，它从<em>闭合</em>（closed）状态开始——该状态表明数据可以流过这个熔断器。</p>
+<p>As we can see in figure 9.7, all incoming messages result in a call to the remote service. However, the circuit breaker keeps track of how many calls to the service produce an exception. When the number of exceptions exceeds a configured threshold, it is an indication that the remote service is either unresponsive or too busy to process additional requests. Therefore, in order to prevent additional load on an already overloaded service, the circuit breaker transitions to the open state, as shown in figure 9.8. This is analogous to what an electrical circuit breaker does when it experiences an electrical surge and trips (opens) the circuit to prevent the flow of electricity into an already overloaded power outlet.</p>
+<p>如图 9.7 所示，所有 incoming 消息都会导致一次对远程服务的调用。不过，熔断器会记录下对该服务的调用中有多少次抛出了异常。当异常次数超过所配置的阈值时，就表明该远程服务要么没有响应、要么过于繁忙而无法处理更多请求。因此，为了避免给一个已过载的服务增加额外负载，熔断器会切换到断开状态，如图 9.8 所示。这类似于电闸在遭遇电涌时的做法：它跳闸（断开）电路，以阻止电流流入一个已经过载的电源插座。</p>
+<p><img alt="" src="assets/CH09_F07_Kjerrumgaard.webp" /></p>
+<p>Figure 9.7 A circuit breaker starts in the closed state, which means that the service will be called for every message that is processed. The service call made when processing message 1 throws an exception, so the fault counter is incremented, and the message is negatively acked. If the counter exceeds the configured threshold, the circuit breaker will trip and transition to an open state.</p>
+<p>图 9.7 熔断器从闭合状态开始，这意味着每处理一条消息都会去调用该服务。处理消息 1 时发出的那次服务调用抛出了异常，于是故障计数器加一，该消息被否定确认。如果计数器超过了所配置的阈值，熔断器就会跳闸并切换到断开状态。</p>
+<p>Once the circuit breaker has been tripped, it will remain so for a preconfigured amount of time. No calls will be made to the service until that time period has expired. This gives the service time to fix the underlying issue before allowing the application to resume making calls to it. After the time period has elapsed, the circuit transitions to the <em>half-open</em> state in which a limited number of requests are permitted to invoke the remote service.</p>
+<p>熔断器一旦跳闸，就会在一个预先配置好的时间长度内保持该状态。在这段时间过去之前，不会对该服务发起任何调用。这给了该服务时间去修复底层问题，之后才允许应用恢复对它的调用。这段时间过去之后，电路会切换到<em>半开</em>（half-open）状态——在该状态下，只允许有限数量的请求去调用远程服务。</p>
+<p><img alt="" src="assets/CH09_F08_Kjerrumgaard.webp" /></p>
+<p>Figure 9.8 Once the circuit breaker’s fault counter exceeds the configured threshold, the circuit transitions to the open state, and all subsequent messages are immediately negatively acked. This prevents making additional calls to a service that are likely to fail and gives the service some time to recover.</p>
+<p>图 9.8 一旦熔断器的故障计数器超过所配置的阈值，电路就切换到断开状态，而所有后续消息都会被立即否定确认。这避免了向一个很可能失败的服务继续发起调用，并给该服务留出一些恢复的时间。</p>
+<p>The half-open state is intended to prevent a recovering service from being flooded with requests from all the backlogged messages. As the service recovers, its capacity to handle requests might be limited at first. Only sending a limited number of requests prevents the recovering system from being overwhelmed after it has recovered. The circuit breaker maintains a success counter that is incremented for every message that is allowed to invoke the service and completes successfully, as shown in figure 9.9.</p>
+<p>半开状态旨在防止一个正在恢复中的服务被所有积压消息所引发的请求洪流淹没。随着服务恢复，它处理请求的能力在起初可能是有限的。只发送有限数量的请求，可以避免这个正在恢复的系统在刚刚恢复之后又被压垮。熔断器维护着一个成功计数器：每有一条消息被允许调用该服务并成功完成，该计数器就加一，如图 9.9 所示。</p>
+<p><img alt="" src="assets/CH09_F09_Kjerrumgaard.webp" /></p>
+<p>Figure 9.9 When the circuit breaker is in the half-open state, a limited number of messages are permitted to invoke the service. Once a sufficient number of these calls complete successfully, the circuit transitions back to the closed state. However, if any of the messages fail, the circuit breaker immediately transitions back to the open state.</p>
+<p>图 9.9 当熔断器处于半开状态时，只允许有限数量的消息去调用该服务。一旦这些调用中有足够多的数量成功完成，电路就切换回闭合状态。但是，如果其中任何一条消息失败，熔断器就立即切换回断开状态。</p>
+<p>If all of these requests are successful, as indicated by the success counter, it is assumed that the fault that was causing the previous issue has been resolved and that the service is ready to accept requests again. Thus, the circuit breaker will then switch back to the closed state and resume normal operations. However, if any of the messages sent during the half-open state fail, the circuit breaker will immediately switch back to the open state (no failure count threshold applies) and restart the timer to give the service additional time to recover from the fault.</p>
+<p>如成功计数器所示，如果这些请求全部成功，那么就可以推定此前引发那个问题的故障已经解决，该服务已准备好重新接受请求。于是熔断器就会切换回闭合状态，并恢复正常运作。然而，如果在半开状态期间发出的任何一条消息失败了，熔断器就会立即切换回断开状态（此时不再适用任何故障计数阈值），并重启计时器，以便给该服务更多的时间从这个故障中恢复。</p>
+<p>This pattern provides stability to the application while the remote service recovers from a non-transient fault by quickly rejecting a request that is likely to fail and might lead to cascading failures throughout the entire application. Oftentimes, this pattern is combined with the retry pattern to handle both transient and non-transient faults within the remote service. To utilize the circuit breaker pattern inside your Pulsar function, you need to wrap the remote service call inside a <em>decorator</em>, as shown in listing 9.4 which shows the implementation of the CreditCardAuthorizationService that is called from the GottaEat payment service when the customer uses a credit card for payment.</p>
+<p>当远程服务正从某个非瞬时故障中恢复时，这个模式通过快速拒绝一个很可能失败、且可能在整个应用中引发级联故障的请求，为应用提供了稳定性。这个模式常常与重试模式组合使用，以应对远程服务中瞬时与非瞬时两类故障。要在自己的 Pulsar 函数中使用熔断器模式，你需要把远程服务调用包进一个<em>装饰器</em>里，如清单 9.4 所示——该清单展示了 CreditCardAuthorizationService 的实现，当客户用信用卡付款时，GottaEat 的支付服务就会调用它。</p>
+<p>Listing 9.4 Utilizing the circuit breaker pattern inside a Pulsar function</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="p">...</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">io.github.resilience4j.circuitbreaker.*</span><span class="p">;</span><span class="w">                       </span><span class="n">❶</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">io.vavr.CheckedFunction0</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">io.vavr.control.Try</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">CreditCardAuthorizationService</span><span class="w"> </span>
+<span class="w">    </span><span class="kd">implements</span><span class="w"> </span><span class="n">Function</span><span class="o">&lt;</span><span class="n">CreditCard</span><span class="p">,</span><span class="w"> </span><span class="n">AuthorizedPayment</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">AuthorizedPayment</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">CreditCard</span><span class="w"> </span><span class="n">card</span><span class="p">,</span><span class="w"> </span><span class="n">Context</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span>
+<span class="w">     </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="n">CircuitBreakerConfig</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CircuitBreakerConfig</span><span class="p">.</span><span class="na">custom</span><span class="p">()</span>
+<span class="w">      </span><span class="p">.</span><span class="na">failureRateThreshold</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span><span class="w">                                       </span><span class="n">❷</span>
+<span class="w">      </span><span class="p">.</span><span class="na">slowCallRateThreshold</span><span class="p">(</span><span class="mi">50</span><span class="p">)</span><span class="w">                                      </span><span class="n">❸</span>
+<span class="w">      </span><span class="p">.</span><span class="na">waitDurationInOpenState</span><span class="p">(</span><span class="n">Duration</span><span class="p">.</span><span class="na">ofMillis</span><span class="p">(</span><span class="mi">30000</span><span class="p">))</span><span class="w">              </span><span class="n">❹</span>
+<span class="w">      </span><span class="p">.</span><span class="na">slowCallDurationThreshold</span><span class="p">(</span><span class="n">Duration</span><span class="p">.</span><span class="na">ofSeconds</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span><span class="w">              </span><span class="n">❺</span>
+<span class="w">      </span><span class="p">.</span><span class="na">permittedNumberOfCallsInHalfOpenState</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="w">                       </span><span class="n">❻</span>
+<span class="w">      </span><span class="p">.</span><span class="na">minimumNumberOfCalls</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span><span class="w">                                       </span><span class="n">❼</span>
+<span class="w">      </span><span class="p">.</span><span class="na">slidingWindowType</span><span class="p">(</span><span class="n">SlidingWindowType</span><span class="p">.</span><span class="na">TIME_BASED</span><span class="p">)</span><span class="w">                </span><span class="n">❽</span>
+<span class="w">         </span><span class="p">.</span><span class="na">slidingWindowSize</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span><span class="w">                                        </span><span class="n">❾</span>
+<span class="w">         </span><span class="p">.</span><span class="na">ignoreException</span><span class="p">(</span><span class="n">e</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">e</span><span class="w"> </span><span class="k">instanceof</span>
+<span class="w">            </span><span class="n">UnsuccessfulCallException</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>
+<span class="w">        </span><span class="p">((</span><span class="n">UnsuccessfulCallException</span><span class="p">)</span><span class="n">e</span><span class="p">).</span><span class="na">getCode</span><span class="p">()</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="mi">499</span><span class="w"> </span><span class="p">)</span><span class="w">             </span><span class="n">❿</span>
+<span class="w">      </span><span class="p">.</span><span class="na">recordExceptions</span><span class="p">(</span><span class="n">IOException</span><span class="p">.</span><span class="na">class</span><span class="p">,</span><span class="w"> </span>
+<span class="w">                        </span><span class="n">UnsuccessfulCallException</span><span class="p">.</span><span class="na">class</span><span class="p">)</span><span class="w">              </span><span class="n">⓫</span>
+<span class="w">     </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">CheckedFunction0</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">cbFunction</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>
+<span class="w">      </span><span class="n">CircuitBreaker</span><span class="p">.</span><span class="na">decorateCheckedSupplier</span><span class="p">(</span>
+<span class="w">         </span><span class="n">CircuitBreakerRegistry</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="n">config</span><span class="p">).</span><span class="na">circuitBreaker</span><span class="p">(</span><span class="s">"name"</span><span class="p">),</span><span class="w">     </span><span class="n">⓬</span>
+<span class="w">         </span><span class="p">()</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">                                                       </span><span class="n">⓭</span>
+<span class="w">        </span><span class="n">OkHttpClient</span><span class="w"> </span><span class="n">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">OkHttpClient</span><span class="p">();</span>
+<span class="w">        </span><span class="n">StringBuilder</span><span class="w"> </span><span class="n">sb</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">StringBuilder</span><span class="p">()</span>
+<span class="w">          </span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="s">"number="</span><span class="p">).</span><span class="na">append</span><span class="p">(</span><span class="n">card</span><span class="p">.</span><span class="na">getAccountNumber</span><span class="p">())</span>
+<span class="w">          </span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="s">"&amp;cvc="</span><span class="p">).</span><span class="na">append</span><span class="p">(</span><span class="n">card</span><span class="p">.</span><span class="na">getCcv</span><span class="p">())</span>
+<span class="w">          </span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="s">"&amp;exp_month="</span><span class="p">).</span><span class="na">append</span><span class="p">(</span><span class="n">card</span><span class="p">.</span><span class="na">getExpMonth</span><span class="p">())</span>
+<span class="w">          </span><span class="p">.</span><span class="na">append</span><span class="p">(</span><span class="s">"&amp;exp_year="</span><span class="p">).</span><span class="na">append</span><span class="p">(</span><span class="n">card</span><span class="p">.</span><span class="na">getExpYear</span><span class="p">());</span>
+
+<span class="w">        </span><span class="n">MediaType</span><span class="w"> </span><span class="n">mediaType</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>
+<span class="w">               </span><span class="n">MediaType</span><span class="p">.</span><span class="na">parse</span><span class="p">(</span><span class="s">"application/x-www-form-urlencoded"</span><span class="p">);</span>
+<span class="w">        </span><span class="n">RequestBody</span><span class="w"> </span><span class="n">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>
+<span class="w">               </span><span class="n">RequestBody</span><span class="p">.</span><span class="na">create</span><span class="p">(</span><span class="n">sb</span><span class="p">.</span><span class="na">toString</span><span class="p">(),</span><span class="w"> </span><span class="n">mediaType</span><span class="p">);</span>
+
+<span class="w">        </span><span class="n">Request</span><span class="w"> </span><span class="n">request</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Request</span><span class="p">.</span><span class="na">Builder</span><span class="p">()</span>
+<span class="w">           </span><span class="p">.</span><span class="na">url</span><span class="p">(</span><span class="s">"https://noodlio-pay.p.rapidapi.com/tokens/create"</span><span class="p">)</span>
+<span class="w">           </span><span class="p">.</span><span class="na">post</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
+<span class="w">           </span><span class="p">.</span><span class="na">addHeader</span><span class="p">(</span><span class="s">"x-rapidapi-key"</span><span class="p">,</span><span class="w"> </span><span class="s">"SIGN-UP-FOR-KEY"</span><span class="p">)</span>
+<span class="w">           </span><span class="p">.</span><span class="na">addHeader</span><span class="p">(</span><span class="s">"x-rapidapi-host"</span><span class="p">,</span><span class="w"> </span><span class="s">"noodlio-pay.p.rapidapi.com"</span><span class="p">)</span>
+<span class="w">           </span><span class="p">.</span><span class="na">addHeader</span><span class="p">(</span><span class="s">"content-type"</span><span class="p">,</span><span class="w"> </span>
+<span class="w">                          </span><span class="s">"application/x-www-form-urlencoded"</span><span class="p">)</span>
+<span class="w">           </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">(</span><span class="n">Response</span><span class="w"> </span><span class="n">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="na">newCall</span><span class="p">(</span><span class="n">request</span><span class="p">).</span><span class="na">execute</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">response</span><span class="p">.</span><span class="na">isSuccessful</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">             </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">UnsuccessfulCallException</span><span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="na">code</span><span class="p">());</span>
+<span class="w">          </span><span class="p">}</span>
+<span class="w">          </span><span class="k">return</span><span class="w"> </span><span class="n">getToken</span><span class="p">(</span><span class="n">response</span><span class="p">.</span><span class="na">body</span><span class="p">().</span><span class="na">string</span><span class="p">());</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">          </span><span class="p">}</span>
+<span class="w">        </span><span class="p">);</span>
+
+<span class="w">        </span><span class="n">Try</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Try</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="n">cbFunction</span><span class="p">);</span><span class="w">                       </span><span class="n">⓮</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nf">authorize</span><span class="p">(</span><span class="n">card</span><span class="p">,</span><span class="w"> </span><span class="n">result</span><span class="p">.</span><span class="na">getOrNull</span><span class="p">());</span><span class="w">                    </span><span class="n">⓯</span>
+<span class="w">      </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getToken</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">json</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="p">...</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">AuthorizedPayment</span><span class="w"> </span><span class="nf">authorize</span><span class="p">(</span><span class="n">CreditCard</span><span class="w"> </span><span class="n">card</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">token</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="p">...</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ We are using classes from the circuitbreaker package.</p>
+<p>❶ 我们使用的是 circuitbreaker 包中的类。</p>
+<p>❷ The number of failures before transitioning to the open state</p>
+<p>❷ 切换到断开状态之前所允许的故障次数。</p>
+<p>❸ The number of slow calls before transitioning to the open state</p>
+<p>❸ 切换到断开状态之前所允许的慢调用次数。</p>
+<p>❹ How long to remain in the open state before transitioning to the half-open state</p>
+<p>❹ 在切换到半开状态之前，需在断开状态停留多久。</p>
+<p>❺ Any call that takes more than 10 seconds is considered slow and added to the count.</p>
+<p>❺ 任何耗时超过 10 秒的调用都被视为慢调用，并计入计数。</p>
+<p>❻ The number of calls that can be made in the half-open state</p>
+<p>❻ 在半开状态下可以发出的调用数量。</p>
+<p>❼ The minimum number of calls before the failure count is applicable</p>
+<p>❼ 故障计数开始适用之前所需的最小调用次数。</p>
+<p>❽ Using a time-based window for the failure count</p>
+<p>❽ 对故障计数采用基于时间的窗口。</p>
+<p>❾ Use a time window of five minutes before restarting failure count.</p>
+<p>❾ 采用五分钟的时间窗口，之后重新开始故障计数。</p>
+<p>❿ List of exceptions that are not added to the failure count</p>
+<p>❿ 不计入故障计数的异常列表。</p>
+<p>⓫ List of exceptions that are added to the failure count</p>
+<p>⓫ 计入故障计数的异常列表。</p>
+<p>⓬ Use our own custom circuit breaker configuration.</p>
+<p>⓬ 使用我们自己的定制熔断器配置。</p>
+<p>⓭ Provide the lambda expression that will be executed if permitted by the circuit breaker.</p>
+<p>⓭ 提供那个在熔断器允许的情况下将被执行的 lambda 表达式。</p>
+<p>⓮ Executes the decorated function until a result is received or the retry limit is reached</p>
+<p>⓮ 执行这个被装饰过的函数，直到拿到结果或达到重试上限。</p>
+<p>⓯ Return the authorized payment or null if no response was received.</p>
+<p>⓯ 返回已授权的支付对象；如果没收到响应，则返回 null。</p>
+<p>The first parameter passed into the CircuitBreaker.decorateCheckedSupplier method is a CircuitBreaker object based on the configuration defined earlier in the code, which specifies the failure count threshold, how long to remain in the open state, and which exceptions indicate a failed method call and which ones do not. Additional details on these parameters and others can be found in the resilience4j documentation (https://resilience4j.readme.io/docs/circuitbreaker).</p>
+<p>传入 CircuitBreaker.decorateCheckedSupplier 方法的第一个参数，是一个基于代码前面所定义配置的 CircuitBreaker 对象，它规定了：故障计数阈值、在断开状态停留多久，以及哪些异常表示一次失败的方法调用、哪些又表示不是。有关这些参数及其他参数的更多细节，可以查阅 resilience4j 的文档（https://resilience4j.readme.io/docs/circuitbreaker）。</p>
+<p>The actual logic that will be called if the circuit breaker is closed is defined inside a lambda expression which was passed in as the second parameter. As you can see, the logic inside the function definition sends an HTTP request to a third-party credit card authorization service named Noodlio Pay, which returns an authorization token that can later be used to collect payment from the credit card provided. The resulting object is a decorated function that is then passed into the Try.of method, which handles all of the circuit breaker logic automatically for you. If the call is successful, the authorization token is extracted from the Noodlio Pay response object and returned inside the AuthorizedPayment object.</p>
+<p>在熔断器处于闭合状态时将会被真正调用的那段逻辑，定义在一个作为第二个参数传入的 lambda 表达式中。可以看到，该函数定义内部的逻辑会向一个名为 Noodlio Pay 的第三方信用卡授权服务发送 HTTP 请求，后者会返回一个授权令牌，日后可凭它从所提供的那张信用卡上收款。由此得到的对象是一个被装饰过的函数，它随后被传入 Try.of 方法，而该方法会替你自动处理全部熔断器逻辑。如果调用成功，授权令牌就会从 Noodlio Pay 的响应对象中被提取出来，并放进 AuthorizedPayment 对象里返回。</p>
+<p>Issues and considerations</p>
+<p>问题与考量</p>
+<p>While this is a very useful pattern to use when interacting with an external system, such as a web service or a database, be sure to consider the following factors when implementing it inside your Pulsar function:</p>
+<p>虽然在与外部系统（例如 Web 服务或数据库）交互时，这是一个非常有用的模式，但在自己的 Pulsar 函数中实现它时，务必考虑以下这些因素：</p>
+<ul>
+<li>
+<p>Consider adjusting the circuit breaker’s strategy based on the severity of the exception itself, as a request might fail for multiple reasons, and some of the errors might be transient and others non-transient. In the presence of a non-transient error, it might make sense to open the circuit breaker immediately rather than waiting for a specific number of occurrences.<br />
+  考虑依据异常本身的严重程度来调整熔断器的策略，因为一个请求可能因为多种原因而失败，其中有些错误可能是瞬时的，有些则是非瞬时的。在出现非瞬时错误的情况下，与其等到它发生特定次数，不如立刻断开熔断器，这可能更合理。</p>
+</li>
+<li>
+<p>Avoid using a single circuit breaker within a Pulsar function that utilizes multiple independent providers. For example, the GottaEat payment service uses four different remote services based on the method of payment provided by the customer. If the call to the payment service went through a single circuit breaker, then error responses from one faulty service could trip the circuit breaker and prevent calls to the other three services that are likely to succeed.<br />
+  避免在一个使用了多个独立服务提供方的 Pulsar 函数内部只用一个熔断器。举例来说，GottaEat 的支付服务依据客户所提供的支付方式，会用到四个不同的远程服务。如果对支付服务的调用都经过同一个熔断器，那么来自某一个故障服务的错误响应就可能让熔断器跳闸，从而阻断对另外三个很可能会成功的服务的调用。</p>
+</li>
+<li>
+<p>A circuit breaker should log all failed requests so the underlying connectivity issues can be identified and corrected as quickly as possible. In addition to regular log files, Pulsar metrics can be used to communicate the number of retry attempts to the Pulsar administrator.<br />
+  熔断器应当把所有失败的请求都记录下来，这样底层的连接问题才能被尽快发现和纠正。除了常规的日志文件之外，还可以用 Pulsar 指标把重试尝试的次数传达给 Pulsar 管理员。</p>
+</li>
+<li>
+<p>The circuit breaker pattern can be used in combination with the retry pattern.<br />
+  熔断器模式可以与重试模式组合使用。</p>
+</li>
+</ul>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4.4.1-unit-testing</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="441-unit-testing">4.4.1 Unit testing</h3>
+<p>The first step would be to write a suite of unit tests that test some of the more common scenarios to validate that the logic is correct and produces accurate results for various sentences we send it. Since this code uses the Pulsar SDK API, we will need to use a mocking library, such as Mockito, to mock the Context object, as shown in the following listing.</p>
+<p>第一步是编写一整套单元测试，测试一些较为常见的场景，以验证逻辑是正确的，并且对我们发送给它的各种句子都能产生准确的结果。由于这段代码使用了 Pulsar SDK 的 API，我们需要使用一个 mock 库（例如 Mockito）来 mock 那个 Context 对象，如下面的清单所示。</p>
+<p>Listing 4.14 KeywordFilterFunction unit tests</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.manning.pulsar.chapter4.functions.sdk</span><span class="p">;</span>
+
+<span class="kn">import static</span><span class="w"> </span><span class="nn">org.mockito.Mockito.*</span><span class="p">;</span>
+<span class="kn">import static</span><span class="w"> </span><span class="nn">org.junit.Assert.*</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">KeywordFilterFunctionTests</span><span class="w"> </span><span class="p">{</span>
+<span class="kd">private</span><span class="w"> </span><span class="n">KeywordFilterFunction</span><span class="w"> </span><span class="n">function</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">KeywordFilterFunction</span><span class="p">();</span>
+
+<span class="nd">@Mock</span>
+<span class="kd">private</span><span class="w"> </span><span class="n">Context</span><span class="w"> </span><span class="n">mockedCtx</span><span class="p">;</span>
+
+<span class="nd">@Before</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">setUp</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">MockitoAnnotations</span><span class="p">.</span><span class="na">initMocks</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@Test</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">containsKeywordTest</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">when</span><span class="p">(</span><span class="n">mockedCtx</span><span class="p">.</span><span class="na">getUserConfigValue</span><span class="p">(</span>
+<span class="w">       </span><span class="n">KeywordFilterFunction</span><span class="p">.</span><span class="na">KEYWORD_CONFIG</span><span class="p">))</span>
+<span class="w">       </span><span class="p">.</span><span class="na">thenReturn</span><span class="p">(</span><span class="n">Optional</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">"dog"</span><span class="p">));</span><span class="w">                        </span><span class="n">❶</span>
+
+<span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">sentence</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"The brown fox jumped over the lazy dog"</span><span class="p">;</span>
+<span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">function</span><span class="p">.</span><span class="na">process</span><span class="p">(</span><span class="n">sentence</span><span class="p">,</span><span class="w"> </span><span class="n">mockedCtx</span><span class="p">);</span>
+<span class="w"> </span><span class="n">assertNotNull</span><span class="p">(</span><span class="n">result</span><span class="p">);</span><span class="w">                                        </span><span class="n">❷</span>
+<span class="w"> </span><span class="nf">assertEquals</span><span class="p">(</span><span class="n">sentence</span><span class="p">,</span><span class="w"> </span><span class="n">result</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@Test</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">doesNotContainKeywordTest</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">when</span><span class="p">(</span><span class="n">mockedCtx</span><span class="p">.</span><span class="na">getUserConfigValue</span><span class="p">(</span>
+<span class="w">    </span><span class="n">KeywordFilterFunction</span><span class="p">.</span><span class="na">KEYWORD_CONFIG</span><span class="p">))</span>
+<span class="w">    </span><span class="p">.</span><span class="na">thenReturn</span><span class="p">(</span><span class="n">Optional</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">"cat"</span><span class="p">));</span><span class="w">                           </span><span class="n">❸</span>
+
+<span class="w">    </span><span class="n">String</span><span class="w"> </span><span class="n">sentence</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"It was the best of times, it was the worst of times"</span><span class="p">;</span>
+<span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">function</span><span class="p">.</span><span class="na">process</span><span class="p">(</span><span class="n">sentence</span><span class="p">,</span><span class="w"> </span><span class="n">mockedCtx</span><span class="p">);</span>
+<span class="w"> </span><span class="n">assertNull</span><span class="p">(</span><span class="n">result</span><span class="p">);</span><span class="w">                                           </span><span class="n">❹</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@Test</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">ignoreCaseTest</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">when</span><span class="p">(</span><span class="n">mockedCtx</span><span class="p">.</span><span class="na">getUserConfigValue</span><span class="p">(</span>
+<span class="w">       </span><span class="n">KeywordFilterFunction</span><span class="p">.</span><span class="na">KEYWORD_CONFIG</span><span class="p">))</span>
+<span class="w">       </span><span class="p">.</span><span class="na">thenReturn</span><span class="p">(</span><span class="n">Optional</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="s">"RED"</span><span class="p">));</span><span class="w">                        </span><span class="n">❺</span>
+
+<span class="w">    </span><span class="nf">when</span><span class="p">(</span><span class="n">mockedCtx</span><span class="p">.</span><span class="na">getUserConfigValue</span><span class="p">(</span>
+<span class="w">       </span><span class="n">KeywordFilterFunction</span><span class="p">.</span><span class="na">IGNORE_CONFIG</span><span class="p">))</span>
+<span class="w">       </span><span class="p">.</span><span class="na">thenReturn</span><span class="p">(</span><span class="n">Optional</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="n">Boolean</span><span class="p">.</span><span class="na">TRUE</span><span class="p">));</span><span class="w">                 </span><span class="n">❻</span>
+
+<span class="w">  </span><span class="n">String</span><span class="w"> </span><span class="n">sentence</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Everyone watched the red sports car drive off."</span><span class="p">;</span>
+<span class="w">  </span><span class="n">String</span><span class="w"> </span><span class="n">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">function</span><span class="p">.</span><span class="na">process</span><span class="p">(</span><span class="n">sentence</span><span class="p">,</span><span class="w"> </span><span class="n">mockedCtx</span><span class="p">);</span>
+<span class="w">  </span><span class="n">assertNotNull</span><span class="p">(</span><span class="n">result</span><span class="p">);</span><span class="w">                                       </span><span class="n">❼</span>
+<span class="w">  </span><span class="nf">assertEquals</span><span class="p">(</span><span class="n">sentence</span><span class="p">,</span><span class="w"> </span><span class="n">result</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ Configure the keyword to be dog.</p>
+<p>❶ 把关键词配置为 dog。</p>
+<p>❷ We expect the sentence to be returned, since it contained the keyword.</p>
+<p>❷ 我们预期该句子会被返回，因为它包含了这个关键词。</p>
+<p>❸ Configure the keyword to be cat.</p>
+<p>❸ 把关键词配置为 cat。</p>
+<p>❹ We don’t expect the sentence to be returned, since it did not contain the keyword.</p>
+<p>❹ 我们不预期该句子会被返回，因为它不包含这个关键词。</p>
+<p>❺ Configure the keyword to be RED.</p>
+<p>❺ 把关键词配置为 RED。</p>
+<p>❻ Configure the function to ignore case when filtering on the keyword.</p>
+<p>❻ 把该函数配置为在按关键词过滤时忽略大小写。</p>
+<p>❼ We expect the sentence to be returned, since it contained a lowercase version of the keyword.</p>
+<p>❼ 我们预期该句子会被返回，因为它包含了该关键词的小写形式。</p>
+<p>As you can see, these unit tests cover the very basic functionality of the function and rely on the use of a mock object for the Pulsar context object. This type of test suite is just like one you would write to test any Java class that wasn’t a Pulsar function.</p>
+<p>正如你所看到的，这些单元测试覆盖了该函数最基本的功能，并且依赖使用一个 mock 对象来替代 Pulsar 的 context 对象。这种类型的测试套件，与你在测试任何一个并非 Pulsar function 的 Java 类时会写的测试套件并无二致。</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

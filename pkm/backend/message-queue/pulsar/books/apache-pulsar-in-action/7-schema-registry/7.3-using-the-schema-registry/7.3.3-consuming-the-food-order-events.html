@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>7.3.3-consuming-the-food-order-events</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="733-consuming-the-food-order-events">7.3.3 Consuming the food order events</h3>
+<p>Lastly, let’s look at the order-validation-service module, which contains a single Pulsar function, named OrderValidationService, which, for the purposes of this chapter, will be just a skeletal implementation of the microservice shown in figure 7.12 and will accept the incoming food orders and validate them for correctness and confirmation of payment, etc. Over time, additional logic will be added, but for now, the function will simply write all of the food orders it receives to standard output (stdout) before forwarding to the configured output topic.</p>
+<p>最后，我们来看看 order-validation-service 模块，它包含唯一一个 Pulsar 函数，名为 OrderValidationService。就本章而言，它只是图 7.12 中那个微服务的一个骨架实现：接收 incoming 的餐品订单，并校验其正确性、确认付款是否成功等。随着时间的推移会陆续加入更多逻辑，但就目前来说，这个函数只是把收到的所有餐品订单写到标准输出（stdout），然后转发到所配置的输出主题。</p>
+<p>Listing 7.8 The OrderValidationService function</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.pulsar.functions.api.Context</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.pulsar.functions.api.Function</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.gottaeat.domain.order.FoodOrder</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">OrderValidationService</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Function</span><span class="o">&lt;</span><span class="n">FoodOrder</span><span class="p">,</span><span class="w"> </span><span class="n">FoodOrder</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+
+<span class="nd">@Override</span>
+<span class="kd">public</span><span class="w"> </span><span class="n">FoodOrder</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">FoodOrder</span><span class="w"> </span><span class="n">order</span><span class="p">,</span><span class="w"> </span><span class="n">Context</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">order</span><span class="p">.</span><span class="na">toString</span><span class="p">());</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">order</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="w">  </span><span class="p">...</span><span class="w"> </span>
+<span class="p">}</span>
+</code></pre>
+<p>This class also includes a main method that contains a LocalRunner configuration, so we can debug this class locally, as shown in the following listing.</p>
+<p>这个类还包含一个 main 方法，其中带有一份 LocalRunner 配置，这样我们就能在本地调试这个类，如下面清单所示。</p>
+<p>Listing 7.9 The OrderValidationService LocalRunner code</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">  </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">ConsumerConfig</span><span class="o">&gt;</span><span class="w"> </span><span class="n">inputSpecs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>
+<span class="w">    </span><span class="k">new</span><span class="w"> </span><span class="n">HashMap</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">ConsumerConfig</span><span class="o">&gt;</span><span class="w"> </span><span class="p">();</span>
+<span class="w">  </span><span class="n">inputSpecs</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"persistent://orders/inbound/food-orders"</span><span class="p">,</span><span class="w"> </span>
+<span class="w">                 </span><span class="n">ConsumerConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">().</span><span class="na">schemaType</span><span class="p">(</span><span class="s">"avro"</span><span class="p">).</span><span class="na">build</span><span class="p">());</span><span class="w">   </span><span class="n">❶</span>
+
+<span class="w">  </span><span class="n">FunctionConfig</span><span class="w"> </span><span class="n">functionConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>
+<span class="w">     </span><span class="n">FunctionConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">      </span><span class="p">.</span><span class="na">className</span><span class="p">(</span><span class="n">OrderValidationService</span><span class="p">.</span><span class="na">class</span><span class="p">.</span><span class="na">getName</span><span class="p">())</span><span class="w">                 </span><span class="n">❷</span>
+<span class="w">      </span><span class="p">.</span><span class="na">inputs</span><span class="p">(</span><span class="n">Collections</span><span class="p">.</span><span class="na">singleton</span><span class="p">(</span>
+<span class="w">          </span><span class="s">"persistent://orders/inbound/food-orders"</span><span class="p">))</span><span class="w">                    </span><span class="n">❸</span>
+<span class="w">      </span><span class="p">.</span><span class="na">inputSpecs</span><span class="p">(</span><span class="n">inputSpecs</span><span class="p">)</span>
+<span class="w">      </span><span class="p">.</span><span class="na">name</span><span class="p">(</span><span class="s">"order-validation"</span><span class="p">)</span>
+<span class="w">      </span><span class="p">.</span><span class="na">output</span><span class="p">(</span><span class="s">"persistent://orders/inbound/valid-food-orders"</span><span class="p">)</span><span class="w">           </span><span class="n">❹</span>
+<span class="w">      </span><span class="p">.</span><span class="na">outputSchemaType</span><span class="p">(</span><span class="s">"avro"</span><span class="p">)</span>
+<span class="w">      </span><span class="p">.</span><span class="na">runtime</span><span class="p">(</span><span class="n">FunctionConfig</span><span class="p">.</span><span class="na">Runtime</span><span class="p">.</span><span class="na">JAVA</span><span class="p">)</span>
+<span class="w">      </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="w">  </span><span class="c1">// Assumes you started docker container with --volume=${HOME}/exchange </span>
+<span class="w">  </span><span class="n">String</span><span class="w"> </span><span class="n">credentials_path</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">System</span><span class="p">.</span><span class="na">getProperty</span><span class="p">(</span><span class="s">"user.home"</span><span class="p">)</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                       </span><span class="n">File</span><span class="p">.</span><span class="na">separator</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">"exchange"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">File</span><span class="p">.</span><span class="na">separator</span><span class="p">;</span>
+
+<span class="w">  </span><span class="n">LocalRunner</span><span class="w"> </span><span class="n">localRunner</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LocalRunner</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">  </span><span class="p">.</span><span class="na">brokerServiceUrl</span><span class="p">(</span><span class="s">"pulsar+ssl://localhost:6651"</span><span class="p">)</span><span class="w">                       </span><span class="n">❺</span>
+<span class="w">  </span><span class="p">.</span><span class="na">clientAuthPlugin</span><span class="p">(</span><span class="s">"org.apache.pulsar.client.impl.auth.AuthenticationTls"</span><span class="p">)</span>
+<span class="w">  </span><span class="p">.</span><span class="na">clientAuthParams</span><span class="p">(</span><span class="s">"tlsCertFile:"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">credentials_path</span><span class="w"> </span><span class="o">+</span><span class="w"> </span>
+<span class="w">       </span><span class="s">"admin.cert.pem,tlsKeyFile:"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">credentials_path</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">"admin-pk8.pem"</span><span class="p">)</span><span class="w"> </span>
+<span class="w">  </span><span class="p">.</span><span class="na">tlsTrustCertFilePath</span><span class="p">(</span><span class="n">credentials_path</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">"ca.cert.pem"</span><span class="p">)</span><span class="w">                </span><span class="n">❻</span>
+<span class="w">  </span><span class="p">.</span><span class="na">functionConfig</span><span class="p">(</span><span class="n">functionConfig</span><span class="p">)</span>
+<span class="w">  </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="w">  </span><span class="n">localRunner</span><span class="p">.</span><span class="na">start</span><span class="p">(</span><span class="kc">false</span><span class="p">);</span><span class="w">                                              </span><span class="n">❼</span>
+<span class="w">  </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">30</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000</span><span class="p">);</span>
+<span class="w">  </span><span class="n">localRunner</span><span class="p">.</span><span class="na">stop</span><span class="p">();</span><span class="w">                                                    </span><span class="n">❽</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ We will be consuming Avro messages.</p>
+<p>❶ 我们将消费 Avro 消息。</p>
+<p>❷ The function class we want to run</p>
+<p>❷ 我们想要运行的那个函数类。</p>
+<p>❸ The topic the function will consume messages from</p>
+<p>❸ 该函数将从中消费消息的那个主题。</p>
+<p>❹ The topic the function will publish messages to</p>
+<p>❹ 该函数将把消息发布到的那个主题。</p>
+<p>❺ Specify the URL of the Pulsar broker we are going to interact with.</p>
+<p>❺ 指定我们要与之交互的那个 Pulsar broker 的 URL。</p>
+<p>❻ Specify the TLS authentication credentials needed to connect to Pulsar.</p>
+<p>❻ 指定连接 Pulsar 所需的 TLS 认证凭据。</p>
+<p>❼ Starts the local runner</p>
+<p>❼ 启动 local runner。</p>
+<p>❽ Stops the local runner</p>
+<p>❽ 停止 local runner。</p>
+<p>As you can see from listing 7.8, we have configured the LocalRunner to connect to the same Pulsar instance. This is why there are several security-related configuration settings in the source code that rely on the security credentials generated inside that container, such as the TLS client certificate and trust store.</p>
+<p>从清单 7.8 中可以看到，我们把 LocalRunner 配置为连接到同一个 Pulsar 实例。正因如此，源码中才会有若干与安全相关的配置项，它们依赖于那个容器内部所生成的那些安全凭据，例如 TLS 客户端证书和信任库。</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5.2.1-developing-a-sink-connector</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="521-developing-a-sink-connector">5.2.1 Developing a sink connector</h3>
+<p>I will start with a very basic sink connector that receives an endless stream of string values and writes them to a local temp file, as shown in listing 5.5. While this sink connector does have some limitations, specifically that you cannot write an endless stream of data to a single file, it does serve as a good example that can be used to demonstrate the process of developing a Sink connector.</p>
+<p>我将从一个非常基础的 sink 连接器开始，它接收一串源源不断的字符串值，并把它们写入一个本地临时文件，如清单 5.5 所示。虽然这个 sink 连接器确实有一些局限，具体来说你无法把无休无止的数据流写入单个文件，但它作为一个不错的示例，足以用来演示开发一个 Sink 连接器的过程。</p>
+<p>Listing 5.5 Local file Pulsar IO sink</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.pulsar.io.core.Sink</span><span class="p">;</span><span class="w">                           </span><span class="n">❶</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">LocalFileSink</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Sink</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">   </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">prefix</span><span class="p">,</span><span class="w"> </span><span class="n">suffix</span><span class="p">;</span>
+<span class="w">   </span><span class="kd">private</span><span class="w"> </span><span class="n">BufferedWriter</span><span class="w"> </span><span class="n">bw</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">   </span><span class="kd">private</span><span class="w"> </span><span class="n">FileWriter</span><span class="w"> </span><span class="n">fw</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+
+<span class="w">   </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">open</span><span class="p">(</span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">config</span><span class="p">,</span>
+<span class="w">                    </span><span class="n">SinkContext</span><span class="w"> </span><span class="n">sinkContext</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">     </span><span class="n">prefix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">String</span><span class="p">)</span><span class="w"> </span><span class="n">config</span><span class="p">.</span><span class="na">getOrDefault</span><span class="p">(</span><span class="s">"filenamePrefix"</span><span class="p">,</span><span class="w"> </span><span class="s">"test-out"</span><span class="p">);</span>
+<span class="w">     </span><span class="n">suffix</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">String</span><span class="p">)</span><span class="w"> </span><span class="n">config</span><span class="p">.</span><span class="na">getOrDefault</span>
+<span class="w">        </span><span class="p">(</span><span class="s">"filenameSuffix"</span><span class="p">,</span><span class="w"> </span><span class="s">".tmp"</span><span class="p">);</span><span class="w">                              </span><span class="n">❷</span>
+
+<span class="w">     </span><span class="n">File</span><span class="w"> </span><span class="n">file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">File</span><span class="p">.</span><span class="na">createTempFile</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span><span class="w"> </span><span class="n">suffix</span><span class="p">);</span><span class="w">            </span><span class="n">❸</span>
+<span class="w">     </span><span class="n">fw</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">FileWriter</span><span class="p">(</span><span class="n">file</span><span class="p">.</span><span class="na">getAbsoluteFile</span><span class="p">(),</span><span class="w"> </span><span class="kc">true</span><span class="p">);</span><span class="w">          </span><span class="n">❹</span>
+<span class="w">     </span><span class="n">bw</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">BufferedWriter</span><span class="p">(</span><span class="n">fw</span><span class="p">);</span>
+<span class="w">   </span><span class="p">}</span>
+
+<span class="w">   </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="n">Record</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">record</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">     </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">bw</span><span class="p">.</span><span class="na">write</span><span class="p">(</span><span class="n">record</span><span class="p">.</span><span class="na">getValue</span><span class="p">());</span><span class="w">                             </span><span class="n">❺</span>
+<span class="w">        </span><span class="n">bw</span><span class="p">.</span><span class="na">flush</span><span class="p">();</span>
+<span class="w">        </span><span class="kd">record</span><span class="err">.</span><span class="nc">ack</span><span class="p">();</span><span class="w">                                            </span><span class="n">❻</span>
+<span class="w">     </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">IOException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">record</span><span class="err">.</span><span class="nc">fail</span><span class="p">();</span><span class="w">                                           </span><span class="n">❼</span>
+<span class="w">        </span><span class="k">throw</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="nf">RuntimeException</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+<span class="w">     </span><span class="p">}</span>
+<span class="w">   </span><span class="p">}</span>
+
+<span class="w">   </span><span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">close</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span><span class="w">                        </span><span class="n">❽</span>
+<span class="w">      </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">         </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">bw</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span>
+<span class="w">            </span><span class="n">bw</span><span class="p">.</span><span class="na">close</span><span class="p">();</span>
+<span class="w">         </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">fw</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span>
+<span class="w">           </span><span class="n">fw</span><span class="p">.</span><span class="na">close</span><span class="p">();</span>
+<span class="w">     </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">IOException</span><span class="w"> </span><span class="n">ex</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">ex</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">     </span><span class="p">}</span>
+<span class="w">   </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ Import the source interface.</p>
+<p>❶ 导入 source 接口。</p>
+<p>❷ Retrieve the target filename prefix and suffix from the provided configuration properties.</p>
+<p>❷ 从所提供的配置属性中取出目标文件名的前缀和后缀。</p>
+<p>❸ Create the new file in the temporary directory.</p>
+<p>❸ 在临时目录中创建这个新文件。</p>
+<p>❹ Initialize the file and buffered writers.</p>
+<p>❹ 初始化文件写入器和缓冲写入器。</p>
+<p>❺ Retrieve the value from the incoming record, and write it to the open file.</p>
+<p>❺ 从传入的记录中取出值，并把它写入已打开的文件。</p>
+<p>❻ Acknowl-edge that we processed the message successfully, so it can be purged.</p>
+<p>❻ 确认我们已成功处理该消息，使其可以被清除。</p>
+<p>❼ Indicate that we weren’t able to process the message, so it can be retained and retried at a later time.</p>
+<p>❼ 表明我们无法处理该消息，使其可以被保留并在稍后重试。</p>
+<p>❽ Close both of the open file streams to ensure the data is flushed to disk.</p>
+<p>❽ 关闭两个已打开的文件流，以确保数据被刷写到磁盘上。</p>
+<p>The open method of the connector retrieves the configuration properties provided by the user and creates the empty target file inside the temp directory of the host. Next, the instance-level FileWriter and BufferedWriter variables are initialized to point to the newly created target file, while the close method will attempt to close both of the writers when the connector is stopped.</p>
+<p>该连接器的 open 方法取出由用户提供的配置属性，并在宿主机的临时目录中创建那个空的目标文件。接下来，实例级的 FileWriter 和 BufferedWriter 变量被初始化为指向这个新创建的目标文件；而 close 方法会在该连接器被停止时尝试关闭这两个写入器。</p>
+<p>The sink’s write method is invoked whenever a new message arrives in any of the sink’s configured input topics. The method appends the record value to the target file via the BufferedWriter’s write method before acknowledging that the message has been successfully processed. In the unlikely event that we cannot write the record’s contents to the temp file, an IOException will be thrown, and the sink will fail the message before propagating the exception.</p>
+<p>每当有一条新消息到达该 sink 所配置的任一输入主题时，该 sink 的 write 方法就会被调用。该方法会通过 BufferedWriter 的 write 方法把记录的值追加到目标文件中，然后确认该消息已被成功处理。在我们无法把该记录的内容写入临时文件这一不大可能发生的情况下，会抛出一个 IOException，并且该 sink 会在传播该异常之前先把这条消息标记为失败。</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5.4.1-creating-and-deleting-connectors</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="541-creating-and-deleting-connectors">5.4.1 Creating and deleting connectors</h3>
+<p>If you haven’t already done so, run the mvn clean install command to create the NAR file for the DirectorySource connector. Also, you will want to stop any running Docker Pulsar containers, as you will need to start a new instance with some additional parameters that allow you to access the NAR file from inside the Pulsar Docker container, as shown in the following listing.</p>
+<p>如果你还没有这么做，请运行 mvn clean install 命令，为 DirectorySource 连接器创建那个 NAR 文件。此外，你会希望停掉任何正在运行的 Docker Pulsar 容器，因为你需要用一些额外的参数来启动一个新的实例，这些参数允许你从 Pulsar Docker 容器内部访问该 NAR 文件，如下面的清单所示。</p>
+<p>Listing 5.13 Starting Pulsar Docker container with mounted volumes</p>
+<pre lang="bash"><code class="language-bash md-fencescode">$<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">GIT_PROJECT</span><span class="o">=</span>&lt;CLONE_DIR&gt;/pulsar-in-action/chapter5<span class="w">   </span>❶
+$<span class="w"> </span>docker<span class="w"> </span>run<span class="w"> </span>--name<span class="w"> </span>pulsar<span class="w"> </span>-id<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-p<span class="w"> </span><span class="m">6650</span>:6650<span class="w"> </span>-p<span class="w"> </span><span class="m">8080</span>:8080<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-v<span class="w"> </span><span class="nv">$GIT_PROJECT</span>:/pulsar/dropbox<span class="w">                           </span>❷
+<span class="w">  </span>apachepulsar/pulsar-standalone
+</code></pre>
+<p>❶ Set this to the directory where you cloned the book’s associated repo.</p>
+<p>❶ 把它设置为你克隆本书配套仓库的目录。</p>
+<p>❷ Makes the project directory accessible inside the Docker container</p>
+<p>❷ 使该项目目录在 Docker 容器内部可被访问</p>
+<p>As you can see from listing 5.13, we have added a -v switch to the usual command we have been using to launch a Pulsar Docker container. That switch mounts the local directory where you cloned the source code for this chapter onto your machine to a folder named /pulsar/dropbox inside the Docker container itself. This is necessary to deploy the connector, since the NAR file has to be physically accessible by the Pulsar cluster for it to be deployed. We will also use this mounted directory to access the configuration file that must be provided when creating a connector.</p>
+<p>正如你从清单 5.13 中看到的，我们在平常用来启动 Pulsar Docker 容器的那条命令上添加了一个 -v 开关。该开关把你在本机上克隆本章源代码的那个本地目录，挂载到 Docker 容器自身内部一个名为 /pulsar/dropbox 的文件夹上。要部署这个连接器，这样做是必需的，因为该 NAR 文件必须能被 Pulsar 集群物理地访问到，它才能被部署。我们还将用这个被挂载的目录来访问创建连接器时必须提供的那个配置文件。</p>
+<p>As you may have noticed, we have always provided hard-coded values for the configuration property inside the unit and integration tests, but when deploying to production, we want to specify those values in a more dynamic manner. This is where the configuration file comes in, as it allows us to specify connector-specific configurations along with other standard connector properties such as parallelism.</p>
+<p>你可能已经注意到，在单元测试和集成测试内部，我们一直是为配置属性提供硬编码的值；但在部署到生产环境时，我们希望以一种更动态的方式来指定这些值。这正是配置文件发挥作用的地方——它允许我们指定连接器专属的配置，以及并行度等其他标准连接器属性。</p>
+<p>Listing 5.14 Contents of the DirectorySource connector config file</p>
+<pre lang="yaml"><code class="language-yaml md-fencescode"><span class="nt">tenant</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">public</span>
+<span class="nt">namespace</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">default</span>
+<span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">directory-source</span>
+
+<span class="nt">className</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">com.manning.pulsar.chapter5.source.DirectorySource</span>
+<span class="nt">topicName</span><span class="p">:</span><span class="w"> </span><span class="s">"persistent://public/default/directory-scan"</span>
+<span class="nt">parallelism</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="nt">processingGuarantees</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ATLEAST_ONCE</span>
+
+<span class="c1"># Connector specific config</span>
+<span class="nt">configs</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">inputDir</span><span class="p">:</span><span class="w"> </span><span class="s">"/tmp/input"</span>
+<span class="w">    </span><span class="nt">processedDir</span><span class="p">:</span><span class="w"> </span><span class="s">"/tmp/processed"</span>
+<span class="w">    </span><span class="nt">frequency</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
+</code></pre>
+<p>As you can see in listing 5.14, the configuration file we are going to use to deploy the connector contains values for source and processed directories along with several properties used by the Pulsar IO framework to create the Pulsar IO connector. The configuration file is then provided to the bin/pulsar-admin source create command when you want to create a new source connector, as shown in the following listing.</p>
+<p>正如你在清单 5.14 中看到的，我们将用来部署该连接器的这个配置文件，包含了 source 与 processed 目录的取值，以及 Pulsar IO 框架用来创建该 Pulsar IO 连接器的若干属性。当你想要创建一个新的 source 连接器时，就把这个配置文件提供给 bin/pulsar-admin source create 命令，如下面的清单所示。</p>
+<p>Listing 5.15 The output of the create command</p>
+<pre lang="bash"><code class="language-bash md-fencescode">docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>pulsar<span class="w"> </span>mkdir<span class="w"> </span>-p<span class="w"> </span>/tmp/input
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>pulsar<span class="w"> </span>chmod<span class="w"> </span>a+w<span class="w"> </span>/tmp/input
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>pulsar<span class="w"> </span>mkdir<span class="w"> </span>-p<span class="w"> </span>/tmp/processed
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>pulsar<span class="w"> </span>chmod<span class="w"> </span>a+w<span class="w"> </span>/tmp/processed
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>pulsar<span class="w"> </span>cp<span class="w"> </span>/pulsar/dropbox/src/test/resources/example-1.txt<span class="w"> </span><span class="se">\</span>
+/tmp/input<span class="w">                                                              </span>❶
+
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>pulsar<span class="w"> </span>/pulsar/bin/pulsar-admin<span class="w"> </span><span class="nb">source</span><span class="w"> </span>create<span class="w"> </span><span class="se">\ </span><span class="w">       </span>❷
+<span class="w"> </span>--archive<span class="w"> </span>/pulsar/dropbox/target/chapter5-0.0.1.nar<span class="w"> </span><span class="se">\ </span><span class="w">                </span>❸
+<span class="w"> </span>--source-config-file<span class="w"> </span>/pulsar/dropbox/src/main/resources/config.yml<span class="w">     </span>❹
+
+<span class="s2">"Created successfully"</span><span class="w">                                                  </span>❺
+
+docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>pulsar<span class="w"> </span>/pulsar/bin/pulsar-admin<span class="w"> </span><span class="nb">source</span><span class="w"> </span>list<span class="w">            </span>❻
+<span class="o">[</span>
+<span class="w">  </span><span class="s2">"directory-source"</span>
+<span class="o">]</span>
+</code></pre>
+<p>❶ Create the input and output folders inside the container, and copy over a test file.</p>
+<p>❶ 在容器内部创建输入和输出文件夹，并复制过去一个测试文件。</p>
+<p>❷ Using the source, create a command to create the connector.</p>
+<p>❷ 使用 source create 命令来创建该连接器。</p>
+<p>❸ Specifies the NAR file that contains the source connector class</p>
+<p>❸ 指定包含该 source 连接器类的 NAR 文件</p>
+<p>❹ Specifies the configuration file to use</p>
+<p>❹ 指定要使用的配置文件</p>
+<p>❺ A response message indicating that the source was created</p>
+<p>❺ 表明该 source 已被创建的响应消息</p>
+<p>❻ List the active source connectors to confirm it was created.</p>
+<p>❻ 列出活跃的 source 连接器，以确认它已被创建。</p>
+<p>When you create the connector, you should receive a reassuring Created successfully message to indicate that the connector was launched successfully. If you did not receive the success message, you will need to debug the error, as described in the next section.</p>
+<p>当你创建该连接器时，你应该会收到一条让人安心的 Created successfully 消息，表明该连接器已成功启动。如果你没有收到这条成功消息，就需要按下一节所描述的方法去排查错误。</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

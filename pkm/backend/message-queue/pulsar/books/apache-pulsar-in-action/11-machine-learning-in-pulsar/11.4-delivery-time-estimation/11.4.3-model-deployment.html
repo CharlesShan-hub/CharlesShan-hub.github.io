@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>11.4.3-model-deployment</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="1143-model-deployment">11.4.3 Model deployment</h3>
+<p>The final step in the process of deploying an ML model in near real-time mode is writing the Pulsar function itself. Fortunately, once an ML model is exported to the PMML format, it can be deployed to production using a wide variety of execution engines available in Java. In our case, we will use an open-source library called <em>JPMML</em>, which we can include in our Maven dependencies, as shown in the next listing.</p>
+<p>以近乎实时模式部署一个 ML 模型，这个过程的最后一步就是编写那个 Pulsar 函数本身。所幸，一旦一个 ML 模型被导出成了 PMML 格式，就可以用 Java 中现成的各种各样执行引擎把它部署到生产环境。在我们的案例中，我们将使用一个名为 <em>JPMML</em> 的开源库——我们可以把它加进自己的 Maven 依赖里，如下面这份清单所示。</p>
+<p>Listing 11.6 The JPMML library dependency</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="w">  </span><span class="nt">&lt;dependency&gt;</span>
+<span class="w">    </span><span class="nt">&lt;groupId&gt;</span>org.jpmml<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>pmml-evaluator<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;version&gt;</span>1.5.15<span class="nt">&lt;/version&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/dependency&gt;</span>
+</code></pre>
+<p>This library allows us to import PMML models and use them to generate predictions. Once the PMML model has been loaded into the JPMML evaluator class, we are ready to generate delivery time predictions on incoming food orders. Therefore, as you can see from listing 11.8, the very first step in the process is to retrieve the PMML model that is stored inside Pulsar’s state store and use it to initialize the appropriate model evaluator. In this case, we need a regression model evaluator, since the delivery time estimation model uses linear regression.</p>
+<p>这个库让我们能够导入 PMML 模型，并用它们来生成预测。一旦这个 PMML 模型被加载进了 JPMML 的 evaluator 类，我们就可以对 incoming 的餐品订单生成送达时间预测了。因此，正如你从清单 11.8 中所看到的，这个过程中的第一步，就是取回存放在 Pulsar 状态存储中的那个 PMML 模型，并用它来初始化适当的模型 evaluator。在这里，我们需要一个回归模型 evaluator，因为送达时间预估模型使用的是线性回归。</p>
+<p>Listing 11.7 The delivery time estimation function</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">import</span><span class="w"> </span><span class="nn">org.dmg.pmml.FieldName</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.dmg.pmml.regression.RegressionModel</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.jpmml.evaluator.ModelEvaluator</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.jpmml.evaluator.regression.RegressionModelEvaluator</span><span class="p">;</span><span class="w">      </span><span class="n">❶</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.jpmml.model.PMMLUtil</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.gottaeat.domain.geography.LatLon</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">com.gottaeat.domain.order.FoodOrderML</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">DeliveryTimeEstimator</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span>
+<span class="w">  </span><span class="n">Function</span><span class="o">&lt;</span><span class="n">FoodOrderML</span><span class="p">,</span><span class="w"> </span><span class="n">FoodOrderML</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">                                </span><span class="n">❷</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">IgniteClient</span><span class="w"> </span><span class="n">client</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">ClientCache</span><span class="o">&lt;</span><span class="n">Long</span><span class="p">,</span><span class="w"> </span><span class="n">LatLon</span><span class="o">&gt;</span><span class="w"> </span><span class="n">cache</span><span class="p">;</span><span class="w">                          </span><span class="n">❸</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">datagridUrl</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">locationCacheName</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kt">byte</span><span class="o">[]</span><span class="w"> </span><span class="n">mlModel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">ModelEvaluator</span><span class="o">&lt;</span><span class="n">RegressionModel</span><span class="o">&gt;</span><span class="w"> </span><span class="n">evaluator</span><span class="p">;</span><span class="w">                </span><span class="n">❹</span>
+
+
+<span class="w">   </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">FoodOrderML</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">FoodOrderML</span><span class="w"> </span><span class="n">order</span><span class="p">,</span><span class="w"> </span><span class="n">Context</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span>
+<span class="w">      </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">initalized</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">mlModel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ctx</span><span class="p">.</span><span class="na">getState</span><span class="p">(</span><span class="n">MODEL_KEY</span><span class="p">).</span><span class="na">array</span><span class="p">();</span><span class="w">                    </span><span class="n">❺</span>
+<span class="w">        </span><span class="n">evaluator</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">RegressionModelEvaluator</span><span class="p">(</span>
+<span class="w">         </span><span class="n">PMMLUtil</span><span class="p">.</span><span class="na">unmarshal</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">ByteArrayInputStream</span><span class="p">(</span><span class="n">mlModel</span><span class="p">)));</span><span class="w">      </span><span class="n">❻</span>
+<span class="w">      </span><span class="p">}</span>
+
+<span class="w">      </span><span class="n">HashMap</span><span class="o">&lt;</span><span class="n">FieldName</span><span class="p">,</span><span class="w"> </span><span class="n">Double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">featureVector</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">HashMap</span><span class="o">&lt;&gt;</span><span class="p">();</span>
+
+<span class="w">      </span><span class="n">featureVector</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="n">FieldName</span><span class="p">.</span><span class="na">create</span><span class="p">(</span><span class="s">"avg_prep_last_hour"</span><span class="p">),</span><span class="w"> </span>
+<span class="w">        </span><span class="n">order</span><span class="p">.</span><span class="na">getRestaurantFeatures</span><span class="p">().</span><span class="na">getAvgMealPrepLastHour</span><span class="p">());</span>
+
+<span class="w">      </span><span class="n">featureVector</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="n">FieldName</span><span class="p">.</span><span class="na">create</span><span class="p">(</span><span class="s">"avg_prep_last_7days"</span><span class="p">),</span><span class="w"> </span>
+<span class="w">        </span><span class="n">order</span><span class="p">.</span><span class="na">getRestaurantFeatures</span><span class="p">().</span><span class="na">getAvgMealPrepLast7Days</span><span class="p">());</span><span class="w">     </span><span class="n">❼</span>
+
+<span class="w">      </span><span class="p">...</span>
+
+<span class="w">      </span><span class="n">featureVector</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="n">FieldName</span><span class="p">.</span><span class="na">create</span><span class="p">(</span><span class="s">"driver_lat"</span><span class="p">),</span>
+<span class="w">        </span><span class="n">getCache</span><span class="p">().</span><span class="na">get</span><span class="p">(</span><span class="n">order</span><span class="p">.</span><span class="na">getAssignedDriverId</span><span class="p">()).</span><span class="na">getLatitude</span><span class="p">());</span>
+
+<span class="w">      </span><span class="n">featureVector</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="n">FieldName</span><span class="p">.</span><span class="na">create</span><span class="p">(</span><span class="s">"driver_long"</span><span class="p">),</span>
+<span class="w">        </span><span class="n">getCache</span><span class="p">().</span><span class="na">get</span><span class="p">(</span><span class="n">order</span><span class="p">.</span><span class="na">getAssignedDriverId</span><span class="p">()).</span><span class="na">getLongitude</span><span class="p">());</span><span class="w">  </span><span class="n">❽</span>
+
+<span class="w">      </span><span class="n">Long</span><span class="w"> </span><span class="n">travel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">Long</span><span class="p">)</span><span class="n">evaluator</span><span class="p">.</span><span class="na">evaluate</span><span class="p">(</span><span class="n">featureVector</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="n">FieldName</span><span class="p">.</span><span class="na">create</span><span class="p">(</span><span class="s">"travel_time"</span><span class="p">));</span><span class="w">                            </span><span class="n">❾</span>
+
+<span class="w">      </span><span class="n">order</span><span class="p">.</span><span class="na">setEstimatedArrival</span><span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="na">currentTimeMillis</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">travel</span><span class="p">);</span><span class="w"> </span><span class="n">❿</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="n">order</span><span class="p">;</span>
+<span class="w">   </span><span class="p">}</span>
+
+<span class="p">...</span>
+
+<span class="p">}</span>
+</code></pre>
+<p>❶ Using the JPMML regression evaluator for the linear regression ML model</p>
+<p>❶ 为这个线性回归 ML 模型使用 JPMML 的回归 evaluator。</p>
+<p>❷ The incoming message contains order details and retrieved features from the feature store.</p>
+<p>❷ 传入的消息中包含订单详情，以及从特征存储中取回的那些特征。</p>
+<p>❸ The model requires information from the in-memory data grid.</p>
+<p>❸ 该模型需要来自内存数据网格的信息。</p>
+<p>❹ The JPMML model evaluator</p>
+<p>❹ JPMML 的模型 evaluator。</p>
+<p>❺ Retrieve the model from the Pulsar state store.</p>
+<p>❺ 从 Pulsar 的状态存储中取回模型。</p>
+<p>❻ Load the model into the regression evaluator class.</p>
+<p>❻ 把这个模型加载进回归 evaluator 类。</p>
+<p>❼ Populate the feature vector with values stored inside the incoming message.</p>
+<p>❼ 用传入消息中所存放的那些值填充特征向量。</p>
+<p>❽ Populate the feature vector with the driver location data from the IMDG.</p>
+<p>❽ 用来自 IMDG 的司机位置数据填充特征向量。</p>
+<p>❾ Pass the feature vector to the model and retrieve the prediction.</p>
+<p>❾ 把特征向量交给模型，并取回预测值。</p>
+<p>❿ Compute the estimated arrival time by adding the predicted travel time to the current time.</p>
+<p>❿ 把预测出的行程时间加到当前时间上，从而算出预计到达时间。</p>
+<p>Once the evaluator has been initialized, the DeliveryTimeEstimator constructs a feature vector and populates it with values contained inside the incoming message along with some values from other low-latency data sources, such as an in-memory datagrid. In this case, the model requires the driver’s current location (latitude/longitude), which is only available from the IMDG.</p>
+<p>一旦这个 evaluator 被初始化完毕，DeliveryTimeEstimator 就会构造一个特征向量，并用传入消息中所含的那些值、以及来自其他低延迟数据源（例如一个内存数据网格）的一些值来填充它。在这里，该模型需要司机的当前位置（纬度/经度），而这只有从 IMDG 中才能拿到。</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

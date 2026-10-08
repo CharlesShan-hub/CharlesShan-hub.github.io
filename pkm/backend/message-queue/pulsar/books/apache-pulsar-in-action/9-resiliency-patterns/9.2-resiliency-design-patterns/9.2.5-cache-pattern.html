@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>9.2.5-cache-pattern</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="925-cache-pattern">9.2.5 Cache pattern</h3>
+<p>If you would prefer <em>not</em> to write a separate function just to perform lookups, the resilency4j library also provides a way to decorate a function call with a cache as well. Listing 9.7 shows how to decorate a Java lambda expression with a cache abstraction. The cache abstraction stores the result of every invocation of the function in a cache instance and tries to retrieve a previous cached result from the cache before it invokes the lambda expression.</p>
+<p>如果你<em>不</em>想为了做查询而专门另写一个函数，那么 resilience4j 库也提供了一种办法来为函数调用装饰上一个缓存。清单 9.7 展示了如何用一个缓存抽象来装饰一个 Java lambda 表达式。这个缓存抽象会把该函数的每一次调用结果存进一个缓存实例，并在真正调用那个 lambda 表达式之前，先尝试从缓存中取回先前缓存过的结果。</p>
+<p>Listing 9.7 Utilizing the resiliency cache inside a Pulsar function</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">import</span><span class="w"> </span><span class="nn">javax.cache.CacheManager</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">javax.cache.Caching</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">javax.cache.configuration.MutableConfiguration</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">io.github.resilience4j.cache.Cache</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">io.github.resilience4j.decorators.Decorators</span><span class="p">;</span>
+
+<span class="p">...</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">GeoEncodingServiceWithCache</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Function</span><span class="o">&lt;</span><span class="n">Address</span><span class="p">,</span><span class="w"> </span><span class="n">Void</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">Void</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">Address</span><span class="w"> </span><span class="n">addr</span><span class="p">,</span><span class="w"> </span><span class="n">Context</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">   </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">initalized</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">init</span><span class="p">(</span><span class="n">ctx</span><span class="p">);</span><span class="w">                                                           </span><span class="n">❶</span>
+<span class="w">   </span><span class="p">}</span>
+
+<span class="w">   </span><span class="n">CheckedFunction1</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">cachedFunction</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Decorators</span>
+<span class="w">      </span><span class="p">.</span><span class="na">ofCheckedSupplier</span><span class="p">(</span><span class="n">getFunction</span><span class="p">(</span><span class="n">addr</span><span class="p">))</span><span class="w">                                </span><span class="n">❷</span>
+<span class="w">      </span><span class="p">.</span><span class="na">withCache</span><span class="p">(</span><span class="n">cacheContext</span><span class="p">)</span><span class="w">                                             </span><span class="n">❸</span>
+<span class="w">      </span><span class="p">.</span><span class="na">decorate</span><span class="p">();</span>
+
+<span class="w">   </span><span class="n">LatLon</span><span class="w"> </span><span class="n">geo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getLocation</span><span class="p">(</span><span class="w">                                               </span><span class="n">❹</span>
+<span class="w">  </span><span class="n">Try</span><span class="p">.</span><span class="na">of</span><span class="p">(()</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">cachedFunction</span><span class="p">.</span><span class="na">apply</span><span class="p">(</span><span class="n">addr</span><span class="p">.</span><span class="na">toString</span><span class="p">())).</span><span class="na">get</span><span class="p">());</span><span class="w">              </span><span class="n">❺</span>
+
+<span class="w">   </span><span class="nf">if</span><span class="w"> </span><span class="p">(</span><span class="n">geo</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">addr</span><span class="p">.</span><span class="na">setGeo</span><span class="p">(</span><span class="n">geo</span><span class="p">);</span><span class="w">                                                    </span><span class="n">❻</span>
+<span class="w">      </span><span class="n">ctx</span><span class="p">.</span><span class="na">newOutputMessage</span><span class="p">(</span><span class="n">ctx</span><span class="p">.</span><span class="na">getOutputTopic</span><span class="p">(),</span><span class="n">AvroSchema</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="n">Address</span><span class="p">.</span><span class="na">class</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="na">properties</span><span class="p">(</span><span class="n">ctx</span><span class="p">.</span><span class="na">getCurrentRecord</span><span class="p">().</span><span class="na">getProperties</span><span class="p">())</span>
+<span class="w">        </span><span class="p">.</span><span class="na">value</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">send</span><span class="p">();</span>
+<span class="w">   </span><span class="p">}</span><span class="w"> </span>
+<span class="w">   </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="kd">private</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">Context</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">CacheManager</span><span class="w"> </span><span class="n">cacheManager</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>
+<span class="w">    </span><span class="n">Caching</span><span class="p">.</span><span class="na">getCachingProvider</span><span class="p">().</span><span class="na">getCacheManager</span><span class="p">();</span><span class="w">                         </span><span class="n">❼</span>
+
+<span class="w">  </span><span class="n">cacheContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Cache</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="n">cacheManager</span><span class="p">.</span><span class="na">createCache</span><span class="p">(</span><span class="w">                        </span><span class="n">❽</span>
+<span class="w">    </span><span class="s">"addressCache"</span><span class="p">,</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">MutableConfiguration</span><span class="o">&lt;&gt;</span><span class="p">()));</span>
+<span class="w">    </span><span class="n">initalized</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="w">   </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="n">CheckedFunction0</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">getFunction</span><span class="p">(</span><span class="n">Address</span><span class="w"> </span><span class="n">addr</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">              </span><span class="n">❾</span>
+<span class="w">     </span><span class="c1">// Same as before</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="n">LatLon</span><span class="w"> </span><span class="nf">getLocation</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">json</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">                                 </span><span class="n">❿</span>
+<span class="w">     </span><span class="c1">// Same as before</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ Initializes the cache</p>
+<p>❶ 初始化缓存。</p>
+<p>❷ Decorates the REST call to the Google Maps API</p>
+<p>❷ 装饰对 Google Maps API 的 REST 调用。</p>
+<p>❸ Assigns the cache</p>
+<p>❸ 装配缓存。</p>
+<p>❹ Parses the response from the cache or REST call</p>
+<p>❹ 解析来自缓存或 REST 调用的响应。</p>
+<p>❺ Checks the cache before invoking the function</p>
+<p>❺ 在调用该函数之前先查缓存。</p>
+<p>❻ If we have the latitude/longitude, then send it.</p>
+<p>❻ 如果我们拿到了纬度/经度，就把它发出去。</p>
+<p>❼ Uses the configured cache implementation</p>
+<p>❼ 使用已配置的缓存实现。</p>
+<p>❽ Creates the address cache</p>
+<p>❽ 创建地址缓存。</p>
+<p>❾ Returns a function containing the REST API call logic</p>
+<p>❾ 返回一个包含 REST API 调用逻辑的函数。</p>
+<p>❿ If we got a valid response, return the JSON string with the latitude/longitude.</p>
+<p>❿ 如果我们拿到了有效响应，就返回那个带有纬度/经度的 JSON 字符串。</p>
+<p>You should configure the function to use a distributed cache implementation, such as Ehcache, Caffeine, or Apache Ignite. If the cache retrieval from the distributed cache fails, the exception will be ignored, and the lambda expression will be called to retrieve the value instead. Please refer to your preferred vendor’s documentation for more details on how to configure and use a vendor-specific implementation of the JCache functional specification.</p>
+<p>你应当把这个函数配置为使用某一种分布式缓存实现，例如 Ehcache、Caffeine 或 Apache Ignite。如果从分布式缓存中取数据失败，该异常会被忽略，转而调用那个 lambda 表达式去取值。有关如何配置和使用某厂商对 JCache 功能规范的具体实现，更多细节请参阅你所青睐厂商的文档。</p>
+<p>The trade-off when using this approach versus the separate lookup service approach is that you lose the ability to limit the amount of time you are willing to wait for the cache call to complete. Therefore, in the unlikely event that the distributed cache service is down, each call could take up to 30 seconds while waiting for a network timeout.</p>
+<p>采用这种做法、相对于"另设一个查询服务"的做法，其代价在于：你失去了限制"愿意为缓存调用等待多久"的能力。因此，万一那个分布式缓存服务真的宕机了（虽然概率不大），每一次调用都可能耗上长达 30 秒，因为它要一直等到网络超时。</p>
+<p>Issues and considerations</p>
+<p>问题与考量</p>
+<p>While this is a very useful pattern to use when interacting with an external system, such as a web service or a database, be sure to consider the following factors when implementing it inside your Pulsar function:</p>
+<p>虽然在与外部系统（例如 Web 服务或数据库）交互时，这是一个非常有用的模式，但在自己的 Pulsar 函数中实现它时，务必考虑以下这些因素：</p>
+<ul>
+<li>
+<p>This is only useful on datasets that are relatively static in nature, such as geo-encoded addresses. Don’t try caching data that is likely to change frequently; otherwise you run the risk of using incorrect data inside your application.<br />
+  这个模式只对那些性质上相对静态的数据集有用，例如已地理编码的地址。不要试图去缓存那些很可能频繁变动的数据；否则你就要冒在自己的应用里用到错误数据的风险。</p>
+</li>
+<li>
+<p>Limit the size of the cache to avoid causing out-of-memory conditions within your Pulsar function. If you need a larger cache, you should consider using a distributed cache, such as Apache Ignite.<br />
+  限制缓存的大小，以避免在你的 Pulsar 函数内部造成内存耗尽。如果你需要更大的缓存，就应当考虑使用分布式缓存，例如 Apache Ignite。</p>
+</li>
+<li>
+<p>Prevent data in your cache from becoming stale by implementing an aging policy on the data so it is automatically purged once it reaches a certain age.<br />
+  为缓存中的数据落实一套老化策略，使其在达到某个年龄后自动被清除，以防缓存中的数据变得陈旧。</p>
+</li>
+</ul>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

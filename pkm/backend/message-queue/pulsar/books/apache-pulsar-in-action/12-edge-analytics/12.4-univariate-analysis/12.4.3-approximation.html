@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>12.4.3-approximation</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="1243-approximation">12.4.3 Approximation</h3>
+<p>When analyzing streaming data, there are certain types of queries that cannot be computed on the edge because they require huge amounts of both computing resources and time to generate exact results. Examples include count distinct, quantiles, most-frequent items, joins, matrix computations, and graph analysis. Therefore, these types of calculations are typically not performed on these streaming datasets at all. However, if an approximate answer will suffice, there is a specialized category of streaming algorithms for providing approximate values, estimates, and data samples for statistical analysis when the event stream is either too large to store in memory or the data is moving too fast to process.</p>
+<p>在分析流式数据时，有某些类型的查询是根本无法在边缘侧计算的，因为它们要产出精确结果，就需要海量的计算资源和时间。这方面的例子包括去重计数、分位数、最频繁项、连接（join）、矩阵运算和图分析。因此，这些类型的计算通常压根就不会在这些流式数据集上执行。然而，如果一个近似答案就够用的话，那么就存在一类专门的流式算法：当事件流要么大到无法存进内存、要么数据移动得太快而来不及处理时，它们可以为统计分析提供近似值、估计值和数据样本。</p>
+<p>These streaming algorithms utilize small data structures, known as sketches, which are usually only a few kilobytes in size, to store the information. Sketch-based algorithms perform <em>one-touch processing</em>, meaning they only need to read each element in the stream once. Both these properties make these algorithms ideal candidates for deployment on edge devices. There are four families of sketching algorithms, each focused on solving a different type of problem:</p>
+<p>这些流式算法利用被称为 sketch（数据草图）的小型数据结构来存储信息，其大小通常只有几千字节。基于 sketch 的算法执行的是<em>一次触碰处理</em>（one-touch processing），意思是它们只需要把流中的每个元素读取一次。这两个性质一起，使这些算法成为部署在边缘设备上的理想候选。sketch 类算法共有四大家族，每一族都专注于解决一个不同类型的问题：</p>
+<ul>
+<li>
+<p><em>Cardinality sketches</em>—Provides approximate counts for each distinct value in the stream, such as the number of page views across a number of different web pages in a given timeframe.<br />
+<em>基数 sketch</em>（Cardinality sketches）——为流中每个不同的值提供近似计数，例如在给定时间范围内、若干个不同网页各自的页面浏览数。</p>
+</li>
+<li>
+<p><em>Frequent item sketches</em>—Provides a list of the most frequently seen values in the stream, such as the top 10 web pages viewed in a given timeframe.<br />
+<em>频繁项 sketch</em>（Frequent item sketches）——提供流中最常被看到的那些值的列表，例如在给定时间范围内被浏览最多的前 10 个网页。</p>
+</li>
+<li>
+<p><em>Sampling sketches</em>—Uses reservoir sampling to provide a uniform random sample of data from the stream that can be used for analysis.<br />
+<em>采样 sketch</em>（Sampling sketches）——使用蓄水池采样，从流中提供一份均匀随机的数据样本，以供分析使用。</p>
+</li>
+<li>
+<p><em>Quantile sketches</em>—Provides a frequency histogram that contains information about the distribution of the data stream values that can be used for anomaly detection.<br />
+<em>分位数 sketch</em>（Quantile sketches）——提供一张频率直方图，其中包含关于数据流取值分布的信息，可被用于异常检测。</p>
+</li>
+</ul>
+<p>There is an open source library called Apache DataSketches that contains implementations of these algorithms in Java, which makes them easy to use inside a Pulsar function, such as the one shown in listing 12.4, which uses the quantile sketch to detect anomalies in the sensor data.</p>
+<p>有一个名为 Apache DataSketches 的开源库，其中包含了这些算法的 Java 实现；这使得它们很容易在一个 Pulsar 函数内部被使用，例如清单 12.4 中所示的那个函数——它使用分位数 sketch 来检测传感器数据中的异常。</p>
+<p>Quantiles</p>
+<p>分位数（Quantiles）</p>
+<p>The word <em>quantile</em> is derived from the word <em>quantity</em> and simply refers to equal-sized groupings of something—typically a probability distribution or a series of observed values. You are already familiar with some of the more common quantiles that are referred to by their more common names, such as halves, thirds, quarters, etc. In statistics and probability, quantiles are more formally defined as cut points that divide a probability distribution into continuous, adjacent intervals with an equal number of elements.</p>
+<p><em>分位数</em>（quantile）这个词源自 quantity（量）一词，简单地指把某样东西分成大小相等的若干组——通常是把一个概率分布或一串观测值分成这样的若干组。你已经熟悉其中一些更常见的分位数，它们有着更通俗的名字，例如二分位、三分位、四分位等等。在统计学和概率论中，分位数被更正式地定义为这样一些切分点：它们把一个概率分布划分成若干个连续的、相邻的区间，而每个区间含有相同数量的元素。</p>
+<p>For example, in figure 12.11 there are three values—Q1, Q2, and Q3—which splits the dataset into equally weighted sections. The areas under the graph between each of these points are the quantiles, in this case thirds, which contain an equal number of data points.</p>
+<p>举例来说，在图 12.11 中有三个值——Q1、Q2 和 Q3——它们把这份数据集切分成了权重相等的若干段。图中这些点之间的曲线下面积就是各个分位数；在本例中是三分位，每一段都含有相同数量的数据点。</p>
+<p><img alt="" src="assets/CH12_F11_Kjerrumgaard.webp" /></p>
+<p>Figure 12.11 A dataset that is divided into three equal-sized sections known as quantiles. Values less than or equal to Q1 are considered part of the first quantile; values between Q1 and Q2 are part of the second quantile; and those greater than or equal to Q3 are part of the third quantile.</p>
+<p>图 12.11 一份被划分成三个等大小区段（即分位数）的数据集。小于或等于 Q1 的值被视为属于第一个分位数；介于 Q1 与 Q2 之间的值属于第二个分位数；而大于或等于 Q3 的那些值则属于第三个分位数。</p>
+<p>For our use case, we will be processing an endless stream of metric data values and using them to dynamically construct a quantile. This allows us to make our decisions based solely on the actual observed values when determining whether or not a value is anomalous by comparing it to previous values of the same metric. When a new metric reading comes into our Pulsar function, we will first add it to the quantile to update the distribution model, and then we will calculate the <em>rank</em> of the metric reading. The rank is best described as the proportion of values in the distribution that the given value is greater than or equal to. For instance, if a metric reading is higher than 79% of the previously observed values, then its rank would be 79. Ranking a value helps us determine whether a given metric reading is commonplace or not, and we have decided to use a configurable value to define the threshold that we consider anomalous.</p>
+<p>就我们的用例而言，我们将处理一条无穷无尽的指标数据值流，并用它们来动态地构造一个分位数。这让我们在判定某个值是否异常时，能够完全依据实际观测到的数值来做决定——办法是把它与同一指标的先前各个值做比较。当一个新的指标读数进入我们的 Pulsar 函数时，我们会先把它加进分位数，以更新这个分布模型，然后我们会计算该指标读数的<em>秩</em>（rank）。对秩最好的描述是：该分布在多大比例的值上，是小于或等于这个给定值的。举例来说，如果某个指标读数高于此前已观测到的 79% 的值，那么它的秩就是 79。为一个值判定秩，有助于我们确定某个给定指标读数是否司空见惯；而我们已决定用一个可配置的值来界定我们所认为的异常阈值。</p>
+<p>Listing 12.4 A Pulsar function for anomaly detection</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.datasketches.quantiles.DoublesSketch</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.datasketches.quantiles.UpdateDoublesSketch</span><span class="p">;</span><span class="w">       </span><span class="n">❶</span>
+<span class="p">.</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="p">.</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">AnomalyDetector</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Function</span><span class="o">&lt;</span><span class="n">Double</span><span class="p">,</span><span class="w"> </span><span class="n">Void</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">UpdateDoublesSketch</span><span class="w"> </span><span class="n">sketch</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">alertThreshold</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="n">initalized</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Void</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">Double</span><span class="w"> </span><span class="n">input</span><span class="p">,</span><span class="w"> </span><span class="n">Context</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">initalized</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">init</span><span class="p">(</span><span class="n">ctx</span><span class="p">);</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">      </span><span class="n">sketch</span><span class="p">.</span><span class="na">update</span><span class="p">(</span><span class="n">input</span><span class="p">);</span><span class="w">                                    </span><span class="n">❷</span>
+
+<span class="w">      </span><span class="nf">if</span><span class="w"> </span><span class="p">(</span><span class="n">sketch</span><span class="p">.</span><span class="na">getRank</span><span class="p">(</span><span class="n">input</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="n">alertThreshold</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">            </span><span class="n">❸</span>
+<span class="w">        </span><span class="nf">react</span><span class="p">();</span><span class="w">                                               </span><span class="n">❹</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">protected</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">Context</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">sketch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">DoublesSketch</span><span class="p">.</span><span class="na">builder</span><span class="p">().</span><span class="na">build</span><span class="p">();</span>
+<span class="w">      </span><span class="n">alertThreshold</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="kt">double</span><span class="p">)</span><span class="w"> </span><span class="n">ctx</span><span class="p">.</span><span class="na">getUserConfigValue</span><span class="w"> </span><span class="p">(</span><span class="s">"threshold"</span><span class="p">);</span>
+<span class="w">      </span><span class="n">initalized</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">protected</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">react</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// Implementation specific                               ❺</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ This function relies on the DataSketches library to perform the statistical calculations.</p>
+<p>❶ 这个函数依赖 DataSketches 库来执行那些统计计算。</p>
+<p>❷ Add the metric reading to the sketch.</p>
+<p>❷ 把这个指标读数加进 sketch。</p>
+<p>❸ Get the metric reading’s rank value, and compare that to the alert threshold.</p>
+<p>❸ 取得该指标读数的秩，并把它与告警阈值做比较。</p>
+<p>❹ If the metric is above the configured threshold, then react.</p>
+<p>❹ 如果该指标高于所配置的阈值，就做出反应。</p>
+<p>❺ This will vary based on the LwM2M protocol being used by the actuator.</p>
+<p>❺ 这将随该执行器所使用的 LwM2M 协议不同而变化。</p>
+<p>The logic for the function is fairly straightforward. First, we update the quantile sketch by adding the data element to it. Then, we request the relative rank of the value in the overall distribution. Next, we determine whether the value is an outlier or not by comparing the metric reading’s rank to the preconfigured alert threshold. If an outlier is detected, then we use an LwM2M client to send a message to an actuator in the perception and reaction layer to perform some sort of preventative action, such as turning off a machine or opening a pressure valve. The logic of the react function shown in listing 12.4 will vary based on the LwM2M protocol being used and the command(s) we need to send in response to the event.</p>
+<p>这个函数的逻辑相当直截了当。首先，我们通过把该数据元素加进分位数 sketch 来更新它。然后，我们请求这个值在整个分布中的相对秩。接着，我们通过把该指标读数的秩与预先配置好的告警阈值做比较，来判定这个值是否为离群值。如果检测到了离群值，我们就用一个 LwM2M 客户端向感知与反应层中的某个执行器发送一条消息，以执行某种预防性动作，例如关掉一台机器或打开一个压力阀。清单 12.4 中所示那个 react 函数的逻辑，将随所使用的 LwM2M 协议、以及我们为响应该事件而需要发送的命令不同而变化。</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

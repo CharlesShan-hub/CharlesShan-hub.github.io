@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>9.2.6-fallback-pattern</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="926-fallback-pattern">9.2.6 Fallback pattern</h3>
+<p>The <em>fallback</em> pattern is used to provide your function with an alternative resource in the event that the primary resource is unavailable. Consider the case where you are calling an internal database through a load balancer endpoint, and the load balancer fails. Rather than allowing the failure of that single piece of hardware to cause your entire application to fail, you could bypass the load balancer entirely and connect directly to the database instead. The following listing shows how to implement such a function.</p>
+<p><em>回退</em>（fallback）模式被用来在你的主资源不可用时，为函数提供一个替代资源。设想这样一种情况：你正通过一个负载均衡器端点去调用一个内部数据库，而那个负载均衡器坏了。与其让这一台硬件的失效导致你整个应用失败，你不如彻底绕开负载均衡器，直接连到数据库上。下面这份清单展示了这样一个函数该如何实现。</p>
+<p>Listing 9.8 Utilizing the fallback pattern inside a Pulsar function</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">import</span><span class="w"> </span><span class="nn">io.github.resilience4j.decorators.Decorators</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">io.vavr.CheckedFunction0</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">io.vavr.control.Try</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">DatabaseLookup</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Function</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">FoodOrder</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">primary</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"jdbc:mysql://load-balancer:3306/food"</span><span class="p">;</span><span class="w">        </span><span class="n">❶</span>
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">backup</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"jdbc:mysql://backup:3306/food"</span><span class="p">;</span><span class="w">                </span><span class="n">❷</span>
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">sql</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"select * from food_orders where id=?"</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">user</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">""</span><span class="p">;</span><span class="w">                                              </span><span class="n">❸</span>
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">pass</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">""</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="n">initalized</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">FoodOrder</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">id</span><span class="p">,</span><span class="w"> </span><span class="n">Context</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">initalized</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">init</span><span class="p">(</span><span class="n">ctx</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">CheckedFunction0</span><span class="o">&lt;</span><span class="n">ResultSet</span><span class="o">&gt;</span><span class="w"> </span><span class="n">decoratedFunction</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>
+<span class="w">      </span><span class="n">Decorators</span><span class="p">.</span><span class="na">ofCheckedSupplier</span><span class="p">(</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">       </span><span class="k">try</span><span class="w"> </span><span class="p">(</span><span class="n">Connection</span><span class="w"> </span><span class="n">con</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>
+<span class="w">            </span><span class="n">DriverManager</span><span class="p">.</span><span class="na">getConnection</span><span class="p">(</span><span class="n">primary</span><span class="p">,</span><span class="w"> </span><span class="n">user</span><span class="p">,</span><span class="w"> </span><span class="n">pass</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w">          </span><span class="n">❹</span>
+<span class="w">          </span><span class="n">PreparedStatement</span><span class="w"> </span><span class="n">stmt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">con</span><span class="p">.</span><span class="na">prepareStatement</span><span class="p">(</span><span class="n">sql</span><span class="p">);</span>
+<span class="w">          </span><span class="n">stmt</span><span class="p">.</span><span class="na">setLong</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">Long</span><span class="p">.</span><span class="na">parseLong</span><span class="p">(</span><span class="n">id</span><span class="p">));</span>
+<span class="w">          </span><span class="k">return</span><span class="w"> </span><span class="n">stmt</span><span class="p">.</span><span class="na">executeQuery</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">       </span><span class="p">})</span><span class="w">        </span>
+<span class="w">      </span><span class="p">.</span><span class="na">withFallback</span><span class="p">(</span><span class="n">SQLException</span><span class="p">.</span><span class="na">class</span><span class="p">,</span><span class="w"> </span><span class="n">ex</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">                         </span><span class="n">❺</span>
+<span class="w">        </span><span class="nf">try</span><span class="w"> </span><span class="p">(</span><span class="n">Connection</span><span class="w"> </span><span class="n">con</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>
+<span class="w">              </span><span class="n">DriverManager</span><span class="p">.</span><span class="na">getConnection</span><span class="p">(</span><span class="n">backup</span><span class="p">,</span><span class="w"> </span><span class="n">user</span><span class="p">,</span><span class="w"> </span><span class="n">pass</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="n">PreparedStatement</span><span class="w"> </span><span class="n">stmt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">con</span><span class="p">.</span><span class="na">prepareStatement</span><span class="p">(</span><span class="n">sql</span><span class="p">);</span>
+<span class="w">          </span><span class="n">stmt</span><span class="p">.</span><span class="na">setLong</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="n">Long</span><span class="p">.</span><span class="na">parseLong</span><span class="p">(</span><span class="n">id</span><span class="p">));</span>
+<span class="w">          </span><span class="k">return</span><span class="w"> </span><span class="n">stmt</span><span class="p">.</span><span class="na">executeQuery</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">         </span><span class="p">})</span>
+<span class="w">      </span><span class="p">.</span><span class="na">decorate</span><span class="p">();</span>
+
+<span class="w">      </span><span class="n">ResultSet</span><span class="w"> </span><span class="n">rs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Try</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="n">decoratedFunction</span><span class="p">).</span><span class="na">get</span><span class="p">();</span><span class="w">                    </span><span class="n">❻</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nf">ORMapping</span><span class="p">(</span><span class="n">rs</span><span class="p">);</span><span class="w">                                              </span><span class="n">❼</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">Context</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Driver</span><span class="w"> </span><span class="n">myDriver</span><span class="p">;</span>
+<span class="w">     </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">       </span><span class="n">myDriver</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">Driver</span><span class="p">)</span><span class="w"> </span><span class="n">Class</span><span class="p">.</span><span class="na">forName</span><span class="p">(</span><span class="s">"com.mysql.jdbc.Driver"</span><span class="p">)</span>
+<span class="w">       </span><span class="p">.</span><span class="na">newInstance</span><span class="p">();</span>
+<span class="w">      </span><span class="n">DriverManager</span><span class="p">.</span><span class="na">registerDriver</span><span class="p">(</span><span class="n">myDriver</span><span class="p">);</span><span class="w">                            </span><span class="n">❽</span>
+<span class="w">      </span><span class="c1">// Set local variables from user properties</span>
+<span class="w">       </span><span class="p">...</span>
+<span class="w">      </span><span class="n">initalized</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="w">     </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">Throwable</span><span class="w"> </span><span class="n">t</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">       </span><span class="n">t</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">     </span><span class="p">}</span>
+
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="n">FoodOrder</span><span class="w"> </span><span class="nf">ORMapping</span><span class="p">(</span><span class="n">ResultSet</span><span class="w"> </span><span class="n">rs</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// Performs the Relational-to-Object mapping</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ The primary connection goes through the load balancer.</p>
+<p>❶ 主连接经由负载均衡器。</p>
+<p>❷ The backup connection goes directly to the database server.</p>
+<p>❷ 备份连接直接连到数据库服务器。</p>
+<p>❸ The DB credentials set inside the init method from user properties</p>
+<p>❸ 数据库凭据在 init 方法中依据用户属性设置。</p>
+<p>❹ The first call is via the load balancer.</p>
+<p>❹ 第一次调用经由负载均衡器。</p>
+<p>❺ If an SQLException was thrown, retry the query via the backup URL.</p>
+<p>❺ 如果抛出了 SQLException，就通过备份 URL 重试这个查询。</p>
+<p>❻ Get the successful ResultSet.</p>
+<p>❻ 取得那个成功的 ResultSet。</p>
+<p>❼ Perform the ORM to return the FoodOrder object.</p>
+<p>❼ 执行 ORM 映射，以返回 FoodOrder 对象。</p>
+<p>❽ Loads the database driver class and registers it</p>
+<p>❽ 加载数据库驱动类并将其注册。</p>
+<p>Another scenario in which this pattern could come into play would be if we had multiple third-party credit card authorization services to choose from, and we wanted to try an alternative service in the event that we could not connect to the primary service for some reason. Note that the first parameter to the withFallback method takes the exception types that trigger the fallback code, so it would be important to only contact the second credit card authorization service if the error indicated that the primary service was unavailable, and <em>not</em> if the card was declined.</p>
+<p>这个模式可能派上用场的另一种场景是：假设我们有多个第三方信用卡授权服务可供选择，而当我们因为某种原因连不上主服务时，希望尝试一个替代服务。请注意，withFallback 方法的第一个参数接收的是那些会触发回退代码的异常类型，因此关键在于：只有当错误表明主服务不可用时，才去联系第二个信用卡授权服务；而如果卡被拒付，就<em>不</em>应该去联系它。</p>
+<p>Issues and considerations</p>
+<p>问题与考量</p>
+<p>While this is a very useful pattern to use when interacting with an external system such as a web service or a database, be sure to consider the following factors when implementing it inside your Pulsar function:</p>
+<p>虽然在与外部系统（例如 Web 服务或数据库）交互时，这是一个非常有用的模式，但在自己的 Pulsar 函数中实现它时，务必考虑以下这些因素：</p>
+<ul>
+<li>This is only useful in situations where you have either an alternative route to the service that is reachable from the Pulsar function or an alternative (backup) copy of the service that provides the same function.<br />
+  这个模式只在你具备下列条件之一时才有用：要么你拥有一条从该 Pulsar 函数可达的、通往该服务的替代路径，要么你拥有一份提供同样功能的该服务的替代（备份）副本。</li>
+</ul>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4.3.3-stateful-functions</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="433-stateful-functions">4.3.3 Stateful functions</h3>
+<p>Stateful functions utilize information gathered from previous messages they have processed to generate their output. One such application would be a function that receives temperature reading events from an IoT sensor and calculates the average temperature of the sensor. Providing this value would require us to calculate and store a running average of the previous temperature readings.</p>
+<p>有状态函数会利用从它们此前已处理过的消息中收集到的信息来生成输出。一个这样的应用是：某个函数从物联网传感器接收温度读数事件，并计算该传感器的平均温度。要提供这个值，就需要我们计算并保存此前各次温度读数的滚动平均值。</p>
+<p>When using the Pulsar SDK to develop your functions, regardless of which of the three supported languages you are using, the second parameter in the process method is a Context object that is automatically provided by the Pulsar Functions framework. If you are using Java or Python, then the Context object’s API also provides two separate mechanisms for retaining information between successive calls to a Pulsar function. The first mechanism that the Context API provides is a map interface for storing and retrieving key/value pairs via its putState and getState methods. These methods act like any other map interface you are familiar with and allow you to store and retrieve values of any type using string values as the keys.</p>
+<p>当你使用 Pulsar SDK 开发函数时，无论你使用的是三种受支持语言中的哪一种，process 方法中的第二个参数都是一个由 Pulsar Functions 框架自动提供的 Context 对象。如果你使用的是 Java 或 Python，那么 Context 对象的 API 还提供了两套独立的机制，用于在多次调用同一个 Pulsar function 之间保留信息。Context API 提供的第一套机制是一个 map 接口，通过其 putState 和 getState 方法来存储和检索键/值对。这些方法的行为与你熟悉的任何其他 map 接口一样，允许你以字符串值作为键，存储和检索任意类型的值。</p>
+<p>The other state mechanisms provided by the Context object are counters, which only allow you to retain numeric values using strings as the keys. These counters are a specialized version of the key/value mapping that is functionally designed specifically for storing numerical values. Internally, counters are stored as 64-bit big-endian binary values and can only be changed via the incrCounter and incrCounterAsync methods.</p>
+<p>Context 对象提供的另一套状态机制是计数器（counter），它只允许你以字符串作为键来保存数值。这些计数器是键/值映射的一个专门化版本，在功能上被专门设计用于存储数值。在内部，计数器以 64 位大端序的二进制值存储，并且只能通过 incrCounter 和 incrCounterAsync 方法来改变。</p>
+<p>Let’s take a function that receives temperature reading events from an IoT sensor and calculates the average temperature of the sensor as an example to show how you would utilize state inside a Pulsar function. The function shown in listing 4.11 receives a sensor reading and compares it to the average temperature reading it has calculated from the previous reading to determine whether it should trigger an alarm of some sort.</p>
+<p>让我们以一个从物联网传感器接收温度读数事件、并计算该传感器平均温度的函数为例，来展示如何在一个 Pulsar function 内部使用状态。清单 4.11 中所示的函数接收一次传感器读数，并把它与此前各次读数所计算出的平均温度读数进行比较，以判断是否应当触发某种告警。</p>
+<p>Listing 4.11 Average sensor reading function</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">AvgSensorReadingFunction</span><span class="w"> </span><span class="kd">implements</span>
+<span class="w">  </span><span class="n">Function</span><span class="o">&lt;</span><span class="n">Double</span><span class="p">,</span><span class="w"> </span><span class="n">Void</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">                                                 </span><span class="n">❶</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">VALUES_KEY</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"VALUES"</span><span class="p">;</span>
+
+<span class="w">  </span><span class="nd">@Override</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">Void</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">Double</span><span class="w"> </span><span class="n">input</span><span class="p">,</span><span class="w"> </span><span class="n">Context</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">CircularFifoQueue</span><span class="o">&lt;</span><span class="n">Double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">values</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getValues</span><span class="p">(</span><span class="n">ctx</span><span class="p">);</span><span class="w">                     </span><span class="n">❷</span>
+
+<span class="w">    </span><span class="nf">if</span><span class="w"> </span><span class="p">(</span><span class="n">Math</span><span class="p">.</span><span class="na">abs</span><span class="p">(</span><span class="n">input</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">getAverage</span><span class="p">(</span><span class="n">values</span><span class="p">))</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">10.0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// trigger an alarm.                                                 ❸</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">values</span><span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="n">input</span><span class="p">);</span><span class="w">                                                     </span><span class="n">❹</span>
+<span class="w">    </span><span class="n">ctx</span><span class="p">.</span><span class="na">putState</span><span class="p">(</span><span class="n">VALUES_KEY</span><span class="p">,</span><span class="w"> </span><span class="n">serialize</span><span class="p">(</span><span class="n">values</span><span class="p">));</span><span class="w">                           </span><span class="n">❺</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="n">Double</span><span class="w"> </span><span class="nf">getAverage</span><span class="p">(</span><span class="n">CircularFifoQueue</span><span class="o">&lt;</span><span class="n">Double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">values</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">StreamSupport</span><span class="p">.</span><span class="na">stream</span><span class="p">(</span><span class="n">values</span><span class="p">.</span><span class="na">spliterator</span><span class="p">(),</span><span class="w"> </span><span class="kc">false</span><span class="p">)</span>
+<span class="w">      </span><span class="p">.</span><span class="na">collect</span><span class="p">(</span><span class="n">Collectors</span><span class="p">.</span><span class="na">summingDouble</span><span class="p">(</span><span class="n">Double</span><span class="p">::</span><span class="n">doubleValue</span><span class="p">))</span>
+<span class="w">      </span><span class="o">/</span><span class="w"> </span><span class="n">values</span><span class="p">.</span><span class="na">size</span><span class="p">();</span><span class="w">                                                     </span><span class="n">❻</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="n">CircularFifoQueue</span><span class="o">&lt;</span><span class="n">Double</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">getValues</span><span class="p">(</span><span class="n">Context</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ctx</span><span class="p">.</span><span class="na">getState</span><span class="p">(</span><span class="n">VALUES_KEY</span><span class="p">)</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">CircularFifoQueue</span><span class="o">&lt;</span><span class="n">Double</span><span class="o">&gt;</span><span class="p">(</span><span class="mi">100</span><span class="p">);</span><span class="w">                           </span><span class="n">❼</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="n">deserialize</span><span class="p">(</span><span class="n">ctx</span><span class="p">.</span><span class="na">getState</span><span class="p">(</span><span class="n">VALUES_KEY</span><span class="p">));</span><span class="w">                        </span><span class="n">❽</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w"> </span><span class="p">}</span>
+
+<span class="p">.</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="p">.</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ The function takes in a double and doesn’t produce an output message.</p>
+<p>❶ 该函数接收一个 double，且不产生输出消息。</p>
+<p>❷ We deserialize the Java object used to store the previous sensor readings.</p>
+<p>❷ 我们反序列化那个用于保存此前传感器读数的 Java 对象。</p>
+<p>❸ If the current reading is significantly different, then we generate an alert.</p>
+<p>❸ 如果当前读数差异显著，就生成一条告警。</p>
+<p>❹ We add the current value to the list of observed values.</p>
+<p>❹ 我们把当前值加入已观测值的列表。</p>
+<p>❺ We store the updated Java object in the state store.</p>
+<p>❺ 我们把更新后的 Java 对象存放到状态存储中。</p>
+<p>❻ We use the Streams API to calculate the average.</p>
+<p>❻ 我们使用 Streams API 来计算平均值。</p>
+<p>❼ Instantiate the Java object if none exists in the state store.</p>
+<p>❼ 如果状态存储中不存在该 Java 对象，就实例化一个。</p>
+<p>❽ Convert the bytes in the state store into the Java object we need.</p>
+<p>❽ 把状态存储中的字节转换成我们需要的 Java 对象。</p>
+<p>There are a few points I want to highlight from the function in listing 4.11. The first thing you may notice is that the return type of function is defined as Void. This means that the function does not produce an output value. Another point I want to highlight is the fact that the function relies on Java serialization to store and retrieve a list of the last 100 values (sensor readings) it has received. It relies on a third-party library implementation of a FIFO queue to retain the 100 most-recent values to compute the average before comparing it to the most recent sensor reading. If that value significantly deviates from the average, then an alert is raised. Finally, the most recent reading is added to the FIFO queue, which is then serialized and written to the state store.</p>
+<p>关于清单 4.11 中的这个函数，有几点我想着重说明。你可能首先注意到的是，该函数的返回类型被定义为 Void。这意味着该函数不产生输出值。另一点我想说明的是：该函数依赖 Java 序列化来存储和检索它所接收到的最近 100 个值（传感器读数）的列表。它依赖某个第三方库对 FIFO 队列的实现，来保留最近的 100 个值，以便在把它与最新一次传感器读数进行比较之前计算出平均值。如果该值与平均值显著偏离，就会触发一条告警。最后，最新一次的读数被加入该 FIFO 队列，然后队列被序列化并写入状态存储。</p>
+<p>On subsequent calls, the AvgSensorReadingFunction will retrieve the bytes of the FIFO queue, deserialize them back into the Java object, and use it to calculate the average again. This process repeats indefinitely and only retains the most recent values for comparison against the trend (e.g., the moving average of the sensor readings). This approach is very different from the windowing capability provided by Pulsar Functions that is discussed in chapter 12. In short, the windowing capability provided by the Pulsar Functions framework permits the collection of multiple inputs before executing the function method based on either time or a fixed count. Once the window is filled, the function is provided the entire list of inputs at one time, whereas the function shown in listing 4.6 is provided the values one at a time, and must maintain the previous values inside its state.</p>
+<p>在后续的调用中，AvgSensorReadingFunction 会取回该 FIFO 队列的字节，把它们反序列化回 Java 对象，并再次用它来计算平均值。这个过程无限重复，并且只保留最近的值，以便与趋势（例如传感器读数的移动平均值）进行比较。这种方式与第 12 章中讨论的 Pulsar Functions 所提供的窗口（windowing）能力截然不同。简而言之，Pulsar Functions 框架提供的窗口能力允许先收集多个输入，然后基于时间或固定的计数来执行函数方法。一旦窗口被填满，函数会一次性获得整个输入列表；而清单 4.6 中所示的函数则是逐个获得这些值，并且必须在其状态中自行维护此前的值。</p>
+<p>So, you might be asking yourself why you wouldn’t just use Pulsar’s built-in windowing for our use case. In our case, we want to react to every individual reading as it becomes available, rather than waiting to accumulate a sufficient number of readings. This allows us to detect any issue much sooner.</p>
+<p>那么，你可能会问自己：在我们的用例中，为什么不直接采用 Pulsar 内置的窗口机制呢？就我们的情况而言，我们希望在每一次读数变得可用时就对它作出反应，而不是等着累积到足够多的读数。这使我们能够更快地发现任何问题。</p>
+<p>Now, let’s wrap up our discussion on stateful functions by looking at the counter interface provided by the Context API. A good example of how and when to use this functionality would be a WordCount function that stores the number of each individual word, using the counter methods provided by the context object API, as shown in the following listing.</p>
+<p>现在，让我们通过考察 Context API 所提供的计数器接口，来结束关于有状态函数的讨论。关于如何以及何时使用这一功能，一个很好的例子是 WordCount 函数：它使用 context 对象 API 所提供的计数器方法来保存每个单词出现的次数，如下面的清单所示。</p>
+<p>Listing 4.12 WordCount function using stateful counters</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">com.manning.pulsar.chapter4.functions.sdk</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.Arrays</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">java.util.List</span><span class="p">;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.pulsar.functions.api.Context</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.pulsar.functions.api.Function</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">WordCountFunction</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Function</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Integer</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nd">@Override</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">Integer</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">input</span><span class="p">,</span><span class="w"> </span><span class="n">Context</span><span class="w"> </span><span class="n">context</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">words</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Arrays</span><span class="p">.</span><span class="na">asList</span><span class="p">(</span><span class="n">input</span><span class="p">.</span><span class="na">split</span><span class="p">(</span><span class="s">"\\."</span><span class="p">));</span>
+<span class="w">      </span><span class="n">words</span><span class="p">.</span><span class="na">forEach</span><span class="p">(</span><span class="n">word</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="n">context</span><span class="p">.</span><span class="na">incrCounter</span><span class="p">(</span><span class="n">word</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">));</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Integer</span><span class="p">.</span><span class="na">valueOf</span><span class="p">(</span><span class="n">words</span><span class="p">.</span><span class="na">size</span><span class="p">());</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>The logic of the function is straightforward; it first splits the incoming string object into multiple words, using a regex pattern; then for each word generated from the split it increments the corresponding counter by one. This function is a good candidate for effectively once processing semantics to ensure an accurate result. If you were to use at-least-once processing semantics instead, you could potentially end up processing the same message more than once in a failure scenario, which would result in the double counting of multiple words.</p>
+<p>该函数的逻辑很直白：它首先使用一个正则表达式模式把传入的字符串对象切分成多个单词；然后对切分出的每个单词，把对应的计数器加一。这个函数非常适合采用有效一次（effectively-once）的处理语义，以确保结果准确。如果你改用至少一次（at-least-once）的处理语义，在发生故障的场景下就可能把同一条消息处理不止一次，从而导致多个单词被重复计数。</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

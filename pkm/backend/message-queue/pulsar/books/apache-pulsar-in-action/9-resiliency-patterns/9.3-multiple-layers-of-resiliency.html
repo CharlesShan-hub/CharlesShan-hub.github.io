@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>9.3-multiple-layers-of-resiliency</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h2 id="93-multiple-layers-of-resiliency">9.3 Multiple layers of resiliency</h2>
+<p>As you may have noticed, in the previous section I only used one of these patterns at a time. But what if you want to use more than one of the previous patterns inside your Pulsar function? There are situations where it would be quite useful to have your function utilize the retry, cache, and circuit breaker patterns.</p>
+<p>你可能已经注意到了，在上一节中我一次只使用了这些模式中的一个。但是，如果你想在自己的 Pulsar 函数中同时使用前面那些模式中的不止一个呢？在某些场景下，让你的函数同时用上重试、缓存和熔断器这三种模式，会相当有用。</p>
+<p>Fortunately, as I mentioned at the beginning of the chapter, you can easily decorate your remote service call with any number of these patterns from the resilience4j library to provide multiple layers of resiliency inside your functions. The following listing demonstrates just how easy this is to accomplish for the GeoEncoding function.</p>
+<p>所幸，正如我在本章开头所提到的，你可以很方便地用 resilience4j 库中任意数量的这些模式来装饰自己的远程服务调用，从而在函数内部提供多层的韧性保障。下面这份清单就演示了：对于 GeoEncoding 函数而言，做到这一点有多么容易。</p>
+<p>Listing 9.10 Multiple resiliency patterns inside a Pulsar function</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">GeoEncodingService</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Function</span><span class="o">&lt;</span><span class="n">Address</span><span class="p">,</span><span class="w"> </span><span class="n">Void</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="n">initalized</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Cache</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">cacheContext</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">CircuitBreakerConfig</span><span class="w"> </span><span class="n">config</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">CircuitBreakerRegistry</span><span class="w"> </span><span class="n">registry</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">CircuitBreaker</span><span class="w"> </span><span class="n">circuitBreaker</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">RetryRegistry</span><span class="w"> </span><span class="n">rertyRegistry</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Retry</span><span class="w"> </span><span class="n">retry</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Void</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">Address</span><span class="w"> </span><span class="n">addr</span><span class="p">,</span><span class="w"> </span><span class="n">Context</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">initalized</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">init</span><span class="p">(</span><span class="n">ctx</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">CheckedFunction1</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">resilientFunction</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Decorators</span>
+<span class="w">       </span><span class="p">.</span><span class="na">ofCheckedSupplier</span><span class="p">(</span><span class="n">getFunction</span><span class="p">(</span><span class="n">addr</span><span class="p">))</span><span class="w">                     </span><span class="n">❶</span>
+<span class="w">       </span><span class="p">.</span><span class="na">withCache</span><span class="p">(</span><span class="n">cacheContext</span><span class="p">)</span><span class="w">                                  </span><span class="n">❷</span>
+<span class="w">       </span><span class="p">.</span><span class="na">withCircuitBreaker</span><span class="p">(</span><span class="n">circuitBreaker</span><span class="p">)</span><span class="w">                       </span><span class="n">❸</span>
+<span class="w">       </span><span class="p">.</span><span class="na">withRetry</span><span class="p">(</span><span class="n">retry</span><span class="p">)</span><span class="w">                                         </span><span class="n">❹</span>
+<span class="w">       </span><span class="p">.</span><span class="na">decorate</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">LatLon</span><span class="w"> </span><span class="n">geo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getLocation</span><span class="p">(</span><span class="n">Try</span><span class="p">.</span><span class="na">of</span><span class="p">(()</span><span class="w"> </span><span class="o">-&gt;</span>
+<span class="w">          </span><span class="n">resilientFunction</span><span class="p">.</span><span class="na">apply</span><span class="p">(</span><span class="n">addr</span><span class="p">.</span><span class="na">toString</span><span class="p">())).</span><span class="na">get</span><span class="p">());</span><span class="w">      </span><span class="n">❺</span>
+
+<span class="w">    </span><span class="nf">if</span><span class="w"> </span><span class="p">(</span><span class="n">geo</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">addr</span><span class="p">.</span><span class="na">setGeo</span><span class="p">(</span><span class="n">geo</span><span class="p">);</span>
+<span class="w">      </span><span class="n">ctx</span><span class="p">.</span><span class="na">newOutputMessage</span><span class="p">(</span><span class="n">ctx</span><span class="p">.</span><span class="na">getOutputTopic</span><span class="p">(),</span><span class="n">AvroSchema</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="n">Address</span><span class="p">.</span><span class="na">class</span><span class="p">))</span>
+<span class="w">        </span><span class="p">.</span><span class="na">properties</span><span class="p">(</span><span class="n">ctx</span><span class="p">.</span><span class="na">getCurrentRecord</span><span class="p">().</span><span class="na">getProperties</span><span class="p">())</span>
+<span class="w">        </span><span class="p">.</span><span class="na">value</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">send</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// We made a valid call, but didn't get a valid geo back</span>
+<span class="w">   </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">Context</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">                               </span><span class="n">❻</span>
+<span class="w">    </span><span class="c1">// Configure a cache (once)</span>
+<span class="w">    </span><span class="n">CacheManager</span><span class="w"> </span><span class="n">cacheManager</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Caching</span><span class="p">.</span><span class="na">getCachingProvider</span><span class="p">()</span>
+<span class="w">  </span><span class="p">.</span><span class="na">getCacheManager</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">cacheContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Cache</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="n">cacheManager</span>
+<span class="w">      </span><span class="p">.</span><span class="na">createCache</span><span class="p">(</span><span class="s">"addressCache"</span><span class="p">,</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">MutableConfiguration</span><span class="o">&lt;&gt;</span><span class="p">()));</span>
+
+<span class="w">    </span><span class="n">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CircuitBreakerConfig</span><span class="p">.</span><span class="na">custom</span><span class="p">()</span>
+<span class="w">    </span><span class="p">...</span>
+<span class="w">    </span><span class="n">cbRegistry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">CircuitBreakerRegistry</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="n">config</span><span class="p">);</span>
+<span class="w">    </span><span class="n">circuitBreaker</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">cbRegistry</span><span class="p">.</span><span class="na">circuitBreaker</span><span class="p">(</span><span class="n">ctx</span><span class="p">.</span><span class="na">getFunctionName</span><span class="p">());</span>
+
+<span class="w">    </span><span class="n">RetryConfig</span><span class="w"> </span><span class="n">retryConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RetryConfig</span><span class="p">.</span><span class="na">custom</span><span class="p">()</span><span class="w">                       </span>
+<span class="w">    </span><span class="p">...</span>
+<span class="w">    </span><span class="n">retryRegistry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">RetryRegistry</span><span class="p">.</span><span class="na">of</span><span class="p">(</span><span class="n">retryConfig</span><span class="p">);</span>
+<span class="w">    </span><span class="n">retry</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">retryRegistry</span><span class="p">.</span><span class="na">retry</span><span class="p">(</span><span class="n">ctx</span><span class="p">.</span><span class="na">getFunctionName</span><span class="p">());</span>
+<span class="w">    </span><span class="n">initalized</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ The Google Maps REST API call</p>
+<p>❶ 对 Google Maps REST API 的调用。</p>
+<p>❷ Decorated with a cache</p>
+<p>❷ 装饰上一个缓存。</p>
+<p>❸ Decorated with a circuit breaker</p>
+<p>❸ 装饰上一个熔断器。</p>
+<p>❹ Decorated with a retry policy</p>
+<p>❹ 装饰上一个重试策略。</p>
+<p>❺ Calls the decorated function to get the actual latitude/ longitude</p>
+<p>❺ 调用这个被装饰过的函数，以取得实际的纬度/经度。</p>
+<p>❻ Initialize the resiliency configurations as before.</p>
+<p>❻ 像前面那样初始化那些韧性配置。</p>
+<p>In this particular configuration, the cache will be checked before the function is invoked. Any calls that fail will be retried based on the defined configuration, and if a sufficient number of calls fail, the circuit breaker will be tripped to prevent subsequent calls from being made to the remote service until sufficient time has passed to allow the service to recover.</p>
+<p>在这份具体的配置中，缓存会在该函数被调用之前先被查询。任何失败的调用都会依据所定义的配置被重试；而如果有足够多数量的调用失败了，熔断器就会跳闸，以阻止后续对远程服务继续发起调用，直到有足够的时间过去、让该服务得以恢复为止。</p>
+<p>Remember that these code-based resiliency patterns are also used in conjunction with the resiliency capabilities provided by the Pulsar Functions framework, such as auto-restarting K8s pods. Together, these can help minimize your downtime and keep your Pulsar Functions applications running smoothly.</p>
+<p>请记住：这些基于代码的韧性模式，还会与 Pulsar Functions 框架本身所提供的那些韧性能力（例如自动重启 K8s pod）配合使用。它们加在一起，能够帮助你把停机时间降到最低，并让你的 Pulsar Functions 应用保持平稳运行。</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../ui.js"></script>
+</body>
+</html>

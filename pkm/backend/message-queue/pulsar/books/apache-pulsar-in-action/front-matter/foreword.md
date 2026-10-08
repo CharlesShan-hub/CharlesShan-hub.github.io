@@ -1,0 +1,37 @@
+## foreword
+
+*Apache Pulsar in Action* is the missing guide that will walk you through your journey with Apache Pulsar. It is a book that I’d recommend to anyone, from developers starting to explore pub-sub messaging, to someone with messaging experience, up to experienced Pulsar power users.
+
+《Apache Pulsar in Action》正是那本缺失的指南，它将陪伴你走完与 Apache Pulsar 相伴的旅程。这是一本我会推荐给任何人的书——从刚开始探索发布-订阅消息的开发者，到已有消息系统经验的人，一直到经验丰富的 Pulsar 资深用户。
+
+The Apache Pulsar project was started at Yahoo! around 2012 with the mission of experimenting with a new architecture that would be able to solve the operational challenges of existing messaging platforms. This was also a time when some significant shifts in the world of data infrastructure were starting to become more visible. Application developers started to look more and more at scalable and reliable messaging as the core component for building the next generation of products. At the same time, companies started to see large-scale real-time streaming data analytics as an essential component and business advantage.
+
+Apache Pulsar 项目大约在 2012 年启动于 Yahoo!，其使命是试验一种新的架构，以期解决现有消息平台所面临的运维挑战。那也是一个数据基础设施领域若干重大转变开始变得日益清晰的时代。应用开发者开始越来越多地把可扩展、可靠的消息系统，视为构建下一代产品的核心组件。与此同时，各家公司开始把大规模的实时流式数据分析，看作一项必不可少的组成部分和商业优势。
+
+Pulsar was designed from the ground up with the objective of bridging these two worlds, pub-sub messaging and streaming analytics, that are too often isolated in different silos. We worked toward creating an infrastructure that would represent a next generation of real-time data platforms, where one single system would be able to support all the use cases throughout the entire life cycle of data events.
+
+Pulsar 从一开始就是带着这样一个目标被设计出来的：把发布-订阅消息与流式分析这两个世界连接起来——而它们过于频繁地被隔绝在不同的孤岛之中。我们致力于创造这样一种基础设施：它代表着下一代实时数据平台，在其中，单一的一个系统就能支撑起数据事件整个生命周期内的全部用例。
+
+Over time, that vision has expanded further, as can be clearly seen from the wide range of components described in this book. The project has added support for lightweight processing with Pulsar Functions, the Pulsar IO connectors framework, support for data schema, and many other features. What has not changed is the ultimate goal of creating the most scalable, flexible, and reliable platform for real-time data, and allowing any user to process the data stored in Pulsar in the most convenient form.
+
+随着时间的推移，那个愿景进一步拓展了——从本书所描述的众多组件中就能清楚地看到这一点。项目陆续加入了对用 Pulsar Functions 做轻量级处理的支持、Pulsar IO 连接器框架、对数据 schema 的支持，以及许多其他特性。始终没有改变的，是那个终极目标：为实时数据打造最具可扩展性、最灵活、最可靠的平台，并让任何用户都能以最便利的形式去处理存放在 Pulsar 中的数据。
+
+I have known and worked with this book’s author, David Kjerrumgaard, for several years. Throughout this time, I’ve seen his passion for working with the Pulsar community. He is always able to help users make sense of technical issues, as well as to show them how Pulsar fits into the bigger picture of solving their data problem.
+
+我与本书作者 David Kjerrumgaard 相识并共事已有数年。在这整段时间里，我目睹了他与 Pulsar 社区一起工作时的那份热忱。他总能帮助用户理清各种技术问题，也总能向他们展示 Pulsar 是如何契合到"解决他们的数据问题"这幅更大的图景之中的。
+
+I particularly appreciate how *Pulsar in Action* is able to seamlessly mix the theory and abstract concepts with the clarity of practical step-by-step examples, and how these examples are rooted in common use cases and messaging design patterns that will surely resonate with many readers. There is truly something for everyone, and everyone will be able to get acquainted with all the aspects and the possibilities that Pulsar offers.
+
+我特别欣赏的一点是：《Pulsar in Action》能够把理论与抽象概念，同那些逐步递进的实例所具有的清晰度无缝地融合在一起；而且这些实例都植根于常见的用例和消息设计模式，必定会引起许多读者的共鸣。这本书真正做到了让每个人都能有所收获；而每个人也都能借此熟悉 Pulsar 所提供的方方面面与各种可能性。
+
+—Matteo Merli
+
+——Matteo Merli
+
+CTO at StreamNative
+
+StreamNative 首席技术官
+
+Co-creator and PMC Chair of Apache Pulsar
+
+Apache Pulsar 的共同创造者与 PMC 主席

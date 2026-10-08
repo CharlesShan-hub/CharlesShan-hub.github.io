@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4.3.2-the-pulsar-sdk</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="432-the-pulsar-sdk">4.3.2 The Pulsar SDK</h3>
+<p>Another option is to develop your functions using the Pulsar Functions SDK, which leverages Pulsar-specific libraries that provide a range of functionality not available in the native interfaces, such as state management and user configuration. Additional capabilities and information can be accessed through a Context object that is defined inside the SDK, including</p>
+<p>另一种选择是使用 Pulsar Functions SDK 来开发你的函数，它利用 Pulsar 专属的库，提供了原生接口所不具备的一系列功能，例如状态管理和用户配置。更多能力和信息可以通过 SDK 内部定义的一个 Context 对象来访问，其中包括</p>
+<ul>
+<li>The name, version, and ID of the Pulsar function</li>
+</ul>
+<p>Pulsar function 的名称、版本和 ID</p>
+<ul>
+<li>The message ID of each message</li>
+</ul>
+<p>每条消息的消息 ID</p>
+<ul>
+<li>The name of the topic on which the message was sent</li>
+</ul>
+<p>消息被发送到的主题的名称</p>
+<ul>
+<li>The names of all input topics as well as the output topic associated with the function</li>
+</ul>
+<p>该函数关联的所有输入主题以及输出主题的名称</p>
+<ul>
+<li>The tenant and namespace associated with the function</li>
+</ul>
+<p>该函数关联的租户和命名空间</p>
+<ul>
+<li>The logger object used by the function, which can be used to write log messages</li>
+</ul>
+<p>该函数所使用的 logger 对象，可用于写入日志消息</p>
+<ul>
+<li>Access to arbitrary user config values supplied via the CLI</li>
+</ul>
+<p>访问通过 CLI 提供的任意用户配置值</p>
+<ul>
+<li>An interface for recording metrics</li>
+</ul>
+<p>用于记录指标的接口</p>
+<p>An implementation of the Pulsar SDK is available for Java, Python, and Golang, and each specifies a functional interface that includes the Context object as a parameter that is populated and provided by the Pulsar Functions runtime environment.</p>
+<p>Pulsar SDK 有 Java、Python 和 Golang 三种实现，每一种都规定了一个函数式接口，该接口把 Context 对象作为一个参数纳入其中；这个对象由 Pulsar Functions 运行时环境填充并提供。</p>
+<p>Java SDK functions</p>
+<p>Java SDK 函数</p>
+<p>To get started developing Pulsar functions using the Java SDK, you’ll need to add a dependency on the pulsar-functions-api artifact to your project, as shown in the following listing.</p>
+<p>要开始使用 Java SDK 开发 Pulsar function，你需要在项目中添加对 pulsar-functions-api 这个构件的依赖，如下面的清单所示。</p>
+<p>Listing 4.3 Adding Pulsar SDK dependencies to you pom.xml file</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;properties&gt;</span>
+<span class="w">    </span><span class="nt">&lt;pulsar.version&gt;</span>2.7.2<span class="nt">&lt;/pulsar.version&gt;</span>
+<span class="nt">&lt;/properties&gt;</span>
+
+...
+<span class="nt">&lt;dependency&gt;</span>
+<span class="w">    </span><span class="nt">&lt;groupId&gt;</span>org.apache.pulsar<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>pulsar-functions-api<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;version&gt;</span>${pulsar.version}<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</code></pre>
+<p>When you are developing a Pulsar function that is based on the SDK, the function should implement the org.apache.pulsar.functions.api.Function interface. As you can see from the following listing, this interface specifies only one method that you need to implement, called process.</p>
+<p>当你开发一个基于 SDK 的 Pulsar function 时，该函数应当实现 org.apache.pulsar.functions.api.Function 接口。正如你从下面的清单中看到的，该接口只规定了一个你需要实现的方法，名为 process。</p>
+<p>Listing 4.4 The Pulsar SDK function interface definition</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@FunctionalInterface</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">Function</span><span class="o">&lt;</span><span class="n">I</span><span class="p">,</span><span class="w"> </span><span class="n">O</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">O</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">I</span><span class="w"> </span><span class="n">input</span><span class="p">,</span><span class="w"> </span><span class="n">Context</span><span class="w"> </span><span class="n">context</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<p>The process method is called at least once, depending on the processing guarantees you specify for the function for every message that is published to the configured input topic of the function. The incoming input bytes are serialized to the input type I for JSON-based messages as well as simple Java types, such as String, Integer, and Float. If these types do not meet your needs, you can also use your own types as long as you provide your own implementation of the org.apache.pulsar.functions.api .SerDe interface for the type, or you can register the incoming message type in the Pulsar schema registry, which I will cover in greater detail in chapter 7. An implementation of the echo function that demonstrates several different features of the SDK, such as logging and recording metrics, is shown in the following listing.</p>
+<p>对于发布到该函数所配置的输入主题上的每一条消息，process 方法至少会被调用一次，具体次数取决于你为该函数指定的处理保证。对于基于 JSON 的消息，以及 String、Integer、Float 等简单 Java 类型，传入的输入字节会被序列化为输入类型 I。如果这些类型不能满足你的需要，你也可以使用自己的类型，前提是你为该类型提供了自己对 org.apache.pulsar.functions.api.SerDe 接口的实现；或者你也可以在 Pulsar schema 注册表中注册传入的消息类型，我将在第 7 章更详细地讨论这一点。下面清单中展示的这个 echo 函数实现，演示了 SDK 的若干不同特性，例如记日志和记录指标。</p>
+<p>Listing 4.5 Pulsar SDK function in Java</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">import</span><span class="w"> </span><span class="nn">java.util.stream.Collectors</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.pulsar.functions.api.Context</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.pulsar.functions.api.Function</span><span class="p">;</span><span class="w">              </span><span class="n">❶</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.slf4j.Logger</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">EchoFunction</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Function</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">input</span><span class="p">,</span><span class="w"> </span><span class="n">Context</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">         </span><span class="n">❷</span>
+<span class="w">       </span><span class="n">Logger</span><span class="w"> </span><span class="n">LOG</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ctx</span><span class="p">.</span><span class="na">getLogger</span><span class="p">();</span><span class="w">                           </span><span class="n">❸</span>
+<span class="w">       </span><span class="n">String</span><span class="w"> </span><span class="n">inputTopics</span><span class="w"> </span><span class="o">=</span>
+<span class="w">         </span><span class="n">ctx</span><span class="p">.</span><span class="na">getInputTopics</span><span class="p">().</span><span class="na">stream</span><span class="p">()</span>
+<span class="w">            </span><span class="p">.</span><span class="na">collect</span><span class="p">(</span><span class="n">Collectors</span><span class="p">.</span><span class="na">joining</span><span class="p">(</span><span class="s">", "</span><span class="p">));</span><span class="w">               </span><span class="n">❹</span>
+
+<span class="w">       </span><span class="n">String</span><span class="w"> </span><span class="n">functionName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ctx</span><span class="p">.</span><span class="na">getFunctionName</span><span class="p">();</span><span class="w">            </span><span class="n">❺</span>
+
+<span class="w">       </span><span class="n">String</span><span class="w"> </span><span class="n">logMessage</span><span class="w"> </span><span class="o">=</span>
+<span class="w">           </span><span class="n">String</span><span class="p">.</span><span class="na">format</span><span class="p">(</span><span class="s">"A message with a value of \"%s\" +</span>
+<span class="s">                “has arrived on one of the following topics: %s\n"</span><span class="p">,</span>
+<span class="w">                </span><span class="n">input</span><span class="p">,</span><span class="w"> </span><span class="n">inputTopics</span><span class="p">);</span>
+
+<span class="w">        </span><span class="n">LOG</span><span class="p">.</span><span class="na">info</span><span class="p">(</span><span class="n">logMessage</span><span class="p">);</span><span class="w">                                  </span><span class="n">❻</span>
+<span class="w">        </span><span class="n">String</span><span class="w"> </span><span class="n">metricName</span><span class="w"> </span><span class="o">=</span>
+<span class="w">           </span><span class="n">String</span><span class="p">.</span><span class="na">format</span><span class="p">(</span><span class="s">"function-%s-messages-received"</span><span class="p">,</span><span class="w"> </span><span class="n">functionName</span><span class="p">);</span>
+
+<span class="w">        </span><span class="n">ctx</span><span class="p">.</span><span class="na">recordMetric</span><span class="p">(</span><span class="n">metricName</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span><span class="w">                       </span><span class="n">❼</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">input</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ The class must implement the Pulsar Functions interface.</p>
+<p>❶ 该类必须实现 Pulsar Functions 接口。</p>
+<p>❷ The interface defines a single method with two parameters, including a context object.</p>
+<p>❷ 该接口定义了只有一个带两个参数的方法，其中包括一个 context 对象。</p>
+<p>❸ We use the context object to access the LOGGER object.</p>
+<p>❸ 我们使用 context 对象来访问 LOGGER 对象。</p>
+<p>❹ We use the context object to get the list of input topics</p>
+<p>❹ 我们使用 context 对象来获取输入主题的列表</p>
+<p>❺ We use the context object to get the function name.</p>
+<p>❺ 我们使用 context 对象来获取函数名。</p>
+<p>❻ We generate a log message.</p>
+<p>❻ 我们生成一条日志消息。</p>
+<p>❼ We record a user-defined metric.</p>
+<p>❼ 我们记录一个用户自定义的指标。</p>
+<p>The Java SDK’s context object enables you to access key/value pairs provided to the Pulsar function via the command line (as JSON). This feature allows you to write generic functions that can be used multiple times but with a slightly different configuration. For instance, let’s say you want to write a function that filters events based on a user-defined regular expression. When an event arrives, the contents are compared to the configured regex, and those entries that match the provided pattern are returned, and all others are ignored. Such a function could be useful if you want to verify the format of the incoming data before you begin processing it. An example of such a function that accesses the regular expression from the key/value pairs in the context object is shown in the following listing.</p>
+<p>Java SDK 的 context 对象使你能够访问通过命令行（以 JSON 形式）提供给该 Pulsar function 的键/值对。这一特性允许你编写通用的函数，它们可以被多次使用，只是配置略有不同。举例来说，假设你想编写一个根据用户定义的正则表达式来过滤事件的函数。当一个事件到达时，把它与配置好的正则表达式进行比较，匹配所提供模式的那些条目被返回，其余的全部被忽略。如果你希望在开始处理传入数据之前先校验其格式，这样的函数就会很有用。下面清单展示了这样一个函数的示例，它从 context 对象的键/值对中取出那个正则表达式。</p>
+<p>Listing 4.6 User-configured Pulsar function in Java</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">import</span><span class="w"> </span><span class="nn">java.util.regex.Pattern</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.pulsar.functions.api.Context</span><span class="p">;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.pulsar.functions.api.Function</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">RegexMatcherFunction</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Function</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">REGEX_CONFIG</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"regex-pattern"</span><span class="p">;</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">input</span><span class="p">,</span><span class="w"> </span><span class="n">Context</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Optional</span><span class="o">&lt;</span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">config</span><span class="w"> </span><span class="o">=</span>
+<span class="w">          </span><span class="n">ctx</span><span class="p">.</span><span class="na">getUserConfigValue</span><span class="p">(</span><span class="n">REGEX_CONFIG</span><span class="p">);</span><span class="w">                    </span><span class="n">❶</span>
+
+<span class="w">        </span><span class="nf">if</span><span class="w"> </span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="na">isPresent</span><span class="p">()</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">config</span><span class="p">.</span><span class="na">get</span><span class="p">().</span><span class="na">getClass</span><span class="p">()</span>
+<span class="w">             </span><span class="p">.</span><span class="na">getName</span><span class="p">().</span><span class="na">equals</span><span class="p">(</span><span class="n">String</span><span class="p">.</span><span class="na">class</span><span class="p">.</span><span class="na">getName</span><span class="p">()))</span><span class="w"> </span><span class="p">{</span><span class="w">          </span><span class="n">❷</span>
+
+<span class="w">           </span><span class="n">Pattern</span><span class="w"> </span><span class="n">pattern</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Pattern</span><span class="p">.</span><span class="na">compile</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="na">get</span><span class="p">().</span><span class="na">toString</span><span class="p">());</span>
+<span class="w">           </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">pattern</span><span class="p">.</span><span class="na">matcher</span><span class="p">(</span><span class="n">input</span><span class="p">).</span><span class="na">matches</span><span class="p">())</span><span class="w"> </span><span class="p">{</span><span class="w">                 </span><span class="n">❸</span>
+<span class="w">               </span><span class="n">String</span><span class="w"> </span><span class="n">metricName</span><span class="w"> </span><span class="o">=</span>
+<span class="w">                 </span><span class="n">String</span><span class="p">.</span><span class="na">format</span><span class="p">(</span><span class="s">"%s-regex-matches"</span><span class="p">,</span><span class="n">ctx</span><span class="p">.</span><span class="na">getFunctionName</span><span class="p">());</span>
+
+<span class="w">               </span><span class="n">ctx</span><span class="p">.</span><span class="na">recordMetric</span><span class="p">(</span><span class="n">metricName</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">);</span>
+<span class="w">               </span><span class="k">return</span><span class="w"> </span><span class="n">input</span><span class="p">;</span>
+<span class="w">           </span><span class="p">}</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">       </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span><span class="w">                                                </span><span class="n">❹</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ Retrieve the regex pattern from the user-provided configs.</p>
+<p>❶ 从用户提供的配置中取出正则表达式模式。</p>
+<p>❷ If a regex string was provided, then compile the regex.</p>
+<p>❷ 如果提供了一个正则表达式字符串，就编译它。</p>
+<p>❸ If the input matches the regex, allow it to pass.</p>
+<p>❸ 如果输入与该正则表达式匹配，就放行。</p>
+<p>❹ Otherwise, return null.</p>
+<p>❹ 否则返回 null。</p>
+<p>Pulsar Functions can publish results to an output topic, but this isn’t required. You can also have functions that don’t always return a value, such as the function in listing 4.5 that filters out non-matching inputs. In such a scenario, you can simply return a value of null from the function.</p>
+<p>Pulsar Functions 可以把结果发布到输出主题，但这并不是必需的。你也可以让函数不总是返回值，例如清单 4.5 中那个过滤掉不匹配输入的函数。在这种场景下，你只需从函数中返回一个 null 值即可。</p>
+<p>Python SDK functions</p>
+<p>Python SDK 函数</p>
+<p>To get started developing Pulsar functions using the Python SDK, you’ll need to add the Pulsar client dependency to your Python installation. The latest version of the Pulsar client library can be easily installed using the pip package manager and the commands shown in the following listing. Once this is installed on your local development environment, you will be able to start developing Pulsar functions in Python that leverage the SDK.</p>
+<p>要开始使用 Python SDK 开发 Pulsar function，你需要在你的 Python 安装中添加 Pulsar 客户端依赖。Pulsar 客户端库的最新版本可以使用 pip 包管理器以及下面清单中所示的命令轻松安装。一旦在你的本地开发环境上安装好了，你就可以开始用 Python 开发借助 SDK 的 Pulsar function 了。</p>
+<p>Listing 4.7 Adding Pulsar SDK dependencies to your Python environment</p>
+<pre lang="bash"><code class="language-bash md-fencescode">pip3<span class="w"> </span>install<span class="w"> </span>pulsar-client<span class="o">==</span><span class="m">2</span>.6.3<span class="w"> </span>-user<span class="w">    </span>❶
+
+pip3<span class="w"> </span>list<span class="w">                                  </span>❷
+
+Package<span class="w">       </span>Version
+-------------<span class="w"> </span>---------
+...
+pulsar-client<span class="w"> </span><span class="m">2</span>.6.3<span class="w">                        </span>❸
+</code></pre>
+<p>❶ Install the Pulsar client.</p>
+<p>❶ 安装 Pulsar 客户端。</p>
+<p>❷ List all the packages.</p>
+<p>❷ 列出所有已安装的包。</p>
+<p>❸ Confirm that the correct version of the Pulsar client has been installed.</p>
+<p>❸ 确认已安装正确版本的 Pulsar 客户端。</p>
+<p>Let’s look at a Python-based implementation of the Echo function to demonstrate some of the SDK capabilities in the following listing.</p>
+<p>让我们来看下面清单中 Echo 函数的 Python 实现，以演示 SDK 的一些能力。</p>
+<p>Listing 4.8 Pulsar SDK function in Python</p>
+<pre lang="python"><code class="language-python md-fencescode"><span class="kn">from</span><span class="w"> </span><span class="nn">pulsar</span><span class="w"> </span><span class="kn">import</span> <span class="n">Function</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">EchoFunction</span><span class="p">(</span><span class="n">Function</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>                    <span class="err">❶</span>
+        <span class="n">logger</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">get_logger</span><span class="p">()</span>                     <span class="err">❷</span>
+        <span class="n">evtTime</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">get_message_eventtime</span><span class="p">()</span>
+        <span class="n">msgKey</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">get_message_key</span><span class="p">();</span>               <span class="err">❸</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"""A message with a value of </span><span class="si">{0}</span><span class="s2">, a key of </span><span class="si">{1}</span><span class="s2">,</span>
+<span class="s2">          and an event time of </span><span class="si">{2}</span><span class="s2"> was received"""</span>
+          <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">msgKey</span><span class="p">,</span> <span class="n">evtTime</span><span class="p">))</span>
+
+        <span class="n">metricName</span> <span class="o">=</span> <span class="s2">"""function-</span><span class="si">%s</span><span class="s2">-</span>
+<span class="s2">          messages-received"""</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">get_function_name</span><span class="p">())</span>
+        <span class="n">context</span><span class="o">.</span><span class="n">record_metric</span><span class="p">(</span><span class="n">metricName</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>              <span class="err">❹</span>
+
+        <span class="k">return</span> <span class="nb">input</span>                                      <span class="err">❺</span>
+</code></pre>
+<p>❶ The function definition required by the Pulsar SDK</p>
+<p>❶ Pulsar SDK 所要求的函数定义</p>
+<p>❷ The Python SDK provides access to the logger.</p>
+<p>❷ Python SDK 提供了对 logger 的访问。</p>
+<p>❸ The Python SDK provides access to message metadata.</p>
+<p>❸ Python SDK 提供了对消息元数据的访问。</p>
+<p>❹ The Python SDK supports metrics.</p>
+<p>❹ Python SDK 支持指标。</p>
+<p>❺ Echo back the original input value.</p>
+<p>❺ 把原始输入值原样返回。</p>
+<p>The Python SDK’s context object provides nearly all the same capabilities as the Java SDK, with two notable exceptions. The first is that, as of version 2.6.0, Python-based Pulsar Functions does not support schemas, which I will discuss in greater detail in chapter 7; essentially this means that the Python function is responsible for the serialization and deserialization of the message bytes into the expected format. The second capability that is not present in Python-based Pulsar Functions is access to the Pulsar Admin API, which, as I discussed in chapter 3, is only available in Java.</p>
+<p>Python SDK 的 context 对象提供了与 Java SDK 几乎相同的全部能力，但有两个值得注意的例外。第一个是：从 2.6.0 版本起，基于 Python 的 Pulsar Functions 不支持 schema，我将在第 7 章更详细地讨论这一点；这实质上意味着 Python 函数要自己负责把消息字节序列化和反序列化成期望的格式。第二个在基于 Python 的 Pulsar Functions 中不存在的能力是对 Pulsar Admin API 的访问，正如我在第 3 章中讨论过的，它只在 Java 中可用。</p>
+<p>Golang SDK functions</p>
+<p>Golang SDK 函数</p>
+<p>To get started developing Pulsar functions using the Golang SDK, you’ll need to add the Pulsar client dependency to your Golang installation. The latest version of the pulsar client library can be installed using the following command: go get -u "github.com/ apache/pulsar-client-go/pulsar". Let’s look at a Golang-based implementation of the Echo function that we used earlier to demonstrate some of the SDK capabilities in the following listing.</p>
+<p>要开始使用 Golang SDK 开发 Pulsar function，你需要在你的 Golang 安装中添加 Pulsar 客户端依赖。pulsar 客户端库的最新版本可以使用下面这条命令安装：<code>go get -u "github.com/apache/pulsar-client-go/pulsar"</code>。让我们在下面的清单中看一下我们前面用过的 Echo 函数的 Golang 实现，以演示 SDK 的一些能力。</p>
+<p>Listing 4.9 Pulsar SDK function in Go</p>
+<pre lang="go"><code class="language-go md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nx">main</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="s">"context"</span>
+<span class="w">    </span><span class="s">"fmt"</span>
+
+<span class="w">    </span><span class="s">"github.com/apache/pulsar/pulsar-function-go/pf"</span><span class="w">             </span><span class="nx">❶</span>
+
+<span class="w">    </span><span class="nx">log</span><span class="w"> </span><span class="s">"github.com/apache/pulsar/pulsar-function-go/logutil"</span><span class="w">    </span><span class="nx">❷</span>
+<span class="p">)</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="nx">echoFunc</span><span class="p">(</span><span class="nx">ctx</span><span class="w"> </span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">in</span><span class="w"> </span><span class="p">[]</span><span class="kt">byte</span><span class="p">)</span><span class="w"> </span><span class="p">[]</span><span class="kt">byte</span><span class="w"> </span><span class="p">{</span><span class="w">            </span><span class="nx">❸</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="nx">fc</span><span class="p">,</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="o">:=</span><span class="w"> </span><span class="nx">pf</span><span class="p">.</span><span class="nx">FromContext</span><span class="p">(</span><span class="nx">ctx</span><span class="p">);</span><span class="w"> </span><span class="nx">ok</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">log</span><span class="p">.</span><span class="nx">Infof</span><span class="p">(</span><span class="s">"This input has a length of: %d"</span><span class="p">,</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="nx">in</span><span class="p">))</span><span class="w">     </span><span class="nx">❹</span>
+
+<span class="w">        </span><span class="nx">fmt</span><span class="p">.</span><span class="nx">Printf</span><span class="p">(</span><span class="s">"Fully-qualified function name is:%s\%s\%s\n"</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">fc</span><span class="p">.</span><span class="nx">GetFuncTenant</span><span class="p">(),</span><span class="w"> </span><span class="nx">fc</span><span class="p">.</span><span class="nx">GetFuncNamespace</span><span class="p">(),</span><span class="w"> </span><span class="nx">fc</span><span class="p">.</span><span class="w"> </span><span class="nx">GetFuncName</span><span class="p">())</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">in</span><span class="w">                                                     </span><span class="nx">❻</span>
+<span class="p">}</span>
+
+<span class="kd">func</span><span class="w"> </span><span class="nx">main</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">pf</span><span class="p">.</span><span class="nx">Start</span><span class="p">(</span><span class="nx">echoFunc</span><span class="p">)</span><span class="w">                                            </span><span class="nx">❼</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ Import the SDK library.</p>
+<p>❶ 导入 SDK 库。</p>
+<p>❷ Import the function logger library.</p>
+<p>❷ 导入函数 logger 库。</p>
+<p>❸ The function code with the correct method signature</p>
+<p>❸ 具有正确方法签名的函数代码</p>
+<p>❹ The Golang SDK provides access to the logger.</p>
+<p>❹ Golang SDK 提供了对 logger 的访问。</p>
+<p>❺ The Golang SDK provides access to function metadata.</p>
+<p>❺ Golang SDK 提供了对函数元数据的访问。</p>
+<p>❻ Echo back the original input value.</p>
+<p>❻ 把原始输入值原样返回。</p>
+<p>❼ Register the echofunc with the Pulsar Functions framework.</p>
+<p>❼ 把 echofunc 注册到 Pulsar Functions 框架。</p>
+<p>When writing Golang-based functions, remember that you need to provide the name of the function you wish to perform the actual logic to the pf.Start() method inside the main() method call, as shown in listing 4.8. This registers the function with the Pulsar Functions framework and ensures that the specified function is the one that is invoked when a new message arrives. In this case, we named used the echoFunc function, but it can be named anything, provided that the method signature matches any of the supported ones shown in the following listing. Any other function signatures will not be accepted, and consequently, no processing logic will be executed inside your Golang function.</p>
+<p>在编写基于 Golang 的函数时，请记住：你需要在 main() 方法的调用中，把你希望执行实际逻辑的那个函数的名字传给 pf.Start() 方法，如清单 4.8 所示。这会把该函数注册到 Pulsar Functions 框架，并确保当新消息到达时被调用的就是这个指定的函数。在本例中，我们使用的名字是 echoFunc，但它可以是任何名字，只要其方法签名匹配下面清单中所示任一受支持的签名即可。任何其他函数签名都不会被接受，因此你的 Golang 函数内部也不会有任何处理逻辑被执行。</p>
+<p>Listing 4.10 Supported method signatures in Go</p>
+<pre lang="go"><code class="language-go md-fencescode"><span class="kd">func</span><span class="w"> </span><span class="p">()</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="kt">error</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">input</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">(</span><span class="nx">output</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">input</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nx">output</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="p">)</span><span class="w"> </span><span class="kt">error</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nx">output</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+<span class="kd">func</span><span class="w"> </span><span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">Context</span><span class="p">,</span><span class="w"> </span><span class="nx">input</span><span class="p">)</span><span class="w"> </span><span class="p">(</span><span class="nx">output</span><span class="p">,</span><span class="w"> </span><span class="kt">error</span><span class="p">)</span>
+</code></pre>
+<p>There are currently some limitations when it comes to using the SDK to develop Golang-based Pulsar functions, but this is subject to change as the project matures, so I highly recommend checking the most recent version of the online documentation for the latest capabilities. However, as of the writing of this book, Golang functions do not support the recording of function-level metrics (e.g., there isn’t a recordMetric method defined inside the context object of the Golang SDK). Furthermore, you cannot implement stateful functions using Golang at this time.</p>
+<p>在使用 SDK 开发基于 Golang 的 Pulsar function 时，目前存在一些限制；但随着项目走向成熟，这一点可能会有变化，因此我强烈建议你查阅最新版本的在线文档，以了解最新的能力。不过，就本书写作时而言，Golang 函数不支持记录函数级指标（例如，Golang SDK 的 context 对象中没有定义 recordMetric 方法）。此外，目前你也无法用 Golang 实现有状态函数。</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

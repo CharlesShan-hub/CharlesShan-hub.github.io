@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>12.4.1-noise-reduction</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="1241-noise-reduction">12.4.1 Noise reduction</h3>
+<p>I previously mentioned how there can be noise (i.e., randomness) within the sensor data. In order to better forecast future data values, an important preprocessing step is the reduction of the noise in these univariate datasets. A common technique used to smooth out these fluctuations of the data is to simply compute the mathematical average of the data points within a predefined time window to produce a value. This computed moving average is then retained rather than the raw values. Doing so minimizes the impact that any individual sensor reading has on the reported value (e.g., if you have 99 sensor readings with the same value of 70 and one with a value of 100, then using a computed average of 70.3 would effectively smooth out the data and provide a value that is more indicative of the sensor reading over that interval).</p>
+<p>我此前讲过，传感器数据中是可能存在噪声（也就是随机性）的。为了更好地预测未来的数据值，一个重要的预处理步骤就是降低这些单变量数据集中的噪声。一种常用来把这些波动抹平的技术是：在一个预先定义好的时间窗口内，简单地计算各数据点的数学平均值，从而产出一个值。随后被留存下来的是这个计算出的移动平均值，而不是那些原始值。这样做把任何单个传感器读数对所上报数值的影响降到了最低（例如，如果你有 99 个取值同为 70 的传感器读数、外加一个取值 100 的读数，那么采用 70.3 这个计算出的平均值，就能有效地把数据抹平，并提供一个更能代表该区间内传感器读数的数值）。</p>
+<p>While there are many different moving average models, for the sake of brevity, I will only cover the <em>simple moving average</em> in this chapter. A simple moving average is calculated by retaining the most recent subset of the time-series data, such as the last 100 sensor readings. When a new reading arrives, it is used to replace the oldest value in the collection. Once the newest value has been added, the mathematical average of these remaining values is computed and returned.</p>
+<p>虽然存在许多不同的移动平均模型，但为了简洁起见，本章我只讲<em>简单移动平均</em>（simple moving average）。简单移动平均的计算方式是：保留时间序列数据中最新的一个子集，例如最近 100 个传感器读数。当一个新的读数到达时，就用它去替换掉集合中最旧的那个值。一旦最新的值被加入进来，就计算并返回这些留存值的数学平均值。</p>
+<p>Listing 12.1 A Pulsar function to calculate the simple moving average</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">SimpleMovingAverageFunction</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Function</span><span class="o">&lt;</span><span class="n">Double</span><span class="p">,</span><span class="w"> </span><span class="n">Void</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">CircularFifoQueue</span><span class="o">&lt;</span><span class="n">Double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">values</span><span class="p">;</span><span class="w">                    </span><span class="n">❶</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">PulsarClient</span><span class="w"> </span><span class="n">client</span><span class="p">;</span><span class="w">                                 </span><span class="n">❷</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">remotePulsarUrl</span><span class="p">,</span><span class="w"> </span><span class="n">topicName</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="n">initalized</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Producer</span><span class="o">&lt;</span><span class="n">Double</span><span class="o">&gt;</span><span class="w"> </span><span class="n">producer</span><span class="p">;</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">     </span><span class="kd">public</span><span class="w"> </span><span class="n">Void</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">Double</span><span class="w"> </span><span class="n">input</span><span class="p">,</span><span class="w"> </span><span class="n">Context</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span><span class="w">    </span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">initalized</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">initalize</span><span class="p">(</span><span class="n">ctx</span><span class="p">);</span>
+<span class="w">      </span><span class="p">}</span>
+
+<span class="w">      </span><span class="n">values</span><span class="p">.</span><span class="na">add</span><span class="p">(</span><span class="n">input</span><span class="p">);</span><span class="w">                                        </span><span class="n">❸</span>
+<span class="w">      </span><span class="kt">double</span><span class="w"> </span><span class="n">average</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">values</span><span class="p">.</span><span class="na">stream</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="na">mapToDouble</span><span class="p">(</span><span class="n">i</span><span class="o">-&gt;</span><span class="n">i</span><span class="p">).</span><span class="na">average</span><span class="p">().</span><span class="na">getAsDouble</span><span class="p">();</span><span class="w">             </span><span class="n">❹</span>
+<span class="w">      </span><span class="nf">publish</span><span class="p">(</span><span class="n">average</span><span class="p">);</span><span class="w">                                         </span><span class="n">❺</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">   </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">publish</span><span class="p">(</span><span class="kt">double</span><span class="w"> </span><span class="n">average</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">getProducer</span><span class="p">().</span><span class="na">send</span><span class="p">(</span><span class="n">average</span><span class="p">);</span>
+<span class="w">      </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">PulsarClientException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">PulsarClient</span><span class="w"> </span><span class="nf">getEdgePulsarClient</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">PulsarClientException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">client</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PulsarClient</span><span class="p">.</span><span class="na">builder</span><span class="p">().</span><span class="na">serviceUrl</span><span class="p">(</span><span class="n">remotePulsarUrl</span><span class="p">).</span><span class="na">build</span><span class="p">();</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="n">client</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Producer</span><span class="o">&lt;</span><span class="n">Double</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">getProducer</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">PulsarClientException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">producer</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">             </span><span class="n">producer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getEdgePulsarClient</span><span class="p">()</span>
+<span class="w">                       </span><span class="p">.</span><span class="na">newProducer</span><span class="p">(</span><span class="n">Schema</span><span class="p">.</span><span class="na">DOUBLE</span><span class="p">)</span>
+<span class="w">                   </span><span class="p">.</span><span class="na">topic</span><span class="p">(</span><span class="n">topicName</span><span class="p">).</span><span class="na">create</span><span class="p">();</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="n">producer</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">initalize</span><span class="p">(</span><span class="n">Context</span><span class="w"> </span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">initalized</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="w">      </span><span class="n">Integer</span><span class="w"> </span><span class="n">size</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">Integer</span><span class="p">)</span><span class="w"> </span><span class="n">ctx</span><span class="p">.</span><span class="na">getUserConfigValueOrDefault</span><span class="p">(</span><span class="s">"size"</span><span class="p">,</span><span class="w"> </span><span class="mi">100</span><span class="p">);</span>
+<span class="w">      </span><span class="n">values</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">CircularFifoQueue</span><span class="o">&lt;</span><span class="n">Double</span><span class="o">&gt;</span><span class="w"> </span><span class="p">(</span><span class="n">size</span><span class="p">);</span>
+<span class="w">      </span><span class="n">remotePulsarUrl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ctx</span><span class="p">.</span><span class="na">getUserConfigValue</span><span class="p">(</span><span class="s">"pulsarUrl"</span><span class="p">).</span><span class="na">get</span><span class="p">().</span><span class="na">toString</span><span class="p">();</span>
+<span class="w">      </span><span class="n">topicName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ctx</span><span class="p">.</span><span class="na">getUserConfigValue</span><span class="p">(</span><span class="s">"topicName"</span><span class="p">).</span><span class="na">get</span><span class="p">().</span><span class="na">toString</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ The circular buffer of values that automatically removes the oldest item</p>
+<p>❶ 自动移除最旧元素的那个环形缓冲区。</p>
+<p>❷ A Pulsar client for the Pulsar cluster running on the edge servers</p>
+<p>❷ 用于连接运行在边缘服务器上的 Pulsar 集群的 Pulsar 客户端。</p>
+<p>❸ Add the sensor reading to the list of values.</p>
+<p>❸ 把这个传感器读数加进值列表中。</p>
+<p>❹ Calculate the simple moving average.</p>
+<p>❹ 计算简单移动平均值。</p>
+<p>❺ Publish the computed value to a topic on the edge server.</p>
+<p>❺ 把这个计算出的值发布到边缘服务器上的某个主题。</p>
+<p>Fortunately, it is relatively straightforward to implement the calculation of moving averages using Pulsar Functions. As you can see from listing 12.1, the key is using a circular buffer to retain the last <em>n</em> values required to calculate the moving average. You can then use this Pulsar function to preprocess the individual sensor readings and publish the calculated SMA rather than the raw value itself. This ensures that all downstream analysis is performed on less-noisy data.</p>
+<p>所幸，用 Pulsar Functions 来实现移动平均的计算是相当直截了当的。从清单 12.1 中可以看到，关键在于使用一个环形缓冲区来保留计算移动平均所需的最后 <em>n</em> 个值。随后你就可以用这个 Pulsar 函数去预处理各个单独的传感器读数，并发布那个计算出来的 SMA、而不是原始值本身。这确保了所有下游分析都是在噪声更小的数据上进行的。</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

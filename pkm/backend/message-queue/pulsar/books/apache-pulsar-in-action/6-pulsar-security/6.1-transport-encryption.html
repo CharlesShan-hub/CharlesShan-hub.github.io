@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>6.1-transport-encryption</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h2 id="61-transport-encryption">6.1 Transport encryption</h2>
+<p>By default, the data transmitted between a Pulsar broker and a Pulsar client is sent in plain text. This means any sensitive data contained within a message, such as passwords, credit card numbers, and social security numbers, is susceptible to being intercepted by eavesdroppers as it is transmitted over the network. Therefore, the first layer of defense is ensuring that the data transmitted between a Pulsar broker and a Pulsar client is encrypted <em>before</em> it is transmitted.</p>
+<p>默认情况下，Pulsar broker 与 Pulsar client 之间传输的数据是明文发送的。这意味着消息中所含的任何敏感数据——例如密码、信用卡号和社会安全号码——在网络传输过程中都有可能被窃听者截获。因此，第一道防线就是确保 Pulsar broker 与 Pulsar client 之间传输的数据在被发送<em>之前</em>就已经加密。</p>
+<p>Pulsar allows you to configure all communication to use transport layer security (TLS), which is a common cryptographic protocol that provides data encryption only as it is transported across the network. This is why it is often referred to as encryption for “data in motion”—the data is decrypted on the receiving end and therefore no longer encrypted once it reaches its destination.</p>
+<p>Pulsar 允许你把所有通信配置为使用传输层安全性协议（TLS），这是一种常见的加密协议，它只在数据跨越网络传输的那一刻提供加密。正因如此，它常被称为“动态数据”（data in motion）加密——数据会在接收端被解密，因此一旦抵达目的地就不再处于加密状态。</p>
+<p>Enabling TLS on Pulsar</p>
+<p>在 Pulsar 上启用 TLS</p>
+<p>Now that I have covered the basics of TLS wire encryption at a fairly high level, let’s focus on how we can use this technology to secure our communications between our Pulsar brokers and our clients. Since the Pulsar documentation does a fair job of outlining the steps required to enable TLS on Pulsar, I have decided that, rather than republish those same steps here, I will capture all of those steps in a single script that can be used to automate the process inside a Docker-based image.</p>
+<p>至此我已经在相当高的层面上讲完了 TLS 链路加密的基本原理，接下来我们把注意力放到如何用这项技术保护 Pulsar broker 与客户端之间的通信。由于 Pulsar 官方文档已经把在 Pulsar 上启用 TLS 所需的步骤讲得相当清楚，我决定不在这里重复罗列同样的步骤，而是把所有这些步骤收录进一个脚本，用来在基于 Docker 的镜像中自动化完成整个过程。</p>
+<p>I will then discuss the commands contained within the scripts in greater detail, as they relate to the discussion we had in the previous section, so you have a better understanding of why these steps are important and how you might modify them to suit your needs in a true production environment. If you look inside the GitHub repo (https://github.com/david-streamlio/pulsar-in-action) associated with this book, you will find a Dockerfile similar to the one shown in listing 6.1 under the docker-image/pulsar-standalone folder.</p>
+<p>随后我会结合上一节的讨论，更详细地讲解脚本中包含的命令，让你更好地理解为什么这些步骤很重要，以及在真正的生产环境中该如何修改它们以满足自己的需要。如果你去查看与本书配套的 GitHub 仓库（https://github.com/david-streamlio/pulsar-in-action），会在 docker-image/pulsar-standalone 目录下找到一个与清单 6.1 所示类似的 Dockerfile。</p>
+<p>For those of you unfamiliar with Docker, a Dockerfile is a simple text file that contains a series of instructions that are executed sequentially by the Docker client when creating an image. They can be thought of as recipes or blueprints for building Docker images and provide a simple way to automate the image-creation process. Now that we have a better understanding of Docker images, it is time to create our own. Our goal is to create an image that extends the capability of the pulsar-standalone image we used previously to include all of the security features I will be discussing throughout this chapter.</p>
+<p>对于不熟悉 Docker 的读者，Dockerfile 就是一个简单的文本文件，其中包含一系列指令，Docker 客户端在创建镜像时会按顺序执行这些指令。可以把它们理解为构建 Docker 镜像的“菜谱”或“蓝图”，它们提供了一种把镜像创建过程自动化的简便方式。既然我们已经对 Docker 镜像有了更清楚的认识，那就来创建我们自己的镜像吧。我们的目标是创建一个镜像，在之前用过的 pulsar-standalone 镜像基础上扩展能力，把本章将要讨论的全部安全特性都包含进去。</p>
+<p>Listing 6.1 Dockerfile contents</p>
+<pre lang="dockerfile"><code class="language-dockerfile md-fencescode"><span class="k">FROM</span><span class="w"> </span><span class="s">apachepulsar/pulsar-standalone:latest</span><span class="w">                            </span>❶
+<span class="k">ENV</span><span class="w"> </span><span class="nv">PULSAR_HOME</span><span class="o">=</span>/pulsar
+
+<span class="k">COPY</span><span class="w"> </span>conf/standalone.conf<span class="w"> </span><span class="nv">$PULSAR_HOME</span>/conf/standalone.conf<span class="w">           </span>❷
+<span class="k">COPY</span><span class="w"> </span>conf/client.conf<span class="w"> </span><span class="nv">$PULSAR_HOME</span>/conf/client.conf<span class="w">                   </span>❸
+
+<span class="k">ADD</span><span class="w"> </span>manning<span class="w"> </span><span class="nv">$PULSAR_HOME</span>/manning<span class="w">                                      </span>❹
+
+<span class="k">RUN</span><span class="w"> </span>chmod<span class="w"> </span>a+x<span class="w"> </span><span class="nv">$PULSAR_HOME</span>/manning/security/*.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">           </span><span class="nv">$PULSAR_HOME</span>/manning/security/*/*.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">              </span><span class="nv">$PULSAR_HOME</span>/manning/security/authentication/*/*.sh<span class="w">     </span>❺
+
+<span class="c">#####################################################################</span>
+<span class="c"># Transport Encryption using TLS</span>
+<span class="c">#####################################################################</span>
+<span class="k">RUN</span><span class="w"> </span><span class="o">[</span><span class="s2">"/bin/bash"</span>,<span class="w"> </span><span class="s2">"-c"</span>,<span class="w"> </span>
+<span class="w">     </span><span class="s2">"/pulsar/manning/security/TLS-encryption/enable-tls.sh"</span><span class="o">]</span><span class="w">         </span>❻
+</code></pre>
+<p>❶ Use the existing pulsar-standalone image as a starting point to effectively extend its capabilities.</p>
+<p>❶ 以现有的 pulsar-standalone 镜像作为起点，从而有效地扩展它的能力。</p>
+<p>❷ Overwrite the broker configuration with one that contains our updated security settings.</p>
+<p>❷ 用包含我们更新后安全设置的配置文件覆盖掉原来的 broker 配置。</p>
+<p>❸ Overwrite the client configuration with one that contains our updated client credentials.</p>
+<p>❸ 用包含我们更新后客户端凭据的配置文件覆盖掉原来的客户端配置。</p>
+<p>❹ Copy the contents of the manning folder into the image at /pulsar/manning.</p>
+<p>❹ 把 manning 目录的内容复制到镜像中的 /pulsar/manning。</p>
+<p>❺ Give execute permission to all of the scripts we need to execute.</p>
+<p>❺ 为我们需要执行的全部脚本赋予可执行权限。</p>
+<p>❻ Execute the specified script to generate the certificates required for TLS.</p>
+<p>❻ 执行指定脚本，生成 TLS 所需的证书。</p>
+<p>I will start by specifying that I wish to use the non-secured apachxpulsar/pulsar-standalone:latest image as the base image by using the FROM keyword. For those of you familiar with object-oriented languages, this is effectively the same as inheriting from a base class. All of the base image’s services, features, and configurations are automatically included in our image, which ensures that our Docker images will also provide a complete Pulsar environment for testing purposes without having to replicate those commands in our Dockerfile.</p>
+<p>我首先用 FROM 关键字声明：希望以未启用安全防护的 apachepulsar/pulsar-standalone:latest 镜像作为基础镜像。对于熟悉面向对象语言的读者来说，这实际上等同于从一个基类继承。基础镜像的全部服务、特性和配置都会被自动包含进我们的镜像，这就确保了我们的 Docker 镜像同样能提供一个完整的 Pulsar 测试环境，而不必在自己的 Dockerfile 里把那些命令再抄一遍。</p>
+<p>After setting the PULSAR_HOME environment variable, I use the COPY keyword to replace both the Pulsar broker and client configuration files with ones that are properly configured to secure the Pulsar instance. This is an important step, as once a container based on this image is launched, it is impossible to change these settings and have them take effect. Next, we add the contents of the manning directory to the Docker image and run a command to enable execute permission on all of the bash scripts that were added in the previous command, so we can execute them.</p>
+<p>设置完 PULSAR_HOME 环境变量之后，我用 COPY 关键字把 Pulsar broker 和客户端的配置文件都替换成已正确配置、可用于保护该 Pulsar 实例的版本。这是很关键的一步，因为一旦基于该镜像的容器启动，就无法再更改这些设置并使其生效了。接着，我们把 manning 目录的内容添加进 Docker 镜像，并运行一条命令为上一步添加进来的所有 bash 脚本开启可执行权限，这样我们后面才能执行它们。</p>
+<p>At the end of the Dockerfile are a series of bash scripts that get executed in order to generate the necessary security credentials, certificates, and keys required to secure a Pulsar cluster. Let’s examine the first script, named enable-tls.sh, which performs all the steps necessary to enable TLS wire encryption on the Pulsar cluster.</p>
+<p>Dockerfile 末尾是一系列 bash 脚本，它们会被依次执行，用以生成保护 Pulsar 集群所需的各种安全凭据、证书和密钥。我们先来看第一个脚本 enable-tls.sh，它完成了在 Pulsar 集群上启用 TLS 链路加密所需的全部步骤。</p>
+<p>The pulsar-standalone Docker image includes OpenSSL, which is an open source library that provides several command-line tools for issuing and signing digital certificates. Since we are running in a development environment, we will use these tools to act as our own certificate authority to produce self-signed certificates rather than use an internationally trusted third-party certificate authority (CA) (e.g., VeriSign, DigiCert) to sign our certificates. In a production environment you should <em>always</em> rely on a third-party CA.</p>
+<p>pulsar-standalone Docker 镜像中包含了 OpenSSL，这是一个开源库，提供若干用于签发和签署数字证书的命令行工具。由于我们运行在开发环境中，我们将用这些工具来充当自己的证书颁发机构，生成自签名证书，而不是去找国际公认的第三方证书颁发机构（CA）（例如 VeriSign、DigiCert）来签署证书。在生产环境中，你<em>始终</em>应当依赖第三方 CA。</p>
+<p>Acting as a CA means dealing with cryptographic pairs of private keys and public certificates. The very first cryptographic pair we’ll create is the root pair. This consists of the root key (ca.key.pem) and root certificate (ca.cert.pem). This pair forms the identity of your CA. Let’s examine the first part of the enable-tls.sh script, which generate these. As we can see from the following listing, the first command in the script generates the root key, while the second command creates the public X.509 certificate using the root key that was generated in the previous step.</p>
+<p>充当 CA 意味着要跟成对的私钥与公共证书打交道。我们要创建的第一个密钥对是根密钥对，它由根密钥（ca.key.pem）和根证书（ca.cert.pem）组成。这一对就构成了你的 CA 的身份。我们来看看 enable-tls.sh 脚本中生成它们的第一部分。从下面这份清单可以看到，脚本中的第一条命令生成根密钥，第二条命令则使用上一步生成的根密钥来创建公开的 X.509 证书。</p>
+<p>Listing 6.2 Portion of enable-tls.sh that creates CA</p>
+<pre lang="bash"><code class="language-bash md-fencescode"><span class="ch">#!/bin/bash</span>
+
+<span class="nb">export</span><span class="w"> </span><span class="nv">CA_HOME</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">CA_PASSWORD</span><span class="o">=</span>secret-password<span class="w">                                    </span>❶
+
+mkdir<span class="w"> </span>certs<span class="w"> </span>crl<span class="w"> </span>newcerts<span class="w"> </span>private
+chmod<span class="w"> </span><span class="m">700</span><span class="w"> </span>private/
+touch<span class="w"> </span>index.txt<span class="w"> </span>index.txt.attr
+<span class="nb">echo</span><span class="w"> </span><span class="m">1000</span><span class="w"> </span>&gt;<span class="w"> </span>serial
+
+<span class="c1"># Generate the certificate authority private key</span>
+openssl<span class="w"> </span>genrsa<span class="w"> </span>-aes256<span class="w"> </span><span class="se">\ </span><span class="w">                                           </span>❷
+<span class="w">   </span>-passout<span class="w"> </span>pass:<span class="si">${</span><span class="nv">CA_PASSWORD</span><span class="si">}</span><span class="w"> </span><span class="se">\ </span><span class="w">                                  </span>❸
+<span class="w">   </span>-out<span class="w"> </span>/pulsar/manning/security/cert-authority/private/ca.key.pem<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span><span class="m">4096</span><span class="w">                                                              </span>❹
+
+<span class="c1"># Restrict Access to the certificate authority private key   </span>
+chmod<span class="w"> </span><span class="m">400</span><span class="w"> </span>/pulsar/manning/security/cert-authority/private/ca.key.pem<span class="w"> </span>❺
+
+<span class="c1"># Create the X.509 certificate.</span>
+openssl<span class="w"> </span>req<span class="w"> </span>-config<span class="w"> </span>openssl.cnf<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-key<span class="w"> </span>/pulsar/manning/security/cert-authority/private/ca.key.pem<span class="w"> </span><span class="se">\ </span><span class="w">  </span>❻
+<span class="w">  </span>-new<span class="w"> </span>-x509<span class="w"> </span><span class="se">\ </span><span class="w">                                                       </span>❼
+<span class="w">  </span>-days<span class="w"> </span><span class="m">7300</span><span class="w"> </span><span class="se">\ </span><span class="w">                                                       </span>❽
+<span class="w">  </span>-sha256<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-extensions<span class="w"> </span>v3_ca<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-out<span class="w"> </span>/pulsar/manning/security/cert-authority/certs/ca.cert.pem<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-subj<span class="w"> </span><span class="s1">'/C=US/ST=CA/L=Palo Alto/CN=gottaeat.com'</span><span class="w"> </span><span class="se">\ </span><span class="w">                  </span>❾
+<span class="w">  </span>-passin<span class="w"> </span>pass:<span class="si">${</span><span class="nv">CA_PASSWORD</span><span class="si">}</span>❿
+</code></pre>
+<p>❶ We use an environment variable to set the password for the CA root key.</p>
+<p>❶ 我们用一个环境变量来设置 CA 根密钥的密码。</p>
+<p>❷ Encrypt the root key with AES 256-bit encryption.</p>
+<p>❷ 用 AES 256 位加密来保护根密钥。</p>
+<p>❸ Generates the private key that is secured with a strong password</p>
+<p>❸ 生成用强密码保护的私钥。</p>
+<p>❹ Use 4096 bits for the root key.</p>
+<p>❹ 根密钥使用 4096 位。</p>
+<p>❺ Anyone in possession of the root key and password can issue trusted certificates.</p>
+<p>❺ 任何同时掌握根密钥和密码的人都能签发受信任的证书。</p>
+<p>❻ Generates the root certificate using the root key</p>
+<p>❻ 使用根密钥生成根证书。</p>
+<p>❼ Requests a new X.509 certificate</p>
+<p>❼ 申请一张新的 X.509 证书。</p>
+<p>❽ Give the root certificate a long expiry date.</p>
+<p>❽ 给根证书设置一个较长的有效期。</p>
+<p>❾ Specify the organization for which the certificate is valid.</p>
+<p>❾ 指定该证书所适用的组织。</p>
+<p>❿ Allows us to provide the password for the root key from the command line without a prompt</p>
+<p>❿ 让我们可以在命令行直接提供根密钥的密码，而不必等待交互式提示。</p>
+<p>At this point the script has generated a password-protected private key (ca.key.pem) and root certificate (ca.cert.pem) for our internal CA. The script purposely generates the root certificate to a known location, so we can refer to it from inside the broker’s configuration file, /pulsar/conf/standalone.conf. Specifically, we have preconfigured the tlsTrustCertsFilePath property to point to the location where the root certificate was generated. In a production environment where you are using a third-party CA, you will be provided with a certificate that can be used to authenticate the X.509 certificates and update the property to point to that certificate instead.</p>
+<p>到这里，脚本已经为我们的内部 CA 生成了受密码保护的私钥（ca.key.pem）和根证书（ca.cert.pem）。脚本特意把根证书生成到一个已知位置，这样我们就能在 broker 的配置文件 /pulsar/conf/standalone.conf 中引用它。具体来说，我们已经预先把 tlsTrustCertsFilePath 属性配置为指向根证书生成的位置。在使用第三方 CA 的生产环境中，对方会提供一份可用于验证 X.509 证书的证书，届时你需要更新该属性，改为指向那份证书。</p>
+<p>Now that we have created a CA certificate, the next step is to generate a certificate for the Pulsar broker and sign it with our internal CA. When using a third-party CA, you would issue this request to them and wait for them to send you a certificate; however, since we are acting as our own certificate authority, we can issue the certificate ourselves, as shown in the following listing.</p>
+<p>既然 CA 证书已经创建好了，下一步就是为 Pulsar broker 生成一张证书，并用我们的内部 CA 为它签名。使用第三方 CA 时，你需要把申请提交给他们，然后等他们把证书发回来；不过，由于我们现在自己就是证书颁发机构，所以可以直接把证书签出来，如下面清单所示。</p>
+<p>Listing 6.3 Portion of enable-tls.sh that generates the Pulsar broker certificate</p>
+<pre lang="bash"><code class="language-bash md-fencescode"><span class="nb">export</span><span class="w"> </span><span class="nv">BROKER_PASSWORD</span><span class="o">=</span>my-secret<span class="w">                                      </span>❶
+
+<span class="c1"># Generate the Server Certificate private key</span>
+openssl<span class="w"> </span>genrsa<span class="w"> </span>-passout<span class="w"> </span>pass:<span class="si">${</span><span class="nv">BROKER_PASSWORD</span><span class="si">}</span><span class="w"> </span><span class="se">\ </span><span class="w">                  </span>❷
+<span class="w">      </span>-out<span class="w"> </span>/pulsar/manning/security/cert-authority/broker.key.pem<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span><span class="m">2048</span><span class="w">                                                           </span>❸
+
+<span class="c1"># Convert the key to PEM format</span>
+openssl<span class="w"> </span>pkcs8<span class="w"> </span>-topk8<span class="w"> </span>-inform<span class="w"> </span>PEM<span class="w"> </span>-outform<span class="w"> </span>PEM<span class="w"> </span><span class="se">\ </span><span class="w">                     </span>❹
+<span class="w">      </span>-in<span class="w"> </span>/pulsar/manning/security/cert-authority/broker.key.pem<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>-out<span class="w"> </span>/pulsar/manning/security/cert-authority/broker.key-pk8.pem<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>-nocrypt
+
+<span class="c1"># Generate the server certificate request       </span>
+openssl<span class="w"> </span>req<span class="w"> </span>-config<span class="w"> </span>/pulsar/manning/security/cert-authority/openssl.cnf<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>-new<span class="w"> </span>-sha256<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>-key<span class="w"> </span>/pulsar/manning/security/cert-authority/broker.key.pem<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>-out<span class="w"> </span>/pulsar/manning/security/cert-authority/broker.csr.pem<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>-subj<span class="w"> </span><span class="s1">'/C=US/ST=CA/L=Palo Alto/O=IT/CN=pulsar.gottaeat.com'</span><span class="w"> </span><span class="se">\ </span><span class="w"> </span>❺
+<span class="w">      </span>-passin<span class="w"> </span>pass:<span class="si">${</span><span class="nv">BROKER_PASSWORD</span><span class="si">}</span><span class="w">                                </span>❻
+
+<span class="c1"># Sign the server certificate with the CA</span>
+openssl<span class="w"> </span>ca<span class="w"> </span>-config<span class="w"> </span>/pulsar/manning/security/cert-authority/openssl.cnf<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>-extensions<span class="w"> </span>server_cert<span class="w"> </span><span class="se">\ </span><span class="w">                                     </span>❼
+<span class="w">      </span>-days<span class="w"> </span><span class="m">1000</span><span class="w"> </span>-notext<span class="w"> </span>-md<span class="w"> </span>sha256<span class="w"> </span>-batch<span class="w"> </span><span class="se">\ </span><span class="w">                        </span>❽
+<span class="w">      </span>-in<span class="w"> </span>/pulsar/manning/security/cert-authority/broker.csr.pem<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>-out<span class="w"> </span>/pulsar/manning/security/cert-authority/broker.cert.pem<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>-passin<span class="w"> </span>pass:<span class="si">${</span><span class="nv">CA_PASSWORD</span><span class="si">}</span><span class="w">                                     </span>❾
+</code></pre>
+<p>❶ We use an environment variable to set the password for the server certificate’s private key.</p>
+<p>❶ 我们用一个环境变量来设置服务器证书私钥的密码。</p>
+<p>❷ Generates the private key that is secured with a strong password</p>
+<p>❷ 生成用强密码保护的私钥。</p>
+<p>❸ Use 2048 bits for the private key.</p>
+<p>❸ 私钥使用 2048 位。</p>
+<p>❹ The broker expects the key to be in PKCS 8 format.</p>
+<p>❹ broker 要求密钥采用 PKCS 8 格式。</p>
+<p>❺ Specify the organization and hostname for which the certificate is valid.</p>
+<p>❺ 指定该证书所适用的组织与主机名。</p>
+<p>❻ Allows us to provide the password for the key from the command line without a prompt</p>
+<p>❻ 让我们可以在命令行直接提供该密钥的密码，而不必等待交互式提示。</p>
+<p>❼ Specify that this certificate is intended to be used by a server.</p>
+<p>❼ 声明该证书供服务器端使用。</p>
+<p>❽ Give the server certificate a long expiry date.</p>
+<p>❽ 给服务器证书设置一个较长的有效期。</p>
+<p>❾ We need to provide the password for the CA’s private key, since we are acting as the CA.</p>
+<p>❾ 由于我们自己充当 CA，所以需要提供 CA 私钥的密码。</p>
+<p>At this point you have a broker certificate (broker.cert.pem) and its associated private key (broker.key-pk8.pem) that you can use along with ca.cert.pem to configure TLS transport encryption for your broker and proxy nodes. Again, the script purposely generates the broker certificate to a known location, so we can refer to it from inside the broker’s configuration file, /pulsar/conf/standalone.conf. Let’s take a look at all the properties that were changed to enable TLS for Pulsar.</p>
+<p>到这里，你已经拿到了 broker 证书（broker.cert.pem）及其对应的私钥（broker.key-pk8.pem），可以配合 ca.cert.pem 一起，为你的 broker 和 proxy 节点配置 TLS 传输加密。同样地，脚本特意把 broker 证书生成到一个已知位置，以便我们能在 broker 的配置文件 /pulsar/conf/standalone.conf 中引用它。下面我们来看看为了在 Pulsar 上启用 TLS 而改动的所有属性。</p>
+<p>Listing 6.4 TLS property changes to the standalone.conf file</p>
+<pre lang="properties"><code class="language-properties md-fencescode"><span class="c1">#### To Enable TLS wire encryption #####</span>
+<span class="na">tlsEnabled</span><span class="o">=</span><span class="s">true</span>
+<span class="na">brokerServicePortTls</span><span class="o">=</span><span class="s">6651</span>
+<span class="na">webServicePortTls</span><span class="o">=</span><span class="s">8443</span>
+
+<span class="c1"># The Broker certificate and associated private key</span>
+<span class="na">tlsCertificateFilePath</span><span class="o">=</span><span class="s">/pulsar/manning/security/cert-authority/broker.cert.pem</span>
+<span class="na">tlsKeyFilePath</span><span class="o">=</span><span class="s">//pulsar/manning/security/cert-authority/broker.key-pk8.pem</span>
+
+<span class="c1"># The CA certificate</span>
+<span class="na">tlsTrustCertsFilePath</span><span class="o">=</span><span class="s">/pulsar/manning/security/cert-authority/certs/ca.cert.pem</span>
+
+<span class="c1"># Used for TLS negotiation to specify which ciphers we consider safe.</span>
+<span class="na">tlsProtocols</span><span class="o">=</span><span class="s">TLSv1.2,TLSv1.1</span>
+<span class="na">tlsCiphers</span><span class="o">=</span><span class="s">TLS_DH_RSA_WITH_AES_256_GCM_SHA384,TLS_DH_RSA_WITH_AES_256_CBC_SHA</span>
+</code></pre>
+<p>Since I have enabled TLS transport encryption, I also need to configure the command-line tools, such as pulsar-admin and pulsar-perf, to communicate with the secure Pulsar broker by changing the following properties in the $PULSAR_HOME/conf/client .conf file, as shown in the following listing.</p>
+<p>由于我已经启用了 TLS 传输加密，还需要配置 pulsar-admin、pulsar-perf 等命令行工具，让它们能与这个安全的 Pulsar broker 通信。具体做法是修改 $PULSAR_HOME/conf/client.conf 文件中的下列属性，如下面清单所示。</p>
+<p>Listing 6.5 TLS property changes to the client.conf file</p>
+<pre lang="properties"><code class="language-properties md-fencescode"><span class="c1">#### To Enable TLS wire encryption ##### </span>
+<span class="c1"># Use the TLS protocols and ports</span>
+<span class="na">webServiceUrl</span><span class="o">=</span><span class="s">https://pulsar.gottaeat.com:8443/</span>
+<span class="na">brokerServiceUrl</span><span class="o">=</span><span class="s">pulsar+ssl://pulsar.gottaeat.com:6651/</span>
+
+<span class="na">useTls</span><span class="o">=</span><span class="s">true</span>
+<span class="na">tlsAllowInsecureConnection</span><span class="o">=</span><span class="s">false</span>
+<span class="na">tlsEnableHostnameVerification</span><span class="o">=</span><span class="s">false</span>
+<span class="na">tlsTrustCertsFilePath</span><span class="o">=</span><span class="s">pulsar/manning/security/cert-authority/certs/ca.cert.pem</span>
+</code></pre>
+<p>If you haven’t already done so, change to the directory that contains the Dockerfile, and run the following command, docker build . -t pia/pulsar-standalone-secure: latest, to create the Docker image, and tag it as shown in the following listing.</p>
+<p>如果你还没做，请先切换到包含 Dockerfile 的目录，然后运行下面这条命令来创建 Docker 镜像并给它打标签，如清单所示：docker build . -t pia/pulsar-standalone-secure:latest。</p>
+<p>Listing 6.6 Building the Docker image from the Dockerfile</p>
+<pre lang="bash"><code class="language-bash md-fencescode">$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="nv">$REPO_HOME</span>/pulsar-in-action/docker-images/pulsar-standalone<span class="w">         </span>❶
+$<span class="w"> </span>docker<span class="w"> </span>build<span class="w"> </span>.<span class="w"> </span>-t<span class="w"> </span>pia/pulsar-standalone-secure:latest<span class="w">                 </span>❷
+Sending<span class="w"> </span>build<span class="w"> </span>context<span class="w"> </span>to<span class="w"> </span>Docker<span class="w"> </span>daemon<span class="w">  </span><span class="m">3</span>.345MB
+Step<span class="w"> </span><span class="m">1</span>/7<span class="w"> </span>:<span class="w"> </span>FROM<span class="w"> </span>apachepulsar/pulsar-standalone:latest<span class="w"> </span>
+<span class="w"> </span>---&gt;<span class="w"> </span>3ed9bffff717<span class="w">                                                      </span>❸
+Step<span class="w"> </span><span class="m">2</span>/7<span class="w"> </span>:<span class="w"> </span>ENV<span class="w"> </span><span class="nv">PULSAR_HOME</span><span class="o">=</span>/pulsar
+<span class="w"> </span>---&gt;<span class="w"> </span>Running<span class="w"> </span><span class="k">in</span><span class="w"> </span>cf81f78f5754
+Removing<span class="w"> </span>intermediate<span class="w"> </span>container<span class="w"> </span>cf81f78f5754
+<span class="w"> </span>---&gt;<span class="w"> </span>48ea643513ff
+Step<span class="w"> </span><span class="m">3</span>/7<span class="w"> </span>:<span class="w"> </span>COPY<span class="w"> </span>conf/standalone.conf<span class="w"> </span><span class="nv">$PULSAR_HOME</span>/conf/standalone.conf
+<span class="w"> </span>---&gt;<span class="w"> </span>6dcf0068eb40
+Step<span class="w"> </span><span class="m">4</span>/7<span class="w"> </span>:<span class="w"> </span>COPY<span class="w"> </span>conf/client.conf<span class="w"> </span><span class="nv">$PULSAR_HOME</span>/conf/client.conf
+<span class="w"> </span>---&gt;<span class="w"> </span>e0f6c81a10c4
+Step<span class="w"> </span><span class="m">5</span>/7<span class="w"> </span>:<span class="w"> </span>ADD<span class="w"> </span>manning<span class="w"> </span><span class="nv">$PULSAR_HOME</span>/manning<span class="w">                             </span>❹
+<span class="w"> </span>---&gt;<span class="w"> </span>e253e7c6ed8e
+Step<span class="w"> </span><span class="m">6</span>/7<span class="w"> </span>:<span class="w"> </span>RUN<span class="w"> </span>chmod<span class="w"> </span>a+x<span class="w"> </span><span class="nv">$PULSAR_HOME</span>/manning/security/*.sh
+<span class="w">   </span><span class="nv">$PULSAR_HOME</span>/manning/security/*/*.sh
+<span class="w">   </span><span class="nv">$PULSAR_HOME</span>/manning/security/authentication/*/*.sh
+<span class="w"> </span>---&gt;<span class="w"> </span>Running<span class="w"> </span><span class="k">in</span><span class="w"> </span>42d33f3e738b
+Removing<span class="w"> </span>intermediate<span class="w"> </span>container<span class="w"> </span>42d33f3e738b
+<span class="w"> </span>---&gt;<span class="w"> </span>ddccc85c75f4
+Step<span class="w"> </span><span class="m">7</span>/7<span class="w"> </span>:<span class="w"> </span>RUN<span class="w"> </span><span class="o">[</span><span class="s2">"/bin/bash"</span>,<span class="w"> </span><span class="s2">"-c"</span>,<span class="w"> </span>
+<span class="w">   </span><span class="s2">"/pulsar/manning/security/TLS-encryption/enable-tls.sh"</span><span class="o">]</span><span class="w">             </span>❺
+<span class="w"> </span>---&gt;<span class="w"> </span>Running<span class="w"> </span><span class="k">in</span><span class="w"> </span>5f26f9626a25
+Generating<span class="w"> </span>RSA<span class="w"> </span>private<span class="w"> </span>key,<span class="w"> </span><span class="m">4096</span><span class="w"> </span>bit<span class="w"> </span>long<span class="w"> </span>modulus
+.....................++++
+........................................................................++++
+e<span class="w"> </span>is<span class="w"> </span><span class="m">65537</span><span class="w"> </span><span class="o">(</span>0x010001<span class="o">)</span>
+Generating<span class="w"> </span>RSA<span class="w"> </span>private<span class="w"> </span>key,<span class="w"> </span><span class="m">2048</span><span class="w"> </span>bit<span class="w"> </span>long<span class="w"> </span>modulus
+......................+++++
+.............................................+++++
+e<span class="w"> </span>is<span class="w"> </span><span class="m">65537</span><span class="w"> </span><span class="o">(</span>0x010001<span class="o">)</span>
+Using<span class="w"> </span>configuration<span class="w"> </span>from<span class="w"> </span>/pulsar/manning/security/cert-authority/openssl.cnf
+Check<span class="w"> </span>that<span class="w"> </span>the<span class="w"> </span>request<span class="w"> </span>matches<span class="w"> </span>the<span class="w"> </span>signature
+Signature<span class="w"> </span>ok
+Certificate<span class="w"> </span>Details:<span class="w">                                                    </span>❻
+<span class="w">        </span>Serial<span class="w"> </span>Number:<span class="w"> </span><span class="m">4096</span><span class="w"> </span><span class="o">(</span>0x1000<span class="o">)</span>
+<span class="w">        </span>Validity
+<span class="w">            </span>Not<span class="w"> </span>Before:<span class="w"> </span>Jan<span class="w"> </span><span class="m">13</span><span class="w"> </span><span class="m">00</span>:55:03<span class="w"> </span><span class="m">2020</span><span class="w"> </span>GMT
+<span class="w">            </span>Not<span class="w"> </span>After<span class="w"> </span>:<span class="w"> </span>Oct<span class="w">  </span><span class="m">9</span><span class="w"> </span><span class="m">00</span>:55:03<span class="w"> </span><span class="m">2022</span><span class="w"> </span>GMT<span class="w">                         </span>❼
+<span class="w">        </span>Subject:
+<span class="w">            </span><span class="nv">countryName</span><span class="w">               </span><span class="o">=</span><span class="w"> </span>US
+<span class="w">            </span><span class="nv">stateOrProvinceName</span><span class="w">       </span><span class="o">=</span><span class="w"> </span>CA
+<span class="w">            </span><span class="nv">organizationName</span><span class="w">          </span><span class="o">=</span><span class="w"> </span>gottaeat.com
+<span class="w">            </span><span class="nv">commonName</span><span class="w">                </span><span class="o">=</span><span class="w"> </span>pulsar.gottaeat.com
+<span class="w">        </span>X509v3<span class="w"> </span>extensions:
+<span class="w">            </span>X509v3<span class="w"> </span>Basic<span class="w"> </span>Constraints:
+<span class="w">                </span>CA:FALSE
+<span class="w">            </span>Netscape<span class="w"> </span>Cert<span class="w"> </span>Type:
+<span class="w">                </span>SSL<span class="w"> </span>Server<span class="w">                                              </span>❽
+<span class="w">            </span>Netscape<span class="w"> </span>Comment:
+<span class="w">                </span>OpenSSL<span class="w"> </span>Generated<span class="w"> </span>Server<span class="w"> </span>Certificate
+<span class="w">            </span>X509v3<span class="w"> </span>Subject<span class="w"> </span>Key<span class="w"> </span>Identifier:
+<span class="w">                </span>DF:75:74:9D:34:C6:0D:F0:9B:E7:CA:07:0A:37:B8:6F:D7:DF:52:0A
+<span class="w">            </span>X509v3<span class="w"> </span>Authority<span class="w"> </span>Key<span class="w"> </span>Identifier:
+<span class="w">                </span>keyid:92:F0:6D:0F:18:D4:3C:1E:88:B1:33:3A:9D:04:29:C0:FC:81:29:02
+<span class="w">                </span>DirName:/C<span class="o">=</span>US/ST<span class="o">=</span>CA/L<span class="o">=</span>Palo<span class="w"> </span>Alto/O<span class="o">=</span>gottaeat.com
+<span class="w">                </span>serial:93:FD:42:06:D8:E9:C3:89
+
+<span class="w">            </span>X509v3<span class="w"> </span>Key<span class="w"> </span>Usage:<span class="w"> </span>critical
+<span class="w">                </span>Digital<span class="w"> </span>Signature,<span class="w"> </span>Key<span class="w"> </span>Encipherment
+<span class="w">            </span>X509v3<span class="w"> </span>Extended<span class="w"> </span>Key<span class="w"> </span>Usage:
+<span class="w">                </span>TLS<span class="w"> </span>Web<span class="w"> </span>Server<span class="w"> </span>Authentication
+Certificate<span class="w"> </span>is<span class="w"> </span>to<span class="w"> </span>be<span class="w"> </span>certified<span class="w"> </span><span class="k">until</span><span class="w"> </span>Oct<span class="w">  </span><span class="m">9</span><span class="w"> </span><span class="m">00</span>:55:03<span class="w"> </span><span class="m">2022</span><span class="w"> </span>GMT<span class="w"> </span><span class="o">(</span><span class="m">1000</span><span class="w"> </span>days<span class="o">)</span>
+
+Write<span class="w"> </span>out<span class="w"> </span>database<span class="w"> </span>with<span class="w"> </span><span class="m">1</span><span class="w"> </span>new<span class="w"> </span>entries
+Data<span class="w"> </span>Base<span class="w"> </span>Updated
+Removing<span class="w"> </span>intermediate<span class="w"> </span>container<span class="w"> </span>5f26f9626a25
+<span class="w"> </span>---&gt;<span class="w"> </span>0e7995c14208
+Successfully<span class="w"> </span>built<span class="w"> </span>0e7995c14208
+Successfully<span class="w"> </span>tagged<span class="w"> </span>pia/pulsar-standalone-secure:latest<span class="w">                  </span>❾
+</code></pre>
+<p>❶ Change to the directory that contains the Dockerfile.</p>
+<p>❶ 切换到包含 Dockerfile 的目录。</p>
+<p>❷ Command to build the Docker image from the Dockerfile, and tag it.</p>
+<p>❷ 从 Dockerfile 构建 Docker 镜像并打标签的命令。</p>
+<p>❸ Pulls down the apachepulsar/pulsar-standalone:latest image from the public repository</p>
+<p>❸ 从公共仓库拉取 apachepulsar/pulsar-standalone:latest 镜像。</p>
+<p>❹ Copies the entire contents of the manning directory into the Docker image</p>
+<p>❹ 把 manning 目录的全部内容复制进 Docker 镜像。</p>
+<p>❺ Executes the enable-tls.sh script</p>
+<p>❺ 执行 enable-tls.sh 脚本。</p>
+<p>❻ The details of the server certificate that is generated by the enable-tls.sh script</p>
+<p>❻ enable-tls.sh 脚本所生成的服务器证书的详细信息。</p>
+<p>❼ The expiration date of the certificate</p>
+<p>❼ 证书的到期日期。</p>
+<p>❽ Indicates that the certificate generated can be used as a server certificate</p>
+<p>❽ 表示所生成的这张证书可作为服务器证书使用。</p>
+<p>❾ Success message, including the tag used to reference the image</p>
+<p>❾ 成功信息，其中包含用于引用该镜像的标签。</p>
+<p>Once the enable-tls.sh script has been executed and the properties have all been configured to point to the correct values, the pulsar-standalone image will only accept connections over a secure TLS channel. You can verify this by using the sequence of commands shown in listing 6.7 to launch a container with the new Docker image. Notice that I am using the -volume switch to create a logical mount point between my laptop’s $HOME directory and a directory inside the Docker container itself. This allows me to publish the TLS client credentials that only exist inside the container to a location on our machine where I can access them. Next, I need to secure shell (ssh) into the container and run the publish-credentials.sh script inside the newly launched bash session to make these credentials available to me in the ${HOME}/exchange folder on our local machine.</p>
+<p>一旦 enable-tls.sh 脚本执行完毕、各项属性也都配置成了正确的值，pulsar-standalone 镜像就只会接受经由安全 TLS 通道建立的连接。你可以用清单 6.7 中的那串命令来启动一个新容器，以此验证这一点。注意，我使用了 -volume 开关，在自己笔记本的 $HOME 目录和 Docker 容器内部的某个目录之间建立了一个逻辑挂载点。这样一来，我就能把那些只存在于容器内部的 TLS 客户端凭据发布到本机上一个我能访问的位置。接下来，我需要通过 ssh 进入容器，并在新启动的 bash 会话中运行 publish-credentials.sh 脚本，把这些凭据输出到本机 ${HOME}/exchange 文件夹中，供我使用。</p>
+<p>Listing 6.7 Publishing the TLS credentials</p>
+<pre lang="bash"><code class="language-bash md-fencescode">$<span class="w"> </span>docker<span class="w"> </span>run<span class="w"> </span>-id<span class="w"> </span>--name<span class="w"> </span>pulsar<span class="w"> </span>-p:6651:6651<span class="w"> </span>-p<span class="w"> </span><span class="m">8443</span>:8443<span class="se">\ </span><span class="w">    </span>❶
+<span class="w">  </span>-volume<span class="o">=</span><span class="si">${</span><span class="nv">HOME</span><span class="si">}</span>/exchange:/pulsar/manning/dropbox<span class="w"> </span><span class="se">\ </span><span class="w">         </span>❷❸
+<span class="w">  </span>-t<span class="w"> </span>pia/pulsar-standalone-secure:latest<span class="w">                      </span>❹
+$<span class="w"> </span>docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>pulsar<span class="w"> </span>bash
+$<span class="w"> </span>/pulsar/manning/security/publish-credentials.sh<span class="w">             </span>❺
+$<span class="w"> </span><span class="nb">exit</span><span class="w">                                                        </span>❻
+</code></pre>
+<p>❶ Use the SSL ports of 6651 and 8443.</p>
+<p>❶ 使用 6651 和 8443 这两个 SSL 端口。</p>
+<p>❷ Use the volume switch to allow us to copy files from the container to our local machine.</p>
+<p>❷ 使用 volume 开关，以便把文件从容器复制到本机。</p>
+<p>❸ Specify the image that we just built</p>
+<p>❸ 指定我们刚刚构建好的那个镜像。</p>
+<p>❹ Run the script that copies the generated credentials to our local machine.</p>
+<p>❹ 运行脚本，把生成的凭据复制到本机。</p>
+<p>❺ Create the default namespace to use for testing.</p>
+<p>❺ 创建供测试使用的默认命名空间。</p>
+<p>❻ Exit the container.</p>
+<p>❻ 退出容器。</p>
+<p>Next, I will attempt to connect to it over the TLS secured port (6651), using the following Java program, which is available in the GitHub repo associated with this book.</p>
+<p>接下来，我将用下面这个 Java 程序尝试通过受 TLS 保护的端口（6651）连接它，该程序可在本书配套的 GitHub 仓库中找到。</p>
+<p>Listing 6.8 Using the TLS credentials to connect to Pulsar</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.pulsar.client.api.*</span><span class="p">;</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">TlsClient</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">PulsarClientException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">       </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">HOME</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"/Users/david/exchange"</span><span class="p">;</span>
+<span class="w">       </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">TOPIC</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"persistent://public/default/test-topic"</span><span class="p">;</span>
+
+<span class="w">       </span><span class="n">PulsarClient</span><span class="w"> </span><span class="n">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PulsarClient</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">          </span><span class="p">.</span><span class="na">serviceUrl</span><span class="p">(</span><span class="s">"pulsar://localhost:6651/"</span><span class="p">)</span><span class="w">              </span><span class="n">❶</span>
+<span class="w">          </span><span class="p">.</span><span class="na">tlsTrustCertsFilePath</span><span class="p">(</span><span class="n">HOME</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">"/ca.cert.pem"</span><span class="p">)</span><span class="w">        </span><span class="n">❷</span>
+<span class="w">          </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="w">      </span><span class="n">Producer</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[]&gt;</span><span class="w"> </span><span class="n">producer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>
+<span class="w">        </span><span class="n">client</span><span class="p">.</span><span class="na">newProducer</span><span class="p">().</span><span class="na">topic</span><span class="p">(</span><span class="n">TOPIC</span><span class="p">).</span><span class="na">create</span><span class="p">();</span>
+
+<span class="w">      </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">idx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">idx</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">100</span><span class="p">;</span><span class="w"> </span><span class="n">idx</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">producer</span><span class="p">.</span><span class="na">send</span><span class="p">(</span><span class="s">"Hello TLS"</span><span class="p">.</span><span class="na">getBytes</span><span class="p">());</span>
+<span class="w">      </span><span class="p">}</span><span class="w">        </span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ Specify the pulsar+ssl protocol. Failure to do so will result in a connection failure.</p>
+<p>❶ 指定 pulsar+ssl 协议。不这样做会导致连接失败。</p>
+<p>❷ The location of the file containing the trusted TLS certificates</p>
+<p>❷ 存放受信任 TLS 证书的那个文件所在的位置。</p>
+<p>That concludes the configuration of TLS wire encryption on the Pulsar broker. From this point forward, all communication with the broker will be over SSL, and all traffic will be encrypted to prevent unauthorized access to the data contained inside the messages that are published to and consumed from the Pulsar broker. You can experiment some more with this container, but once you are finished, you should be sure to run docker stop pulsar &amp;&amp; docker rm pulsar to stop the container and remove it. Both of these steps are necessary to rebuild the Docker image in the next section to enable support for authentication in the pulsar-standalone image.</p>
+<p>Pulsar broker 上 TLS 链路加密的配置到这里就讲完了。从今往后，与该 broker 的所有通信都将基于 SSL 进行，所有流量都会被加密，以防他人未授权访问那些发布到 Pulsar broker、或从中消费出来的消息里所包含的数据。你可以继续用这个容器做更多实验，但一旦用完，务必运行 docker stop pulsar &amp;&amp; docker rm pulsar 来停止并删除该容器。这两个步骤都是必需的——下一节要在 pulsar-standalone 镜像中启用认证支持，需要重新构建 Docker 镜像。</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../site-tree.json", "hasMath": true};</script>
+<script src="../../../../../../ui.js"></script>
+</body>
+</html>

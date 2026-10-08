@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5.1.1-sink-connectors</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="511-sink-connectors">5.1.1 Sink connectors</h3>
+<p>While the Pulsar IO framework already provides a collection of built-in connectors for some of the most popular data systems, it was designed with extensibility in mind, allowing users to add new connectors as new systems and APIs are developed. The programming model behind Pulsar IO Connectors is very straightforward, which greatly simplifies the development process. Pulsar IO sink connectors can receive messages from one or more <em>input</em> topics. Every time a message is published to any of the input topics, the Pulsar sink’s write method is called.</p>
+<p>虽然 Pulsar IO 框架已经为一些最流行的数据系统提供了一组内置连接器，但它在设计时就把可扩展性考虑在内，允许用户在新的系统和 API 出现时添加新的连接器。Pulsar IO 连接器背后的编程模型非常直白，这大大简化了开发过程。Pulsar IO sink 连接器可以从一个或多个<em>输入</em>主题接收消息。每当有消息被发布到任一输入主题时，该 Pulsar sink 的 write 方法就会被调用。</p>
+<p>The implementation of the write method is responsible for determining how to process the incoming message contents and properties in order to write data to the source system. The Pulsar sink shown in figure 5.2 can use the message contents to determine which database table to insert the record into and then construct and execute the appropriate SQL command to do so.</p>
+<p>write 方法的实现负责决定如何处理传入的消息内容和属性，以便把数据写入源系统。图 5.2 中所示的那个 Pulsar sink 可以利用消息内容来判断该把记录插入到哪张数据库表中，然后构造并执行相应的 SQL 命令来完成插入。</p>
+<p><img alt="" src="assets/CH05_F02_Kjerrumgaard.webp" /></p>
+<p>Figure 5.2 Overview of the Pulsar IO sink connector programming model</p>
+<p>图 5.2 Pulsar IO sink 连接器编程模型概览</p>
+<p>The easiest way to create a custom sink connector is to write a Java class that implements the org.apache.pulsar.io.core.Sink interface shown in listing 5.1. The first method defined in the interface is the open method, which is called just once when the sink connector is created and can be used to initialize all the necessary resources (e.g., for a database connector, you can create the JDBC client). The open method also provides a single input parameter, named config, from which you can retrieve all the connector-specific settings (e.g., the database connection URL, username, and password). In addition to the passed-in config object, the Pulsar runtime also provides a SinkContext for the connector that provides access to runtime resources, much like the Context object does in the Pulsar Functions API.</p>
+<p>创建一个自定义 sink 连接器最简单的方式，是编写一个实现了清单 5.1 中所示 org.apache.pulsar.io.core.Sink 接口的 Java 类。该接口中定义的第一个方法是 open 方法，它在 sink 连接器被创建时只被调用一次，可用于初始化所有必需的资源（例如，对于一个数据库连接器，你可以创建 JDBC 客户端）。open 方法还提供了一个名为 config 的输入参数，你可以从中取出所有连接器专属的设置（例如数据库连接 URL、用户名和密码）。除了传入的 config 对象之外，Pulsar 运行时还会为该连接器提供一个 SinkContext，它提供对运行时资源的访问，其角色与 Pulsar Functions API 中的 Context 对象非常相似。</p>
+<p>Listing 5.1 The Pulsar sink interface</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">org.apache.pulsar.io.core</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">Sink</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">AutoCloseable</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * Open connector with configuration</span>
+<span class="cm">     *</span>
+<span class="cm">     * @param config initialization config</span>
+<span class="cm">     * @param sinkContext</span>
+<span class="cm">     * @throws Exception IO type exceptions when opening a connector</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">open</span><span class="p">(</span><span class="kd">final</span><span class="w"> </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">config</span><span class="p">,</span>
+<span class="w">              </span><span class="n">SinkContext</span><span class="w"> </span><span class="n">sinkContext</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="p">;</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * Write a message to Sink</span>
+<span class="cm">     * @param record record to write to sink</span>
+<span class="cm">     * @throws Exception</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">write</span><span class="p">(</span><span class="n">Record</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="n">record</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<p>The other method defined in the interface is the write method, which is responsible for consuming messages from the sink’s configured source Pulsar topic and writing the data to the external source system. The write method receives an object that implements the org.apache.pulsar.functions.api.Record interface, which provides information that can be used when processing the incoming message. It is worth pointing out that the sink interface extends the AutoCloseable interface, which includes a close method definition that can be used to release any resources, such as database connections or open file writers, before the connector is stopped.</p>
+<p>该接口中定义的另一个方法是 write 方法，它负责从该 sink 所配置的源 Pulsar 主题消费消息，并把数据写入外部的源系统。write 方法接收一个实现了 org.apache.pulsar.functions.api.Record 接口的对象，该对象提供了在处理传入消息时可以使用的信息。值得指出的是，sink 接口继承了 AutoCloseable 接口，后者包含一个 close 方法定义，可用于在连接器被停止之前释放任何资源，例如数据库连接或已打开的文件写入器。</p>
+<p>Listing 5.2 The record interface</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">package</span><span class="w"> </span><span class="nn">org.apache.pulsar.functions.api</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">Record</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="n">Optional</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">getTopicName</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">            </span><span class="n">❶</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Optional</span><span class="p">.</span><span class="na">empty</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="n">Optional</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">getKey</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">                  </span><span class="n">❷</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Optional</span><span class="p">.</span><span class="na">empty</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="n">T</span><span class="w"> </span><span class="nf">getValue</span><span class="p">();</span><span class="w">                                        </span><span class="n">❸</span>
+
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="n">Optional</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">getEventTime</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">              </span><span class="n">❹</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Optional</span><span class="p">.</span><span class="na">empty</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="n">Optional</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">getPartitionId</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">          </span><span class="n">❺</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Optional</span><span class="p">.</span><span class="na">empty</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="n">Optional</span><span class="o">&lt;</span><span class="n">Long</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">getRecordSequence</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">         </span><span class="n">❻</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Optional</span><span class="p">.</span><span class="na">empty</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">getProperties</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">        </span><span class="n">❼</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Collections</span><span class="p">.</span><span class="na">emptyMap</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">ack</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">                                 </span><span class="n">❽</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">fail</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">                                </span><span class="n">❾</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">default</span><span class="w"> </span><span class="n">Optional</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">getDestinationTopic</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">     </span><span class="n">❿</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Optional</span><span class="p">.</span><span class="na">empty</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ If the record originated from a topic, report the topic name.</p>
+<p>❶ 如果该记录来自某个主题，则报告该主题的名称。</p>
+<p>❷ Return a key if the key has one associated.</p>
+<p>❷ 如果该记录有关联的 key，则返回该 key。</p>
+<p>❸ Retrieves the actual data of the record</p>
+<p>❸ 取出该记录的实际数据</p>
+<p>❹ Retrieves the event time of the record from the source</p>
+<p>❹ 取出该记录在源端的事件时间</p>
+<p>❺ If the record is originated from a partitioned source, return its partition ID. The partition ID will be used as part of the unique identifier by the Pulsar IO runtime to do message deduplication and achieve an exactly-once processing guarantee.</p>
+<p>❺ 如果该记录来自一个分区化的源端，则返回它的分区 ID。该分区 ID 会被 Pulsar IO 运行时用作唯一标识符的一部分，以完成消息去重并达成恰好一次的处理保证。</p>
+<p>❻ If the record is originated from a sequential source, return its record sequence. The record sequence will be used as part of the unique identi-fier by Pulsar IO runtime to do message deduplication and achieve an exactly-once processing guarantee.</p>
+<p>❻ 如果该记录来自一个顺序化的源端，则返回它的记录序号。该记录序号会被 Pulsar IO 运行时用作唯一标识符的一部分，以完成消息去重并达成恰好一次的处理保证。</p>
+<p>❼ Retrieves user-defined properties attached to the record</p>
+<p>❼ 取出附加在该记录上的用户自定义属性</p>
+<p>❽ Acknowledge that the record has been processed.</p>
+<p>❽ 确认该记录已被处理。</p>
+<p>❾ Indicate to the source system that this record has failed to be processed.</p>
+<p>❾ 向源系统表明这条记录处理失败。</p>
+<p>❿ To support message routing on a per message basis</p>
+<p>❿ 用于支持逐条消息的消息路由</p>
+<p>The implementation of the record should also provide two methods: ack and fail. These two methods will be used by the Pulsar IO connector to acknowledge the records that have been processed and fail the records that have failed. Failure to acknowledge or fail messages within the source connector will result in the messages being retained, which will ultimately cause the connector to stop processing due to backpressure.</p>
+<p>该记录的实现还应当提供两个方法：ack 和 fail。Pulsar IO 连接器会用这两个方法来确认那些已被处理的记录，以及标记那些处理失败的记录。如果 source 连接器未能及时确认或将消息标记为失败，这些消息就会被保留下来，最终会因背压而导致连接器停止处理。</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

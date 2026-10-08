@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>7.3.1-modelling-the-food-order-event-in-avro</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="731-modelling-the-food-order-event-in-avro">7.3.1 Modelling the food order event in Avro</h3>
+<p>The first module, domain-schema, contains all of the Avro schema definitions for the GottaEat order entry use case. Avro schemas can be defined in either plain JSON or Avro IDL text files, but the schema files need to live somewhere, and this module serves that purpose.</p>
+<p>第一个模块 domain-schema 包含了 GottaEat 订单录入用例所需的全部 Avro schema 定义。Avro schema 既可以用普通 JSON 来定义，也可以用 Avro IDL 文本文件来定义，但这些 schema 文件总得有个存放的地方，这个模块就是干这个的。</p>
+<p>As you can see from the contents of the domain-schema module, I have created an Avro IDL schema definition file named src/main/resources/avro/order/food-order.avdl, which contains the schema definition shown in listing 7.2. This file represents the initial data model for the food order object that will be used across multiple services, and it will be used to generate the Java classes that will be used by all of the consuming Java-based microservices.</p>
+<p>从 domain-schema 模块的内容可以看到，我创建了一个 Avro IDL schema 定义文件，名为 src/main/resources/avro/order/food-order.avdl，其中包含清单 7.2 中所示的 schema 定义。这个文件代表了餐品订单对象的初始数据模型，它将被多个服务共用，并且会被用来生成供所有基于 Java 的消费方微服务使用的 Java 类。</p>
+<p>Listing 7.2 food-order.avdl</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="nd">@namespace</span><span class="p">(</span><span class="s">"com.gottaeat.domain.order"</span><span class="p">)</span><span class="w">                       </span><span class="n">❶</span>
+<span class="n">protocol</span><span class="w"> </span><span class="n">OrderProtocol</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kn">import</span><span class="w"> </span><span class="nn">idl</span><span class="w"> </span><span class="s">"../common/common.avdl"</span><span class="p">;</span><span class="w">                         </span><span class="n">❷</span>
+<span class="w">  </span><span class="kn">import</span><span class="w"> </span><span class="nn">idl</span><span class="w"> </span><span class="s">"../payment/payment-commons.avdl"</span><span class="p">;</span>
+<span class="w">  </span><span class="kn">import</span><span class="w"> </span><span class="nn">idl</span><span class="w"> </span><span class="s">"../resturant/resturant.avdl"</span><span class="p">;</span>
+
+<span class="w">  </span><span class="kd">record</span> <span class="nc">FoodOrder</span><span class="w"> </span><span class="p">{</span><span class="w">                                          </span><span class="n">❸</span>
+<span class="w">    </span><span class="kt">long</span><span class="w"> </span><span class="n">order_id</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">long</span><span class="w"> </span><span class="n">customer_id</span><span class="p">;</span><span class="w">    </span>
+<span class="w">    </span><span class="kt">long</span><span class="w"> </span><span class="n">resturant_id</span><span class="p">;</span><span class="w">    </span>
+<span class="w">    </span><span class="n">string</span><span class="w"> </span><span class="n">time_placed</span><span class="p">;</span><span class="w">    </span>
+<span class="w">    </span><span class="n">OrderStatus</span><span class="w"> </span><span class="n">order_status</span><span class="p">;</span>
+<span class="w">    </span><span class="n">array</span><span class="o">&lt;</span><span class="n">OrderDetail</span><span class="o">&gt;</span><span class="w"> </span><span class="n">details</span><span class="p">;</span><span class="w">                               </span><span class="n">❹</span>
+<span class="w">    </span><span class="n">com</span><span class="p">.</span><span class="na">gottaeat</span><span class="p">.</span><span class="na">domain</span><span class="p">.</span><span class="na">common</span><span class="p">.</span><span class="na">Address</span><span class="w"> </span><span class="n">delivery_location</span><span class="p">;</span><span class="w">     </span><span class="n">❺</span>
+<span class="w">    </span><span class="n">com</span><span class="p">.</span><span class="na">gottaeat</span><span class="p">.</span><span class="na">domain</span><span class="p">.</span><span class="na">payment</span><span class="p">.</span><span class="na">CreditCard</span><span class="w"> </span><span class="n">payment_method</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">total</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0.0</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">record</span> <span class="nc">OrderDetail</span><span class="w"> </span><span class="p">{</span>
+<span class="w">     </span><span class="kt">int</span><span class="w"> </span><span class="n">quantity</span><span class="p">;</span>
+<span class="w">     </span><span class="kt">float</span><span class="w"> </span><span class="n">total</span><span class="p">;</span>
+<span class="w">     </span><span class="n">com</span><span class="p">.</span><span class="na">gottaeat</span><span class="p">.</span><span class="na">domain</span><span class="p">.</span><span class="na">resturant</span><span class="p">.</span><span class="na">MenuItem</span><span class="w"> </span><span class="n">food_item</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">enum</span><span class="w"> </span><span class="n">OrderStatus</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">NEW</span><span class="p">,</span><span class="w"> </span><span class="n">ACCEPTED</span><span class="p">,</span><span class="w"> </span><span class="n">READY</span><span class="p">,</span><span class="w"> </span><span class="n">DISPATCHED</span><span class="p">,</span><span class="w"> </span><span class="n">DELIVERED</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ The namespace for these types, which corresponds with the Java package name</p>
+<p>❶ 这些类型所属的命名空间，它与 Java 的包名相对应。</p>
+<p>❷ We import Avro type definitions from other files, which enables compositional schemas.</p>
+<p>❷ 我们从其他文件中导入 Avro 类型定义，这使得可组合的 schema 成为可能。</p>
+<p>❸ The FoodOrder record definition</p>
+<p>❸ FoodOrder 记录的定义。</p>
+<p>❹ Each FoodOrder can contain one or more food items in it.</p>
+<p>❹ 每一份 FoodOrder 中可以包含一项或多项餐品。</p>
+<p>❺ Using a type defined inside one of the included schema definitions</p>
+<p>❺ 使用某个被引入的 schema 定义中所定义的类型。</p>
+<p>We will use the Avro plugin to automatically generate Java classes based on the schema definitions in our project by adding the configuration shown in the following listing to the plugins section of the Maven pom.xml file.</p>
+<p>我们将使用 Avro 插件，基于项目中的 schema 定义自动生成 Java 类。具体做法是：把下面清单中所示的配置添加到 Maven pom.xml 文件的 plugins 段中。</p>
+<p>Listing 7.3 Configuring the Avro Maven plugin</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;plugin&gt;</span>
+<span class="w">  </span><span class="nt">&lt;groupId&gt;</span>org.apache.avro<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;artifactId&gt;</span>avro-maven-plugin<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">  </span><span class="nt">&lt;version&gt;</span>1.9.1<span class="nt">&lt;/version&gt;</span>
+<span class="w">  </span><span class="nt">&lt;executions&gt;</span>
+<span class="w">     </span><span class="nt">&lt;execution&gt;</span>
+<span class="w">       </span><span class="nt">&lt;phase&gt;</span>generate-sources<span class="nt">&lt;/phase&gt;</span><span class="w">                        </span>❶
+<span class="w">       </span><span class="nt">&lt;goals&gt;</span>
+<span class="w">          </span><span class="nt">&lt;goal&gt;</span>idl-protocol<span class="nt">&lt;/goal&gt;</span><span class="w">                           </span>❷
+<span class="w">       </span><span class="nt">&lt;/goals&gt;</span>
+<span class="w">       </span><span class="nt">&lt;configuration&gt;</span>
+<span class="w">        </span><span class="nt">&lt;sourceDirectory&gt;</span>
+<span class="w">          </span>${project.basedir}/src/main/resources/avro/order<span class="w">    </span>❸
+<span class="w">         </span><span class="nt">&lt;/sourceDirectory&gt;</span>
+<span class="w">         </span><span class="nt">&lt;outputDirectory&gt;</span>
+<span class="w">            </span>${project.basedir}/src/main/java<span class="w">                  </span>❹
+<span class="w">          </span><span class="nt">&lt;/outputDirectory&gt;</span>
+<span class="w">       </span><span class="nt">&lt;/configuration&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/execution&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/executions&gt;</span>
+<span class="nt">&lt;/plugin&gt;</span>
+</code></pre>
+<p>❶ We want to generate Java source files.</p>
+<p>❶ 我们希望生成 Java 源文件。</p>
+<p>❷ The definitions are in the IDL format.</p>
+<p>❷ 这些定义采用的是 IDL 格式。</p>
+<p>❸ Use the directory containing the food-order.avdl as the source directory.</p>
+<p>❸ 把包含 food-order.avdl 的那个目录用作源目录。</p>
+<p>❹ Where to output the generated source files</p>
+<p>❹ 生成的源文件输出到哪里。</p>
+<p>With the Avro schemas defined and the Maven plugin configured, we can execute the command shown in listing 7.4 to generate the Java classes into the project’s source folder, as specified in listing 7.3. This command will generate the Java classes source files, compile them, and jar them into the domain-schema-0.0.1.jar JAR file before finally publishing that JAR file to your local Maven repository.</p>
+<p>Avro schema 定义好、Maven 插件也配置好之后，我们就可以执行清单 7.4 中所示的命令，把 Java 类生成到项目的源码目录中（正如清单 7.3 所指定的那样）。这条命令会生成 Java 类的源文件、编译它们，并把它们打成 domain-schema-0.0.1.jar 这个 JAR 文件，最后再把这个 JAR 文件发布到你本地的 Maven 仓库。</p>
+<p>Listing 7.4 Generating the Java classes from the Avro schema</p>
+<pre lang="bash"><code class="language-bash md-fencescode">$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span>./domain-schema
+$<span class="w"> </span>mvn<span class="w"> </span>install
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>Scanning<span class="w"> </span><span class="k">for</span><span class="w"> </span>projects...
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>---------------------&lt;<span class="w"> </span>com.gottaeat:domain-schema<span class="w"> </span>&gt;-------------------
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>Building<span class="w"> </span>domain-schema<span class="w"> </span><span class="m">0</span>.0.1
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>--------------------------------<span class="o">[</span><span class="w"> </span>jar<span class="w"> </span><span class="o">]</span>-------------------------------
+<span class="o">[</span>INFO<span class="o">]</span>
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>---<span class="w"> </span>avro-maven-plugin:1.9.1:idl-protocol<span class="w"> </span><span class="o">(</span>default<span class="o">)</span><span class="w"> </span>@<span class="w"> </span>domain-schema<span class="w"> </span>---
+<span class="o">[</span>INFO<span class="o">]</span>
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>---<span class="w"> </span>maven-compiler-plugin:3.8.1:compile<span class="w"> </span><span class="o">(</span>default-compile<span class="o">)</span><span class="w"> </span>
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>Compiling<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="nb">source</span><span class="w"> </span>files<span class="w"> </span>to<span class="w"> </span>domain-schema/target/classes
+<span class="o">[</span>INFO<span class="o">]</span>
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>---<span class="w"> </span>maven-jar-plugin:2.4:jar<span class="w"> </span><span class="o">(</span>default-jar<span class="o">)</span><span class="w"> </span>@<span class="w"> </span>domain-schema<span class="w"> </span>---
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>Building<span class="w"> </span>jar:<span class="w"> </span>/domain-schema/target/domain-schema-0.0.1.jar
+<span class="o">[</span>INFO<span class="o">]</span>
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>---<span class="w"> </span>maven-install-plugin:2.4:install<span class="w"> </span><span class="o">(</span>default-install<span class="o">)</span><span class="w"> </span>
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>Installing<span class="w"> </span>/domain-schema/target/domain-schema-0.0.1.jar<span class="w"> </span>to<span class="w"> </span>..
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>----------------------------------------------------------------------
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>BUILD<span class="w"> </span>SUCCESS
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>----------------------------------------------------------------------
+</code></pre>
+<p>You will find the generated classes inside their respective subfolders, under the project’s source folder, as shown in listing 7.5. These files are too lengthy to reproduce here, but if you open them with a text editor, you will see that the files contain POJOs that have been auto-generated by Avro and contain all the field definitions in the schema definitions, along with methods to serialize and deserialize the object to and from Avro’s binary format.</p>
+<p>你会发现生成的那些类位于项目源码目录下的各自子文件夹中，如清单 7.5 所示。这些文件太长，不适合在这里原样复制，但如果你用文本编辑器打开它们，就会看到其中包含由 Avro 自动生成的 POJO：它们含有 schema 定义中的全部字段定义，以及用于把该对象序列化成 Avro 二进制格式、和从 Avro 二进制格式反序列化回来的方法。</p>
+<p>Listing 7.5 Listing all of the generated Java classes</p>
+<pre lang="bash"><code class="language-bash md-fencescode">ls<span class="w"> </span>-R<span class="w"> </span>src/main/java/*
+gottaeat
+
+src/main/java/com/gottaeat:
+domain
+
+src/main/java/com/gottaeat/domain:
+common<span class="w">        </span>order<span class="w">        </span>payment<span class="w">        </span>resturant
+
+src/main/java/com/gottaeat/domain/common:
+Address.java
+
+src/main/java/com/gottaeat/domain/order:
+FoodOrder.java<span class="w">  </span>OrderDetail.java<span class="w">  </span>OrderProtocol.java<span class="w">  </span>OrderStatus.java
+
+src/main/java/com/gottaeat/domain/payment:
+CardType.java<span class="w">  </span>CreditCard.java
+
+src/main/java/com/gottaeat/domain/resturant:
+MenuItem.java
+</code></pre>
+<p>At this point, we have a domain model in Java for our food order event that can be used by the other microservices in the project.</p>
+<p>到这里，我们就拥有了一个用 Java 描述的餐品订单事件领域模型，项目中其他的微服务都可以使用它。</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

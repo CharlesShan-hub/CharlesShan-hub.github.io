@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>4.4.2-integration-testing</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="442-integration-testing">4.4.2 Integration testing</h3>
+<p>After we are satisfied with our unit testing results, we will want to see how the Pulsar function will perform on a Pulsar cluster. The easiest way to test a Pulsar function is to start a Pulsar server and run the Pulsar function locally, using the LocalRunner helper class. In this mode, the function runs as a standalone process on the machine it is submitted from. This option is best when you are developing and testing your functions, as it allows you to attach a debugger to the function process on the local machine, as shown in figure 4.5.</p>
+<p>在我们对单元测试结果感到满意之后，接下来会想看看这个 Pulsar function 在一个 Pulsar 集群上会有怎样的表现。测试一个 Pulsar function 最简单的方式是：启动一个 Pulsar 服务器，并使用 LocalRunner 这个辅助类在本地运行该 Pulsar function。在这种模式下，该函数作为一个独立进程运行在提交它的那台机器上。当你在开发和测试自己的函数时，这个选项是最佳选择，因为它允许你把一个调试器挂接到本地机器上的函数进程上，如图 4.5 所示。</p>
+<p><img alt="" src="assets/CH04_F05_Kjerrumgaard.webp" /></p>
+<p>Figure 4.5 When you run a Pulsar function using LocalRunner, the function runs on the local machine, allowing you to attach a debugger and step through the code.</p>
+<p>图 4.5 当你使用 LocalRunner 运行一个 Pulsar function 时，该函数运行在本地机器上，这使你可以挂接一个调试器并单步调试代码。</p>
+<p>To use the LocalRunner, you must first add a few dependencies to your Maven project, as shown in the following listing. This brings in the LocalRunner class that is used to test the function against a running Pulsar cluster.</p>
+<p>要使用 LocalRunner，你必须先向你的 Maven 项目添加几个依赖，如下面的清单所示。这会引入 LocalRunner 类，它用于针对一个正在运行的 Pulsar 集群来测试该函数。</p>
+<p>Listing 4.15 Including the LocalRunner dependencies</p>
+<pre lang="xml"><code class="language-xml md-fencescode"><span class="nt">&lt;dependencies&gt;</span>
+<span class="w">  </span>.<span class="w"> </span>.<span class="w"> </span>.
+<span class="w">  </span><span class="nt">&lt;dependency&gt;</span>
+<span class="w">        </span><span class="nt">&lt;groupId&gt;</span>com.fasterxml.jackson.core<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">        </span><span class="nt">&lt;artifactId&gt;</span>jackson-core<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">        </span><span class="nt">&lt;version&gt;</span>${jackson.version}<span class="nt">&lt;/version&gt;</span>
+<span class="w">    </span><span class="nt">&lt;/dependency&gt;</span>
+<span class="w">  </span><span class="nt">&lt;dependency&gt;</span>
+<span class="w">    </span><span class="nt">&lt;groupId&gt;</span>org.apache.pulsar<span class="nt">&lt;/groupId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;artifactId&gt;</span>pulsar-functions-local-runner-original<span class="nt">&lt;/artifactId&gt;</span>
+<span class="w">    </span><span class="nt">&lt;version&gt;</span>${pulsar.version}<span class="nt">&lt;/version&gt;</span>
+<span class="w">  </span><span class="nt">&lt;/dependency&gt;</span>
+<span class="nt">&lt;/dependencies&gt;</span>
+</code></pre>
+<p>Next, we need to write a class to configure and launch the LocalRunner, as shown in the following listing. As you can see, this code must first configure the Pulsar function to execute on the LocalRunner, and it specifies the address of the actual Pulsar cluster instance that will be used for the testing.</p>
+<p>接下来，我们需要编写一个类来配置并启动 LocalRunner，如下面的清单所示。正如你所看到的，这段代码必须先把这个 Pulsar function 配置为在 LocalRunner 上执行，并且它指定了将用于测试的那个真实 Pulsar 集群实例的地址。</p>
+<p>Listing 4.16 Testing the KeywordFilterFunction with the LocalRunner</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">KeywordFilterFunctionLocalRunnerTest</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">final</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">BROKER_URL</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"pulsar://localhost:6650"</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">final</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">IN</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"persistent://public/default/raw-feed"</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">final</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">OUT</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"persistent://public/default/filtered-feed"</span><span class="p">;</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">ExecutorService</span><span class="w"> </span><span class="n">executor</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">LocalRunner</span><span class="w"> </span><span class="n">localRunner</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">PulsarClient</span><span class="w"> </span><span class="n">client</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">Producer</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">producer</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">Consumer</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">consumer</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">keyword</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">""</span><span class="p">;</span>
+
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">args</span><span class="p">.</span><span class="na">length</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">keyword</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">args</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span><span class="p">;</span><span class="w">                                                    </span><span class="n">❶</span>
+<span class="w">   </span><span class="p">}</span>
+<span class="w">   </span><span class="n">startLocalRunner</span><span class="p">();</span>
+<span class="w">   </span><span class="n">init</span><span class="p">();</span>
+<span class="w">   </span><span class="n">startConsumer</span><span class="p">();</span>
+<span class="w">   </span><span class="n">sendData</span><span class="p">();</span>
+<span class="w">   </span><span class="n">shutdown</span><span class="p">();</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">startLocalRunner</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">localRunner</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">LocalRunner</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">            </span><span class="p">.</span><span class="na">brokerServiceUrl</span><span class="p">(</span><span class="n">BROKER_URL</span><span class="p">)</span><span class="w">                                 </span><span class="n">❷</span>
+<span class="w">            </span><span class="p">.</span><span class="na">functionConfig</span><span class="p">(</span><span class="n">getFunctionConfig</span><span class="p">())</span><span class="w">                          </span><span class="n">❸</span>
+<span class="w">            </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+<span class="w">   </span><span class="n">localRunner</span><span class="p">.</span><span class="na">start</span><span class="p">(</span><span class="kc">false</span><span class="p">);</span><span class="w">                                              </span><span class="n">❹</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">FunctionConfig</span><span class="w"> </span><span class="nf">getFunctionConfig</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">ConsumerConfig</span><span class="o">&gt;</span><span class="w"> </span><span class="n">inputSpecs</span><span class="w"> </span><span class="o">=</span>
+<span class="w">       </span><span class="k">new</span><span class="w"> </span><span class="n">HashMap</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">ConsumerConfig</span><span class="o">&gt;</span><span class="w"> </span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">inputSpecs</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="n">IN</span><span class="p">,</span><span class="w"> </span><span class="n">ConsumerConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span><span class="w">                           </span><span class="n">❺</span>
+<span class="w">           </span><span class="p">.</span><span class="na">schemaType</span><span class="p">(</span><span class="n">Schema</span><span class="p">.</span><span class="na">STRING</span><span class="p">.</span><span class="na">getSchemaInfo</span><span class="p">().</span><span class="na">getName</span><span class="p">())</span>
+<span class="w">           </span><span class="p">.</span><span class="na">build</span><span class="p">());</span>
+
+<span class="w">    </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">userConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">HashMap</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="w">    </span><span class="n">userConfig</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="n">KeywordFilterFunction</span><span class="p">.</span><span class="na">KEYWORD_CONFIG</span><span class="p">,</span><span class="w"> </span><span class="n">keyword</span><span class="p">);</span>
+<span class="w">    </span><span class="n">userConfig</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="n">KeywordFilterFunction</span><span class="p">.</span><span class="na">IGNORE_CONFIG</span><span class="p">,</span><span class="w"> </span><span class="kc">true</span><span class="p">);</span><span class="w">            </span><span class="n">❻</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">FunctionConfig</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">          </span><span class="p">.</span><span class="na">className</span><span class="p">(</span><span class="n">KeywordFilterFunction</span><span class="p">.</span><span class="na">class</span><span class="p">.</span><span class="na">getName</span><span class="p">())</span><span class="w">               </span><span class="n">❼</span>
+<span class="w">          </span><span class="p">.</span><span class="na">inputs</span><span class="p">(</span><span class="n">Collections</span><span class="p">.</span><span class="na">singleton</span><span class="p">(</span><span class="n">IN</span><span class="p">))</span><span class="w">                              </span><span class="n">❽</span>
+<span class="w">          </span><span class="p">.</span><span class="na">inputSpecs</span><span class="p">(</span><span class="n">inputSpecs</span><span class="p">)</span><span class="w">                                         </span><span class="n">❾</span>
+<span class="w">          </span><span class="p">.</span><span class="na">output</span><span class="p">(</span><span class="n">OUT</span><span class="p">)</span><span class="w">                                                    </span><span class="n">❿</span>
+<span class="w">          </span><span class="p">.</span><span class="na">name</span><span class="p">(</span><span class="s">"keyword-filter"</span><span class="p">)</span>
+<span class="w">          </span><span class="p">.</span><span class="na">tenant</span><span class="p">(</span><span class="s">"public"</span><span class="p">)</span>
+<span class="w">          </span><span class="p">.</span><span class="na">namespace</span><span class="p">(</span><span class="s">"default"</span><span class="p">)</span>
+<span class="w">          </span><span class="p">.</span><span class="na">runtime</span><span class="p">(</span><span class="n">FunctionConfig</span><span class="p">.</span><span class="na">Runtime</span><span class="p">.</span><span class="na">JAVA</span><span class="p">)</span><span class="w">                           </span><span class="n">⓫</span>
+<span class="w">          </span><span class="p">.</span><span class="na">subName</span><span class="p">(</span><span class="s">"keyword-filter-sub"</span><span class="p">)</span>
+<span class="w">          </span><span class="p">.</span><span class="na">userConfig</span><span class="p">(</span><span class="n">userConfig</span><span class="p">)</span><span class="w">                                         </span><span class="n">⓬</span>
+<span class="w">          </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">init</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">PulsarClientException</span><span class="w"> </span><span class="p">{</span><span class="w">               </span><span class="n">⓭</span>
+<span class="w">    </span><span class="n">executor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Executors</span><span class="p">.</span><span class="na">newFixedThreadPool</span><span class="p">(</span><span class="mi">2</span><span class="p">);</span>
+<span class="w">    </span><span class="n">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PulsarClient</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">              </span><span class="p">.</span><span class="na">serviceUrl</span><span class="p">(</span><span class="n">BROKER_URL</span><span class="p">)</span>
+<span class="w">              </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+<span class="w">    </span><span class="n">producer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="na">newProducer</span><span class="p">(</span><span class="n">Schema</span><span class="p">.</span><span class="na">STRING</span><span class="p">).</span><span class="na">topic</span><span class="p">(</span><span class="n">IN</span><span class="p">).</span><span class="na">create</span><span class="p">();</span>
+<span class="w">    </span><span class="n">consumer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">client</span><span class="p">.</span><span class="na">newConsumer</span><span class="p">(</span><span class="n">Schema</span><span class="p">.</span><span class="na">STRING</span><span class="p">).</span><span class="na">topic</span><span class="p">(</span><span class="n">OUT</span><span class="p">)</span>
+<span class="w">                </span><span class="p">.</span><span class="na">subscriptionName</span><span class="p">(</span><span class="s">"validation-sub"</span><span class="p">).</span><span class="na">subscribe</span><span class="p">();</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">startConsumer</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w">                                   </span><span class="n">⓮</span>
+<span class="w">    </span><span class="n">Runnable</span><span class="w"> </span><span class="n">runnableTask</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">while</span><span class="w"> </span><span class="p">(</span><span class="kc">true</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Message</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">msg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">           </span><span class="n">msg</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">consumer</span><span class="p">.</span><span class="na">receive</span><span class="p">();</span>
+<span class="w">           </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">printf</span><span class="p">(</span><span class="s">"Message received: %s \n"</span><span class="p">,</span><span class="w"> </span><span class="n">msg</span><span class="p">.</span><span class="na">getValue</span><span class="p">());</span>
+<span class="w">           </span><span class="n">consumer</span><span class="p">.</span><span class="na">acknowledge</span><span class="p">(</span><span class="n">msg</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">Exception</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">           </span><span class="n">consumer</span><span class="p">.</span><span class="na">negativeAcknowledge</span><span class="p">(</span><span class="n">msg</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">       </span><span class="p">}};</span>
+<span class="w">    </span><span class="n">executor</span><span class="p">.</span><span class="na">execute</span><span class="p">(</span><span class="n">runnableTask</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">sendData</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">IOException</span><span class="w"> </span><span class="p">{</span><span class="w">                     </span><span class="n">⓯</span>
+<span class="w">    </span><span class="n">InputStream</span><span class="w"> </span><span class="n">inputStream</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Thread</span><span class="p">.</span><span class="na">currentThread</span><span class="p">().</span><span class="na">getContextClassLoader</span><span class="p">()</span>
+<span class="w">       </span><span class="p">.</span><span class="na">getResourceAsStream</span><span class="p">(</span><span class="s">"test-data.txt"</span><span class="p">);</span>
+
+<span class="w">   </span><span class="n">InputStreamReader</span><span class="w"> </span><span class="n">streamReader</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">InputStreamReader</span><span class="p">(</span><span class="n">inputStream</span><span class="p">,</span>
+<span class="w">      </span><span class="n">StandardCharsets</span><span class="p">.</span><span class="na">UTF_8</span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">BufferedReader</span><span class="w"> </span><span class="n">reader</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">BufferedReader</span><span class="p">(</span><span class="n">streamReader</span><span class="p">);</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">line</span><span class="p">;</span><span class="w"> </span><span class="p">(</span><span class="n">line</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">reader</span><span class="p">.</span><span class="na">readLine</span><span class="p">())</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="kc">null</span><span class="p">;)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">producer</span><span class="p">.</span><span class="na">send</span><span class="p">(</span><span class="n">line</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">shutdown</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span><span class="w">                       </span><span class="n">⓰</span>
+<span class="w">    </span><span class="n">executor</span><span class="p">.</span><span class="na">shutdown</span><span class="p">();</span>
+<span class="w">    </span><span class="n">localRunner</span><span class="p">.</span><span class="na">stop</span><span class="p">();</span>
+<span class="w">   </span><span class="p">.</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="p">.</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ Get the user-provided keyword.</p>
+<p>❶ 获取用户提供的关键词。</p>
+<p>❷ The service URL for the Pulsar cluster the function will run on</p>
+<p>❷ 该函数将运行于其上的 Pulsar 集群的服务 URL</p>
+<p>❸ Pass in the function configuration to the LocalRunner.</p>
+<p>❸ 把函数配置传给 LocalRunner。</p>
+<p>❹ Start the LocalRunner and function.</p>
+<p>❹ 启动 LocalRunner 与该函数。</p>
+<p>❺ Specifies that the data inside the input topic will be strings</p>
+<p>❺ 指定输入主题中的数据将是字符串</p>
+<p>❻ Initialize the user configuration properties with the user-provided keyword.</p>
+<p>❻ 用用户提供的关键词初始化用户配置属性。</p>
+<p>❼ Specifies the class name of the function to run locally</p>
+<p>❼ 指定要在本地运行的函数的类名</p>
+<p>❽ Specifies the input topic</p>
+<p>❽ 指定输入主题</p>
+<p>❾ Pass in the input topic configuration properties.</p>
+<p>❾ 传入输入主题的配置属性。</p>
+<p>❿ Specifies the output topic</p>
+<p>❿ 指定输出主题</p>
+<p>⓫ Specifies that we want to use a Java Runtime environment for the function</p>
+<p>⓫ 指定我们希望为该函数使用 Java 运行时环境</p>
+<p>⓬ Pass in the user configuration properties.</p>
+<p>⓬ 传入用户配置属性。</p>
+<p>⓭ Initialize a producer and consumer to use for testing.</p>
+<p>⓭ 初始化一个生产者和一个消费者，用于测试。</p>
+<p>⓮ Launch the consumer in a background thread to read messages from the function output topic.</p>
+<p>⓮ 在一个后台线程中启动消费者，以从函数输出主题读取消息。</p>
+<p>⓯ Send data to the function input topic.</p>
+<p>⓯ 向函数输入主题发送数据。</p>
+<p>⓰ Stop the LocalRunner, consumer, etc.</p>
+<p>⓰ 停止 LocalRunner、消费者等。</p>
+<p>The easiest way to gain access to a Pulsar cluster is to launch the Pulsar Docker container like we did in chapter 3 by running the following command in a bash window, which will start a Pulsar cluster in standalone mode inside the container. Note that we are also mounting the directory where you cloned the GitHub project associated with this book onto the local machine:</p>
+<p>获得一个 Pulsar 集群访问权的最简单方式，是像我们在第 3 章中那样启动 Pulsar 的 Docker 容器：在一个 bash 窗口中运行下面这条命令，它会在容器内部以 standalone 模式启动一个 Pulsar 集群。请注意，我们还把你克隆本书配套 GitHub 项目的那个目录挂载到了本地机器上：</p>
+<pre lang="bash"><code class="language-bash md-fencescode">$<span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">GIT_PROJECT</span><span class="o">=</span>&lt;CLONE_DIR&gt;/pulsar-in-action/chapter4
+$<span class="w"> </span>docker<span class="w"> </span>run<span class="w"> </span>--name<span class="w"> </span>pulsar<span class="w"> </span>-id<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-p<span class="w"> </span><span class="m">6650</span>:6650<span class="w"> </span>-p<span class="w"> </span><span class="m">8080</span>:8080<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-v<span class="w"> </span><span class="nv">$GIT_PROJECT</span>:/pulsar/dropbox
+<span class="w">  </span>apachepulsar/pulsar:latest<span class="w"> </span>bin/pulsar<span class="w"> </span>standalone
+</code></pre>
+<p>Typically, you would run the LocalRunner test from inside your IDE to attach a debugger and step through the function code to identify and resolve any errors you have encountered. However, in this scenario I want to run the LocalRunner test using the command line. Therefore, I must first bundle the test class that is located under the chapter4/src/main/test folder of the GitHub repo associated with this book into a JAR file along with all the necessary dependencies, including the LocalRunner class, by running the Maven assemble command. Once that is complete, we can start the LocalRunner commands, as shown in the following listing.</p>
+<p>通常情况下，你会在自己的 IDE 内部运行 LocalRunner 测试，以便挂接调试器并单步执行函数代码，从而定位和解决你遇到的任何错误。然而在本场景中，我希望用命令行来运行这个 LocalRunner 测试。因此，我必须先把位于本书配套 GitHub 仓库 chapter4/src/main/test 文件夹下的那个测试类，连同所有必需的依赖（包括 LocalRunner 类）一起，通过运行 Maven 的 assemble 命令打包成一个 JAR 文件。一旦完成，我们就可以启动 LocalRunner 命令了，如下面的清单所示。</p>
+<p>Listing 4.17 Starting the LocalRunner and entering some data</p>
+<pre lang="bash"><code class="language-bash md-fencescode">mvn<span class="w"> </span>clean<span class="w"> </span>compile<span class="w"> </span>test-compile<span class="w"> </span>assembly:single<span class="w">                            </span>❶
+...
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>----------------------------------------------------------
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>BUILD<span class="w"> </span>SUCCESS
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>----------------------------------------------------------
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>Total<span class="w"> </span>time:<span class="w">  </span><span class="m">29</span>.279<span class="w"> </span>s
+<span class="o">[</span>INFO<span class="o">]</span><span class="w"> </span>Finished<span class="w"> </span>at:<span class="w"> </span><span class="m">2020</span>-08-15T15:43:58-07:00
+
+java<span class="w"> </span>-cp<span class="w"> </span>./target/chapter4-0.0.1-fat-tests.jar<span class="w">  </span>com.manning.pulsar.chapter4.functions.sdk.KeywordFilterFunctionLocalRunnerTest<span class="w"> </span>Director<span class="w">   </span>❷
+
+org.apache.pulsar.functions.runtime.thread.ThreadRuntime<span class="w"> </span>-<span class="w"> </span>ThreadContainer
+starting<span class="w"> </span><span class="k">function</span><span class="w"> </span>with<span class="w"> </span>instance<span class="w"> </span>config<span class="w"> </span>InstanceConfig<span class="o">(</span><span class="nv">instanceId</span><span class="o">=</span><span class="m">0</span>,
+<span class="nv">functionId</span><span class="o">=</span>0bc39b7d-fb08-4549-a6cf-ab641d583edd,
+<span class="nv">functionVersion</span><span class="o">=</span>7786da28-
+0bb6-4c11-97d9-3d6140cc4261,<span class="w"> </span><span class="nv">functionDetails</span><span class="o">=</span>tenant:<span class="w"> </span><span class="s2">"public"</span>
+namespace:<span class="w"> </span><span class="s2">"default"</span>
+name:<span class="w"> </span><span class="s2">"keyword-filter"</span>
+className:<span class="w"> </span><span class="s2">"com.manning.pulsar.chapter4.functions.sdk.KeywordFilterFunction"</span><span class="w">   </span>❸
+userConfig:<span class="w"> </span><span class="s2">"{\"keyword\":\"Director\",\"ignore-case\":true}"</span>
+autoAck:<span class="w"> </span><span class="nb">true</span>
+parallelism:<span class="w"> </span><span class="m">1</span>
+<span class="nb">source</span><span class="w"> </span><span class="o">{</span><span class="w">                                                                  </span>❹
+<span class="w">  </span>typeClassName:<span class="w"> </span><span class="s2">"java.lang.String"</span>
+<span class="w">  </span>subscriptionName:<span class="w"> </span><span class="s2">"keyword-filter-sub"</span>
+<span class="w">  </span>inputSpecs<span class="w"> </span><span class="o">{</span>
+<span class="w">    </span>key:<span class="w"> </span><span class="s2">"persistent://public/default/raw-feed"</span>
+<span class="w">    </span>value<span class="w"> </span><span class="o">{</span>
+<span class="w">      </span>schemaType:<span class="w"> </span><span class="s2">"String"</span>
+<span class="w">    </span><span class="o">}</span>
+<span class="w">  </span><span class="o">}</span>
+<span class="w">  </span>cleanupSubscription:<span class="w"> </span><span class="nb">true</span>
+<span class="o">}</span>
+sink<span class="w"> </span><span class="o">{</span><span class="w">                                                                    </span>❺
+<span class="w">  </span>topic:<span class="w"> </span><span class="s2">"persistent://public/default/filtered-feed"</span>
+<span class="w">  </span>typeClassName:<span class="w"> </span><span class="s2">"java.lang.String"</span>
+<span class="w">  </span>forwardSourceMessageProperty:<span class="w"> </span><span class="nb">true</span>
+<span class="o">}</span>
+.<span class="w"> </span>.<span class="w"> </span>.
+
+Message<span class="w"> </span>received:<span class="w"> </span>At<span class="w"> </span>the<span class="w"> </span>end<span class="w"> </span>of<span class="w"> </span>the<span class="w"> </span>room<span class="w"> </span>a<span class="w"> </span>loud<span class="w"> </span>speaker<span class="w"> </span>projected<span class="w"> </span>from<span class="w"> </span>the
+wall.<span class="w"> </span>The<span class="w"> </span>Director<span class="w"> </span>walked<span class="w"> </span>up<span class="w"> </span>to<span class="w"> </span>it<span class="w"> </span>and<span class="w"> </span>pressed<span class="w"> </span>a<span class="w"> </span>switch.<span class="w">                 </span>❻
+Message<span class="w"> </span>received:<span class="w"> </span>The<span class="w"> </span>Director<span class="w"> </span>pushed<span class="w"> </span>back<span class="w"> </span>the<span class="w"> </span>switch.<span class="w"> </span>The<span class="w"> </span>voice<span class="w"> </span>was
+silent.<span class="w"> </span>Only<span class="w"> </span>its<span class="w"> </span>thin<span class="w"> </span>ghost<span class="w"> </span>continued<span class="w"> </span>to<span class="w"> </span>mutter<span class="w"> </span>from<span class="w"> </span>beneath<span class="w"> </span>the
+eighty<span class="w"> </span>pillows.
+Message<span class="w"> </span>received:<span class="w"> </span>Once<span class="w"> </span>more<span class="w"> </span>the<span class="w"> </span>Director<span class="w"> </span>touched<span class="w"> </span>the<span class="w"> </span>switch.
+</code></pre>
+<p>❶ Builds the fat jar containing the LocalRunner test and all its dependencies</p>
+<p>❶ 构建包含 LocalRunner 测试及其全部依赖的 fat jar</p>
+<p>❷ Run the LocalRunner test, and specify a keyword of Director to filter on.</p>
+<p>❷ 运行 LocalRunner 测试，并指定关键词 Director 作为过滤条件。</p>
+<p>❸ The output should indicate that the function was deployed as expected.</p>
+<p>❸ 输出应表明该函数已按预期部署。</p>
+<p>❹ The output should display the function’s input topic.</p>
+<p>❹ 输出应显示该函数的输入主题。</p>
+<p>❺ The output should display the function’s output topic.</p>
+<p>❺ 输出应显示该函数的输出主题。</p>
+<p>❻ The output should contain only sentences with the keyword Director in them.</p>
+<p>❻ 输出应只包含含有关键词 Director 的句子。</p>
+<p>Let’s review the steps that just occurred. An instance of the KeywordFilterFunction was launched locally inside a JVM on my laptop and was connected to the Pulsar instance that was running inside the Docker container we launched earlier. Next, the input and output topics specified in the function configuration were created inside that Pulsar instance automatically. Then all of the data published by the producer running inside the KeywordFilterFunctionLocalRunnerTest’s sendData method was published to the Pulsar topic inside the Docker container.</p>
+<p>让我们回顾一下刚才发生的各个步骤。KeywordFilterFunction 的一个实例在我笔记本电脑上的一个 JVM 内被本地启动，并连接到了运行在我们先前启动的那个 Docker 容器内的 Pulsar 实例。接下来，函数配置中所指定的输入和输出主题在那个 Pulsar 实例内被自动创建。随后，运行在 KeywordFilterFunctionLocalRunnerTest 的 sendData 方法内的生产者所发布的全部数据，都被发布到了 Docker 容器内的那个 Pulsar 主题上。</p>
+<p>The KeywordFilterFunction was listening on this same topic, and the processing logic was applied to each line published to that topic. Only those messages that contained the keyword, which in this case was Director, were written to the function’s configured output topic. The consumer running inside the KeywordFilterFunctionLocalRunnerTest’s startConsumer method was also reading messages from this output topic and writing them to standard out so that we could verify the results.</p>
+<p>KeywordFilterFunction 正在监听同一个主题，并且处理逻辑被应用到发布到该主题的每一行上。只有那些包含关键词（在本例中是 Director）的消息才被写入该函数所配置的输出主题。运行在 KeywordFilterFunctionLocalRunnerTest 的 startConsumer 方法内的消费者同样在从这个输出主题读取消息，并把它们写到标准输出上，以便我们验证结果。</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

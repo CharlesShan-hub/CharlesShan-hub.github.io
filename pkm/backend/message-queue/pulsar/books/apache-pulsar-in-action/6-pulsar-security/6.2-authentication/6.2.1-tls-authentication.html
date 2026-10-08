@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>6.2.1-tls-authentication</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="621-tls-authentication">6.2.1 TLS authentication</h3>
+<p>In TLS client authentication, the client uses a certificate to authenticate itself. Obtaining a certificate requires interaction with a CA that will issue a certificate that can be trusted by the Pulsar broker. For a client certificate to pass a server’s validation process, the digital signature found on it should have been signed by a CA recognized by the server. Therefore, I have used the same CA that issued the server certificate in the previous section to generate the client certificates to ensure that the client certificates are trusted.</p>
+<p>在 TLS 客户端认证中，客户端使用一张证书来证明自己的身份。要拿到证书，就需要与某个 CA 交互，由它签发一张能被 Pulsar broker 信任的证书。客户端证书要想通过服务器的校验流程，其上的数字签名必须由一个服务器认可的 CA 签署。因此，我使用了上一节签发服务器证书的同一个 CA 来生成客户端证书，以确保这些客户端证书是被信任的。</p>
+<p>With TLS client authentication, the client generates a key pair for authentication purpose and retains the private key of the key pair in a secure location. The client then issues a certificate request to a trusted CA and receives back an X.509 digital certificate.</p>
+<p>在 TLS 客户端认证模式下，客户端会为认证目的生成一个密钥对，并把其中的私钥保存在一个安全可靠的地方。随后客户端向受信任的 CA 发起证书申请，并收回一张 X.509 数字证书。</p>
+<p>These client certificates typically contain pertinent information like a digital signature, expiration date, name of client, name of CA, revocation status, SSL/TLS version number, serial number, common name, and possibly more, all structured using the X.509 standard. Pulsar uses the common name field of the certificate to map the client to a specific role, which is used to determine what actions the client is authorized to perform.</p>
+<p>这类客户端证书通常包含以下相关信息：数字签名、到期日期、客户端名称、CA 名称、吊销状态、SSL/TLS 版本号、序列号、通用名称（common name），可能还有更多——全部按 X.509 标准来组织。Pulsar 使用证书中的 common name 字段把客户端映射到某个具体角色，而这个角色则被用来决定该客户端被授权执行哪些操作。</p>
+<p>When a client attempts to connect to a Pulsar broker that has TLS authentication enabled, it can submit a client certificate for authentication as part of the TLS handshake. Upon receiving the certificate, the Pulsar broker uses it to identify the certificate’s source and determine whether the client should be granted access.</p>
+<p>当客户端尝试连接一个启用了 TLS 认证的 Pulsar broker 时，它可以作为 TLS 握手的一部分提交客户端证书用于认证。收到证书后，Pulsar broker 会用它来识别证书的来源，并判断该客户端是否应当被授予访问权限。</p>
+<p>Don’t confuse client certificates with the server certificate we used to enable TLS wire encryption. Both are X.509 digital certificates, but they are two different things. A server certificate is sent from the Pulsar broker to the client at the start of a session and is used by the client to authenticate the server. A client certificate, on the other hand, is sent from the client to the broker at the start of a session and is used by the server to authenticate the client. In order to enable TLS-based authentication, we append a command to the Dockerfile from the previous section that executes another script named gen-client-certs.sh. This script generates TLS client certificates that can be used for authentication, as shown in the following listing.</p>
+<p>不要把客户端证书与我们用来启用 TLS 链路加密的那张服务器证书混为一谈。两者都是 X.509 数字证书，但它们是完全不同的两样东西。服务器证书是在会话开始时由 Pulsar broker 发送给客户端的，客户端用它来验证服务器的身份；而客户端证书则是在会话开始时由客户端发送给 broker 的，服务器用它来验证客户端的身份。为了启用基于 TLS 的认证，我们在上一节的 Dockerfile 后面追加了一条命令，用于执行另一个名为 gen-client-certs.sh 的脚本。该脚本会生成可用于认证的 TLS 客户端证书，如下面清单所示。</p>
+<p>Listing 6.9 Updated Dockerfile contents</p>
+<pre lang="dockerfile"><code class="language-dockerfile md-fencescode"><span class="k">FROM</span><span class="w"> </span><span class="s">apachepulsar/pulsar-standalone:latest</span><span class="w">    </span>
+<span class="k">ENV</span><span class="w"> </span><span class="nv">PULSAR_HOME</span><span class="o">=</span>/pulsar
+
+...<span class="w"> </span>
+
+<span class="k">RUN</span><span class="w"> </span><span class="o">[</span><span class="s2">"/bin/bash"</span>,<span class="w"> </span><span class="s2">"-c"</span>,<span class="w"> </span>
+<span class="w">     </span><span class="s2">"/pulsar/manning/security/TLS-encryption/enable-tls.sh"</span><span class="o">]</span>
+
+<span class="k">RUN</span><span class="w"> </span><span class="o">[</span><span class="s2">"/bin/bash"</span>,<span class="w"> </span><span class="s2">"-c"</span>,<span class="w"> </span>
+<span class="w">     </span><span class="s2">"/pulsar/manning/security/authentication/tls/gen-client-certs.sh"</span><span class="o">]</span><span class="w">   </span>❶
+<span class="c">#A Same content as shown in figure 6.1</span>
+</code></pre>
+<p>❶ Execute the specified script to generate TLS client certs for role-based authentication.</p>
+<p>❶ 执行指定脚本，生成用于基于角色认证的 TLS 客户端证书。</p>
+<p>Let’s take a look at the gen-client-certs.sh script in the following listing to see exactly what steps are required to generate TLS client certificates that can be used to authenticate with the Pulsar broker.</p>
+<p>我们来看看下面清单中的 gen-client-certs.sh 脚本，了解生成可用于向 Pulsar broker 认证的 TLS 客户端证书究竟需要哪些步骤。</p>
+<p>Listing 6.10 Contents of the gen-client-certs.sh file</p>
+<pre lang="bash"><code class="language-bash md-fencescode"><span class="ch">#!/bin/bash</span>
+
+<span class="nb">cd</span><span class="w"> </span>/pulsar/manning/security/cert-authority
+<span class="nb">export</span><span class="w"> </span><span class="nv">CA_HOME</span><span class="o">=</span><span class="k">$(</span><span class="nb">pwd</span><span class="k">)</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">CA_PASSWORD</span><span class="o">=</span>secret-password
+
+<span class="k">function</span><span class="w"> </span>generate_client_cert<span class="o">()</span><span class="w"> </span><span class="o">{</span>
+
+<span class="w">   </span><span class="nb">local</span><span class="w"> </span><span class="nv">CLIENT_ID</span><span class="o">=</span><span class="nv">$1</span><span class="w">                                                    </span>❶
+<span class="w">   </span><span class="nb">local</span><span class="w"> </span><span class="nv">CLIENT_ROLE</span><span class="o">=</span><span class="nv">$2</span><span class="w">                                                  </span>❷
+<span class="w">   </span><span class="nb">local</span><span class="w"> </span><span class="nv">CLIENT_PASSWORD</span><span class="o">=</span><span class="nv">$3</span><span class="w">                                              </span>❸
+
+<span class="w">  </span><span class="c1"># Generate the Client Certificate private key</span>
+<span class="w">  </span>openssl<span class="w"> </span>genrsa<span class="w"> </span>-passout<span class="w"> </span>pass:<span class="si">${</span><span class="nv">CLIENT_PASSWORD</span><span class="si">}</span><span class="w"> </span><span class="se">\ </span><span class="w">                   </span>❹
+<span class="w">   </span>-out<span class="w"> </span>/pulsar/manning/security/authentication/tls/<span class="si">${</span><span class="nv">CLIENT_ID</span><span class="si">}</span>.key.pem<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span><span class="m">2048</span>
+
+<span class="w">  </span><span class="c1"># Convert the key to PEM format</span>
+<span class="w">  </span>openssl<span class="w"> </span>pkcs8<span class="w"> </span>-topk8<span class="w"> </span>-inform<span class="w"> </span>PEM<span class="w"> </span>-outform<span class="w"> </span>PEM<span class="w"> </span>-nocrypt<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>-in<span class="w"> </span>/pulsar/manning/security/authentication/tls/<span class="si">${</span><span class="nv">CLIENT_ID</span><span class="si">}</span>.key.pem<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>-out<span class="w"> </span>/pulsar/manning/security/authentication/tls/<span class="si">${</span><span class="nv">CLIENT_ID</span><span class="si">}</span>-pk8.pem<span class="w"> </span>
+
+<span class="w">  </span><span class="c1"># Generate the client certificate request       </span>
+<span class="w">  </span>openssl<span class="w"> </span>req<span class="w"> </span>-config<span class="w"> </span>/pulsar/manning/security/cert-authority/openssl.cnf<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>-key<span class="w"> </span>/pulsar/manning/security/authentication/tls/<span class="si">${</span><span class="nv">CLIENT_ID</span><span class="si">}</span>.key.pem<span class="w">  </span><span class="se">\</span>
+<span class="w">   </span>-out<span class="w"> </span>/pulsar/manning/security/authentication/tls/<span class="si">${</span><span class="nv">CLIENT_ID</span><span class="si">}</span>.csr.pem<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>-subj<span class="w"> </span><span class="s2">"/C=US/ST=CA/L=Palo Alto/O=gottaeat.com/CN=</span><span class="si">${</span><span class="nv">CLIENT_ROLE</span><span class="si">}</span><span class="s2">"</span><span class="w"> </span><span class="se">\ </span><span class="w">   </span>❺
+<span class="w">   </span>-new<span class="w"> </span>-sha256<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>-passin<span class="w"> </span>pass:<span class="si">${</span><span class="nv">CLIENT_PASSWORD</span><span class="si">}</span><span class="w">                                      </span>❻
+
+<span class="w">  </span><span class="c1"># Sign the server certificate with the CA</span>
+<span class="w">  </span>openssl<span class="w"> </span>ca<span class="w"> </span>-config<span class="w"> </span>/pulsar/manning/security/cert-authority/openssl.cnf<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>-extensions<span class="w"> </span>usr_cert<span class="w"> </span><span class="se">\ </span><span class="w">                                              </span>❼
+<span class="w">   </span>-days<span class="w"> </span><span class="m">100</span><span class="w"> </span>-notext<span class="w"> </span>-md<span class="w"> </span>sha256<span class="w"> </span>-batch<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>-in<span class="w"> </span>/pulsar/manning/security/authentication/tls/<span class="si">${</span><span class="nv">CLIENT_ID</span><span class="si">}</span>.csr.pem<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>-out<span class="w"> </span>/pulsar/manning/security/authentication/tls/<span class="si">${</span><span class="nv">CLIENT_ID</span><span class="si">}</span>.cert.pem<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>-passin<span class="w"> </span>pass:<span class="si">${</span><span class="nv">CA_PASSWORD</span><span class="si">}</span><span class="w">                                          </span>❽
+
+<span class="w">  </span><span class="c1"># Remove the client key and certifcate request once we are finished</span>
+<span class="w">  </span>rm<span class="w"> </span>-f<span class="w"> </span>/pulsar/manning/security/authentication/tls/<span class="si">${</span><span class="nv">CLIENT_ID</span><span class="si">}</span>.csr.pem
+<span class="w">  </span>rm<span class="w"> </span>-f<span class="w"> </span>/pulsar/manning/security/authentication/tls/<span class="si">${</span><span class="nv">CLIENT_ID</span><span class="si">}</span>.key.pem
+<span class="o">}</span>
+
+<span class="c1"># Create a certificate for Adam with admin role-level access</span>
+generate_client_cert<span class="w"> </span>admin<span class="w"> </span>admin<span class="w"> </span>admin-secret
+
+<span class="c1"># Create a certificate for the web app with webapp role-level access</span>
+generate_client_cert<span class="w"> </span>webapp-service<span class="w"> </span>webapp<span class="w"> </span>webapp-secret
+
+<span class="c1"># Create a certificate for Peggy who with payment-role level access</span>
+generate_client_cert<span class="w"> </span>peggy<span class="w"> </span>payments<span class="w"> </span>payment-secret
+
+<span class="c1"># Create a certificate for David who needs driver-role level access</span>
+generate_client_cert<span class="w"> </span>david<span class="w"> </span>driver<span class="w"> </span>davids-secret
+</code></pre>
+<p>❶ Sets the local variable CLIENT_ID to the first parameter passed to the function call</p>
+<p>❶ 把函数调用传入的第一个参数赋给局部变量 CLIENT_ID。</p>
+<p>❷ Sets the local variable CLIENT_ROLE to the second parameter passed to the function call</p>
+<p>❷ 把函数调用传入的第二个参数赋给局部变量 CLIENT_ROLE。</p>
+<p>❸ Sets the local variable CLIENT_PASSWORD to the third parameter passed to the function call</p>
+<p>❸ 把函数调用传入的第三个参数赋给局部变量 CLIENT_PASSWORD。</p>
+<p>❹ Use the CLIENT_PASSWORD to secure the private key.</p>
+<p>❹ 使用 CLIENT_PASSWORD 来保护私钥。</p>
+<p>❺ Pulsar uses the value associated with the common name (CN) to determine the client’s role.</p>
+<p>❺ Pulsar 使用 common name（CN）所对应的值来确定客户端的角色。</p>
+<p>❻ We need to pass in the password associated with the client key used to generate the CSR.</p>
+<p>❻ 我们需要传入与生成 CSR 所用客户端密钥关联的密码。</p>
+<p>❼ Specify that we want a client certificate.</p>
+<p>❼ 声明我们需要的是一张客户端证书。</p>
+<p>❽ We need to provide the CA password to approve and sign the client’s certificate request.</p>
+<p>❽ 我们需要提供 CA 密码，以批准并签署客户端的证书申请。</p>
+<p>In a production environment, the clients would use their own private keys to generate the certificate requests and only send over the CSR files. Since I am automating the process, I have taken the liberty of generating these as part of the script for a small set of users, each with a different role.</p>
+<p>在生产环境中，客户端会使用自己的私钥来生成证书申请，只把 CSR 文件发送过来。由于我这里是在做自动化，我就图省事地在脚本里为一小部分用户（各自拥有不同角色）直接生成了这些密钥和证书。</p>
+<p>At this point, there are now several pairs of private keys and client certificates that have been generated and signed by our CA that can be used to authenticate to the pulsar-standalone instance. The properties shown in the following listing have also been added to the standalone.conf file in order to enable TLS-based authentication on the broker.</p>
+<p>到这里，我们已经有了若干对由自家 CA 生成并签名的私钥与客户端证书，可以用来向 pulsar-standalone 实例认证。为了在 broker 上启用基于 TLS 的认证，下面清单中所示的属性也被添加进了 standalone.conf 文件。</p>
+<p>Listing 6.11 TLS authentication property changes to the standalone.conf file</p>
+<pre lang="properties"><code class="language-properties md-fencescode"><span class="c1">#### To enable TLS authentication </span>
+<span class="na">authenticationEnabled</span><span class="o">=</span><span class="s">true                               ❶</span>
+<span class="na">authenticationProviders</span><span class="o">=</span><span class="s">org.apache.pulsar.broker.authentication.AuthenticationProviderTls  ❷</span>
+</code></pre>
+<p>❶ Turn on authentication.</p>
+<p>❶ 开启认证。</p>
+<p>❷ Specifies the TLS authentication provider</p>
+<p>❷ 指定 TLS 认证提供者。</p>
+<p>Changes are also required to the client.conf file, as shown in the following listing, which grants all of the Pulsar command-line tools admin-level permissions, including the ability to define authorization rules at the Pulsar-namespace level.</p>
+<p>client.conf 文件同样需要修改，如下面清单所示。这些改动会授予所有 Pulsar 命令行工具管理员级别的权限，其中包括在 Pulsar 命名空间级别定义授权规则的能力。</p>
+<p>Listing 6.12 TLS authentication property changes to the client.conf file</p>
+<pre lang="properties"><code class="language-properties md-fencescode"><span class="c1">## TLS Authentication ##</span>
+<span class="na">authPlugin</span><span class="o">=</span><span class="s">org.apache.pulsar.client.impl.auth.AuthenticationTls           ❶</span>
+<span class="na">authParams</span><span class="o">=</span><span class="s">tlsCertFile:/pulsar/manning/security/authentication/tls/admin.cert.pem,tlsKeyFile:/pulsar/manning/security/authentication/tls/admin-pk8.pem   ❷</span>
+</code></pre>
+<p>❶ Tells the client to use TLS authentication when connecting to Pulsar</p>
+<p>❶ 告知客户端在连接 Pulsar 时使用 TLS 认证。</p>
+<p>❷ Specifies the client certificate and associated private key to use</p>
+<p>❷ 指定要使用的客户端证书及其对应的私钥。</p>
+<p>Let’s rebuild the image to include the changes necessary to generate the TLS client certificates and enable TLS-based authentication that was discussed in this section by executing the commands shown in the following listing.</p>
+<p>我们来重建镜像，把本节所讨论的、生成 TLS 客户端证书以及启用基于 TLS 认证所需的改动都包含进去。执行下面清单中的命令即可。</p>
+<p>Listing 6.13 Building the Docker image from the Dockerfile</p>
+<pre lang="bash"><code class="language-bash md-fencescode">$<span class="w"> </span><span class="nb">cd</span><span class="w"> </span><span class="nv">$REPO_HOME</span>/pulsar-in-action/docker-images/pulsar-standalone<span class="w">          </span>❶
+$<span class="w"> </span>docker<span class="w"> </span>build<span class="w"> </span>.<span class="w"> </span>-t<span class="w"> </span>pia/pulsar-standalone-secure:latest<span class="w">                   </span>❷
+Sending<span class="w"> </span>build<span class="w"> </span>context<span class="w"> </span>to<span class="w"> </span>Docker<span class="w"> </span>daemon<span class="w">  </span><span class="m">3</span>.345MB
+Step<span class="w"> </span><span class="m">1</span>/8<span class="w"> </span>:<span class="w"> </span>FROM<span class="w"> </span>apachepulsar/pulsar-standalone:latest<span class="w">                     </span>❸
+<span class="w"> </span>---&gt;<span class="w"> </span>3ed9bffff717
+...<span class="w">                                                                       </span>❹
+Step<span class="w"> </span><span class="m">8</span>/8<span class="w"> </span>:<span class="w"> </span>RUN<span class="w"> </span><span class="o">[</span><span class="s2">"/bin/bash"</span>,<span class="w"> </span><span class="s2">"-c"</span>,<span class="w"> </span><span class="s2">"/pulsar/manning/security/authentication/tls/gen-client-certs.sh"</span><span class="o">]</span><span class="w">   </span>❺
+<span class="w"> </span>---&gt;<span class="w"> </span>Running<span class="w"> </span><span class="k">in</span><span class="w"> </span>5beaabba5865
+Generating<span class="w"> </span>RSA<span class="w"> </span>private<span class="w"> </span>key,<span class="w"> </span><span class="m">2048</span><span class="w"> </span>bit<span class="w"> </span>long<span class="w"> </span>modulus<span class="w">                         </span>❻
+........+++++
+...................+++++
+e<span class="w"> </span>is<span class="w"> </span><span class="m">65537</span><span class="w"> </span><span class="o">(</span>0x010001<span class="o">)</span>
+Using<span class="w"> </span>configuration<span class="w"> </span>from<span class="w"> </span>/pulsar/manning/security/cert-authority/openssl.cnf
+Check<span class="w"> </span>that<span class="w"> </span>the<span class="w"> </span>request<span class="w"> </span>matches<span class="w"> </span>the<span class="w"> </span>signature
+Signature<span class="w"> </span>ok
+Certificate<span class="w"> </span>Details:
+<span class="w">        </span>Serial<span class="w"> </span>Number:<span class="w"> </span><span class="m">4097</span><span class="w"> </span><span class="o">(</span>0x1001<span class="o">)</span><span class="w">                                      </span>❼
+<span class="w">        </span>Validity
+<span class="w">            </span>Not<span class="w"> </span>Before:<span class="w"> </span>Jan<span class="w"> </span><span class="m">13</span><span class="w"> </span><span class="m">02</span>:47:54<span class="w"> </span><span class="m">2020</span><span class="w"> </span>GMT
+<span class="w">            </span>Not<span class="w"> </span>After<span class="w"> </span>:<span class="w"> </span>Apr<span class="w"> </span><span class="m">22</span><span class="w"> </span><span class="m">02</span>:47:54<span class="w"> </span><span class="m">2020</span><span class="w"> </span>GMT
+<span class="w">        </span>Subject:
+<span class="w">            </span><span class="nv">countryName</span><span class="w">               </span><span class="o">=</span><span class="w"> </span>US
+<span class="w">            </span><span class="nv">stateOrProvinceName</span><span class="w">       </span><span class="o">=</span><span class="w"> </span>CA
+<span class="w">            </span><span class="nv">organizationName</span><span class="w">          </span><span class="o">=</span><span class="w"> </span>gottaeat.com
+<span class="w">            </span><span class="nv">commonName</span><span class="w">                </span><span class="o">=</span><span class="w"> </span>admin<span class="w">                              </span>❽
+<span class="w">   </span>....<span class="w">    </span>
+
+Write<span class="w"> </span>out<span class="w"> </span>database<span class="w"> </span>with<span class="w"> </span><span class="m">1</span><span class="w"> </span>new<span class="w"> </span>entries
+Data<span class="w"> </span>Base<span class="w"> </span>Updated
+Generating<span class="w"> </span>RSA<span class="w"> </span>private<span class="w"> </span>key,<span class="w"> </span><span class="m">2048</span><span class="w"> </span>bit<span class="w"> </span>long<span class="w"> </span>modulus
+
+...<span class="w">                                                                       </span>❾
+Successfully<span class="w"> </span>built<span class="w"> </span>6ef6eddd675e
+Successfully<span class="w"> </span>tagged<span class="w"> </span>pia/pulsar-standalone-secure:latest<span class="w">                   </span>❿
+</code></pre>
+<p>❶ Change to the directory that contains the Dockerfile.</p>
+<p>❶ 切换到包含 Dockerfile 的目录。</p>
+<p>❷ Command to build the Docker image from the Dockerfile and tag it</p>
+<p>❷ 从 Dockerfile 构建 Docker 镜像并打标签的命令。</p>
+<p>❸ Notice there are now eight steps instead of seven.</p>
+<p>❸ 注意现在是 8 个步骤，而不是之前的 7 个。</p>
+<p>❹ Execution of steps 2 through 7</p>
+<p>❹ 第 2 到第 7 步的执行过程。</p>
+<p>❺ Executes the gen-client-certs.sh script</p>
+<p>❺ 执行 gen-client-certs.sh 脚本。</p>
+<p>❻ The following stanza will be repeated five times—once for each client cert generated.</p>
+<p>❻ 下面这一段会重复出现五次——每生成一张客户端证书出现一次。</p>
+<p>❼ The certificate serial number will be different for each client.</p>
+<p>❼ 每张证书的序列号各不相同。</p>
+<p>❽ The common name will be different for each client and is used to associate it to a particular role.</p>
+<p>❽ 每个客户端的 common name 都不同，它被用来把该客户端关联到某个特定角色。</p>
+<p>❾ Four more occurrences of the stanza should appear—one for each client certificate generated.</p>
+<p>❾ 这一段还应再出现四次——每生成一张客户端证书出现一次。</p>
+<p>❿ Success message, including the tag used to reference the image</p>
+<p>❿ 成功信息，其中包含用于引用该镜像的标签。</p>
+<p>Next, I need to follow the steps shown in listing 6.7 again to launch a new container based on the updated Docker image, ssh into the container, and run the publish- credentials.sh script inside the newly launched bash session to make these client certificates available to us in the ${HOME}/exchange folder on our local machine. For instance, the certificate file admin.cert.pem and the associated private key file admin-pk8.pem can now be used together to authenticate to the pulsar-standalone instance. Next, I will attempt to use TLS authentication by using the Java program shown in the following listing, which is available in the GitHub repo associated with this book.</p>
+<p>接下来，我需要再次按照清单 6.7 中的步骤，基于更新后的 Docker 镜像启动一个新容器，ssh 进入容器，并在新启动的 bash 会话中运行 publish-credentials.sh 脚本，把这些客户端证书输出到本机的 ${HOME}/exchange 文件夹供我们使用。举例来说，证书文件 admin.cert.pem 与对应的私钥文件 admin-pk8.pem 现在就可以配合起来，用于向 pulsar-standalone 实例认证。接着，我将用下面清单中的 Java 程序尝试使用 TLS 认证，该程序可在本书配套的 GitHub 仓库中找到。</p>
+<p>Listing 6.14 Authenticating with TLS client certificates</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.pulsar.client.api.*</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">TlsAuthClient</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">main</span><span class="p">(</span><span class="n">String</span><span class="o">[]</span><span class="w"> </span><span class="n">args</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">PulsarClientException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">AUTH</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"org.apache.pulsar.client.impl.auth.AuthenticationTls"</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">HOME</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"/Users/david/exchange"</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">TOPIC</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"persistent://public/default/test-topic"</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">PulsarClient</span><span class="w"> </span><span class="n">client</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PulsarClient</span><span class="p">.</span><span class="na">builder</span><span class="p">()</span>
+<span class="w">        </span><span class="p">.</span><span class="na">serviceUrl</span><span class="p">(</span><span class="s">"pulsar+ssl://localhost:6651/"</span><span class="p">)</span><span class="w">                   </span><span class="n">❶</span>
+<span class="w">        </span><span class="p">.</span><span class="na">tlsTrustCertsFilePath</span><span class="p">(</span><span class="n">HOME</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">"/ca.cert.pem"</span><span class="p">)</span><span class="w">                 </span><span class="n">❷</span>
+<span class="w">        </span><span class="p">.</span><span class="na">authentication</span><span class="p">(</span><span class="n">AUTH</span><span class="p">,</span><span class="w">                                        </span><span class="n">❸</span>
+<span class="w">            </span><span class="s">"tlsCertFile:"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">HOME</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">"/admin.cert.pem,"</span><span class="w"> </span><span class="o">+</span><span class="w">              </span><span class="n">❹</span>
+<span class="w">            </span><span class="s">"tlsKeyFile:"</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">HOME</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">"/admin-pk8.pem"</span><span class="p">)</span><span class="w">                  </span><span class="n">❺</span>
+<span class="w">        </span><span class="p">.</span><span class="na">build</span><span class="p">();</span>
+
+<span class="w">    </span><span class="n">Producer</span><span class="o">&lt;</span><span class="kt">byte</span><span class="o">[]&gt;</span><span class="w"> </span><span class="n">producer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>
+<span class="w">      </span><span class="n">client</span><span class="p">.</span><span class="na">newProducer</span><span class="p">().</span><span class="na">topic</span><span class="p">(</span><span class="n">TOPIC</span><span class="p">).</span><span class="na">create</span><span class="p">();</span>
+
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">idx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">idx</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="mi">100</span><span class="p">;</span><span class="w"> </span><span class="n">idx</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">producer</span><span class="p">.</span><span class="na">send</span><span class="p">(</span><span class="s">"Hello TLS Auth"</span><span class="p">.</span><span class="na">getBytes</span><span class="p">());</span>
+<span class="w">    </span><span class="p">}</span><span class="w">    </span>
+<span class="w">    </span><span class="n">System</span><span class="p">.</span><span class="na">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ Use the Pulsar+ssl protocol. Failure to do so will result in a connection failure.</p>
+<p>❶ 使用 pulsar+ssl 协议。不这样做会导致连接失败。</p>
+<p>❷ The location of the file containing the trusted TLS certificates</p>
+<p>❷ 存放受信任 TLS 证书的那个文件所在的位置。</p>
+<p>❸ Use TLS authentication.</p>
+<p>❸ 使用 TLS 认证。</p>
+<p>❹ The client certificate location</p>
+<p>❹ 客户端证书的位置。</p>
+<p>❺ The private key associated with the client certificate</p>
+<p>❺ 与客户端证书关联的私钥。</p>
+<p>TLS client authentication is useful in cases where a server is keeping track of hundreds of thousands or millions of clients, as in IoT, or in a mobile app with millions of installs exchanging secure information. For example, a manufacturing company with hundreds of thousands of IoT devices can issue a unique client certificate to each device, then limit connections to only their devices by having Pulsar only accept connections where the client presents a valid client certificate signed by the company’s certificate authority.</p>
+<p>TLS 客户端认证在这样一类场景下非常有用：服务器需要管理成千上万乃至数以百万计的客户端，比如物联网场景，或者拥有数百万次安装、需要交换安全信息的移动应用。举例来说，一家拥有数十万台物联网设备的制造企业可以为每台设备签发一张唯一的客户端证书，然后让 Pulsar 只接受那些出示了由公司 CA 签名的有效客户端证书的连接，从而把连接限定为只来自自家设备。</p>
+<p>In the case of a mobile application, where you want to prevent your customers’ sensitive data, such as credit card information, from getting stolen by someone spoofing your mobile app, you can issue a unique certificate to every app installation and use them to validate that the request is coming from an approved version of your mobile application, not a spoofed version.</p>
+<p>在移动应用的场景下，如果你希望防止客户的敏感数据（例如信用卡信息）被冒充你移动应用的人窃取，你可以为每一次应用安装签发一张唯一的证书，并用它们来验证请求确实来自你移动应用的正版版本，而非仿冒版本。</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": true};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

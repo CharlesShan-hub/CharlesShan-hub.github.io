@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5.2.2-developing-a-pushsource-connector</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="522-developing-a-pushsource-connector">5.2.2 Developing a PushSource connector</h3>
+<p>Next, let’s write a custom push-based source connector that scans a directory for new files and publishes the contents of these files line by line to Pulsar, as shown in listing 5.6. We want this connector to periodically scan for new files and publish their contents as soon as the file is written to the directory we are scanning. We can do this by extending the PushSource class, which is a specialized implementation of the source interface that is designed to use a background process to continuously produce records.</p>
+<p>接下来，让我们编写一个自定义的、基于推送的 source 连接器，它扫描一个目录以寻找新文件，并把这些文件的内容逐行发布到 Pulsar，如清单 5.6 所示。我们希望这个连接器周期性地扫描新文件，并在文件被写入我们所扫描的目录时就立即发布其内容。我们可以通过继承 PushSource 类来做到这一点——该类是 source 接口的一个专门化实现，被设计为使用一个后台进程来持续地产生记录。</p>
+<p>Listing 5.6 A PushSource connector</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="w">  </span><span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.pulsar.io.core.PushSource</span><span class="p">;</span>
+<span class="w">  </span><span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.pulsar.io.core.SourceContext</span><span class="p">;</span>
+
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">DirectorySource</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">PushSource</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">ScheduledExecutorService</span><span class="w"> </span><span class="n">scheduler</span><span class="w"> </span><span class="o">=</span>
+<span class="w">    </span><span class="n">Executors</span><span class="p">.</span><span class="na">newScheduledThreadPool</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span><span class="w">                             </span><span class="n">❶</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">DirectoryConsumerThread</span><span class="w"> </span><span class="n">scanner</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="n">Logger</span><span class="w"> </span><span class="n">log</span><span class="p">;</span>
+
+<span class="nd">@Override</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">open</span><span class="p">(</span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">config</span><span class="p">,</span><span class="w"> </span><span class="n">SourceContext</span><span class="w"> </span><span class="n">context</span><span class="p">)</span>
+<span class="w">  </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">String</span><span class="w"> </span><span class="n">in</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">String</span><span class="p">)</span><span class="w"> </span><span class="n">config</span><span class="p">.</span><span class="na">getOrDefault</span><span class="p">(</span><span class="s">"inputDir"</span><span class="p">,</span><span class="w"> </span><span class="s">"."</span><span class="p">);</span><span class="w">          </span><span class="n">❷</span>
+<span class="w">  </span><span class="n">String</span><span class="w"> </span><span class="n">out</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">String</span><span class="p">)</span><span class="w"> </span><span class="n">config</span><span class="p">.</span><span class="na">getOrDefault</span><span class="p">(</span><span class="s">"processedDir"</span><span class="p">,</span><span class="w"> </span><span class="s">"."</span><span class="p">);</span>
+<span class="w">  </span><span class="n">String</span><span class="w"> </span><span class="n">freq</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">String</span><span class="p">)</span><span class="w"> </span><span class="n">config</span><span class="p">.</span><span class="na">getOrDefault</span><span class="p">(</span><span class="s">"frequency"</span><span class="p">,</span><span class="w"> </span><span class="s">"10"</span><span class="p">);</span>
+
+<span class="w">  </span><span class="n">scanner</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">DirectoryConsumerThread</span><span class="p">(</span><span class="k">this</span><span class="p">,</span><span class="w"> </span><span class="n">in</span><span class="p">,</span><span class="w"> </span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="n">log</span><span class="p">);</span><span class="w">          </span><span class="n">❸</span>
+<span class="w">  </span><span class="n">scheduler</span><span class="p">.</span><span class="na">scheduleAtFixedRate</span><span class="p">(</span><span class="n">scanner</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="n">Long</span><span class="p">.</span><span class="na">parseLong</span><span class="p">(</span><span class="n">freq</span><span class="p">),</span><span class="w"> </span><span class="n">TimeUnit</span><span class="p">.</span><span class="na">MINUTES</span><span class="p">);</span><span class="w">   </span><span class="n">❹</span>
+<span class="w">  </span><span class="n">log</span><span class="p">.</span><span class="na">info</span><span class="p">(</span><span class="n">String</span><span class="p">.</span><span class="na">format</span><span class="p">(</span><span class="s">"Scheduled to run every %s minutes"</span><span class="p">,</span><span class="w"> </span><span class="n">freq</span><span class="p">));</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="nd">@Override</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">close</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">log</span><span class="p">.</span><span class="na">info</span><span class="p">(</span><span class="s">"Closing connector"</span><span class="p">);</span>
+<span class="w">  </span><span class="n">scheduler</span><span class="p">.</span><span class="na">shutdownNow</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ An internal thread pool for running the background thread</p>
+<p>❶ 一个用于运行后台线程的内部线程池</p>
+<p>❷ Get the runtime settings from the configuration properties that are passed in.</p>
+<p>❷ 从传入的配置属性中取得运行时设置。</p>
+<p>❸ Create the background thread, passing in a reference to the source connector and the configs.</p>
+<p>❸ 创建后台线程，并把对该 source 连接器的引用以及各项配置传进去。</p>
+<p>❹ Start the back-ground thread.</p>
+<p>❹ 启动后台线程。</p>
+<p>The open method of the source connector retrieves the configuration properties provided by the user that specifies the local directory to read the files from, and then launches a background thread of type DirectoryConsumerThread that is responsible for scanning the directory and reading each of the file’s contents line by line. The background thread class shown in the following listing takes the source connector instance as a parameter to its constructor method, which it then uses to pass the file contents to an internal blocking queue inside the threads process method.</p>
+<p>该 source 连接器的 open 方法取出由用户提供的配置属性——它们指定了要从哪个本地目录读取文件，然后启动一个 DirectoryConsumerThread 类型的后台线程，该线程负责扫描该目录并逐行读取每个文件的内容。下面清单中所示的那个后台线程类，把 source 连接器的实例作为其构造方法的一个参数，随后它用这个实例把文件内容传递给线程 process 方法内部的一个阻塞队列。</p>
+<p>Listing 5.7 The DirectoryConsumerThread process</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="w">  </span><span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.pulsar.io.core.PushSource</span><span class="p">;</span>
+
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">DirectoryConsumerThread</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">Thread</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">PushSource</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">source</span><span class="p">;</span><span class="w">                              </span><span class="n">❶</span>
+<span class="w">   </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">baseDir</span><span class="p">;</span>
+<span class="w">   </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">processedDir</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="nf">DirectoryConsumerThread</span><span class="p">(</span><span class="n">PushSource</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">source</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">base</span><span class="p">,</span><span class="w"> </span><span class="n">String</span>
+<span class="n">processed</span><span class="p">,</span><span class="w"> </span><span class="n">Logger</span><span class="w"> </span><span class="n">log</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">this</span><span class="p">.</span><span class="na">source</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">source</span><span class="p">;</span>
+<span class="w">  </span><span class="k">this</span><span class="p">.</span><span class="na">baseDir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">base</span><span class="p">;</span>
+<span class="w">  </span><span class="k">this</span><span class="p">.</span><span class="na">processedDir</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">processed</span><span class="p">;</span>
+<span class="w">  </span><span class="k">this</span><span class="p">.</span><span class="na">log</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">log</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">run</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">log</span><span class="p">.</span><span class="na">info</span><span class="p">(</span><span class="s">"Scanning for files....."</span><span class="p">);</span>
+<span class="w">  </span><span class="n">File</span><span class="o">[]</span><span class="w"> </span><span class="n">files</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">File</span><span class="p">(</span><span class="n">baseDir</span><span class="p">).</span><span class="na">listFiles</span><span class="p">();</span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">idx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span><span class="w"> </span><span class="n">idx</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">files</span><span class="p">.</span><span class="na">length</span><span class="p">;</span><span class="w"> </span><span class="n">idx</span><span class="o">++</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">   </span><span class="n">consumeFile</span><span class="p">(</span><span class="n">files</span><span class="o">[</span><span class="n">idx</span><span class="o">]</span><span class="p">);</span><span class="w">                                             </span><span class="n">❷</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">private</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">consumeFile</span><span class="p">(</span><span class="n">File</span><span class="w"> </span><span class="n">file</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">log</span><span class="p">.</span><span class="na">info</span><span class="p">(</span><span class="n">String</span><span class="p">.</span><span class="na">format</span><span class="p">(</span><span class="s">"Consuming file %s"</span><span class="p">,</span><span class="w"> </span><span class="n">file</span><span class="p">.</span><span class="na">getName</span><span class="p">()));</span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">(</span><span class="n">Stream</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">getLines</span><span class="p">(</span><span class="n">file</span><span class="p">))</span><span class="w"> </span><span class="p">{</span><span class="w">                         </span><span class="n">❸</span>
+<span class="w">    </span><span class="n">AtomicInteger</span><span class="w"> </span><span class="n">counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">AtomicInteger</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="w">     </span><span class="n">lines</span><span class="p">.</span><span class="na">forEach</span><span class="p">(</span><span class="n">line</span><span class="w"> </span><span class="o">-&gt;</span>
+<span class="w">        </span><span class="n">process</span><span class="p">(</span><span class="n">line</span><span class="p">,</span><span class="w"> </span><span class="n">file</span><span class="p">.</span><span class="na">getPath</span><span class="p">(),</span><span class="w"> </span><span class="n">counter</span><span class="p">.</span><span class="na">incrementAndGet</span><span class="p">()));</span><span class="w">      </span><span class="n">❹</span>
+
+<span class="w">      </span><span class="n">log</span><span class="p">.</span><span class="na">info</span><span class="p">(</span><span class="n">String</span><span class="p">.</span><span class="na">format</span><span class="p">(</span><span class="s">"Processed %d lines from %s"</span><span class="p">,</span>
+<span class="w">        </span><span class="n">counter</span><span class="p">.</span><span class="na">get</span><span class="p">(),</span><span class="w"> </span><span class="n">file</span><span class="p">.</span><span class="na">getName</span><span class="p">()));</span>
+<span class="w">      </span><span class="n">Files</span><span class="p">.</span><span class="na">move</span><span class="p">(</span><span class="n">file</span><span class="p">.</span><span class="na">toPath</span><span class="p">(),</span><span class="n">Paths</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="n">processedDir</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">resolve</span><span class="p">(</span><span class="n">file</span><span class="p">.</span><span class="na">toPath</span><span class="p">().</span><span class="na">getFileName</span><span class="p">()),</span><span class="w"> </span><span class="n">REPLACE_EXISTING</span><span class="p">);</span><span class="w">       </span><span class="n">❺</span>
+<span class="w">      </span><span class="n">log</span><span class="p">.</span><span class="na">info</span><span class="p">(</span><span class="n">String</span><span class="p">.</span><span class="na">format</span><span class="p">(</span><span class="s">"Moved file %s to %s"</span><span class="p">,</span>
+<span class="w">        </span><span class="n">file</span><span class="p">.</span><span class="na">toPath</span><span class="p">().</span><span class="na">toString</span><span class="p">(),</span><span class="w"> </span><span class="n">processedDir</span><span class="p">));</span>
+
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="n">IOException</span><span class="w"> </span><span class="n">e</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">e</span><span class="p">.</span><span class="na">printStackTrace</span><span class="p">();</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">private</span><span class="w"> </span><span class="n">Stream</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">getLines</span><span class="p">(</span><span class="n">File</span><span class="w"> </span><span class="n">file</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">IOException</span><span class="w"> </span><span class="p">{</span><span class="w">         </span><span class="n">❻</span>
+<span class="w">  </span><span class="nf">if</span><span class="w"> </span><span class="p">(</span><span class="n">file</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">     </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">Files</span><span class="p">.</span><span class="na">lines</span><span class="p">(</span><span class="n">Paths</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="n">file</span><span class="p">.</span><span class="na">getAbsolutePath</span><span class="p">()),</span>
+<span class="w">      </span><span class="n">Charset</span><span class="p">.</span><span class="na">defaultCharset</span><span class="p">());</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">private</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">line</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">lineNum</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="n">source</span><span class="p">.</span><span class="na">consume</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">FileRecord</span><span class="p">(</span><span class="n">line</span><span class="p">,</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="n">lineNum</span><span class="p">));</span><span class="w">                   </span><span class="n">❼</span>
+<span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ A reference to the PushSource connector</p>
+<p>❶ 对那个 PushSource 连接器的引用</p>
+<p>❷ Process all of the files in the configured base directory.</p>
+<p>❷ 处理所配置的基础目录中的所有文件。</p>
+<p>❸ Split each file into individual lines.</p>
+<p>❸ 把每个文件切分成单独的行。</p>
+<p>❹ Process each line in the file individually.</p>
+<p>❹ 逐行处理文件中的每一行。</p>
+<p>❺ When we are finished with a file, move it to the processed directory.</p>
+<p>❺ 当我们处理完一个文件后，把它移到已处理目录。</p>
+<p>❻ Splits the given file into a stream of individual lines</p>
+<p>❻ 把给定文件切分成一个由各行组成的流</p>
+<p>❼ Creates a new Record for each line of text in the file</p>
+<p>❼ 为文件中的每一行文本创建一条新的 Record</p>
+<p>I also created a new record type, FileRecord, as shown in listing 5.8, for this PushSource connector. This allows me to retain some additional metadata about the file content, including the name of the source file and line number. This type of metadata can be used for downstream processing of these records by other Pulsar functions, as it would allow you to sort the records by file name or type or ensure that you are processing the lines of a given file in sequence (based on the line number).</p>
+<p>我还为这个 PushSource 连接器创建了一个新的记录类型 FileRecord，如清单 5.8 所示。这使我能够保留一些关于文件内容的额外元数据，包括源文件名和行号。这类元数据可以被其他 Pulsar function 用于对这些记录做下游处理，因为它使你能够按文件名或类型对记录排序，或者确保你按（基于行号的）顺序来处理某个给定文件的各行。</p>
+<p>Listing 5.8 The FileRecord class</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kn">import</span><span class="w"> </span><span class="nn">org.apache.pulsar.functions.api.Record</span><span class="p">;</span>
+
+<span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">FileRecord</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Record</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">SOURCE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Source"</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">LINE</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"Line-no"</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">content</span><span class="p">;</span><span class="w">                                    </span><span class="n">❶</span>
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="n">props</span><span class="p">;</span><span class="w">                         </span><span class="n">❷</span>
+
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="nf">FileRecord</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">content</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">src</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">lineNumber</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="na">content</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">content</span><span class="p">;</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="na">props</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">HashMap</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="na">props</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="n">SOURCE</span><span class="p">,</span><span class="w"> </span><span class="n">srcFileName</span><span class="p">);</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="na">props</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="n">LINE</span><span class="p">,</span><span class="w"> </span><span class="n">lineNumber</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">""</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@Override</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">Optional</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">getKey</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">Optional</span><span class="p">.</span><span class="na">ofNullable</span><span class="p">(</span><span class="n">props</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="n">SOURCE</span><span class="p">));</span><span class="w">           </span><span class="n">❸</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@Override</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">String</span><span class="o">&gt;</span><span class="w"> </span><span class="nf">getProperties</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="n">props</span><span class="p">;</span><span class="w">                                            </span><span class="n">❹</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nd">@Override</span>
+<span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">getValue</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">     </span><span class="k">return</span><span class="w"> </span><span class="n">content</span><span class="p">;</span><span class="w">                                         </span><span class="n">❺</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ The actual contents of the file for this particular line</p>
+<p>❶ 这一特定行所对应的文件实际内容</p>
+<p>❷ The message properties</p>
+<p>❷ 消息属性</p>
+<p>❸ Use the source file as the key for key-based subscriptions, etc.</p>
+<p>❸ 使用源文件作为基于 key 的订阅等场景中的 key。</p>
+<p>❹ The message properties expose the metadata.</p>
+<p>❹ 消息属性把这些元数据暴露出来。</p>
+<p>❺ The message value is the raw file contents themselves.</p>
+<p>❺ 消息的值就是文件本身未经加工的内容。</p>
+<p>The thread’s process method calls the PushSource’s consume() method, passing in the file contents. As we saw in listing 5.4, the consume() method inside the PushSource simply writes the incoming data directly to the internal blocking queue. This decouples the reading of the file contents from the Pulsar framework’s call to the PushSource connector’s read() method. The use of a background thread is a common design pattern for PushSource connectors that retrieve the data from the external system and then invoke the source’s consume method to push the data to the output topic.</p>
+<p>该线程的 process 方法调用 PushSource 的 consume() 方法，并把文件内容传进去。正如我们在清单 5.4 中看到的，PushSource 内部的 consume() 方法只是把传入的数据直接写入内部的阻塞队列。这就把文件内容的读取过程，与 Pulsar 框架对 PushSource 连接器的 read() 方法的调用解耦开了。使用一个后台线程是 PushSource 连接器的一种常见设计模式：它从外部系统取回数据，然后调用该 source 的 consume 方法把数据推送到输出主题。</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>

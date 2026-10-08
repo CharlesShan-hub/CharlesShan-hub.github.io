@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>5.3.1-unit-testing</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h3 id="531-unit-testing">5.3.1 Unit testing</h3>
+<p>The first step is to write a suite of unit tests that test some of the more common scenarios in order to validate that the logic is correct and produces accurate results for various sentences we send it. Since this code uses the Pulsar SDK API, we will need to use a Mocking library, such as Mockito, to mock the SourceContext object, as shown in the following listing.</p>
+<p>第一步是编写一整套单元测试，测试一些较为常见的场景，以验证逻辑是正确的，并且对我们发送给它的各种句子都能产生准确的结果。由于这段代码使用了 Pulsar SDK 的 API，我们需要使用一个 Mock 库（例如 Mockito）来 mock 那个 SourceContext 对象，如下面的清单所示。</p>
+<p>Listing 5.9 DirectorySource unit tests</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="w">  </span><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">DirectorySourceTest</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">final</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">Path</span><span class="w"> </span><span class="n">SOURCE_DIR</span><span class="w"> </span><span class="o">=</span>
+<span class="w">      </span><span class="n">Paths</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="na">getProperty</span><span class="p">(</span><span class="s">"java.io.tmpdir"</span><span class="p">),</span><span class="w"> </span><span class="s">"source"</span><span class="p">);</span>
+<span class="w">   </span><span class="kd">final</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">Path</span><span class="w"> </span><span class="n">PROCESSED_DIR</span><span class="w"> </span><span class="o">=</span>
+<span class="w">     </span><span class="n">Paths</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="n">System</span><span class="p">.</span><span class="na">getProperty</span><span class="p">(</span><span class="s">"java.io.tmpdir"</span><span class="p">),</span><span class="s">"processed"</span><span class="p">);</span><span class="w">     </span><span class="n">❶</span>
+
+<span class="w">   </span><span class="kd">private</span><span class="w"> </span><span class="n">Path</span><span class="w"> </span><span class="n">srcPath</span><span class="p">,</span><span class="w"> </span><span class="n">processedPath</span><span class="p">;</span>
+<span class="w">   </span><span class="kd">private</span><span class="w"> </span><span class="n">DirectorySource</span><span class="w"> </span><span class="n">spySource</span><span class="p">;</span><span class="w">                                 </span><span class="n">❷</span>
+
+<span class="w">   </span><span class="nd">@Mock</span>
+<span class="w">   </span><span class="kd">private</span><span class="w"> </span><span class="n">SourceContext</span><span class="w"> </span><span class="n">mockedContext</span><span class="p">;</span>
+
+<span class="w">   </span><span class="nd">@Mock</span>
+<span class="w">   </span><span class="kd">private</span><span class="w"> </span><span class="n">Logger</span><span class="w"> </span><span class="n">mockedLogger</span><span class="p">;</span>
+
+<span class="w">   </span><span class="nd">@Captor</span>
+<span class="w">   </span><span class="kd">private</span><span class="w"> </span><span class="n">ArgumentCaptor</span><span class="o">&lt;</span><span class="n">FileRecord</span><span class="o">&gt;</span><span class="w"> </span><span class="n">captor</span><span class="p">;</span><span class="w">                         </span><span class="n">❸</span>
+
+<span class="w">   </span><span class="nd">@Before</span>
+<span class="w">   </span><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">init</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">IOException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">MockitoAnnotations</span><span class="p">.</span><span class="na">initMocks</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+<span class="w">      </span><span class="n">when</span><span class="p">(</span><span class="n">mockedContext</span><span class="p">.</span><span class="na">getLogger</span><span class="p">()).</span><span class="na">thenReturn</span><span class="p">(</span><span class="n">mockedLogger</span><span class="p">);</span>
+<span class="w">      </span><span class="n">FileUtils</span><span class="p">.</span><span class="na">deleteDirectory</span><span class="p">(</span><span class="n">SOURCE_DIR</span><span class="p">.</span><span class="na">toFile</span><span class="p">());</span>
+<span class="w">      </span><span class="n">FileUtils</span><span class="p">.</span><span class="na">deleteDirectory</span><span class="p">(</span><span class="n">PROCESSED_DIR</span><span class="p">.</span><span class="na">toFile</span><span class="p">());</span><span class="w">              </span><span class="n">❹</span>
+<span class="w">      </span><span class="n">srcPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Files</span><span class="p">.</span><span class="na">createDirectory</span><span class="p">(</span><span class="n">SOURCE_DIR</span><span class="p">,</span>
+<span class="w">        </span><span class="n">PosixFilePermissions</span><span class="p">.</span><span class="na">asFileAttribute</span><span class="p">(</span>
+<span class="w">          </span><span class="n">PosixFilePermissions</span><span class="p">.</span><span class="na">fromString</span><span class="p">(</span><span class="s">"rwxrwxrwx"</span><span class="p">)));</span>
+<span class="w">      </span><span class="n">processedPath</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Files</span><span class="p">.</span><span class="na">createDirectory</span><span class="p">(</span><span class="n">PROCESSED_DIR</span><span class="p">,</span>
+<span class="w">        </span><span class="n">PosixFilePermissions</span><span class="p">.</span><span class="na">asFileAttribute</span><span class="p">(</span>
+<span class="w">          </span><span class="n">PosixFilePermissions</span><span class="p">.</span><span class="na">fromString</span><span class="p">(</span><span class="s">"rwxrwxrwx"</span><span class="p">)));</span><span class="w">             </span><span class="n">❺</span>
+<span class="w">      </span><span class="n">spySource</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">spy</span><span class="p">(</span><span class="k">new</span><span class="w"> </span><span class="n">DirectorySource</span><span class="p">());</span><span class="w">                         </span><span class="n">❻</span>
+<span class="w">   </span><span class="p">}</span>
+
+
+<span class="w">      </span><span class="nd">@Test</span>
+<span class="w">      </span><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">oneLineTest</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">Files</span><span class="p">.</span><span class="na">copy</span><span class="p">(</span><span class="n">getFile</span><span class="p">(</span><span class="s">"single-line.txt"</span><span class="p">),</span><span class="n">Paths</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="n">srcPath</span><span class="p">.</span><span class="na">toString</span><span class="p">(),</span>
+<span class="w">          </span><span class="s">"single-line.txt"</span><span class="p">),</span><span class="w"> </span><span class="n">COPY_ATTRIBUTES</span><span class="p">);</span><span class="w">                       </span><span class="n">❼</span>
+<span class="w">       </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">configs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">HashMap</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="w">       </span><span class="n">configs</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"inputDir"</span><span class="p">,</span><span class="w"> </span><span class="n">srcPath</span><span class="p">.</span><span class="na">toFile</span><span class="p">().</span><span class="na">getAbsolutePath</span><span class="p">());</span>
+<span class="w">       </span><span class="n">configs</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"processedDir"</span><span class="p">,</span><span class="w"> </span><span class="n">processedPath</span><span class="p">.</span><span class="na">toFile</span><span class="p">().</span><span class="na">getAbsolutePath</span><span class="p">());</span>
+
+<span class="w">       </span><span class="n">spySource</span><span class="p">.</span><span class="na">open</span><span class="p">(</span><span class="n">configs</span><span class="p">,</span><span class="w"> </span><span class="n">mockedContext</span><span class="p">);</span><span class="w">                        </span><span class="n">❽</span>
+<span class="w">       </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">3000</span><span class="p">);</span>
+
+<span class="w">       </span><span class="n">Mockito</span><span class="p">.</span><span class="na">verify</span><span class="p">(</span><span class="n">spySource</span><span class="p">).</span><span class="na">consume</span><span class="p">(</span><span class="n">captor</span><span class="p">.</span><span class="na">capture</span><span class="p">());</span><span class="w">           </span><span class="n">❾</span>
+<span class="w">       </span><span class="n">FileRecord</span><span class="w"> </span><span class="n">captured</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">captor</span><span class="p">.</span><span class="na">getValue</span><span class="p">();</span><span class="w">                       </span><span class="n">❿</span>
+<span class="w">       </span><span class="nf">assertNotNull</span><span class="p">(</span><span class="n">captured</span><span class="p">);</span>
+<span class="w">       </span><span class="n">assertEquals</span><span class="p">(</span><span class="s">"It was the best of times"</span><span class="p">,</span>
+<span class="w">         </span><span class="n">captured</span><span class="p">.</span><span class="na">getValue</span><span class="p">());</span><span class="w">                                        </span><span class="n">⓫</span>
+<span class="w">       </span><span class="nf">assertEquals</span><span class="p">(</span><span class="s">"1"</span><span class="p">,</span><span class="w"> </span><span class="n">captured</span><span class="p">.</span><span class="na">getProperties</span><span class="p">().</span><span class="na">get</span><span class="p">(</span><span class="n">FileRecord</span><span class="p">.</span><span class="na">LINE</span><span class="p">));</span>
+<span class="w">       </span><span class="n">assertTrue</span><span class="p">(</span><span class="n">captured</span><span class="p">.</span><span class="na">getProperties</span><span class="p">().</span><span class="na">get</span><span class="p">(</span><span class="n">FileRecord</span><span class="p">.</span><span class="na">SOURCE</span><span class="p">)</span>
+<span class="w">         </span><span class="p">.</span><span class="na">contains</span><span class="p">(</span><span class="s">"single-line.txt"</span><span class="p">));</span><span class="w">                               </span><span class="n">⓬</span>
+<span class="w">     </span><span class="p">}</span>
+
+<span class="w">     </span><span class="nd">@Test</span>
+<span class="w">     </span><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">multiLineTest</span><span class="p">()</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">Exception</span><span class="w"> </span><span class="p">{</span>
+<span class="w">       </span><span class="n">Files</span><span class="p">.</span><span class="na">copy</span><span class="p">(</span><span class="n">getFile</span><span class="p">(</span><span class="s">"example-1.txt"</span><span class="p">),</span><span class="n">Paths</span><span class="p">.</span><span class="na">get</span><span class="p">(</span><span class="n">srcPath</span><span class="p">.</span><span class="na">toString</span><span class="p">(),</span>
+<span class="w">         </span><span class="s">"example-1.txt"</span><span class="p">),</span><span class="w"> </span><span class="n">COPY_ATTRIBUTES</span><span class="p">);</span>
+<span class="w">       </span><span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="w"> </span><span class="n">configs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">HashMap</span><span class="o">&lt;</span><span class="n">String</span><span class="p">,</span><span class="w"> </span><span class="n">Object</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="w">       </span><span class="n">configs</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"inputDir"</span><span class="p">,</span><span class="w"> </span><span class="n">srcPath</span><span class="p">.</span><span class="na">toFile</span><span class="p">().</span><span class="na">getAbsolutePath</span><span class="p">());</span>
+<span class="w">       </span><span class="n">configs</span><span class="p">.</span><span class="na">put</span><span class="p">(</span><span class="s">"processedDir"</span><span class="p">,</span><span class="w"> </span><span class="n">processedPath</span><span class="p">.</span><span class="na">toFile</span><span class="p">().</span><span class="na">getAbsolutePath</span><span class="p">());</span>
+
+<span class="w">       </span><span class="n">spySource</span><span class="p">.</span><span class="na">open</span><span class="p">(</span><span class="n">configs</span><span class="p">,</span><span class="w"> </span><span class="n">mockedContext</span><span class="p">);</span><span class="w">                        </span><span class="n">⓭</span>
+<span class="w">       </span><span class="n">Thread</span><span class="p">.</span><span class="na">sleep</span><span class="p">(</span><span class="mi">3000</span><span class="p">);</span>
+
+<span class="w">    </span><span class="n">Mockito</span><span class="p">.</span><span class="na">verify</span><span class="p">(</span><span class="n">spySource</span><span class="p">,</span><span class="w"> </span><span class="n">times</span><span class="p">(</span><span class="mi">113</span><span class="p">)).</span><span class="na">consume</span><span class="p">(</span><span class="n">captor</span><span class="p">.</span><span class="na">capture</span><span class="p">());</span><span class="w">  </span><span class="n">⓮</span>
+
+<span class="w">    </span><span class="kd">final</span><span class="w"> </span><span class="n">AtomicInteger</span><span class="w"> </span><span class="n">counter</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">AtomicInteger</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="w">    </span><span class="n">captor</span><span class="p">.</span><span class="na">getAllValues</span><span class="p">().</span><span class="na">forEach</span><span class="p">(</span><span class="n">rec</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="n">assertNotNull</span><span class="p">(</span><span class="n">rec</span><span class="p">.</span><span class="na">getValue</span><span class="p">());</span>
+<span class="w">      </span><span class="n">assertEquals</span><span class="p">(</span><span class="n">counter</span><span class="p">.</span><span class="na">incrementAndGet</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">""</span><span class="p">,</span>
+<span class="w">        </span><span class="n">rec</span><span class="p">.</span><span class="na">getProperties</span><span class="p">().</span><span class="na">get</span><span class="p">(</span><span class="n">FileRecord</span><span class="p">.</span><span class="na">LINE</span><span class="p">));</span>
+<span class="w">      </span><span class="n">assertTrue</span><span class="p">(</span><span class="n">rec</span><span class="p">.</span><span class="na">getProperties</span><span class="p">().</span><span class="na">get</span><span class="p">(</span><span class="n">FileRecord</span><span class="p">.</span><span class="na">SOURCE</span><span class="p">)</span>
+<span class="w">        </span><span class="p">.</span><span class="na">contains</span><span class="p">(</span><span class="s">"example-1.txt"</span><span class="p">));</span><span class="w">                                  </span><span class="n">⓯</span>
+
+<span class="w">    </span><span class="p">});</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="kd">private</span><span class="w"> </span><span class="kd">static</span><span class="w"> </span><span class="n">Path</span><span class="w"> </span><span class="nf">getFile</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">fileName</span><span class="p">)</span><span class="w"> </span><span class="kd">throws</span><span class="w"> </span><span class="n">IOException</span><span class="w"> </span><span class="p">{</span>
+<span class="w">     </span><span class="p">.</span><span class="w"> </span><span class="p">.</span><span class="w"> </span><span class="p">.</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>❶ Using the tmp folder for testing</p>
+<p>❶ 使用 tmp 文件夹进行测试</p>
+<p>❷ We will spy on the DirectorySource connector.</p>
+<p>❷ 我们将对 DirectorySource 连接器进行 spy。</p>
+<p>❸ Class that captures all of the records written by the DirectorySource connector</p>
+<p>❸ 用于捕获由 DirectorySource 连接器写出的所有记录的类</p>
+<p>❹ Clear out the tmp folder before running each test.</p>
+<p>❹ 在运行每个测试之前清空 tmp 文件夹。</p>
+<p>❺ Create the source and processed folder used during the test.</p>
+<p>❺ 创建测试期间使用的 source 与 processed 文件夹。</p>
+<p>❻ Instantiate the DirectorySource connector.</p>
+<p>❻ 实例化 DirectorySource 连接器。</p>
+<p>❼ Copy the test file into the source directory.</p>
+<p>❼ 把测试文件复制到 source 目录中。</p>
+<p>❽ Run the DirectorySource connector.</p>
+<p>❽ 运行 DirectorySource 连接器。</p>
+<p>❾ Verify that a single record was published.</p>
+<p>❾ 验证有且仅有一条记录被发布。</p>
+<p>❿ Retrieve the published record for validation.</p>
+<p>❿ 取出被发布的那条记录以做校验。</p>
+<p>⓫ Validate the record contents.</p>
+<p>⓫ 校验记录的内容。</p>
+<p>⓬ Validate the record properties.</p>
+<p>⓬ 校验记录的属性。</p>
+<p>⓭ Run the DirectorySource connector.</p>
+<p>⓭ 运行 DirectorySource 连接器。</p>
+<p>⓮ Verify that the expected number of records were published.</p>
+<p>⓮ 验证被发布的记录数量符合预期。</p>
+<p>⓯ Validate each of the records’ values and properties.</p>
+<p>⓯ 校验每一条记录的值和属性。</p>
+<p>As you can see, these unit tests cover the very basic functionality of Functions and rely on the use of a mock object for the Pulsar context object. This type of test suite is quite similar to one you would write to test any Java class that wasn’t a Pulsar function.</p>
+<p>正如你所看到的，这些单元测试覆盖了 Functions 最基本的功能，并且依赖使用一个 mock 对象来替代 Pulsar 的 context 对象。这种类型的测试套件，与你在测试任何一个并非 Pulsar function 的 Java 类时会写的测试套件非常相似。</p>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../../site-tree.json", "hasMath": false};</script>
+<script src="../../../../../../../ui.js"></script>
+</body>
+</html>
