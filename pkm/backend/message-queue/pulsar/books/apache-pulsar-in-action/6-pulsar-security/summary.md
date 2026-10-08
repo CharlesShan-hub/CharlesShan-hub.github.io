@@ -5,8 +5,7 @@ tags:
 date: 2026-10-08
 comment:
 ---
-## Summary
-
+# Summary
 - Pulsar supports TLS wire encryption, which ensures that all data transferred between clients and the Pulsar broker is encrypted.
   Pulsar 支持 TLS 链路加密，它确保客户端与 Pulsar broker 之间传输的所有数据都是加密的。
 

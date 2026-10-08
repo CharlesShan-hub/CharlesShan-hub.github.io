@@ -5,8 +5,7 @@ tags:
 date: 2026-10-08
 comment:
 ---
-### A.1.2 Minikube
-
+# A.1.2 Minikube
 Once kubectl has been installed, the next step is to create a Kubernetes cluster to host the Pulsar cluster. While all of the major cloud vendors provide Kubernetes environments that are well-suited for production use, in this appendix I will use a more cost-effective alternative known as minikube, which allows me to run a Kubernetes cluster on my development machine.
 
 一旦 kubectl 安装完毕，下一步就是创建一个 Kubernetes 集群来托管那个 Pulsar 集群。虽然所有主流云厂商都提供很适合生产使用的 Kubernetes 环境，但在本附录中，我将使用一种更具成本效益的替代方案，即 minikube——它让我能够在自己的开发机上运行一个 Kubernetes 集群。

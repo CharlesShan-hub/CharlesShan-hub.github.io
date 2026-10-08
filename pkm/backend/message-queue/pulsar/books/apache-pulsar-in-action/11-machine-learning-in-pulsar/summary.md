@@ -5,8 +5,7 @@ tags:
 date: 2026-10-08
 comment:
 ---
-## Summary
-
+# Summary
 - Pulsar Functions can be used to provide near real-time machine learning on streaming data to produce actionable insights.
   Pulsar Functions 可以被用来对流式数据提供近乎实时的机器学习，以产出可付诸行动的洞察。
 

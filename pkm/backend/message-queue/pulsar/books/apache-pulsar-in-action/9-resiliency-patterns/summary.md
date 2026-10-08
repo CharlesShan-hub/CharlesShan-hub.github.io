@@ -5,8 +5,7 @@ tags:
 date: 2026-10-08
 comment:
 ---
-## Summary
-
+# Summary
 - There are several different adverse events that can impact a Pulsar function, and message backpressure is a good metric to use for fault detection.
   有多种不同的不利事件会影响到一个 Pulsar 函数，而消息背压是一个可用于故障检测的很好的指标。
 

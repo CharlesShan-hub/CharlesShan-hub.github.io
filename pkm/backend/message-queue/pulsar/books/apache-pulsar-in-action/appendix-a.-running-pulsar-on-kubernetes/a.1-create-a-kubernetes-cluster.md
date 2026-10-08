@@ -5,8 +5,7 @@ tags:
 date: 2026-10-08
 comment:
 ---
-## A.1 Create a Kubernetes cluster
-
+# A.1 Create a Kubernetes cluster
 A cluster is the foundational base for running your containerized applications. In Kubernetes, a cluster consists of at least one *cluster master* and multiple worker machines, called *nodes*, as shown in figure A.1. The cluster master machine hosts the Kubernetes control plane, which performs all the administrative functions for the cluster, while the nodes are the machines that will host the containers themselves.
 
 集群是运行你那些容器化应用的基础底座。在 Kubernetes 中，一个集群由至少一个*集群主节点*（cluster master）和多台被称为*节点*（node）的工作机器构成，如图 A.1 所示。集群主节点那台机器托管着 Kubernetes 的控制平面，由它执行集群的全部管理职能；而各个节点则是那些将亲自托管容器的机器。

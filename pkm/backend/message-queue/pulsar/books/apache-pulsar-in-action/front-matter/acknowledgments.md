@@ -5,8 +5,7 @@ tags:
 date: 2026-10-08
 comment:
 ---
-## acknowledgments
-
+# acknowledgments
 In the order of nature, we cannot render benefits to those from whom we receive them, or only seldom. But the benefit we receive must be rendered again, line for line, deed for deed, cent for cent, to somebody.
 
 按照自然的秩序，我们无法把好处回报给那些我们受其恩惠的人，或者至多只能偶尔为之。但我们所领受的这份好处，必须一报还一报地再付出去——一行对一行，一事对一事，一分对一分——付给某个人。

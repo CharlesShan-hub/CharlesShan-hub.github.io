@@ -5,8 +5,7 @@ tags:
 date: 2026-10-08
 comment: 前言
 ---
-## foreword
-
+# foreword
 *Apache Pulsar in Action*  is the missing guide that will walk you through your journey with Apache Pulsar. It is a book that I’d recommend to anyone, from developers starting to explore pub-sub messaging, to someone with messaging experience, up to experienced Pulsar power users.
 
 《Apache Pulsar in Action》正是那本缺失的指南，它将陪伴你走完与 Apache Pulsar 相伴的旅程。这是一本我会推荐给任何人的书——从刚开始探索发布-订阅消息的开发者，到已有消息系统经验的人，一直到经验丰富的 Pulsar 资深用户。

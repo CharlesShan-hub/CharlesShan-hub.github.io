@@ -5,8 +5,7 @@ tags:
 date: 2026-10-08
 comment:
 ---
-## Summary
-
+# Summary
 - Pulsar IO connectors are an extension of the Pulsar Functions framework specifically designed to interface with external systems such as databases.
   Pulsar IO 连接器是 Pulsar Functions 框架的一种扩展，专门设计用来与数据库之类的外部系统对接。
 

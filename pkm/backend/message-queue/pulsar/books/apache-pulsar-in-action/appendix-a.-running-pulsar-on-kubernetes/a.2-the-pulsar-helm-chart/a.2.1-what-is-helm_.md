@@ -5,8 +5,7 @@ tags:
 date: 2026-10-08
 comment:
 ---
-### A.2.1 What is Helm?
-
+# A.2.1 What is Helm?
 Helm is a package manager for Kubernetes that allows developers to easily package, configure, and deploy applications and services onto Kubernetes clusters. It is analogous to Linux package managers such as *YUM* or *APT* because they all allow you to deploy a software package, along with all its dependencies, with a simple command.
 
 Helm 是 Kubernetes 的一个包管理器，它让开发人员能够轻松地把应用和服务打包、配置并部署到 Kubernetes 集群上。它类似于 Linux 上的那些包管理器，例如 *YUM* 或 *APT*——因为它们都允许你用一条简单的命令，就部署一个软件包连同它的全部依赖项。

@@ -5,8 +5,7 @@ tags:
 date: 2026-10-08
 comment:
 ---
-## preface
-
+# preface
 Back in 2012, the Yahoo! team was looking for a global, geo-replicated platform that could stream all of Yahoo!’s messaging data between various apps such as Yahoo Mail and Yahoo Finance. At the time, there were generally two types of systems to handle in-motion data: message queues that handled mission-critical business events in real-time, and streaming systems that handled scalable data pipelines at scale. But there wasn’t a platform that provided both capabilities that Yahoo required.
 
 早在 2012 年，Yahoo! 团队就在寻找一个全球化、支持异地复制的平台，能够把 Yahoo! 的全部消息数据在 Yahoo Mail、Yahoo Finance 等各个应用之间流式地传起来。当时，用来处理"运动中的数据"的系统大体上有两类：一类是消息队列，实时处理那些关键任务型的业务事件；另一类是流式系统，大规模地处理可扩展的数据流水线。但并不存在一个能同时提供 Yahoo 所需这两种能力的平台。
@@ -25,11 +24,11 @@ The greatest challenge we faced when working with Kafka was helping our customer
 
 This rebalancing requirement was universally disliked by all the customers who were using HDF, and rightfully so, because they saw it as a clear impediment to their ability to scale the Kafka cluster as their data volumes grew. They knew from experience just how difficult it was to scale their messaging platform up and down. Even worse was the fact that we could not simply “drop in” a few more nodes to add computing capacity to our customer’s existing cluster without also reconfiguring the topics to use them by assigning more partitions to the existing topics to have the data redistributed onto the recently added nodes. This inability to horizontally scale out their streaming capacity without manual (or heavily scripted) intervention was in direct conflict with most of our customers’ desires to move their messaging platforms to the cloud and capitalize on the elastic computing capability the cloud provides.
 
-所有使用 HDF 的客户都普遍厌恶这个再均衡的要求，而且他们的反感是完全有道理的——因为他们把它视为一个明显的阻碍：随着自身数据量增长，他们扩展 Kafka 集群的能力被卡住了。他们从经验中深知，把自己的消息平台扩上去、再缩下来有多么困难。更糟的是这样一个事实：我们不能简单地"丢进"几个新节点，就能为客户现有的集群增加计算能力——除非同时重新配置各个主题来使用它们，也就是给现有主题分配更多分区，好让数据被重新分布到那些新近加入的节点上。这种"不靠人工（或大量脚本）干预就无法横向扩展流式处理能力"的状况，与我们大多数客户的愿望是直接冲突的：他们希望能把自己的消息平台搬上云，并充分利用云所提供的弹性计算能力。
+所有使用 HDF 的客户都普遍厌恶这个再均衡的要求，而且他们的反感是完全有道理的——因为他们把它视为一个明显的阻碍：随着自身数据量增长，他们扩展 Kafka 集群的能力被卡住了。他们从经验中深知，把自己的消息平台扩上去、再缩下来有多么困难。（因为kafka分区数量只能增，不能减）更糟的是这样一个事实：我们不能简单地"丢进"几个新节点，就能为客户现有的集群增加计算能力——除非同时重新配置各个主题来使用它们，也就是给现有主题分配更多分区，好让数据被重新分布到那些新近加入的节点上。这种"不靠人工（或大量脚本）干预就无法横向扩展流式处理能力"的状况，与我们大多数客户的愿望是直接冲突的：他们希望能把自己的消息平台搬上云，并充分利用云所提供的弹性计算能力。
 
 That is when I discovered the Apache Pulsar platform and found its claim to be “cloud-native” especially appealing because it addressed both scalability pain points. While HDF had allowed my customers to get started quickly, they found it difficult to manage and not architected to run in the cloud. I realized that Apache Pulsar was a much better solution than what we were currently offering to our customers and tried to convince our product team to consider replacing Kafka with Pulsar in our HDF product. I even went so far as to write connectors that allowed it to work with the Apache NiFi component of our stack to facilitate that adoption, but to no avail.
 
-就在那时，我发现了 Apache Pulsar 这个平台，并且觉得它"云原生"的自我定位格外有吸引力——因为它同时解决了上述两个可扩展性痛点。虽然 HDF 让我的客户能够快速上手，但他们发现它难以管理，而且其架构并不是为运行在云上而设计的。我意识到，Apache Pulsar 比起我们当时提供给客户的方案要好得多，于是便试图说服我们的产品团队考虑在 HDF 产品中把 Kafka 换成 Pulsar。我甚至还专门写了一些连接器，让它能与我们技术栈中的 Apache NiFi 组件协同工作，以推动这项采用——但毫无结果。
+就在那时，我发现了 Apache Pulsar 这个平台，并且觉得它"云原生"的自我定位格外有吸引力——因为它同时解决了上述两个可扩展性痛点。虽然 HDF 让我的客户能够快速上手，但他们发现它难以管理，而且其架构并不是为运行在云上而设计的。我意识到，Apache Pulsar 比起我们当时提供给客户的方案要好得多，于是便试图说服我们的产品团队考虑**在 HDF 产品中把 Kafka 换成 Pulsar**。我甚至还专门写了一些连接器，让它能与我们技术栈中的 Apache NiFi 组件协同工作，以推动这项采用——但毫无结果。
 
 When I was approached by the original developers of Apache Pulsar in January of 2018 and offered the opportunity to join a small start-up called Streamlio, I immediately jumped at the chance to work with them. Pulsar was a young project back then, having just been placed into the Apache incubation program, and we spent the next 15 months working to get our fledgling “podling” through the incubation process and promoted to top-level project status.
 
@@ -39,7 +38,7 @@ This was during the height of the streaming data hype, and Kafka was the dominan
 
 那正是流式数据炒作最盛的时期，而 Kafka 是这个领域里占据主导地位的玩家，因此大家自然地把这两个词当作可以互换的。当时的共识是：Kafka 是唯一可用的数据流式平台。而我基于此前的经历知道事实并非如此，于是把不遗余力地布道那个我深知在技术上更优越的方案，当成了自己的责任——一个在众所周知的荒野中呼喊的孤独声音。
 
-By the spring of 2019, the Apache Pulsar community had experienced tremendous growth in terms of contributors and users, but there was a profound lack of reliable documentation on the technology. So, when the prospect of writing *Apache* *Pulsar in Action* was first proposed to me, I immediately seized upon it as an opportunity to address the glaring need within the Pulsar community. While I was never able to convince my colleagues to join me in this endeavor, they were an invaluable source of guidance and information throughout the process and have used this book as a means of transferring some of their knowledge to you.
+By the spring of 2019, the Apache Pulsar community had experienced tremendous growth in terms of contributors and users, but there was a profound lack of reliable documentation on the technology. So, when the prospect of writing *Apache Pulsar in Action*  was first proposed to me, I immediately seized upon it as an opportunity to address the glaring need within the Pulsar community. While I was never able to convince my colleagues to join me in this endeavor, they were an invaluable source of guidance and information throughout the process and have used this book as a means of transferring some of their knowledge to you.
 
 到了 2019 年春天，Apache Pulsar 社区在贡献者和用户两方面都经历了巨大的增长，但关于这项技术的可靠文档却严重匮乏。因此，当有人第一次向我提出撰写《Apache Pulsar in Action》的设想时，我立刻把它抓在了手里，视其为填补 Pulsar 社区这一明显需求的机会。虽然我始终没能说服我的同事们加入这项事业，但在整个过程中，他们一直是指导和信息的宝贵来源；而他们也把这本书当作一种途径，把他们的部分知识传递给了你。
 

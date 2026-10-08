@@ -5,8 +5,7 @@ tags:
 date: 2026-10-08
 comment:
 ---
-## Summary
-
+# Summary
 - The Pulsar Functions framework is a distributed processing framework that is well suited for Dataflow programming, where the data is processed in stages that can be executed in parallel like an assembly line.
   Pulsar Functions 框架是一个分布式处理框架，非常适合数据流编程——在这种编程方式下，数据被分阶段处理，而这些阶段可以像装配线一样并行执行。
 

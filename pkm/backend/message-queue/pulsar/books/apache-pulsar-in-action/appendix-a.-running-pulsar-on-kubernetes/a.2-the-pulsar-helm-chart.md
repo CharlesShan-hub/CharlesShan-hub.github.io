@@ -5,8 +5,7 @@ tags:
 date: 2026-10-08
 comment:
 ---
-## A.2 The Pulsar Helm chart
-
+# A.2 The Pulsar Helm chart
 Now that we have a Kubernetes cluster up and running, we can deploy containerized applications on top of it. This can be accomplished with a deployment configuration file that contains all the information needed to create all the containers required by your application. These deployment configuration files are simple YAML files that conform to a specific structure, as shown in the following listing, which shows the configuration for a single Ngnix-based web server that listens on port 80 for incoming requests.
 
 既然我们已经有一个 Kubernetes 集群在正常运行了，就可以在它之上部署容器化应用了。这可以借助一个部署配置文件来完成——该文件包含了创建你的应用所需的全部容器所需要的全部信息。这些部署配置文件就是遵循某种特定结构的简单 YAML 文件，如下面这份清单所示；该清单展示了一个基于 Ngnix 的单一 Web 服务器的配置，它监听 80 端口以接收 incoming 的请求。

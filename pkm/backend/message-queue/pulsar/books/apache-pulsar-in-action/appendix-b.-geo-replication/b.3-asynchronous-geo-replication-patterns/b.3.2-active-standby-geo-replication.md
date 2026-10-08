@@ -5,8 +5,7 @@ tags:
 date: 2026-10-08
 comment:
 ---
-### B.3.2 Active-standby geo-replication
-
+# B.3.2 Active-standby geo-replication
 In this situation you are looking to keep an up-to-date copy of the cluster at a different geographical location, so you can resume operations in the event of a failure with a minimal amount of data loss or recovery time. Since Pulsar doesn’t provide a means for specifying one-way replication of namespaces, the only way to accomplish this configuration is by restricting the clients to a single cluster, known as the active cluster, and having them all failover to the standby cluster only in the event of a failure. Typically, this can be accomplished via a load balancer or other network-level mechanism that makes the transition transparent to the clients, as shown in figure B.5. Pulsar clients publish messages to the active cluster, which are then replicated to the standby cluster for backup.
 
 在这种情形下，你所追求的是在另一个地理位置上保有一份随时可用的集群副本，以便在发生故障时，能够以最少的数据丢失或最短的恢复时间来恢复运转。由于 Pulsar 并没有提供指定命名空间单向复制的手段，完成这种配置的唯一办法就是：把各个客户端限制在单一集群上（即所谓的活动集群），并且只在发生故障时才让它们全部故障转移到那个备用集群。通常，这可以借助一个负载均衡器或其他网络层机制来实现——它让这个切换对客户端而言是透明的，如图 B.5 所示。Pulsar 客户端把消息发布到那个活动集群，随后这些消息被复制到备用集群以作备份。

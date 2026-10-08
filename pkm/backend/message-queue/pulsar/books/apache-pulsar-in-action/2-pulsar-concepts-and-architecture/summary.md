@@ -5,8 +5,7 @@ tags:
 date: 2026-10-08
 comment:
 ---
-## Summary
-
+# Summary
 - We discussed the logical structure of Pulsar’s address space in order to support multitenancy.
 
   我们讨论了 Pulsar 地址空间的逻辑结构，用以支持多租户。

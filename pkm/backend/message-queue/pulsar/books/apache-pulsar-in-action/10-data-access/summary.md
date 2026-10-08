@@ -5,8 +5,7 @@ tags:
 date: 2026-10-08
 comment:
 ---
-## Summary
-
+# Summary
 - Pulsar’s internal state store provides a convenient location for storing infrequently accessed data without having to rely on an external system.
   Pulsar 的内部状态存储提供了一个便捷的去处，用来存放那些不常被访问的数据，而不必依赖某个外部系统。
 

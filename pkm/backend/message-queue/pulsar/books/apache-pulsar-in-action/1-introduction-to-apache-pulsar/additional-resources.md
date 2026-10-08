@@ -5,8 +5,7 @@ tags:
 date: 2026-10-08
 comment:
 ---
-## Additional resources
-
+# Additional resources
 Pulsar has a vibrant and growing community and graduated from the Apache Incubator in August of 2018. Current documentation for the project can be found on the official project website at http://pulsar.apache.org.
 
 Pulsar 拥有一个充满活力且不断壮大的社区，并于 2018 年 8 月从 Apache 孵化器毕业。该项目的最新文档可以在官方项目网站 http://pulsar.apache.org 上找到。

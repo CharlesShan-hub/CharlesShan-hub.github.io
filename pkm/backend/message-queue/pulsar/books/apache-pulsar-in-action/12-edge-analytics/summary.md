@@ -5,8 +5,7 @@ tags:
 date: 2026-10-08
 comment:
 ---
-## Summary
-
+# Summary
 - The amount of time between when an event occurs and when you respond to it is known as the time value of data. This time value decreases rapidly over time, so being able to respond quickly is important.
   从某个事件发生到你对其做出响应之间的时间长度，被称为数据的时值（time value of data）。这个时值会随时间迅速下降，因此能够快速响应是很重要的。
 

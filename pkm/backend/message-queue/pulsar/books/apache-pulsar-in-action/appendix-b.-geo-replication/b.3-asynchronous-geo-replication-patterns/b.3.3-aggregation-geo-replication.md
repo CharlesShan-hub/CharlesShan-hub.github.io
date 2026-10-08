@@ -5,8 +5,7 @@ tags:
 date: 2026-10-08
 comment:
 ---
-### B.3.3 Aggregation geo-replication
-
+# B.3.3 Aggregation geo-replication
 Assume we have three clusters all actively serving the GottaEat customers in their respective regions and a fourth Pulsar cluster named *internal* that is completely isolated from the web and only accessible by internal employees, and that is used to aggregate the data from all of the customer-serving Pulsar clusters, as shown in figure B.6. To implement aggregation geo-replication across these four clusters, you will need to use the commands shown in listing B.10, which first creates the E-payments tenant and grants access to all the clusters.
 
 假设我们有三个集群，都在各自的区域内活跃地为 GottaEat 的客户提供服务；此外还有第四个名为 *internal* 的 Pulsar 集群，它与互联网完全隔离、只有内部员工可以访问，并且被用来聚合来自所有那些面向客户的 Pulsar 集群的数据，如图 B.6 所示。要在这四个集群之间实现聚合异地复制，你将需要使用清单 B.10 中所示的那些命令——它们首先创建 E-payments 这个租户，并授予其访问所有集群的权限。

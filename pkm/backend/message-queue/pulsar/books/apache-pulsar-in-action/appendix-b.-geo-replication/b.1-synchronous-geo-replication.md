@@ -5,8 +5,7 @@ tags:
 date: 2026-10-08
 comment:
 ---
-## B.1 Synchronous geo-replication
-
+# B.1 Synchronous geo-replication
 A *synchronous* geo-replicated Pulsar installation consists of a cluster of bookies running across multiple regions, a cluster of brokers also distributed across all regions, and a single global ZooKeeper installation to form a single global logical instance across all available regions, as shown in figure B.1. The global “stretched” ZooKeeper ensemble is critical to supporting this approach because it is used to store the managed ledgers.
 
 一个*同步*异地复制的 Pulsar 安装，由跨多个区域运行的一批 bookie、同样分布在所有区域的一批 broker，以及一套单一的全局 ZooKeeper 安装构成，从而在全部可用区域之上形成一个单一的全局逻辑实例，如图 B.1 所示。那个全局的、被"拉长"的 ZooKeeper ensemble 对支持这种做法至关重要，因为它被用来存放各个受管 ledger。
