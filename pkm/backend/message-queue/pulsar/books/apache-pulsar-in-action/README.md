@@ -1,3 +1,10 @@
+---
+title: Apache Pulsar in Action
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 # Apache Pulsar in Action
 
 - [inside front cover](<inside-front-cover.md>)

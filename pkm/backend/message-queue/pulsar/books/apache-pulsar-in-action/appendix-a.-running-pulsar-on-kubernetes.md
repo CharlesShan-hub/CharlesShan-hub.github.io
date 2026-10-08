@@ -1,3 +1,10 @@
+---
+title: Appendix A. Running Pulsar on Kubernetes
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 # Appendix A. Running Pulsar on Kubernetes
 
 Kubernetes is a popular open source platform for deploying and running containerized applications at scale. It originated inside Google as a solution for managing their extensive infrastructure by automating many of the manual processes involved in deploying, managing, and scaling their applications across multiple hosts. For more information on Kubernetes, I highly recommend *Kubernetes in Action* by Marko Lukša (Manning, 2017).

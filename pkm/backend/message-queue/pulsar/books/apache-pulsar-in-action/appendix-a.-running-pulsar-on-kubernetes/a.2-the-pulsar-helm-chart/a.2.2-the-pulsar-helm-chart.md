@@ -1,3 +1,10 @@
+---
+title: A.2.2 The Pulsar Helm chart
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ### A.2.2 The Pulsar Helm chart
 
 I have covered what Helm charts are and how they can be used to deploy an entire application. You will be glad to know that there is a Helm chart for Apache Pulsar that is included in the open source distribution, and you can easily access the chart by cloning the repo, using git, as shown in the following listing.

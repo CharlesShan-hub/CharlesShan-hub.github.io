@@ -1,3 +1,10 @@
+---
+title: A.1.1 Install prerequisites
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ### A.1.1 Install prerequisites
 
 As a prerequisite for working with Kubernetes, you will need to install the Kubernetes command-line tool called kubectl, which allows you to run commands against Kubernetes clusters. You will need this tool to deploy applications, inspect and manage cluster resources, and view logs. If you don’t already have kubectl installed, you should download it (https://kubernetes.io/docs/tasks/tools/#before-you-begin) and follow the instructions for your operating system.

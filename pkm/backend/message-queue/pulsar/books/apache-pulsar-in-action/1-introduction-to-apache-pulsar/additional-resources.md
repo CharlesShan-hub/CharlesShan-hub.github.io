@@ -1,3 +1,10 @@
+---
+title: Additional resources
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## Additional resources
 
 Pulsar has a vibrant and growing community and graduated from the Apache Incubator in August of 2018. Current documentation for the project can be found on the official project website at http://pulsar.apache.org.

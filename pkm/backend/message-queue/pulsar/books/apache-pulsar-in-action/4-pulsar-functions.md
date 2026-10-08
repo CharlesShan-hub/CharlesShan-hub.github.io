@@ -1,3 +1,10 @@
+---
+title: 4 Pulsar functions
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 # 4 Pulsar functions
 
 This chapter covers

@@ -1,3 +1,10 @@
+---
+title: Summary
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## Summary
 
 - There are several different adverse events that can impact a Pulsar function, and message backpressure is a good metric to use for fault detection.

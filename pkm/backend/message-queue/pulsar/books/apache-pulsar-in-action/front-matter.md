@@ -1,3 +1,10 @@
+---
+title: front matter
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 # front matter
 
 

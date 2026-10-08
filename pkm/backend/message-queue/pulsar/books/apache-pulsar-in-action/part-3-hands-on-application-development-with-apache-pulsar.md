@@ -1,3 +1,10 @@
+---
+title: Part 3 Hands-on application development with Apache Pulsar
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 # Part 3 Hands-on application development with Apache Pulsar
 
 In this part, we move beyond the theory and simplistic examples and dive into the use of Pulsar Functions as a development framework for microservices applications by walking through a much more realistic use case based on a fictional food delivery service called GottaEat. This section demonstrates how to implement common design patterns from both the enterprise integration world and the microservices world, highlighting the usage of various patterns, such as content-based routing and filtering, resiliency, and data access within a real-world scenario.

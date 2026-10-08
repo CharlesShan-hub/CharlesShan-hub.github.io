@@ -1,3 +1,10 @@
+---
+title: A.3 Using the Pulsar Helm chart
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## A.3 Using the Pulsar Helm chart
 
 Now that we have downloaded and examined the Pulsar Helm chart, the next step is to use it to provide our Pulsar cluster. The first step in this process is to add the Pulsar Helm chart to your local Helm repository and initialize it, as shown in the following listing. This will allow your local Helm client to locate and download the Pulsar Helm chart.

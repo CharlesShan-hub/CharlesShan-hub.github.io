@@ -1,3 +1,10 @@
+---
+title: 11 Machine learning in Pulsar
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 # 11 Machine learning in Pulsar
 
 This chapter covers

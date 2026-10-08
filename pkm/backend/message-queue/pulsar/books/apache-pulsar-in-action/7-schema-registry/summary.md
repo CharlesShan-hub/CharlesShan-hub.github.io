@@ -1,3 +1,10 @@
+---
+title: Summary
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## Summary
 
 - We discussed the different microservice communication styles and why Pulsar is a perfect fit for asynchronous publish/subscribe-based interservice communication.

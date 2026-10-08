@@ -1,3 +1,10 @@
+---
+title: 3 Interacting with Pulsar
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 # 3 Interacting with Pulsar
 
 This chapter covers

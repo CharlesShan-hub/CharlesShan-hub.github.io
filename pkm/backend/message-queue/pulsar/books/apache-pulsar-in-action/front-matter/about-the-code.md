@@ -1,3 +1,10 @@
+---
+title: About the code
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## About the code
 
 This book contains many examples of source code both in numbered listings and in line with normal text. In both cases, source code is formatted in a fixed-width font like this to separate it from ordinary text. Sometimes code is also in bold to highlight code that has changed from previous steps in the chapter, such as when a new feature adds to an existing line of code.

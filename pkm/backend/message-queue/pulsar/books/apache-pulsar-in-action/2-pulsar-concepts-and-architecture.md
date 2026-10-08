@@ -1,3 +1,10 @@
+---
+title: 2 Pulsar concepts and architecture
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 # 2 Pulsar concepts and architecture
 
 This chapter covers

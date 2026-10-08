@@ -1,3 +1,10 @@
+---
+title: about this book
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## about this book
 
 *Apache Pulsar in Action* was written as an introduction to the stream processing world and to help you become familiar with the terminology, semantics, and considerations one must take when adopting the stream processing paradigm while coming from a batch-processing background. It starts with a historical review of the evolution of messaging systems over the past 40 years and shows how Pulsar sits at the top of this evolutionary cycle.

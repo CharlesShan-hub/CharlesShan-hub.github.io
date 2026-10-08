@@ -1,3 +1,10 @@
+---
+title: A.2 The Pulsar Helm chart
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## A.2 The Pulsar Helm chart
 
 Now that we have a Kubernetes cluster up and running, we can deploy containerized applications on top of it. This can be accomplished with a deployment configuration file that contains all the information needed to create all the containers required by your application. These deployment configuration files are simple YAML files that conform to a specific structure, as shown in the following listing, which shows the configuration for a single Ngnix-based web server that listens on port 80 for incoming requests.

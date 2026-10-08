@@ -1,3 +1,10 @@
+---
+title: about the cover illustration
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## about the cover illustration
 
 The figure on the cover of *Apache Pulsar in Action* is captioned “Cosaque,” or a Cossack man. The illustration is taken from a collection of dress costumes from various countries by Jacques Grasset de Saint-Sauveur (1757-1810), titled *Costumes civils actuels de tous les peuples connus*, published in France in 1788. Each illustration is finely drawn and colored by hand. The rich variety of Grasset de Saint-Sauveur’s collection reminds us vividly of how culturally apart the world’s towns and regions were just 200 years ago. Isolated from each other, people spoke different dialects and languages. In the streets or in the countryside, it was easy to identify where they lived and what their trade or station in life was just by their dress.

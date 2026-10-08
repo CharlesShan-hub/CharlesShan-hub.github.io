@@ -1,3 +1,10 @@
+---
+title: liveBook discussion forum
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## liveBook discussion forum
 
 Purchase of *Apache Pulsar in Action* includes free access to a private web forum run by Manning Publications where you can make comments about the book, ask technical questions, and receive help from the author and from other users. To access the forum, go to https://livebook.manning.com/#!/book/apache-pulsar-in-action/discussion. You can also learn more about Manning’s forums and the rules of conduct at https:// livebook.manning.com/#!/discussion.

@@ -1,3 +1,10 @@
+---
+title: about the author
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## about the author
 
 <table>

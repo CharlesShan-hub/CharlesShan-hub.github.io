@@ -1,3 +1,10 @@
+---
+title: Summary
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## Summary
 
 - The amount of time between when an event occurs and when you respond to it is known as the time value of data. This time value decreases rapidly over time, so being able to respond quickly is important.

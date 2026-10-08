@@ -1,3 +1,10 @@
+---
+title: A.3.2 Configuring clients
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ### A.3.2 Configuring clients
 
 The main challenge with connecting to a Pulsar cluster inside a K8s environment is finding the ports that the cluster is listening on. The default binary port, 6650 and HTTP admin port, 8080 are not exposed outside of the K8s environment. Therefore, you first need to determine where these node ports are mapped to.

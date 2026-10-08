@@ -1,3 +1,10 @@
+---
+title: B.2 Asynchronous geo-replication
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## B.2 Asynchronous geo-replication
 
 An *asynchronous* geo-replicated Pulsar installation consists of a two or more independent Pulsar clusters running in different regions. Each Pulsar cluster contains its own respective set of brokers, bookies, and ZooKeeper nodes that are completely isolated from one another. In asynchronous geo-replication, when messages are produced on a Pulsar topic, they are first persisted to the local cluster and are then replicated asynchronously to the remote clusters. This replication process occurs via inter-broker communication, as shown in figure B.2.

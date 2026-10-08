@@ -1,3 +1,10 @@
+---
+title: B.2.1 Configuring asynchronous geo-replication
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ### B.2.1 Configuring asynchronous geo-replication
 
 As you may recall from chapter 2, a Pulsar instance is comprised of one or more Pulsar clusters that act together as a single unit and can be administered from a single location, as shown in figure B.3. In fact, one of the biggest reasons for using a Pulsar instance is to enable geo-replication, and only clusters within the same instance can be configured to replicate data amongst themselves. Therefore, enabling asynchronous geo-replication requires us to first create a Pulsar instance.

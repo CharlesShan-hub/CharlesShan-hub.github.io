@@ -1,3 +1,10 @@
+---
+title: 10 Data access
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 # 10 Data access
 
 This chapter covers

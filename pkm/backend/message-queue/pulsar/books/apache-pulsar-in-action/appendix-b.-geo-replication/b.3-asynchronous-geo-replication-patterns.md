@@ -1,3 +1,10 @@
+---
+title: B.3 Asynchronous geo-replication patterns
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## B.3 Asynchronous geo-replication patterns
 
 With asynchronous replication, Pulsar provides tenants a great degree of flexibility for customizing their replication strategy. That means that an application is able to set up active-active and full-mesh replication, active-standby replication, and aggregation replication across multiple data centers. Let’s take a quick look at how to implement each of these patterns inside of Pulsar.

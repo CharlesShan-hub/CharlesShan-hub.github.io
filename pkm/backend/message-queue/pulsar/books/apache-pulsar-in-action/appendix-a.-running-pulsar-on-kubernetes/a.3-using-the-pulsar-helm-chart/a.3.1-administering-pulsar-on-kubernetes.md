@@ -1,3 +1,10 @@
+---
+title: A.3.1 Administering Pulsar on Kubernetes
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ### A.3.1 Administering Pulsar on Kubernetes
 
 Once you have deployed a Pulsar cluster to a Kubernetes environment, one of your first concerns will be deciding how to administer the pulsar cluster. Fortunately, the Pulsar Helm chart creates a pod named pulsar-mini-toolset-0 that contains the pulsar-admin CLI tool, which is already configured to interact with the deployed Pulsar cluster. Consequently, all that is required to administer the cluster is to use the kubectl exec command to access the pod and execute the commands directly against the cluster, as shown in the following listing.

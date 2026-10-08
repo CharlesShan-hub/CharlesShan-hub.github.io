@@ -1,6 +1,13 @@
-# Part 2 Apache Pulsar development essentials
+---
+title: Part 2  Apache  Pulsar  development  essentials
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
+# Part 2  Apache  Pulsar  development  essentials
 
-Part 2 focuses on Pulsar’s built-in serverless computing framework, known as Pulsar Functions, and how it can be used to provide stream processing capabilities without requiring an additional computational framework, such as Apache Flink or Kafka Streams. This type of serverless stream processing is also referred to as *stream-native processing* and has a broad range of applications—from real-time ETL and event-driven programming to microservices development and real-time machine learning.
+Part 2 focuses on Pulsar’s built-in serverless computing framework, known as Pulsar Functions, and how it can be used to provide stream processing capabilities without requiring an additional computational framework, such as Apache Flink or Kafka Streams. This type of serverless stream processing is also referred to as *stream-native processing*  and has a broad range of applications—from real-time ETL and event-driven programming to microservices development and real-time machine learning.
 
 第 2 部分聚焦于 Pulsar 内置的无服务器计算框架（即 Pulsar Functions），以及它如何能被用来提供流式处理能力，而无需额外引入一个计算框架，例如 Apache Flink 或 Kafka Streams。这类无服务器流式处理也被称为*流式原生处理*（stream-native processing），它有着广泛的应用——从实时 ETL 和事件驱动编程，一直到微服务开发和实时机器学习。
 

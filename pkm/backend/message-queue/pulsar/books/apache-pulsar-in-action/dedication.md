@@ -1,3 +1,10 @@
+---
+title: dedication
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 # dedication
 
 To my father, who promised to read this book even if he can’t understand a word of it. May your heart be filled with pride every time you tell your friends that your son is a published author.

@@ -1,3 +1,10 @@
+---
+title: 7 Schema registry
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 # 7 Schema registry
 
 This chapter covers

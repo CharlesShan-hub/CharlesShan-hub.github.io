@@ -1,3 +1,10 @@
+---
+title: Who should read this book
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## Who should read this book
 
 *Apache Pulsar in Action* is primarily intended for Java developers who have an interest in working with streaming data, or microservice developers who are looking for an alternative message-based framework that can be used for event sourcing. DevOps teams who are looking to deploy and operate Pulsar within their organizations will find this book useful as well. One of the primary criticisms of Apache Pulsar is an overall lack of documentation and blog posts available online, and although I fully expect that to change in the near future, I hope that this book will help fill that gap in the interim and will benefit anyone wanting to learn more about stream processing in general and Apache Pulsar in particular.

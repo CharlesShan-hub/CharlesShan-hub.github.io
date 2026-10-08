@@ -1,3 +1,10 @@
+---
+title: B.3.3 Aggregation geo-replication
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ### B.3.3 Aggregation geo-replication
 
 Assume we have three clusters all actively serving the GottaEat customers in their respective regions and a fourth Pulsar cluster named *internal* that is completely isolated from the web and only accessible by internal employees, and that is used to aggregate the data from all of the customer-serving Pulsar clusters, as shown in figure B.6. To implement aggregation geo-replication across these four clusters, you will need to use the commands shown in listing B.10, which first creates the E-payments tenant and grants access to all the clusters.

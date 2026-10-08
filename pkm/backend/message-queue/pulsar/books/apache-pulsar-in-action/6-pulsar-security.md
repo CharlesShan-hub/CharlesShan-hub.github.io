@@ -1,3 +1,10 @@
+---
+title: 6 Pulsar security
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 # 6 Pulsar security
 
 This chapter covers

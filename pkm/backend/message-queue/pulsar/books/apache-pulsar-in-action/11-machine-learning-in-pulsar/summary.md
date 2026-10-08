@@ -1,3 +1,10 @@
+---
+title: Summary
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## Summary
 
 - Pulsar Functions can be used to provide near real-time machine learning on streaming data to produce actionable insights.

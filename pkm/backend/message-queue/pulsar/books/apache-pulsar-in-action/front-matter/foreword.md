@@ -1,3 +1,10 @@
+---
+title: foreword
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## foreword
 
 *Apache Pulsar in Action* is the missing guide that will walk you through your journey with Apache Pulsar. It is a book that I’d recommend to anyone, from developers starting to explore pub-sub messaging, to someone with messaging experience, up to experienced Pulsar power users.

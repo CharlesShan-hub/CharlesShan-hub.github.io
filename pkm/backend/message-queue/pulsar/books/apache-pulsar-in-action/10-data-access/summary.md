@@ -1,3 +1,10 @@
+---
+title: Summary
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## Summary
 
 - Pulsar’s internal state store provides a convenient location for storing infrequently accessed data without having to rely on an external system.

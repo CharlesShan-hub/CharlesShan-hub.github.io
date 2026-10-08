@@ -1,3 +1,10 @@
+---
+title: 12 Edge analytics
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 # 12 Edge analytics
 
 This chapter covers

@@ -1,3 +1,10 @@
+---
+title: 8 Pulsar Functions patterns
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 # 8 Pulsar Functions patterns
 
 This chapter covers

@@ -1,3 +1,10 @@
+---
+title: 5 Pulsar IO connectors
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 # 5 Pulsar IO connectors
 
 This chapter covers

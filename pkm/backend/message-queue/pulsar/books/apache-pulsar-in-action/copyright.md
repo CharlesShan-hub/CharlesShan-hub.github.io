@@ -1,3 +1,10 @@
+---
+title: Copyright
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 # Copyright
 
 For online information and ordering of these  and other Manning books, please visit www.manning.com. The publisher offers discounts on these books when ordered in quantity.

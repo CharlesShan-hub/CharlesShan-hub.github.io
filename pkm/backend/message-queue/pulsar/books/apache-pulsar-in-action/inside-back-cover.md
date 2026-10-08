@@ -1,3 +1,10 @@
+---
+title: inside back cover
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 # inside back cover
 
 ![](assets/IBC.png)

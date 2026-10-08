@@ -1,3 +1,10 @@
+---
+title: B.3.1 Multi-active geo-replication
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ### B.3.1 Multi-active geo-replication
 
 Asynchronous geo-replication is controlled on a per-tenant basis in Pulsar. This means geo-replication can only be enabled between clusters when a tenant has been created that allows access to all of the clusters involved. To configure *multi-active geo-replication*, you need to specify which clusters a tenant has access to via the pulsar-admin CLI, as shown in the following listing, which displays the command to create a new tenant and grant it permission to access the US-East and US-West clusters only.

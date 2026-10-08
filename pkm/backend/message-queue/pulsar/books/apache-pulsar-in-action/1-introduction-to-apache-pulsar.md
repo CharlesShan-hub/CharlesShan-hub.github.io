@@ -1,3 +1,10 @@
+---
+title: 1 Introduction to Apache Pulsar
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 # 1 Introduction to Apache Pulsar
 
 This chapter covers

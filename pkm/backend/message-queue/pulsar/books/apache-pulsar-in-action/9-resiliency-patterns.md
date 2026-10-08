@@ -1,3 +1,10 @@
+---
+title: 9 Resiliency patterns
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 # 9 Resiliency patterns
 
 This chapter covers

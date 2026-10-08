@@ -1,3 +1,10 @@
+---
+title: preface
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## preface
 
 Back in 2012, the Yahoo! team was looking for a global, geo-replicated platform that could stream all of Yahoo!’s messaging data between various apps such as Yahoo Mail and Yahoo Finance. At the time, there were generally two types of systems to handle in-motion data: message queues that handled mission-critical business events in real-time, and streaming systems that handled scalable data pipelines at scale. But there wasn’t a platform that provided both capabilities that Yahoo required.

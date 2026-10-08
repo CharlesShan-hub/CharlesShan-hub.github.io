@@ -1,3 +1,10 @@
+---
+title: "How this book is organized: A roadmap"
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## How this book is organized: A roadmap
 
 This book consists of 12 chapters that are spread across three different parts. Part 1 starts with a basic introduction to Apache Pulsar and where it fits in the 40-year evolution of messaging systems by comparing it to and contrasting it with the various messaging platforms that have come before it:

@@ -1,3 +1,10 @@
+---
+title: Summary
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## Summary
 
 - We discussed the logical structure of Pulsar’s address space in order to support multitenancy.

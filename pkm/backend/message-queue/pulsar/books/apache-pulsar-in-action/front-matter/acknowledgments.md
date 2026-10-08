@@ -1,3 +1,10 @@
+---
+title: acknowledgments
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## acknowledgments
 
 In the order of nature, we cannot render benefits to those from whom we receive them, or only seldom. But the benefit we receive must be rendered again, line for line, deed for deed, cent for cent, to somebody.

@@ -1,3 +1,10 @@
+---
+title: Part 1 Getting started with Apache Pulsar
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 # Part 1 Getting started with Apache Pulsar
 
 Enterprise messaging systems (EMS) are designed to promote loosely coupled architectures that allow geographically distributed systems to communicate with one another by exchanging messages via a simple API that supports two basic operations: publish a message and subscribe to a topic (read messages). Over the course of their 40+ year history, enterprise messaging systems have given rise to several important distributed software architectural styles, including

@@ -1,3 +1,10 @@
+---
+title: Summary
+tags:
+  - book
+date: 2026-10-08
+comment:
+---
 ## Summary
 
 - Pulsar Functions is a serverless computing framework that runs on top of Apache Pulsar and allows you to define processing logic that get executed when a new message arrives in a topic.
