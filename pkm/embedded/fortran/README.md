@@ -10,11 +10,12 @@ comment:
 ## Notes
 
 * 背景介绍
-    * [background](notes/background.md)
-    * [complier](notes/install.md)
-    * [fpm](notes/fpm.md): 新型的开源构建系统
+    * [background](notes/background/background.md): FORTRAN I / II 是 IBM 的产品版本；FORTRAN 66 / 77 是 ANSI 标准（77 后来被 ISO 采纳）；从 Fortran 90 起，标准由 **ISO/IEC** 主导发布。
+    * [complier](notes/background/install.md): 一个标准，多个实现，GFortran最主流。
+    * [fpm](notes/background/fpm.md): 新型的开源构建系统。
 * 快速入门（按照）
-    * 
+    * [hello-world](notes/basic/hello-world.md)
+    * [variable](notes/basic/variable.md)
 
 ## 书
 

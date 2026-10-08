@@ -1,17 +1,21 @@
 ---
-title:
+title: msys2简介
 tags:
-date:
+date: 2026-10-08
 comment:
 ---
 
 # MSYS2 使用指南
 
+## 基本介绍
+
+1. MSYS2不是Linux，MSYS2 是在 Windows 上模拟类 Unix 环境的一套工具。
+2. 为了让 Windows 用户也能方便地安装各种编译器和开发工具，MSYS2直接移植了 Arch Linux 的 **pacman** 作为自己的包管理系统。
+3. MSYS2 的不可替代性在于**为 Windows 编译原生软件**，如果你只是想“用 Linux”，WSL 是更好的选择；但如果你是想“用 Windows 编译出给 Windows 用的程序”，MSYS2 依然是对的选择。
+
 ## 安装 MSYS2
 
-1. 下载安装程序：[https://www.msys2.org/](https://www.msys2.org/)
-2. 运行安装程序，使用默认安装路径
-3. 安装完成后，UCRT64 终端会自动启动
+`scoop install msys2`
 
 ## 基本系统操作
 
