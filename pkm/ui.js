@@ -7,6 +7,17 @@
   var DEFAULT_THEME = C.defaultTheme || (THEMES[0] || "");
   var SITE_TREE = C.siteTree || "site-tree.json";
 
+  // 「当前页的站点相对 rel」：线上/仓库根部署时 pathname 带站点前缀（如 /pkm/），
+  // 而站点树里的 rel 相对 pkm 站点根；用 SITE_TREE 反解出根目录把前缀剥掉，
+  // 文件树高亮 / 书页翻页条 / md 下载三处共用
+  var SITE_ROOT = "";
+  try { SITE_ROOT = decodeURIComponent(new URL(SITE_TREE, location.href).pathname.replace(/[^/]*$/, "")); } catch (e) {}
+  var curSiteRel = function () {
+    var p = decodeURIComponent(location.pathname);
+    if (SITE_ROOT && SITE_ROOT !== "/" && p.indexOf(SITE_ROOT) === 0) p = p.slice(SITE_ROOT.length);
+    return p.replace(/^\//, "");
+  };
+
   /* ===== 左侧按钮组（文件树 / TOC / 搜索）=====
      桌面端默认收成 “…” 主按钮：鼠标悬浮整组临时展开，点击主按钮固定展开/收起；
      手机端由 CSS 覆盖为常显平铺，主按钮隐藏。 */
@@ -138,7 +149,7 @@
     } catch (e) {}
 
     var base = SITE_TREE.replace(/site-tree\.json$/, "");
-    var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+    var curRel = curSiteRel();
     // 首页（站点根 index.html）时链接一律新标签页打开，不打断首页音乐播放
     var isHome = /index\.html$/.test(curRel) || curRel.replace(/\/$/, "").split("/").length === 1;
     var box = panel.querySelector(".nav-tree");
@@ -213,7 +224,7 @@
      站点树里当前页挂有 prev/next（导出端 _attach_pager_chain 生成）时，
      正文底部渲染 上一篇/下一篇；普通笔记页/首页无链信息不渲染。 */
   (function () {
-    var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+    var curRel = curSiteRel();
     var content = document.getElementById("pkm-content");
     if (!content) return;
     var base = SITE_TREE.replace(/site-tree\.json$/, "");
@@ -989,7 +1000,7 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
 
   /* ===== 下载 Markdown（右上按钮组）===== */
   (function () {
-    var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+    var curRel = curSiteRel();
     // 首页（站点根 index.html 等根目录页）没有对应 md 副本，不显示下载
     if (/index\.html$/.test(curRel) || curRel.replace(/\/$/, "").split("/").length === 1) return;
     var btn = document.createElement("button");
@@ -1003,6 +1014,38 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
       var a = document.createElement("a");
       a.href = mdUrl; a.download = "";
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    });
+    var g = document.getElementById("pkm-top-btns");
+    if (g) { g.appendChild(btn); } else { document.body.appendChild(btn); }
+  })();
+
+  /* ===== 复制短链（右上按钮组，下载按钮旁）=====
+     页面 config 带 short 码（导出端按路径哈希生成）时显示；点击复制 /s?short= 短链 */
+  (function () {
+    var C = window.PKM || {};
+    if (!C.short) return;
+    var btn = document.createElement("button");
+    btn.id = "share-btn"; btn.type = "button";
+    btn.setAttribute("aria-label", "复制短链"); btn.setAttribute("title", "复制短链");
+    btn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg>';
+    var fallback = function (text) {
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch (e) {}
+      document.body.removeChild(ta);
+    };
+    btn.addEventListener("click", function () {
+      var url = location.origin + SITE_ROOT + "s?short=" + C.short;
+      var done = function () {
+        btn.setAttribute("title", "已复制");
+        setTimeout(function () { btn.setAttribute("title", "复制短链"); }, 1200);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(done, function () { fallback(url); done(); });
+      } else { fallback(url); done(); }
     });
     var g = document.getElementById("pkm-top-btns");
     if (g) { g.appendChild(btn); } else { document.body.appendChild(btn); }
