@@ -66,15 +66,76 @@
     refreshPanelTheme();
     window.addEventListener("pkm-theme-applied", refreshPanelTheme);
 
+    /* 桌面/平板（>900px）停靠模式：面板占真实布局空间（body 左留白让位），
+       像编辑器左侧文件区，点正文不收起；手机端维持滑出弹层。开合与宽度都记忆。 */
+    var isDesktop = function () {
+      return !window.matchMedia || !window.matchMedia("(max-width: 900px)").matches;
+    };
+    var DOCK_KEY = "pkm-nav-open", W_KEY = "pkm-nav-width";
+    var setDock = function (on) {
+      document.body.classList.toggle("nav-dock-open", on);
+    };
     var toggle = function () {
       panel.classList.toggle("open");
-      btn.classList.toggle("open", panel.classList.contains("open"));
+      var open = panel.classList.contains("open");
+      btn.classList.toggle("open", open);
+      if (isDesktop()) {
+        setDock(open);
+        try { localStorage.setItem(DOCK_KEY, open ? "1" : "0"); } catch (e) {}
+      }
     };
     btn.addEventListener("click", function (e) { e.stopPropagation(); toggle(); });
     document.addEventListener("click", function (e) {
-      if (panel.classList.contains("open") &&
+      if (panel.classList.contains("open") && !isDesktop() &&
           !panel.contains(e.target) && e.target !== btn) toggle();
     });
+
+    // 右缘分割线拖拽调宽（180~520px），宽度记忆在 localStorage
+    var resizer = document.createElement("div");
+    resizer.className = "nav-resizer";
+    panel.appendChild(resizer);
+    var navW = 260;
+    try {
+      var savedW = parseInt(localStorage.getItem(W_KEY), 10);
+      if (!isNaN(savedW) && savedW >= 180 && savedW <= 520) navW = savedW;
+    } catch (e) {}
+    document.documentElement.style.setProperty("--pkm-nav-dock-w", navW + "px");
+    resizer.addEventListener("pointerdown", function (e) {
+      if (!isDesktop()) return;
+      e.preventDefault();
+      resizer.setPointerCapture(e.pointerId);
+      var startX = e.clientX, startW = navW;
+      document.body.classList.add("nav-resizing");
+      var move = function (ev) {
+        navW = Math.min(520, Math.max(180, startW + ev.clientX - startX));
+        document.documentElement.style.setProperty("--pkm-nav-dock-w", navW + "px");
+      };
+      var up = function () {
+        resizer.removeEventListener("pointermove", move);
+        resizer.removeEventListener("pointerup", up);
+        resizer.removeEventListener("pointercancel", up);
+        document.body.classList.remove("nav-resizing");
+        try { localStorage.setItem(W_KEY, String(navW)); } catch (e2) {}
+      };
+      resizer.addEventListener("pointermove", move);
+      resizer.addEventListener("pointerup", up);
+      resizer.addEventListener("pointercancel", up);
+    });
+
+    // 上次停靠开着：本页（桌面端）免动画直接恢复，避免每次翻页都闪一下滑入
+    try {
+      if (isDesktop() && localStorage.getItem(DOCK_KEY) === "1") {
+        panel.style.transition = "none";
+        document.body.style.transition = "none";
+        panel.classList.add("open");
+        btn.classList.add("open");
+        setDock(true);
+        requestAnimationFrame(function () {
+          panel.style.transition = "";
+          document.body.style.transition = "";
+        });
+      }
+    } catch (e) {}
 
     var base = SITE_TREE.replace(/site-tree\.json$/, "");
     var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
@@ -773,7 +834,15 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
       return;
     }
 
-    var open = function () { panel.classList.add("open"); btn.classList.add("open"); };
+    var open = function () {
+      panel.classList.add("open");
+      btn.classList.add("open");
+      // 打开时把列表滚到当前阅读位置：目录长了当前项可能在可视区外，
+      // 虽有 .active 高亮但看不到，表现为"没找到本页位置"
+      if (cur) {
+        panel.scrollTop = Math.max(0, cur.offsetTop - panel.clientHeight / 2 + cur.offsetHeight / 2);
+      }
+    };
     var close = function () { panel.classList.remove("open"); btn.classList.remove("open"); };
     btn.addEventListener("click", function (e) {
       e.stopPropagation();
@@ -832,6 +901,41 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
     };
     window.addEventListener("scroll", updateActive, { passive: true });
     updateActive();
+  })();
+
+  /* ===== comment 备注气泡配色：取引用框（blockquote）的背景/文字色 =====
+     气泡原用标题文字色当背景、页面背景色当文字，部分主题下对比失效看不见。
+     各主题引用框样式来源不一（CSS 变量/硬编码/仅左边框），静态 CSS 无法引用，
+     运行时测实际渲染出的引用框 computed style 写成变量，供 .pkm-info-pop 使用；
+     页面没有引用框时临时插探针测量后移除，主题切换时重测。 */
+  (function () {
+    var applyPopColors = function () {
+      var host = document.getElementById("pkm-content") ||
+        (document.body.classList.contains("done") ? document.body : null);
+      if (!host) return;
+      var probe = null;
+      var bq = host.querySelector("blockquote");
+      if (!bq) {
+        probe = document.createElement("blockquote");
+        probe.innerHTML = "<p>x</p>";
+        host.appendChild(probe);
+        bq = probe;
+      }
+      var cs = getComputedStyle(bq);
+      var fg = cs.color;
+      var bg = cs.backgroundColor;
+      // 无背景的引用框（仅左边框风格）：用其文字色淡淡混入页面背景，兜出气泡底色
+      if (bg === "transparent" || /rgba\([^)]+,\s*0\)$/.test(bg)) {
+        var pageBg = getComputedStyle(document.body).getPropertyValue("--bg-color").trim() || "#fff";
+        bg = "color-mix(in srgb, " + fg + " 9%, " + pageBg + ")";
+      }
+      var st = document.documentElement.style;
+      st.setProperty("--pkm-info-pop-bg", bg);
+      st.setProperty("--pkm-info-pop-fg", fg);
+      if (probe) probe.remove();
+    };
+    applyPopColors();
+    window.addEventListener("pkm-theme-applied", applyPopColors);
   })();
 };
 
