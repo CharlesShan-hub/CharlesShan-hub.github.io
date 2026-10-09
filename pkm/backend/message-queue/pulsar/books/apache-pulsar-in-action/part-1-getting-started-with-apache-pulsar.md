@@ -2,10 +2,12 @@
 title: Part 1 Getting started with Apache Pulsar
 tags:
   - book
-date: 2026-10-08
+date: 2026-10-09
 comment:
 ---
 # Part 1 Getting started with Apache Pulsar
+
+> 我的总结🤖：企业消息系统（EMS）是一类为松耦合架构而设计的底层通信技术，它通过“发布消息、订阅主题”两个基本操作，让地理上分散的系统能够可靠地交换消息。在四十多年的演进中，EMS 先后催生了 RPC、面向消息的中间件（MOM）、面向服务的架构（SOA）和事件驱动架构（EDA）等多种分布式软件风格，并在其中扮演底层通信支撑的角色。EMS 与普通网络通信的关键区别在于它保证消息投递——消息一旦发布就会被存储并转发给所有预期接收方，而不像基于 HTTP 的微服务调用那样可能因网络故障而丢失。这些被留存下来的消息本身也成了有价值的数据源，可以通过 Flink、Spark 等工具进行流式处理，从中挖掘业务价值。本书第一部分将沿着 EMS 的演进脉络，逐一审视每一代系统新增的核心能力，帮助读者理解各种消息系统之间的差异，并最终说明 Apache Pulsar 为何是这一谱系中向前演进的下一步，值得作为企业基础设施的关键一环来考虑。
 
 Enterprise messaging systems (EMS) are designed to promote loosely coupled architectures that allow geographically distributed systems to communicate with one another by exchanging messages via a simple API that supports two basic operations: publish a message and subscribe to a topic (read messages). Over the course of their 40+ year history, enterprise messaging systems have given rise to several important distributed software architectural styles, including
 
@@ -37,4 +39,4 @@ The first part of this book provides an evolutionary overview of the EMS with a 
 
 Chapter 1 provides a basic introduction to Apache Pulsar and where it fits in the 40-year evolution of messaging systems by comparing it to and contrasting it with the various messaging platforms that have come before it. Next, chapter 2 dives into the details of Pulsar’s physical architecture and how its multitiered architecture allows its storage and computing layers to scale independently of one another. It also describes some of the common message consumption patterns, how they are different from one another, and how Pulsar supports them all. Finally, chapter 3 demonstrates how to interact with Apache Pulsar from both the command line as well as by using its programming API. After completing this chapter, you should be comfortable running a local instance of Apache Pulsar and interacting with it.
 
-第 1 章提供对 **Apache Pulsar 的基础介绍**，并通过把它与之前出现过的各种消息平台做比较与对照，说明它在消息系统 40 年演进中的位置。接着，第 2 章深入讲述 **Pulsar 物理架构**的细节，以及它的多层架构如何让存储层与计算层能够彼此独立地扩展。它还描述了若干常见的消息消费模式、它们之间的区别，以及 Pulsar 是如何支持它们全部的。最后，第 3 章演示如何既从命令行、又通过使用其编程 **API** 来与 Apache Pulsar 交互。学完本章后，你应当能够自如地运行一个本地的 Apache Pulsar 实例并与之交互。
+**第 1 章**提供对 **Apache Pulsar 的基础介绍**，并通过把它与之前出现过的各种消息平台做比较与对照，说明它在消息系统 40 年演进中的位置。接着，**第 2 章**深入讲述 **Pulsar 物理架构**的细节，以及它的多层架构如何让存储层与计算层能够彼此独立地扩展。它还描述了若干常见的消息消费模式、它们之间的区别，以及 Pulsar 是如何支持它们全部的。最后，**第 3 章**演示如何既从命令行、又通过使用其编程 **API** 来与 Apache Pulsar 交互。学完本章后，你应当能够自如地运行一个本地的 Apache Pulsar 实例并与之交互。
