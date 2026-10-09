@@ -2,7 +2,7 @@
 title: variable
 tags:
   - note
-date: 2026-10-07
+date: 2026-10-09
 comment:
 ---
 # 变量
@@ -103,6 +103,7 @@ program main
 end program main
 ```
 
+
 ## 标准输入输出
 
 ### print
@@ -174,6 +175,38 @@ charles@192 ~/w/p/l/temp (master)> ./test
 .true.
  You entered:  T
 ```
+
+## 表达式
+
+|操作符|描述|
+|---|---|
+|`**`|指数|
+|`*`|乘法|
+|`/`|除法|
+|`+`|加法|
+|`-`|减法|
+## 浮点精度
+
+可以使用 `kind` 参数显式声明所需的浮点精度。 `iso_fortran_env` 内置模块为常见的 32 位和 64 位浮点类型提供了 `kind` 参数。
+
+**示例：** 显式实数 `kind`
+
+```fortran
+program float
+    use, intrinsic :: iso_fortran_env, only: sp=>real32, dp=>real64
+    implicit none
+    
+    real(sp) :: float32
+    real(dp) :: float64
+    
+    float32 = 1.0_sp  ! Explicit suffix for literal constants
+    float64 = 1.0_dp
+    print*, float32, float64
+end program float
+```
+
+> 始终为浮点文字常量使用 `kind` 后缀。
+
 
 ## 参考资料
 

@@ -2,7 +2,7 @@
 title: Javase
 tags:
   - catalog
-date: 2026-10-06
+date: 2026-10-09
 comment: Java SE 基础笔记：语法、OOP、集合、IO、多线程、JVM
 ---
 
@@ -59,7 +59,7 @@ comment: Java SE 基础笔记：语法、OOP、集合、IO、多线程、JVM
     * [annotation](notes/06-java-advanced/annotation.md)：注解
     * [Swing](notes/06-java-advanced/Swing.md)：GUI
     * [jvm](notes/06-java-advanced/jvm.md)
-    * [java-new](notes/06-java-advanced/java-new.md)
+    * [java-new](notes/01-basic/java-new.md)
 * Others
     * [Remember](details/remember.md)：反思总结
     * [Plan](details/plan.md)：进度追踪

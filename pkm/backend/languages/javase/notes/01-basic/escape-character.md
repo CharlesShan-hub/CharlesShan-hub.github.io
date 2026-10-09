@@ -1,11 +1,12 @@
 ---
-title:
+title: Java 转义字符
 tags:
-date:
+  - note
+date: 2026-10-09
 comment:
 ---
 
-# Java转义字符
+# Java 转义字符
 ---
 
 ## 什么是转义字符
@@ -51,6 +52,7 @@ comment:
 
 
 ## 参考资料
+
 1. [Java里\r和\n的区别](https://blog.csdn.net/ShiMengRan107/article/details/76923090)
 2. [解析java中的\r、\n、\r\n、\n\r的区别](https://blog.51cto.com/u_14233037/5824468)
 3. [Java概述——Java转义字符](https://blog.csdn.net/weixin_43763859/article/details/118080288)

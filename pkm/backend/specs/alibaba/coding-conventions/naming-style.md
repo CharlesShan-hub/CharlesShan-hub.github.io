@@ -1,7 +1,8 @@
 ---
-title:
+title: naming-style
 tags:
-date:
+  - note
+date: 2026-10-09
 comment:
 ---
 

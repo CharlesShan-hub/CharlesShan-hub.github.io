@@ -1,7 +1,8 @@
 ---
-title:
+title: operator-assign
 tags:
-date:
+  - note
+date: 2026-10-09
 comment:
 ---
 
@@ -40,4 +41,6 @@ boolean flag = 5 > 3 && 2 < 4; // true（比较优先于逻辑与）
 int value = a > b ? a : b + 1; // 相当于 a > b ? a : (b + 1)
 ```
 
-**参考资料**：[Java运算符优先级详解](https://www.cnblogs.com/lvlp/p/16783709.html)
+## 参考资料
+
+1. [Java运算符优先级详解](https://www.cnblogs.com/lvlp/p/16783709.html)

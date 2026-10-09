@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>java-new-14</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h1 id="java14">Java14新特性</h1>
+<div class="pkm-meta"><span class="pkm-badge pkm-tag-c0"><span class="pkm-badge-ico"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4.75 0a.75.75 0 0 1 .75.75V2h5V.75a.75.75 0 0 1 1.5 0V2h1.25c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0 1 12.25 16H2.75A1.75 1.75 0 0 1 1 14.25V3.75C1 2.784 1.784 2 2.75 2H4V.75A.75.75 0 0 1 4.75 0ZM2.5 7.5v6.75c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V7.5Z"/></svg></span><span class="pkm-badge-val">2026-10-09</span></span><span class="pkm-badge pkm-tag-c0"><span class="pkm-badge-val">note</span></span></div>
+<h2 id="_1">功能总览</h2>
+<ul>
+<li>JEP 305：instanceof 的模式匹配（预览）</li>
+<li>JEP 343：包装工具（孵化器）</li>
+<li>JEP 345：G1 的 NUMA 感知内存分配</li>
+<li>JEP 349：JFR 事件流</li>
+<li>JEP 352：非易失性映射字节缓冲区</li>
+<li>JEP 358：有用的空指针异常</li>
+<li>JEP 359：记录（预览）</li>
+<li>JEP 361： switch表达式（标准）</li>
+<li>JEP 362：弃用 Solaris 和 SPARC 端口</li>
+<li>JEP 363：删除并发标记清除 (CMS) 垃圾收集器</li>
+<li>JEP 364：macOS 上的 ZGC</li>
+<li>JEP 365：Windows 上的 ZGC</li>
+<li>JEP 366：弃用 ParallelScavenge + SerialOld GC 组合</li>
+<li>JEP 367：删除 Pack200 工具和 API</li>
+<li>JEP 368：文本块（第二次预览）</li>
+<li>JEP 370：外部内存访问 API（孵化器）</li>
+</ul>
+<h2 id="instanceof">instanceof的模式匹配</h2>
+<p>在JDK14中新增instanceof模式匹配增强(预览)，在JDK16中转正。通过instanceof模式匹配增强，我们就可以直接在模式匹配的括号内声明对应类型的局部变量。<br />
+【示例】执行向下转型的操作，从而调用show()方法</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="cm">/**</span>
+<span class="cm"> * 以前的代码实现方式</span>
+<span class="cm"> */</span>
+<span class="nd">@Test</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testOld</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 父类引用指向子类对象（多态）</span>
+<span class="w">    </span><span class="n">Animal</span><span class="w"> </span><span class="n">animal</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Dog</span><span class="p">();</span>
+<span class="w">    </span><span class="c1">// 判断animal是否为Dog类的实例</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">animal</span><span class="w"> </span><span class="k">instanceof</span><span class="w"> </span><span class="n">Dog</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 指向向下转型的操作</span>
+<span class="w">        </span><span class="n">Dog</span><span class="w"> </span><span class="n">dog</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">Dog</span><span class="p">)</span><span class="w"> </span><span class="n">animal</span><span class="p">;</span>
+<span class="w">        </span><span class="c1">// 调用Dog类特有的show()方法</span>
+<span class="w">        </span><span class="n">dog</span><span class="p">.</span><span class="na">show</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+<span class="cm">/**</span>
+<span class="cm"> * 使用instanceof模式匹配增强的实现方式</span>
+<span class="cm"> */</span>
+<span class="kd">public</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">testNew</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 父类引用指向子类对象（多态）</span>
+<span class="w">    </span><span class="n">Animal</span><span class="w"> </span><span class="n">animal</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Dog</span><span class="p">();</span>
+<span class="w">    </span><span class="c1">// 如果animal是Dog类的实例，则向下转型后就命名为dog</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">animal</span><span class="w"> </span><span class="k">instanceof</span><span class="w"> </span><span class="n">Dog</span><span class="w"> </span><span class="n">dog</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 调用Dog类特有的show()方法</span>
+<span class="w">        </span><span class="n">dog</span><span class="p">.</span><span class="na">show</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>【示例】重写equals()，判断成员变量是否相等</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Tiger</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="kt">int</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * 以前的代码实现方式</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="cm">/*@Override</span>
+<span class="cm">    public boolean equals(Object obj) {</span>
+<span class="cm">        if (this == obj) return true;</span>
+<span class="cm">        if (obj == null) return false;</span>
+<span class="cm">        // 如果obj属于Tiger类型，则就执行向下转型的操作</span>
+<span class="cm">        if (obj instanceof Tiger) {</span>
+<span class="cm">            // 执行向下转型的操作，恢复对象的实际类型</span>
+<span class="cm">            Tiger tiger = (Tiger) obj;</span>
+<span class="cm">            // 如果成员变量都相等，则返回true，否则返回false</span>
+<span class="cm">            return age == tiger.age &amp;&amp; Objects.equals(name, tiger.name);</span>
+<span class="cm">        }</span>
+<span class="cm">        // 如果obj不属于Tiger类型，则返回false即可</span>
+<span class="cm">        return false;</span>
+<span class="cm">    }*/</span>
+
+<span class="w">    </span><span class="cm">/**</span>
+<span class="cm">     * 使用instanceof模式匹配增强的实现方式</span>
+<span class="cm">     */</span>
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="nf">equals</span><span class="p">(</span><span class="n">Object</span><span class="w"> </span><span class="n">obj</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">obj</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">obj</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+<span class="w">        </span><span class="c1">// 如果obj属于Tiger类型并且成员变量值都相等，那么返回true</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">obj</span><span class="w"> </span><span class="k">instanceof</span><span class="w"> </span><span class="n">Tiger</span><span class="w"> </span><span class="n">tiger</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="k">return</span><span class="w"> </span><span class="n">age</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">tiger</span><span class="p">.</span><span class="na">age</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">Objects</span><span class="p">.</span><span class="na">equals</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">tiger</span><span class="p">.</span><span class="na">name</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">        </span><span class="c1">// 如果obj不属于Tiger类型，则返回false即可</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h2 id="_2">文本块</h2>
+<p>在Java语言中，通常需要使用String类型表达HTML，XML，SQL或JSON等格式的字符串，在进行字符串赋值时需要进行转义和连接操作，然后才能编译该代码，这种表达方式难以阅读并且难以维护。<br />
+在Java12版本中，新增了文本块（预览）。文本块就是指多行字符串，例如一段格式化后的xml、json等。而有了文本块以后，用户不需要转义，Java能自动搞定。因此，文本块将提高Java程序的可读性和可写性。<br />
+【示例】演示文本块的使用</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// 使用以前拼接的方式</span>
+<span class="n">String</span><span class="w"> </span><span class="n">html1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"&lt;html&gt;\n"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">        </span><span class="s">"      &lt;body&gt;\n"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">        </span><span class="s">"            &lt;p&gt;Hello， world&lt;/p&gt;\n"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">        </span><span class="s">"      &lt;/body&gt;\n"</span><span class="w"> </span><span class="o">+</span>
+<span class="w">        </span><span class="s">"&lt;/html&gt;"</span><span class="p">;</span>
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">html1</span><span class="p">);</span>
+<span class="c1">// 使用文本块的方式</span>
+<span class="n">String</span><span class="w"> </span><span class="n">html2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"""</span>
+<span class="s">        &lt;html&gt;</span>
+<span class="s">              &lt;body&gt;</span>
+<span class="s">                    &lt;p&gt;Hello， world&lt;/p&gt;</span>
+<span class="s">              &lt;/body&gt;</span>
+<span class="s">        &lt;/html&gt;</span>
+<span class="s">        """</span><span class="p">;</span>
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">html2</span><span class="p">);</span>
+</code></pre>
+<p>在Java14版本中，针对文本块又新增两个特性（阅览）。1)在一行的结尾增加“\”可以取消改行的换行符；2)可以通过“\s”增加空格。<br />
+【示例】演示文本块新增特性</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// 取消换行（\）</span>
+<span class="n">String</span><span class="w"> </span><span class="n">json1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"""</span>
+<span class="s">        {</span>
+<span class="s">            "username":"ande"，\</span>
+<span class="s">            "age":18</span>
+<span class="s">        }</span>
+<span class="s">        """</span><span class="p">;</span>
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">json1</span><span class="p">);</span>
+<span class="c1">// 添加空格（\s）</span>
+<span class="n">String</span><span class="w"> </span><span class="n">json2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">"""</span>
+<span class="s">        {</span>
+<span class="s">            "username"\s:\s"ande"，</span>
+<span class="s">            "age"\s:\s18</span>
+<span class="s">        }</span>
+<span class="s">        """</span><span class="p">;</span>
+<span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="n">json2</span><span class="p">);</span>
+</code></pre>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../site-tree.json", "hasMath": false, "short": "4ajfz9"};</script>
+<script src="../../../../../../ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>java-new-15</title>
+<link id="theme-css" rel="stylesheet" href="../../../../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../../../../ui.css">
+</head>
+<body class="done">
+<div id="pkm-content">
+<h1 id="java15">Java15新特性</h1>
+<div class="pkm-meta"><span class="pkm-badge pkm-tag-c0"><span class="pkm-badge-ico"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4.75 0a.75.75 0 0 1 .75.75V2h5V.75a.75.75 0 0 1 1.5 0V2h1.25c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0 1 12.25 16H2.75A1.75 1.75 0 0 1 1 14.25V3.75C1 2.784 1.784 2 2.75 2H4V.75A.75.75 0 0 1 4.75 0ZM2.5 7.5v6.75c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V7.5Z"/></svg></span><span class="pkm-badge-val">2026-10-09</span></span><span class="pkm-badge pkm-tag-c0"><span class="pkm-badge-val">note</span></span></div>
+<h2 id="_1">功能总览</h2>
+<ul>
+<li>JEP 339：爱德华兹曲线数字签名算法 (EdDSA)</li>
+<li>JEP 360：密封类（预览）</li>
+<li>JEP 371：隐藏类</li>
+<li>JEP 372：删除 Nashorn JavaScript 引擎</li>
+<li>JEP 373：重新实现旧版 DatagramSocket API</li>
+<li>JEP 374：禁用和弃用偏向锁定</li>
+<li>JEP 375：instanceof 的模式匹配（第二次预览，无改动）</li>
+<li>JEP 377：ZGC：可扩展的低延迟垃圾收集器（确定正式版）</li>
+<li>JEP 378：文本块（确定正式版）</li>
+<li>JEP 379：Shenandoah：一个低暂停时间的垃圾收集器（确定正式版）</li>
+<li>JEP 381：删除 Solaris 和 SPARC 端口</li>
+<li>JEP 383：外内存访问API（第二孵化器）</li>
+<li>JEP 384：记录（第二次预览）</li>
+<li>JEP 385：弃用 RMI 激活以进行删除</li>
+</ul>
+<h2 id="record">Record</h2>
+<p>早在2019年2月份，Java语言架构师Brian Goetz就吐槽了Java语言，他和很多程序员一样抱怨“Java太啰嗦”或有太多的“繁文缛节”，他提到：开发人员想要创建纯数据载体类，通常都必须编写大量低价值、重复的、容易出错的代码。例如：构造方法、getter/setter、equals()、hashCode()以及toString()等。<br />
+以至于很多人选择使用IDE的功能来自动生成这些代码。还有一些开发会选择使用一些第三方类库，如Lombok等来生成这些方法，从而会导致了令人吃惊的表现和糟糕的可调试性。<br />
+那么，Brian Goetz大神提到的纯数据载体到底指的是什么呢？我们举了一个简单的例子：</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Tiger</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">private</span><span class="w"> </span><span class="kd">final</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="nf">Tiger</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">age</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">        </span><span class="k">this</span><span class="p">.</span><span class="na">age</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">name</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">name</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">age</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">age</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="nf">equals</span><span class="p">(</span><span class="n">Object</span><span class="w"> </span><span class="n">obj</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">obj</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="k">this</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">obj</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="kc">null</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="n">obj</span><span class="p">.</span><span class="na">getClass</span><span class="p">()</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="na">getClass</span><span class="p">())</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+<span class="w">        </span><span class="kd">var</span><span class="w"> </span><span class="n">that</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">Tiger</span><span class="p">)</span><span class="w"> </span><span class="n">obj</span><span class="p">;</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Objects</span><span class="p">.</span><span class="na">equals</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="na">name</span><span class="p">,</span><span class="w"> </span><span class="n">that</span><span class="p">.</span><span class="na">name</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span>
+<span class="w">                </span><span class="k">this</span><span class="p">.</span><span class="na">age</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">that</span><span class="p">.</span><span class="na">age</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="nf">hashCode</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">Objects</span><span class="p">.</span><span class="na">hash</span><span class="p">(</span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="n">age</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="nd">@Override</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">String</span><span class="w"> </span><span class="nf">toString</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s">"Tiger["</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"name="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">name</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="s">", "</span><span class="w"> </span><span class="o">+</span>
+<span class="w">                </span><span class="s">"age="</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">age</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="sc">']'</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>这里面的Tiger其实就是一个纯数据载体，Tiger类中提供了name和age两个私有常量，并且只提供了全参构造方法和常量名相同的getter方法，以及一些equals、hashCode和toString等方法。于是，BrianGoetz大神提出一种想法，他提到，Java完全可以对于这种纯数据载体通过另外一种方式表示。<br />
+在Java14版本中，新增了Record类型。Record是Java的一种新的类型，Record使数据类型变得非常简洁，一般可以帮助我们定义一些简单的用于纯数据载体的实体类。</p>
+<p><strong>Record类的特点：</strong><br />
+状态声明中的每个属性，都是默认采用了private和final修饰，则属性值就不可修改<br />
+在Record类中，默认已经重写了Object类提供的equals()，hashcode()，toString()方法<br />
+在Record类中，默认提供全参的构造方法，并且提供的getter方法名和属性名保持一致。<br />
+Record类采用了final修饰，并且显示的继承于Java.lang.Record类，因此就不能继承别的父类。<br />
+【示例】将以上的Tiger类转化为Record类</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">record</span> <span class="nc">Tiger</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">age</span><span class="p">)</span><span class="w">  </span><span class="p">{</span>
+
+<span class="p">}</span>
+</code></pre>
+<p>在以上的Record类中，Tiger类默认采用了final修饰，并且显示的继承于Java.lang.Record抽象类，因此Tiger类就不能继承于别的父类。在Tiger类中，提供了name和age两个私有常量，并且还提供了一个public修饰的全参构造方法，提供的getter方法的名字和属性名保持一致，但是并没有提供setter方法。并且，在Tiger类中还重写了Object类提供的equals()，hashcode()，toString()方法。<br />
+在Record类中，我们还可以新增静态属性、无参构造方法、成员方法和静态方法，但是创建对象时不能调用无参构造方法，而是通过全参构造方法创建对象的时候，默认就会调用Record类中的无参构造方法。<br />
+【示例】在Record类中添加的内容</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="kd">public</span><span class="w"> </span><span class="kd">record</span> <span class="nc">Tiger</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">age</span><span class="p">)</span><span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 新增静态属性</span>
+<span class="w">    </span><span class="kd">static</span><span class="w"> </span><span class="kt">double</span><span class="w"> </span><span class="n">score</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">// 新增无参构造方法</span>
+<span class="w">    </span><span class="c1">// 注意：通过全参构造方法创建对象，默认就会调用此处的无参构造方法</span>
+<span class="w">    </span><span class="kd">public</span><span class="w"> </span><span class="n">Tiger</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"无参构造方法"</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="c1">// 新增成员方法</span>
+<span class="w">    </span><span class="kt">void</span><span class="w"> </span><span class="nf">show</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"show. .."</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="c1">// 新增静态方法</span>
+<span class="w">    </span><span class="kd">static</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">method</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="n">System</span><span class="p">.</span><span class="na">out</span><span class="p">.</span><span class="na">println</span><span class="p">(</span><span class="s">"method ..."</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<h2 id="_2">密封类</h2>
+<p>Java中的密封类是一种新的类修饰符，它可以修饰类和接口，可以控制哪些类可以扩展或实现该类或接口。下面是密封类的一些主要用途：</p>
+<ol>
+<li>维护类层次结构的封闭性</li>
+</ol>
+<p>密封类的一个主要用途是确保类层次结构的封闭性。这意味着，如果您想保护一组类，而不希望其他类继承或实现它们，可以使用密封类来实现这一目标。这对于确保代码的安全性和稳定性非常有用。</p>
+<ol>
+<li>预防代码的意外扩展</li>
+</ol>
+<p>密封类可以防止其他程序员意外地扩展一个类。在进行类设计时，您可能希望自己或其他程序员只能在特定的类中实现或继承指定的类。在这种情况下，您可以将类标记为“密封”，强制限制其他程序员可以实现或继承的类的范围。</p>
+<ol>
+<li>增强代码的可读性和可维护性</li>
+</ol>
+<p>密封类可以增强代码的可读性和可维护性。由于密封类明确规定了哪些类可以扩展或实现它，因此其他开发人员可以更清晰地看到代码的结构并理解它们的关系。这使得代码更易于维护和修改。<br />
+总之，密封类是一种灵活而有用的类修饰符，可以帮助您维护类的封闭性、预防代码的意外扩展、增强代码的可读性和可维护性。</p>
+<p>在Java15版本中，新增了密封类和密封接口（预览）。<br />
+使用sealed关键字修饰的类，我们就称之为密封类。密封类必须是一个父类，我们可以使用permits关键字来指定哪些子类可以继承于密封类，并且密封类的子类必须使用sealed、final或non-sealed来修饰。<br />
+【示例】密封类的演示</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// 密封类必须被继承，并且使用permits来指定哪些子类可以被继承</span>
+<span class="kd">sealed</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Animal</span><span class="w"> </span><span class="kd">permits</span><span class="w"> </span><span class="n">Dog</span><span class="p">,</span><span class="w"> </span><span class="n">Bird</span><span class="p">,</span><span class="w"> </span><span class="n">Tiger</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
+<span class="c1">// 注意：密封类的子类必须使用sealed、final或non-sealed来修饰</span>
+<span class="c1">// final关键字修饰的子类，则该子类不能被继承</span>
+<span class="kd">final</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Tiger</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">Animal</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
+<span class="c1">// non-sealed修饰的子类，则该子类就是一个普通类</span>
+<span class="kd">non-sealed</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Bird</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">Animal</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
+<span class="c1">// sealed修饰的子类，则该类就必须被继承，否则就会编译错误</span>
+<span class="kd">sealed</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Dog</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">Animal</span><span class="w"> </span><span class="p">{}</span>
+<span class="kd">non-sealed</span><span class="w"> </span><span class="kd">class</span> <span class="nc">SmallDog</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">Dog</span><span class="w"> </span><span class="p">{}</span>
+</code></pre>
+<p>使用sealed关键字修饰的接口，我们就称之为密封接口。密封接口必须使用permits关键字来指定实现类或子接口。针对密封接口的实现类，则必须使用sealed、final或non-sealed来修饰；针对密封接口的子接口，则必须使用sealed或non-sealed来修饰。<br />
+【示例】密封接口的演示</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// 使用sealed修饰的接口，则必须使用permits来指定实现类或子接口。</span>
+<span class="kd">public</span><span class="w"> </span><span class="kd">sealed</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">InterA</span><span class="w"> </span><span class="kd">permits</span><span class="w"> </span><span class="n">Student</span><span class="p">,</span><span class="w"> </span><span class="n">InterB</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
+<span class="c1">// 密封接口的实现类，必须使用sealed、final或non-sealed来修饰</span>
+<span class="kd">non-sealed</span><span class="w"> </span><span class="cm">/*final*/</span><span class="w"> </span><span class="cm">/*sealed*/</span><span class="w"> </span><span class="kd">class</span> <span class="nc">Student</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">InterA</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
+<span class="c1">// 密封接口的子接口，必须使用sealed或non-sealed来修饰</span>
+<span class="kd">non-sealed</span><span class="w"> </span><span class="cm">/*sealed*/</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">InterB</span><span class="w"> </span><span class="kd">extends</span><span class="w"> </span><span class="n">InterA</span><span class="w"> </span><span class="p">{}</span>
+</code></pre>
+<p><strong>sealed与record：</strong><br />
+因为Record类默认采用了final关键字修饰，因此Record类就可以作为密封接口的实现类。<br />
+【示例】密封接口和Record类</p>
+<pre lang="java"><code class="language-java md-fencescode"><span class="c1">// 密封接口</span>
+<span class="kd">sealed</span><span class="w"> </span><span class="kd">interface</span> <span class="nc">Flyable</span><span class="w"> </span><span class="kd">permits</span><span class="w"> </span><span class="n">SuperMan</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
+<span class="c1">// 让Record类作为密封接口的实现类</span>
+<span class="kd">record</span> <span class="nc">SuperMan</span><span class="p">(</span><span class="n">String</span><span class="w"> </span><span class="n">name</span><span class="p">,</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">age</span><span class="p">)</span><span class="w"> </span><span class="kd">implements</span><span class="w"> </span><span class="n">Flyable</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">}</span>
+</code></pre>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../../../../site-tree.json", "hasMath": false, "short": "4xu91i"};</script>
+<script src="../../../../../../ui.js"></script>
+</body>
+</html>
