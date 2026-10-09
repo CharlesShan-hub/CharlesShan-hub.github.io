@@ -209,6 +209,52 @@
     }
   })();
 
+  /* ===== 书页翻页条（GitBook 式）：book+catalog 目录页定义的阅读链 =====
+     站点树里当前页挂有 prev/next（导出端 _attach_pager_chain 生成）时，
+     正文底部渲染 上一篇/下一篇；普通笔记页/首页无链信息不渲染。 */
+  (function () {
+    var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
+    var content = document.getElementById("pkm-content");
+    if (!content) return;
+    var base = SITE_TREE.replace(/site-tree\.json$/, "");
+    fetch(SITE_TREE)
+      .then(function (r) { return r.json(); })
+      .then(function (root) {
+        var node = null;
+        (function find(n) {
+          if (n.type === "dir") { (n.children || []).forEach(find); return; }
+          if (n.rel === curRel) node = n;
+        })(root);
+        if (!node || (!node.next && !node.prev)) return;
+        var nav = document.createElement("nav");
+        nav.className = "pkm-pager";
+        if (node.prev) {
+          var pa = document.createElement("a");
+          pa.className = "pager-prev"; pa.href = base + node.prev;
+          var pArrow = document.createElement("span"); pArrow.className = "pager-arrow"; pArrow.textContent = "←";
+          var pWrap = document.createElement("span"); pWrap.className = "pager-wrap";
+          var pLabel = document.createElement("span"); pLabel.className = "pager-label"; pLabel.textContent = "上一篇";
+          var pTitle = document.createElement("span"); pTitle.className = "pager-title"; pTitle.textContent = node.prevTitle || "";
+          pWrap.appendChild(pLabel); pWrap.appendChild(pTitle);
+          pa.appendChild(pArrow); pa.appendChild(pWrap);
+          nav.appendChild(pa);
+        }
+        if (node.next) {
+          var na = document.createElement("a");
+          na.className = "pager-next"; na.href = base + node.next;
+          var nWrap = document.createElement("span"); nWrap.className = "pager-wrap";
+          var nLabel = document.createElement("span"); nLabel.className = "pager-label"; nLabel.textContent = "下一篇";
+          var nTitle = document.createElement("span"); nTitle.className = "pager-title"; nTitle.textContent = node.nextTitle || "";
+          nWrap.appendChild(nLabel); nWrap.appendChild(nTitle);
+          var nArrow = document.createElement("span"); nArrow.className = "pager-arrow"; nArrow.textContent = "→";
+          na.appendChild(nWrap); na.appendChild(nArrow);
+          nav.appendChild(na);
+        }
+        content.parentNode.insertBefore(nav, content.nextSibling);
+      })
+      .catch(function () {});
+  })();
+
   /* ===== 共享组件（主题切换 + 本页大纲 TOC）：ui_widgets.js 单点维护，ui.js 与私密页加密外壳共用 ===== */
   /* pkmizer 共享组件：主题切换 + 本页大纲（TOC）
  * 站点 ui.js 与私密页加密外壳（encrypt.mjs 模板）共用同一份实现，单点维护。

@@ -2,6 +2,7 @@
 title: Apache Pulsar in Action
 tags:
   - book
+  - catalog
 date: 2026-10-09
 comment:
 ---
