@@ -529,7 +529,7 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
 
   /* ===== 调试面板（localStorage 缓存查看 / 增删改） ===== */
   (function () {
-    // 仅首页显示：子页面 / 私密页不创建，保持界面干净（与 ui_main.js 的首页判定一致）
+    // 仅首页显示：子页面 / 私密页不创建，保持界面干净（与 ui_core.js 的首页判定一致）
     var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
     if (!(/index\.html$/.test(curRel) || curRel.replace(/\/$/, "").split("/").length === 1)) return;
     var btn = document.createElement("button");

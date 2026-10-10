@@ -1,4 +1,6 @@
-/* pkmizer ui.js - 主题切换 / 文件树 / 目录 / 图片放大 */
+/* pkmizer ui.js 分片 1/6：IIFE 外壳 + 页面配置 + 按钮组基础设施
+   全部分片由 mdh/ui_bundle.py build_ui_js 按序拼接成单文件 ui.js（同一 IIFE，闭包共享）：
+   ui_core(本片) -> ui_nav -> ui_pager -> ui_actions -> ui_search -> ui_view */
 (function () {
   "use strict";
   var C = window.PKM || {};
@@ -58,6 +60,7 @@
     document.documentElement.style.setProperty("--nav-fg", fg || "");
   };
 
+/* pkmizer ui.js 分片 2/6：左侧文件树（面板开合/停靠拖拽/标签筛选/聚焦模式/树渲染） */
   /* ===== 主题切换 + 本页大纲 TOC：共享组件（ui_widgets.js），调用见文件树之后的共享挂载 ===== */
 
   /* ===== 左侧文件树 ===== */
@@ -379,6 +382,7 @@
     }
   })();
 
+/* pkmizer ui.js 分片 3/6：书页翻页条（GitBook 式，book+catalog 目录页定义的阅读链） */
   /* ===== 书页翻页条（GitBook 式）：book+catalog 目录页定义的阅读链 =====
      站点树里当前页挂有 prev/next（导出端 _attach_pager_chain 生成）时，
      正文底部渲染 上一篇/下一篇；普通笔记页/首页无链信息不渲染。 */
@@ -425,6 +429,7 @@
       .catch(function () {});
   })();
 
+/* pkmizer ui.js 分片 4/6：共享组件挂载（主题切换+TOC）+ 右上动作按钮（下载 md / 短链）+ 首页背景明暗 */
   /* ===== 共享组件（主题切换 + 本页大纲 TOC）：ui_widgets.js 单点维护，ui.js 与私密页加密外壳共用 ===== */
   /* pkmizer 共享组件：主题切换 + 本页大纲（TOC）
  * 站点 ui.js 与私密页加密外壳（encrypt.mjs 模板）共用同一份实现，单点维护。
@@ -924,7 +929,7 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
 
   /* ===== 调试面板（localStorage 缓存查看 / 增删改） ===== */
   (function () {
-    // 仅首页显示：子页面 / 私密页不创建，保持界面干净（与 ui_main.js 的首页判定一致）
+    // 仅首页显示：子页面 / 私密页不创建，保持界面干净（与 ui_core.js 的首页判定一致）
     var curRel = decodeURIComponent(location.pathname).replace(/^\//, "");
     if (!(/index\.html$/.test(curRel) || curRel.replace(/\/$/, "").split("/").length === 1)) return;
     var btn = document.createElement("button");
@@ -1242,6 +1247,7 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
     applyMode(sm === "dark" ? "dark" : (sm === "light" ? "light" : (sysDark ? "dark" : "light")));
   })();
 
+/* pkmizer ui.js 分片 5/6：全站搜索（按文件名与标签过滤站点树） */
   /* ===== 全站搜索 ===== */
   (function () {
     var btn = document.createElement("button");
@@ -1342,6 +1348,7 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
       .catch(function () {});
   })();
 
+/* pkmizer ui.js 分片 6/6：内容呈现增强（图片放大 / KaTeX / mermaid 占位 / 代码框工具栏）+ IIFE 收口 */
   /* ===== 图片双击放大 ===== */
   (function () {
     var box = document.createElement("div");
