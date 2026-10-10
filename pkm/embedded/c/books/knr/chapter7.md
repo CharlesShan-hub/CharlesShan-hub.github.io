@@ -7,7 +7,7 @@ comment:
 ---
 
 
-## Chapter 7 - Input and Output
+# Chapter 7 - Input and Output
 
 Input and output are not part of the C language itself, so we have not emphasized them in our presentation thus far. Nonetheless, programs interact with their environment in much more complicated ways than those we have shown before. In this chapter we will describe the standard library, a set of functions that provide input and output, string handling, storage management, mathematical routines, and a variety of other services for C programs. We will concentrate on input and output 
 

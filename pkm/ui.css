@@ -63,17 +63,20 @@ body { box-sizing: border-box; }
 }
 #pkm-width-pop .pkm-width-value { margin-top: 8px; color: var(--nav-fg, #888); }
 
-/* 桌面端按钮组折叠：默认只显示 “…”；悬浮整组临时展开，点击固定展开 */
+/* 桌面端按钮组折叠：默认只显示 “…”；悬浮主按钮临时展开，点击固定展开 */
 .pkm-btns.collapsed button:not(.pkm-more) {
   opacity: 0; transform: translateX(-6px); pointer-events: none; visibility: hidden;
 }
-.pkm-btns.collapsed:hover button:not(.pkm-more),
+/* 悬浮触发收窄到「…」主按钮本身：:hover 挂容器会把隐藏按钮的占位空白也算进
+   触发区（visibility:hidden 仍占布局），鼠标靠近就弹出反而点不到主按钮；
+   :has 只认主按钮悬停，展开后鼠标移入子按钮自然回到容器 hover，保持展开 */
+.pkm-btns.collapsed:has(.pkm-more:hover) button:not(.pkm-more),
 .pkm-btns.collapsed.pinned button:not(.pkm-more) {
   opacity: 1; transform: translateX(0); pointer-events: auto; visibility: visible;
 }
 /* 右侧按钮组镜像：按钮在 “…” 左侧，收起时向右（朝主按钮）偏移，展开时归零 */
 #pkm-top-btns.collapsed button:not(.pkm-more) { transform: translateX(6px); }
-#pkm-top-btns.collapsed:hover button:not(.pkm-more),
+#pkm-top-btns.collapsed:has(.pkm-more:hover) button:not(.pkm-more),
 #pkm-top-btns.collapsed.pinned button:not(.pkm-more) { transform: translateX(0); }
 
 /* 主题菜单（与文件树 / TOC 浮层同风格，跟随主题变量） */
@@ -223,27 +226,83 @@ body { box-sizing: border-box; }
   transition: transform .25s ease, visibility 0s;
 }
 #nav-panel .nav-head {
+  display: flex; align-items: center; justify-content: space-between;
   padding: 14px 16px 10px; font-size: 14px; font-weight: 600;
   color: var(--nav-fg, #555);
   border-bottom: 1px solid color-mix(in srgb, var(--nav-fg, #555) 14%, transparent);
 }
+/* 类型标签筛选条：四个彩色小圆点（配色与正文标签胶囊同一哈希色板，非 emoji），
+   点按熄灭/点亮对应类型，hover 由 title 显示标签名，状态记忆在 localStorage */
+#nav-panel .nav-filters { display: flex; gap: 7px; }
+#nav-panel .nav-filter {
+  width: 11px; height: 11px; padding: 0; border: none; border-radius: 50%;
+  background: var(--badge-color, #999); cursor: pointer;
+  transition: transform .15s ease, opacity .15s ease;
+}
+#nav-panel .nav-filter:hover { transform: scale(1.3); }
+#nav-panel .nav-filter.off { opacity: .22; transform: none; }
+/* 聚焦模式徽章：头部显示当前聚焦文件夹（尾段名，超长省略），× 恢复展示全部 */
+#nav-panel .nav-focus {
+  display: flex; align-items: center; gap: 4px;
+  min-width: 0; max-width: 42%;
+  padding: 3px 4px 3px 10px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--nav-fg, #555) 10%, transparent);
+  font-size: 12px; font-weight: 500;
+}
+#nav-panel .nav-focus-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#nav-panel .nav-focus-x {
+  flex: none; width: 16px; height: 16px; padding: 0;
+  border: none; border-radius: 50%;
+  background: color-mix(in srgb, var(--nav-fg, #555) 16%, transparent);
+  color: inherit; font-size: 12px; line-height: 1; cursor: pointer;
+  transition: background .15s ease;
+}
+#nav-panel .nav-focus-x:hover { background: color-mix(in srgb, var(--nav-fg, #555) 30%, transparent); }
+/* 右键/长按文件夹菜单：fixed 挂 body，配色用主题切换写入的全局变量（不依赖面板作用域） */
+.nav-menu {
+  position: fixed; z-index: 10000; min-width: 150px;
+  padding: 5px; border-radius: 10px;
+  background: var(--bg-color, #fff);
+  border: 1px solid color-mix(in srgb, #888 22%, transparent);
+  box-shadow: 0 8px 28px rgba(0,0,0,.16);
+}
+.nav-menu-item {
+  display: block; width: 100%; padding: 7px 12px;
+  border: none; border-radius: 6px; background: none; cursor: pointer;
+  font-size: 13px; text-align: left;
+  color: var(--text-color, #333);
+  transition: background .12s ease;
+}
+.nav-menu-item:hover { background: color-mix(in srgb, var(--text-color, #333) 10%, transparent); }
 #nav-panel .nav-tree {
   flex: 1; overflow-y: auto; padding: 8px 8px 24px; margin: 0;
   list-style: none; box-sizing: border-box;
 }
 #nav-panel ul { list-style: none; margin: 0; padding: 0 0 0 14px; }
+/* 子层级缩进引导线（VS Code 式左侧细线） */
+#nav-panel .nav-tree ul {
+  border-left: 1px solid color-mix(in srgb, var(--nav-fg, #555) 10%, transparent);
+}
 #nav-panel .nav-dir {
   padding: 2px 0; cursor: pointer; color: var(--nav-fg, #555);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+#nav-panel .nav-dir-label {
+  display: block; padding: 3px 6px; margin: 1px 0; border-radius: 5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.45;
 }
 #nav-panel .nav-dir-label::before {
-  content: "▾"; display: inline-block; width: 14px;
+  content: "▸"; display: inline-block; width: 14px;
   color: color-mix(in srgb, var(--nav-fg, #555) 60%, transparent);
   font-size: 10px; vertical-align: 1px;
+  transition: transform .15s ease;
 }
-#nav-panel .nav-dir.collapsed > .nav-dir-label::before { content: "▸"; }
+/* 展开箭头旋转过渡（替代字符切换，动效更顺） */
+#nav-panel .nav-dir:not(.collapsed) > .nav-dir-label::before { transform: rotate(90deg); }
 #nav-panel .nav-dir.collapsed > ul { display: none; }
-#nav-panel .nav-dir-label:hover { color: var(--nav-fg, #111); }
+#nav-panel .nav-dir-label:hover {
+  background: color-mix(in srgb, var(--nav-fg, #555) 9%, transparent);
+}
 #nav-panel .nav-file {
   display: block; padding: 3px 6px; margin: 1px 0;
   border-radius: 5px; color: var(--nav-fg, #444); text-decoration: none;

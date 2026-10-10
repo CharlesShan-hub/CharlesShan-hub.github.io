@@ -69,7 +69,7 @@
       '<path d="M3 6a2 2 0 0 1 2-2h3l2 2h9a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
     var panel = document.createElement("div");
     panel.id = "nav-panel";
-    panel.innerHTML = '<div class="nav-head">&nbsp;</div>' +
+    panel.innerHTML = '<div class="nav-head">&nbsp;<span class="nav-filters"></span></div>' +
       '<ul class="nav-tree"><li class="nav-empty">加载中...</li></ul>';
     addSideBtn(btn);
     document.body.appendChild(panel);
@@ -163,27 +163,180 @@
       if (navRaw) { userCollapsed = JSON.parse(navRaw) || {}; }
       navFirst = navRaw === null;
     } catch (e) {}
+
+    /* ===== 类型标签筛选：头部四个彩色圆点（配色与正文标签胶囊同一哈希色板），
+       点按熄灭/点亮对应类型（note/catalog/book/attachment），状态记忆；
+       过滤后整树重建，折叠状态与当前页高亮随 buildNode 自动恢复 ===== */
+    var TYPE_TAGS = ["note", "catalog", "book", "attachment"];
+    var FILTER_KEY = "pkm-nav-tagfilter";
+    var tagsOff = {};
+    try { tagsOff = JSON.parse(localStorage.getItem(FILTER_KEY)) || {}; } catch (e) { tagsOff = {}; }
+    var tagColor = function (t) {
+      var h = 0;
+      for (var i = 0; i < t.length; i++) h += t.charCodeAt(i);
+      // 与 python 端 decorate_body 的标签配色同一哈希（ord 求和 % 6）
+      return ["#007ec6", "#97ca00", "#dfb317", "#8a2be2", "#e05d44", "#fe7d37"][h % 6];
+    };
+    var fileVisible = function (node) {
+      var tags = node.tags || [];
+      for (var i = 0; i < tags.length; i++) {
+        if (TYPE_TAGS.indexOf(tags[i]) > -1) return !tagsOff[tags[i]];
+      }
+      return true; // 无类型标签的文件不参与筛选，始终显示
+    };
+    var fbox = panel.querySelector(".nav-filters");
+    TYPE_TAGS.forEach(function (t) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "nav-filter" + (tagsOff[t] ? " off" : "");
+      b.style.setProperty("--badge-color", tagColor(t));
+      b.title = t;
+      b.setAttribute("aria-label", "筛选 " + t);
+      b.addEventListener("click", function () {
+        tagsOff[t] = !tagsOff[t];
+        b.classList.toggle("off", tagsOff[t]);
+        try { localStorage.setItem(FILTER_KEY, JSON.stringify(tagsOff)); } catch (e) {}
+        if (treeCache) renderTree(treeCache);
+      });
+      fbox.appendChild(b);
+    });
+
+    /* ===== 聚焦模式：右键/长按文件夹「只展示本文件夹」，头部徽章一键恢复 ===== */
+    var FOCUS_KEY = "pkm-nav-focus";
+    var focusRel = "";
+    try { focusRel = localStorage.getItem(FOCUS_KEY) || ""; } catch (e) { focusRel = ""; }
+    var findDir = function (node, rel) {
+      if (node.type !== "dir") return null;
+      if (node.rel === rel) return node;
+      var kids = node.children || [];
+      for (var i = 0; i < kids.length; i++) {
+        var f = findDir(kids[i], rel);
+        if (f) return f;
+      }
+      return null;
+    };
+    var headEl = panel.querySelector(".nav-head");
+    var renderFocusBadge = function () {
+      var old = headEl.querySelector(".nav-focus");
+      if (old) old.remove();
+      if (!focusRel) return;
+      var b = document.createElement("span");
+      b.className = "nav-focus";
+      b.title = focusRel;
+      var name = document.createElement("span");
+      name.className = "nav-focus-name";
+      name.textContent = focusRel.replace(/\/$/, "").split("/").pop();
+      var x = document.createElement("button");
+      x.type = "button"; x.className = "nav-focus-x"; x.title = "展示全部文件";
+      x.textContent = "×";
+      x.addEventListener("click", function () { setFocus(""); });
+      b.appendChild(name); b.appendChild(x);
+      headEl.insertBefore(b, fbox);
+    };
+    var setFocus = function (rel) {
+      focusRel = rel || "";
+      try {
+        if (focusRel) localStorage.setItem(FOCUS_KEY, focusRel);
+        else localStorage.removeItem(FOCUS_KEY);
+      } catch (e) {}
+      renderFocusBadge();
+      if (treeCache) renderTree(treeCache);
+    };
+    renderFocusBadge(); // 启动时按 localStorage 恢复聚焦徽章
+
+    /* 右键/长按文件夹弹出聚焦菜单（fixed 挂 body，避开面板 transform 对定位的干扰） */
+    var menu = document.createElement("div");
+    menu.className = "nav-menu";
+    menu.style.display = "none";
+    document.body.appendChild(menu);
+    var closeNavMenu = function () { menu.style.display = "none"; };
+    var openNavMenu = function (x, y, rel) {
+      menu.innerHTML = "";
+      var mk = function (text, fn) {
+        var it = document.createElement("button");
+        it.type = "button"; it.className = "nav-menu-item"; it.textContent = text;
+        it.addEventListener("click", function () { closeNavMenu(); fn(); });
+        menu.appendChild(it);
+      };
+      mk("只展示本文件夹", function () { setFocus(rel); });
+      if (focusRel) mk("展示全部文件", function () { setFocus(""); });
+      menu.style.display = "block";
+      var mw = menu.offsetWidth, mh = menu.offsetHeight;
+      var left = x, top = y;
+      if (left + mw > window.innerWidth - 8) left = window.innerWidth - mw - 8;
+      if (top + mh > window.innerHeight - 8) top = window.innerHeight - mh - 8;
+      menu.style.left = Math.max(8, left) + "px";
+      menu.style.top = Math.max(8, top) + "px";
+    };
+    document.addEventListener("click", closeNavMenu);
+    document.addEventListener("contextmenu", function (e) {
+      if (!menu.contains(e.target)) closeNavMenu();
+    });
+    box.addEventListener("contextmenu", function (e) {
+      var li = e.target.closest("li.nav-dir");
+      if (!li || !li.dataset.rel) return;
+      e.preventDefault();
+      e.stopPropagation(); // 阻止冒泡到 document 的关闭监听，否则菜单刚开就被关掉
+      openNavMenu(e.clientX, e.clientY, li.dataset.rel);
+    });
+    // 长按（触屏）500ms 触发同一菜单；移动超 10px 或抬起视为取消
+    var lpTimer = null, lpXY = null;
+    var lpCancel = function () { if (lpTimer) { clearTimeout(lpTimer); lpTimer = null; } };
+    box.addEventListener("touchstart", function (e) {
+      var li = e.target.closest("li.nav-dir");
+      if (!li || !li.dataset.rel) return;
+      var t = e.touches[0];
+      lpXY = { x: t.clientX, y: t.clientY };
+      lpTimer = setTimeout(function () {
+        lpTimer = null;
+        openNavMenu(lpXY.x, lpXY.y, li.dataset.rel);
+      }, 500);
+    }, { passive: true });
+    box.addEventListener("touchmove", function (e) {
+      if (!lpTimer || !lpXY) return;
+      var t = e.touches[0];
+      if (Math.abs(t.clientX - lpXY.x) > 10 || Math.abs(t.clientY - lpXY.y) > 10) lpCancel();
+    }, { passive: true });
+    box.addEventListener("touchend", lpCancel);
+    box.addEventListener("touchcancel", lpCancel);
+
+    var treeCache = null;
+    var renderTree = function (root) {
+      box.innerHTML = "";
+      var shown = root;
+      if (focusRel) {
+        shown = findDir(root, focusRel);
+        if (!shown) { setFocus(""); shown = root; } // 聚焦目录已不存在，退回全部
+      }
+      var kids = focusRel ? [shown] : (shown.children || []);
+      if (!kids.length) {
+        box.innerHTML = '<li class="nav-empty">暂无文件</li>';
+        return;
+      }
+      kids.forEach(function (c) {
+        var n = buildNode(c, 0);
+        if (n) box.appendChild(n);
+      });
+      // 首次使用（无折叠记录）时展开当前文件所在路径，之后尊重用户折叠状态
+      if (navFirst) expandActive(box);
+    };
     fetch(SITE_TREE)
       .then(function (r) { return r.json(); })
       .then(function (root) {
-        box.innerHTML = "";
-        if (!root.children || !root.children.length) {
-          box.innerHTML = '<li class="nav-empty">暂无文件</li>';
-          return;
-        }
-        (root.children || []).forEach(function (c) { box.appendChild(buildNode(c, 0)); });
-        // 首次使用（无折叠记录）时展开当前文件所在路径，之后尊重用户折叠状态
-        if (navFirst) expandActive(box);
+        treeCache = root;
+        renderTree(root);
       })
       .catch(function () {
         box.innerHTML = '<li class="nav-empty">文件树加载失败</li>';
       });
     function buildNode(node, depth) {
+      if (node.type !== "dir" && !fileVisible(node)) return null;
       var li = document.createElement("li");
       if (node.type === "dir") {
         // 折叠状态：用户记录优先，无记录时非顶层目录默认折叠
         var collapsed = (node.rel in userCollapsed) ? userCollapsed[node.rel] : depth > 0;
         li.className = "nav-dir" + (collapsed ? " collapsed" : "");
+        li.dataset.rel = node.rel; // 右键/长按菜单定位文件夹用
         var label = document.createElement("span");
         label.className = "nav-dir-label";
         label.textContent = node.name;
@@ -194,7 +347,13 @@
         });
         li.appendChild(label);
         var ul = document.createElement("ul");
-        (node.children || []).forEach(function (c) { ul.appendChild(buildNode(c, depth + 1)); });
+        var kids = [];
+        (node.children || []).forEach(function (c) {
+          var n = buildNode(c, depth + 1);
+          if (n) kids.push(n);
+        });
+        if (!kids.length) return null; // 子树全被筛掉，目录一并隐藏
+        kids.forEach(function (n) { ul.appendChild(n); });
         li.appendChild(ul);
       } else {
         var a = document.createElement("a");

@@ -1,7 +1,8 @@
 ---
-title:
+title: url-uri-urn
 tags:
-date:
+  - note
+date: 2026-10-10
 comment:
 ---
 

@@ -2,7 +2,8 @@
 title: K&R C Chapter 0
 tags:
   - book
-date: 2026-10-06
+  - catalog
+date: 2026-10-10
 comment:
 ---
 

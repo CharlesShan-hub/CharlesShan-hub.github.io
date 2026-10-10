@@ -1,7 +1,8 @@
 ---
-title:
+title: tomcat-download-scoop
 tags:
-date:
+  - note
+date: 2026-10-10
 comment:
 ---
 

@@ -1,7 +1,8 @@
 ---
-title:
+title: bs-cs-architecture
 tags:
-date:
+  - note
+date: 2026-10-10
 comment:
 ---
 

@@ -7,7 +7,7 @@ comment:
 ---
 
 
-## Chapter 6 - Structures
+# Chapter 6 - Structures
 
 A structure is a collection of one or more variables, possibly of different types, grouped together under a single name for convenient handling. (Structures are called "records" in some languages, notably Pascal.) Structures help to organize complicated data, particularly in large programs, because they permit a group of related variables to be treated as a unit instead of as separate entities. 
 

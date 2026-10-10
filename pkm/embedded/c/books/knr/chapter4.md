@@ -7,7 +7,7 @@ comment:
 ---
 
 
-## Chapter 4 - Functions and Program Structure
+# Chapter 4 - Functions and Program Structure
 
 Functions break large computing tasks into smaller ones, and enable people to build on what others have done instead of starting over from scratch. Appropriate functions hide details of operation from parts of the program that don't need to know about them, thus clarifying the whole, and easing the pain of making changes. 
 

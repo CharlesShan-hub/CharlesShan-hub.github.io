@@ -1,13 +1,14 @@
 ---
-title:
+title: hello-world
 tags:
-date:
+  - note
+date: 2026-10-10
 comment:
 ---
 
 # Hello World
 
-1. tomcat windows 安装：[tomcat-download](../details/tomcat-download.md)
+1. tomcat windows 官网下载安装：[tomcat-download](../details/tomcat-download.md)
 2. tomcat windows scoop安装：[tomcat-download-scoop](../details/tomcat-download-scoop.md)
 3. 🌟tomcat docker 部署（本案例使用这个方案）：[tomcat-docker](../details/tomcat-docker.md)
 4. 🌟静态网站案例（这个只是前端内容）：后边很多案例会基于这个静态网站进行进一步开发，这个案例就是在servlet上搭建一个部门管理系统的最初的雏形。详细内容：[static-website-development](../details/static-website-development.md)
