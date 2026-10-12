@@ -2,7 +2,7 @@
 title: Javase
 tags:
   - catalog
-date: 2026-10-09
+date: 2026-10-10
 comment: Java SE 基础笔记：语法、OOP、集合、IO、多线程、JVM
 ---
 
@@ -10,10 +10,8 @@ comment: Java SE 基础笔记：语法、OOP、集合、IO、多线程、JVM
 * Basic and Components
     * 👉 [01-java-intro](notes/01-basic/01-java-intro.md)：Java基础、Hello World等
     * 👉 [02-variable-and-datatype](notes/01-basic/02-variable-and-datatype.md)：变量与数据类型
-    * 👉 [Keyboard Input](notes/01-basic/keyboard-input.md)：键盘输入
-    * 👉 [Branch and Loop](notes/01-basic/branch-control.md)：分支与循环
-    * 👉 [Array](notes/01-basic/array.md)：数组
-    * 👉 [Arrays](notes/01-basic/Arrays.md)：Comparator
+    * 👉 [03-Branch and Loop](notes/01-basic/branch-control.md)：分支与循环
+    * 👉 [04-array](notes/01-basic/array.md)：数组
 * OOP Basic
     * [Introduction for Class and Object](notes/02-oop/class-and-object-introduce.md)：引入
     * [Attributes and Methods](notes/02-oop/attributes-and-methods.md)：属性和成员方法
@@ -47,6 +45,8 @@ comment: Java SE 基础笔记：语法、OOP、集合、IO、多线程、JVM
     * [Date](notes/04-utils/date.md)：日期类
     * [System](notes/04-utils/System.md)：系统类
     * [Random](notes/04-utils/Random.md)：随机数
+    * [Scanner](notes/04-utils/Scanner.md)：键盘输入
+    * 👉 [Arrays](notes/04-utils/Arrays.md)：Comparator
 * IO and Network
     * [File](notes/05-io/File.md)：文件
     * [Coding](notes/05-io/coding.md)：编码
@@ -59,7 +59,6 @@ comment: Java SE 基础笔记：语法、OOP、集合、IO、多线程、JVM
     * [annotation](notes/06-java-advanced/annotation.md)：注解
     * [Swing](notes/06-java-advanced/Swing.md)：GUI
     * [jvm](notes/06-java-advanced/jvm.md)
-    * [java-new](notes/01-basic/java-new.md)
 * Others
     * [Remember](details/remember.md)：反思总结
     * [Plan](details/plan.md)：进度追踪

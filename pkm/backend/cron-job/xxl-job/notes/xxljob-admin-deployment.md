@@ -1,7 +1,8 @@
 ---
-title:
+title: xxljob-admin-deployment
 tags:
-date:
+  - note
+date: 2026-10-12
 comment:
 ---
 

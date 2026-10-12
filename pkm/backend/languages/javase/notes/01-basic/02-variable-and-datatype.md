@@ -2,7 +2,7 @@
 title: 变量与数据类型
 tags:
   - note
-date: 2026-10-06
+date: 2026-10-10
 comment: 变量、基本类型、进制，自动与强制类型转换规则
 ---
 
@@ -29,6 +29,7 @@ comment: 变量、基本类型、进制，自动与强制类型转换规则
     * 👉 [operator-assign](details/operator-assign.md): 赋值运算符、三目运算符
 * 后续扩展
     * 👉 [WrapperClass](../04-utils/WrapperClass.md): 包装类
+    * 👉 [Introduction to Scanner](../../details/scanner-intro.md)：Scanner 基本使用
 
 ---
 

@@ -1,7 +1,8 @@
 ---
-title:
+title: README
 tags:
-date:
+  - catalog
+date: 2026-10-12
 comment:
 ---
 
@@ -11,28 +12,18 @@ comment:
 
 ---
 
-## 专题一：任务调度基础
+## 专题一：任务调度概述与 Java 方案选型
 
-了解任务调度的基本概念与常见场景，为后续学习分布式调度方案打基础。
+先认识任务调度的基本概念与常见场景，再看 Java 侧的实现方案：JDK 内置的 Timer、ScheduledExecutorService、@Scheduled，成熟框架 Quartz，以及为什么必须走向分布式。
 
 * [任务调度概述](notes/task-scheduling-overview.md)
-* [任务调度核心概念](notes/task-scheduling-core-concepts.md)：任务、触发器、调度器
-* [任务调度使用场景](notes/task-scheduling-cases.md)
-* [任务调度注意事项](notes/task-scheduling-notes.md)
-
----
-
-## 专题二：Java 任务调度方案对比与选型
-
-从 JDK 内置方案（Timer、ScheduledExecutorService、@Scheduled）到成熟框架（Quartz），再到为什么必须走向分布式。
-
 * [Java 任务调度实现方案](notes/task-scheduling-implementations.md)
 * [任务调度选型指南](notes/task-scheduling-selection-guide.md)
 * [为什么需要分布式任务调度](notes/distributed-task-scheduling-why.md)
 
 ---
 
-## 专题三：XXL-JOB 入门与部署
+## 专题二：XXL-JOB 入门与部署
 
 从零认识 XXL-JOB，搭建调度中心、部署执行器，跑通第一个任务。
 
@@ -43,7 +34,7 @@ comment:
 
 ---
 
-## 专题四：XXL-JOB 核心特性与进阶用法
+## 专题三：XXL-JOB 核心特性与进阶用法
 
 深入 XXL-JOB 在分布式场景下的核心能力：动态任务、集群去重、分片广播。
 

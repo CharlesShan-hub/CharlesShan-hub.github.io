@@ -1,7 +1,8 @@
 ---
-title:
+title: xxljob-glue-mode
 tags:
-date:
+  - note
+date: 2026-10-12
 comment:
 ---
 

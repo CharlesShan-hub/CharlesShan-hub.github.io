@@ -1,7 +1,8 @@
 ---
-title:
+title: distributed-task-scheduling-why
 tags:
-date:
+  - note
+date: 2026-10-12
 comment:
 ---
 

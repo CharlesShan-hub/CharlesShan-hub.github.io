@@ -77,7 +77,7 @@ comment:
 	* 57～58：基础数据类型与字符串相互转换，包装类
 	* 59～60：[第三章作业](../notes/stage1/第三章作业.md)
 	* 61：（可跳过）章末总结
-* 第 4 章：[operator](../notes/01-basic/operator.md)，[keyboard-input](../notes/01-basic/keyboard-input.md)
+* 第 4 章：[operator](../notes/01-basic/operator.md)，[keyboard-input](../notes/04-utils/Scanner.md)
 	* 62：（可跳过）运算符简介
 	* 63：除法、取摸、++
 	* 64：（重点）i++面试题
@@ -93,7 +93,7 @@ comment:
 	* 80：运算符优先级（不用特别的背）
 	* 81~83：（可跳过）标识符规则和规范：[标识符规则与规范](../notes/stage1/标识符规则与规范.md)
 	* 84：（可跳过）关键字、保留字
-	* 85：（重要）键盘输入：[keyboard-input](../notes/01-basic/keyboard-input.md)
+	* 85：（重要）键盘输入：[keyboard-input](../notes/04-utils/Scanner.md)
 	* 86：（重要）进制：[进制](../notes/stage1/进制.md)
 	* 87～89：（可跳过）二、八、十六进制转十进制
 	* 90～92：（可跳过）十进制转二、八、十六进制
@@ -259,7 +259,7 @@ comment:
 	* 454：自定义异常
 	* 455：throw 和 throws 对比
 	* 456~458：[第十二章作业](../notes/stage2/第十二章作业.md)
-* 第 13 章：[WrapperClass](../notes/04-utils/WrapperClass.md)，[String](../notes/04-utils/String.md)，[Math](../notes/04-utils/Math.md)，[Arrays](../notes/01-basic/Arrays.md)，[BigIntegerBigDecimal](../notes/04-utils/BigIntegerBigDecimal.md)，[date](../notes/04-utils/date.md)
+* 第 13 章：[WrapperClass](../notes/04-utils/WrapperClass.md)，[String](../notes/04-utils/String.md)，[Math](../notes/04-utils/Math.md)，[Arrays](../notes/04-utils/Arrays.md)，[BigIntegerBigDecimal](../notes/04-utils/BigIntegerBigDecimal.md)，[date](../notes/04-utils/date.md)
 	* 459~464：包装类
 	* 465~473：（重要）String
 	* 474~477：（重要）StringBuffer
