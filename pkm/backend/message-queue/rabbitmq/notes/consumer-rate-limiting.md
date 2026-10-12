@@ -22,7 +22,7 @@ public void test02(){
 
 运行测试程序，观察 web 管理界面 `queue.order`队列：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763892303223-4730975f-4b86-4ea0-99b1-d16e301a5b40.png" width="736" title="" crop="0,0,1,1" id="u6f195249" class="ne-image">
+![1763892303223-4730975f-4b86-4ea0-99b1-d16e301a5b40.png](../assets/1763892303223-4730975f-4b86-4ea0-99b1-d16e301a5b40.png)
 
 
 
@@ -43,9 +43,9 @@ public void processMessagePrefetch(String dataString, Message message, Channel c
 
 启动消费端，打开 web 管理界面，看看是不是 100 瞬间变成 0：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763892565191-caaf4ded-665d-4f19-a27a-ed000512ea8f.png" width="216" title="" crop="0,0,1,1" id="u5aa5dc0e" class="ne-image">
+![1763892565191-caaf4ded-665d-4f19-a27a-ed000512ea8f.png](../assets/1763892565191-caaf4ded-665d-4f19-a27a-ed000512ea8f.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763892577218-0c1e3171-ade4-4a03-945c-f48d1865f2f7.png" width="205.6" title="" crop="0,0,1,1" id="u623c01b4" class="ne-image">
+![1763892577218-0c1e3171-ade4-4a03-945c-f48d1865f2f7.png](../assets/1763892577218-0c1e3171-ade4-4a03-945c-f48d1865f2f7.png)
 
 ## 当启用限流时
 在消费端的 `application.yml`中启用限流，一次少取，配置如下：
@@ -66,11 +66,11 @@ spring:
 
 再重新执行生产端，发送 100 条消息到队列：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763893871565-ec0f6230-3217-48a5-b629-9b16e91da6d4.png" width="174.4" title="" crop="0,0,1,1" id="ub442f151" class="ne-image">
+![1763893871565-ec0f6230-3217-48a5-b629-9b16e91da6d4.png](../assets/1763893871565-ec0f6230-3217-48a5-b629-9b16e91da6d4.png)
 
 5 秒后刷新页面：达到了 1 秒取一条消息进行消费。
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763893886496-1b425458-c246-41ae-b5ae-d09723deb681.png" width="232.8" title="" crop="0,0,1,1" id="ud8687366" class="ne-image">
+![1763893886496-1b425458-c246-41ae-b5ae-d09723deb681.png](../assets/1763893886496-1b425458-c246-41ae-b5ae-d09723deb681.png)
 
 ## 一次取少量和一次取大量的区别
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763893247044-24882f77-627c-4732-917b-6d3393b3c2d7.png" width="779.2" title="" crop="0,0,1,1" id="u0e92423a" class="ne-image">
+![1763893247044-24882f77-627c-4732-917b-6d3393b3c2d7.png](../assets/1763893247044-24882f77-627c-4732-917b-6d3393b3c2d7.png)

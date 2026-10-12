@@ -261,4 +261,4 @@ docker exec -it rabbitmq-node1 rabbitmqctl set_policy ha-all "^" '{"ha-mode":"al
 
 另外，通过 web 管理界面也可以看到三个节点的集群已经做到了相互感知和发现了：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764049992301-111cf21f-dd84-474b-882e-0c8af5faf2f4.png" width="479.2" title="" crop="0,0,1,1" id="u045426f7" class="ne-image">
+![1764049992301-111cf21f-dd84-474b-882e-0c8af5faf2f4.png](../assets/1764049992301-111cf21f-dd84-474b-882e-0c8af5faf2f4.png)

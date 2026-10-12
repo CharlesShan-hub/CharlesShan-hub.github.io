@@ -24,15 +24,15 @@ comment:
 
 1. 创建交换机：`exchange.timeout`
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763896968333-b865fd9d-d7aa-4426-a557-0ba25cef4aa1.png" width="506.4" title="" crop="0,0,1,1" id="u722f0079" class="ne-image">
+![1763896968333-b865fd9d-d7aa-4426-a557-0ba25cef4aa1.png](../assets/1763896968333-b865fd9d-d7aa-4426-a557-0ba25cef4aa1.png)
 
 2. 创建队列：`queue.timeout`
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763897083238-885377f0-be73-47c7-ab23-72609e03639d.png" width="723.2" title="" crop="0,0,1,1" id="uf5e569bc" class="ne-image">
+![1763897083238-885377f0-be73-47c7-ab23-72609e03639d.png](../assets/1763897083238-885377f0-be73-47c7-ab23-72609e03639d.png)
 
 3. 配置路由键，绑定交换机和队列：`routing.key.timeout`
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763897154516-58ab64b5-6e6c-40f3-87d4-7167889c25da.png" width="824.8" title="" crop="0,0,1,1" id="u9a85fcca" class="ne-image">
+![1763897154516-58ab64b5-6e6c-40f3-87d4-7167889c25da.png](../assets/1763897154516-58ab64b5-6e6c-40f3-87d4-7167889c25da.png)
 
 
 
@@ -51,11 +51,11 @@ void test02() {
 
 运行测试程序，观察 web 管理界面：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763897508094-4be978e4-dbe3-4837-8be9-056f1caf4061.png" width="197.6" title="" crop="0,0,1,1" id="u8bf86499" class="ne-image">
+![1763897508094-4be978e4-dbe3-4837-8be9-056f1caf4061.png](../assets/1763897508094-4be978e4-dbe3-4837-8be9-056f1caf4061.png)
 
 10 秒超时后：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763897515548-9783d76a-c5f4-4734-a70a-5319e7a482cc.png" width="171.2" title="" crop="0,0,1,1" id="ue16e320e" class="ne-image">
+![1763897515548-9783d76a-c5f4-4734-a70a-5319e7a482cc.png](../assets/1763897515548-9783d76a-c5f4-4734-a70a-5319e7a482cc.png)
 
 ## 通过代码设置某条消息的超时时间
 **在 `producer_confirm`项目中编写测试代码，生产端发送 1 条**设置了超时时间**的消息到队列，看看超时之后，消息是否全部删除：**

@@ -1,8 +1,9 @@
 ---
-title:
+title: Comparator
 tags:
-date:
-comment:
+  - note
+date: 2026-10-12
+comment: 用于对对象集合进行总排序。
 ---
 
 # Comparator

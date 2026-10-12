@@ -45,7 +45,7 @@ channel.basicNack(deliveryTag, false, false);
 
 **创建正常队列**：`queue.normal.video`
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763963759632-23436d76-c3a0-4010-8b9f-bc24154b924c.png" width="828.8" title="" crop="0,0,1,1" id="u494abcd5" class="ne-image">
+![1763963759632-23436d76-c3a0-4010-8b9f-bc24154b924c.png](../assets/1763963759632-23436d76-c3a0-4010-8b9f-bc24154b924c.png)
 
 **绑定路由键**：`routing.key.normal`
 
@@ -95,7 +95,7 @@ public void processMessageDead(String dataString, Message message, Channel chann
 
 在 Web 管理界面向**正常队列**发送消息（**在交换机页面**，通过交换机 `exchange.normal.video`+ 路由键 `routing.key.normal`发送消息）
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763976041206-e73fee77-2a66-48b1-9cee-fc30c68ee481.png" width="872.8" title="" crop="0,0,1,1" id="u2bd6c8a7" class="ne-image">
+![1763976041206-e73fee77-2a66-48b1-9cee-fc30c68ee481.png](../assets/1763976041206-e73fee77-2a66-48b1-9cee-fc30c68ee481.png)
 
 
 
@@ -140,4 +140,4 @@ public void test04(){
 
 此时启动死信队列的监听，就是我们在验证第一种情况时编写的监听死信队列的代码，结果如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763977143487-5ae3cf22-3535-4629-be3d-b4167c3f0d6b.png" width="404" title="" crop="0,0,1,1" id="u9f90c7a0" class="ne-image">
+![1763977143487-5ae3cf22-3535-4629-be3d-b4167c3f0d6b.png](../assets/1763977143487-5ae3cf22-3535-4629-be3d-b4167c3f0d6b.png)

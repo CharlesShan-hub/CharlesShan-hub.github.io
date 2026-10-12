@@ -118,13 +118,13 @@ docker exec -it rabbitmq-shanghai rabbitmq-plugins enable rabbitmq_federation_ma
 
 如果进入 web 管理界面，看到如下图，表示插件启用成功了。
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764070775597-38fec8ec-4839-434d-a9a2-316d2ff46db8.png" width="1355.2" title="" crop="0,0,1,1" id="ud1c26c14" class="ne-image">
+![1764070775597-38fec8ec-4839-434d-a9a2-316d2ff46db8.png](../assets/1764070775597-38fec8ec-4839-434d-a9a2-316d2ff46db8.png)
 
 ## 联邦交换机
 ### 在下游**定义**上游的地址
 假设北京是上游（端口 15675）。上海是下游（端口 15676）。需要在下游中配置：告诉下游，它的上游节点在哪里。
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764071171721-695b56f0-ddc1-4e9a-ba3d-0ae7882982dc.png" width="1464.8" title="" crop="0,0,1,1" id="ud3af1d32" class="ne-image">
+![1764071171721-695b56f0-ddc1-4e9a-ba3d-0ae7882982dc.png](../assets/1764071171721-695b56f0-ddc1-4e9a-ba3d-0ae7882982dc.png)
 
 上游的名字就填（**随便起名**）：`beijing.upstream`
 
@@ -139,7 +139,7 @@ docker exec -it rabbitmq-shanghai rabbitmq-plugins enable rabbitmq_federation_ma
 
 `^federation\.`** 是正则表达式：表示交换机名字以 `federation.`开头的都设置为联邦交换机。**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764073208259-172ef6d5-90c1-4c97-a977-a5e4e938d00b.png" width="1448" title="" crop="0,0,1,1" id="u83bff58a" class="ne-image">
+![1764073208259-172ef6d5-90c1-4c97-a977-a5e4e938d00b.png](../assets/1764073208259-172ef6d5-90c1-4c97-a977-a5e4e938d00b.png)
 
 策略名字（**随便写**）：`policy.federation.exchange`
 
@@ -152,7 +152,7 @@ docker exec -it rabbitmq-shanghai rabbitmq-plugins enable rabbitmq_federation_ma
 定义：`federation-upstream`=`beijing.upstream`
 
 ### 注意事项
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764073999436-2ec179e8-8b74-4d7c-aa3d-f59f7c8958f3.png" width="605.4000244140625" title="" crop="0,0,1,1" id="u289021f7" class="ne-image">
+![1764073999436-2ec179e8-8b74-4d7c-aa3d-f59f7c8958f3.png](../assets/1764073999436-2ec179e8-8b74-4d7c-aa3d-f59f7c8958f3.png)
 
 **注意：**
 
@@ -178,17 +178,17 @@ docker exec -it rabbitmq-shanghai rabbitmq-plugins enable rabbitmq_federation_ma
 ### 在上游**交换机上**发条消息测试
 在上游的 web 管理界面中发送一条消息，进行测试，看看下游的队列中是否也存在这条消息：注意，是在交换机上发送消息。**因为现在配置的是联邦交换机**。
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764077482490-cbb0a24b-6cf8-4d75-8a05-78ed7c0643a1.png" width="843.2" title="" crop="0,0,1,1" id="u66a72ee6" class="ne-image">
+![1764077482490-cbb0a24b-6cf8-4d75-8a05-78ed7c0643a1.png](../assets/1764077482490-cbb0a24b-6cf8-4d75-8a05-78ed7c0643a1.png)
 
 
 
 **发送之后，去下游看看，队列中也有数据就对了：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764077514501-763141a1-7fd0-42e5-89d2-0cd2f366a7e9.png" width="247.2" title="" crop="0,0,1,1" id="u4f5a1b34" class="ne-image">
+![1764077514501-763141a1-7fd0-42e5-89d2-0cd2f366a7e9.png](../assets/1764077514501-763141a1-7fd0-42e5-89d2-0cd2f366a7e9.png)
 
 ## 联邦队列
 ### 下游配置 Federation** 队列**策略
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764078244455-1c415efd-7287-46c1-a0ad-330bfa535bed.png" width="1468" title="" crop="0,0,1,1" id="uba2e657b" class="ne-image">
+![1764078244455-1c415efd-7287-46c1-a0ad-330bfa535bed.png](../assets/1764078244455-1c415efd-7287-46c1-a0ad-330bfa535bed.png)
 
 **名字：**`policy.federation.queue`
 
@@ -217,19 +217,19 @@ docker exec -it rabbitmq-shanghai rabbitmq-plugins enable rabbitmq_federation_ma
 创建队列：`fed.queue.demo`
 
 ### 在上游的**交换机**位置发送一条消息
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764078820564-440dbf05-4b87-467a-aaaa-0f17a30d0e79.png" width="728.8" title="" crop="0,0,1,1" id="udaf2407b" class="ne-image">
+![1764078820564-440dbf05-4b87-467a-aaaa-0f17a30d0e79.png](../assets/1764078820564-440dbf05-4b87-467a-aaaa-0f17a30d0e79.png)
 
 
 
 **你会看到，上游的队列中是有消息的：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764078857154-e21dd386-da8f-4f48-82b1-659922c055bb.png" width="195.2" title="" crop="0,0,1,1" id="ud83d022d" class="ne-image">
+![1764078857154-e21dd386-da8f-4f48-82b1-659922c055bb.png](../assets/1764078857154-e21dd386-da8f-4f48-82b1-659922c055bb.png)
 
 
 
 **但是下游队列看不到消息：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764078880939-267d4bab-95b2-4aad-9878-d9390a3dc49e.png" width="156.8" title="" crop="0,0,1,1" id="u597fcc9d" class="ne-image">
+![1764078880939-267d4bab-95b2-4aad-9878-d9390a3dc49e.png](../assets/1764078880939-267d4bab-95b2-4aad-9878-d9390a3dc49e.png)
 
 
 
@@ -279,7 +279,7 @@ public class MyMessageListener {
 
 **启动消费者监听，查看控制台，有没有消息：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764079408040-1a02b6b9-4f4a-4876-85fb-ca71e18f1127.png" width="440.8" title="" crop="0,0,1,1" id="u574cec04" class="ne-image">
+![1764079408040-1a02b6b9-4f4a-4876-85fb-ca71e18f1127.png](../assets/1764079408040-1a02b6b9-4f4a-4876-85fb-ca71e18f1127.png)
 
 不需要管这个异常，看到消息消费了就表示成功了。
 

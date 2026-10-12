@@ -12,13 +12,13 @@ comment:
 1. 官网地址：[https://www.rabbitmq.com/](https://www.rabbitmq.com/)
 2. logo：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763734245609-f8dcb23b-667a-456e-b58d-e4c54b1c153c.png" width="212.8" title="" crop="0,0,1,1" id="u6ebbde96" class="ne-image">
+![1763734245609-f8dcb23b-667a-456e-b58d-e4c54b1c153c.png](../assets/1763734245609-f8dcb23b-667a-456e-b58d-e4c54b1c153c.png)
 
 3. RabbitMQ 是一款基于 AMQP、由 Erlang 语言开发的消息队列产品。2007 年由 Rabbit 技术公司发布了 1.0 版本。
 
 ## RabbitMQ 的内部体系结构
 
-<img src="https://cdn.nlark.com/yuque/0/2026/png/21376908/1770514323809-f3218018-7787-4c0b-9d01-998cff08e415.png" width="1462.4" title="" crop="0,0,1,1" id="ua4206fcc" class="ne-image">
+![1770514323809-f3218018-7787-4c0b-9d01-998cff08e415.png](../assets/1770514323809-f3218018-7787-4c0b-9d01-998cff08e415.png)
 
 ### 生产者 Producer 与消费者 Consumer
 
@@ -115,7 +115,7 @@ rabbitmq:3.13-management
 
 在 `Oracle VirtualBox`软件中配置端口转发。这样在 windows 系统上就可以使用 `localhost`方式访问了。
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764038935571-39e6268a-509d-4c42-945e-fae5f6012397.png" width="914.4" title="" crop="0,0,1,1" id="ua05afef8" class="ne-image">
+![1764038935571-39e6268a-509d-4c42-945e-fae5f6012397.png](../assets/1764038935571-39e6268a-509d-4c42-945e-fae5f6012397.png)
 
 | **windows 端口** | **虚拟机端口** | **docker 端口** |
 | ---------------- | -------------- | --------------- |
@@ -124,4 +124,4 @@ rabbitmq:3.13-management
 
 **第四步：打开 Web 管理界面：**[**http://localhost:15672/**](http://localhost:15672/)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764038774581-d900af0d-21dd-4929-9599-a1d96f9c5359.png" width="287.2" title="" crop="0,0,1,1" id="u77a69977" class="ne-image">
+![1764038774581-d900af0d-21dd-4929-9599-a1d96f9c5359.png](../assets/1764038774581-d900af0d-21dd-4929-9599-a1d96f9c5359.png)

@@ -15,7 +15,7 @@ comment:
 
 **创建队列：**`queue.priority`
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763990360324-f0fc0992-b4b8-4e79-9501-0ccb6c33848d.png" width="767.2" title="" crop="0,0,1,1" id="u53ced881" class="ne-image">
+![1763990360324-f0fc0992-b4b8-4e79-9501-0ccb6c33848d.png](../assets/1763990360324-f0fc0992-b4b8-4e79-9501-0ccb6c33848d.png)
 
 优先级的最高值必须设置，这个参数如果不设置的话，设置优先级没用。最高值不一定是 10，但一定要设置这个参数。
 
@@ -28,7 +28,7 @@ comment:
 ## 编写测试代码测试
 **在之前项目中随便找一个生产端，编写发送消息的测试程序。在这个项目中写吧：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763990493740-b7c068c0-ed22-4cfd-be8b-447c9038cc51.png" width="206.4" title="" crop="0,0,1,1" id="ub5bf4e85" class="ne-image">
+![1763990493740-b7c068c0-ed22-4cfd-be8b-447c9038cc51.png](../assets/1763990493740-b7c068c0-ed22-4cfd-be8b-447c9038cc51.png)
 
 ```java
 public static final String EXCHANGE_PRIORITY = "exchange.priority";
@@ -60,7 +60,7 @@ public void test07(){
 
 执行以上测试程序，观察 web 管理界面，队列中是否有三条消息：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763990863345-e22adf76-65b5-4f66-8617-672bf9b6bb24.png" width="220.8" title="" crop="0,0,1,1" id="ud4d0bb8b" class="ne-image">
+![1763990863345-e22adf76-65b5-4f66-8617-672bf9b6bb24.png](../assets/1763990863345-e22adf76-65b5-4f66-8617-672bf9b6bb24.png)
 
 
 
@@ -68,7 +68,7 @@ public void test07(){
 
 **在之前项目中随便找一个消费端，编写监听程序。我们就在这个项目中编写吧：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763990897678-1fc2ee5c-b804-446d-9876-96669fde1d90.png" width="197.6" title="" crop="0,0,1,1" id="u2b43f1db" class="ne-image">
+![1763990897678-1fc2ee5c-b804-446d-9876-96669fde1d90.png](../assets/1763990897678-1fc2ee5c-b804-446d-9876-96669fde1d90.png)
 
 ```java
 // 常量 
@@ -84,4 +84,4 @@ public void processMessagePriority(String dataString, Message message, Channel c
 
 执行这个程序，看看控制台，是不是优先级最高的那条消息最先被消费：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763991042509-e1dd799a-5d35-409a-89ad-0f4c1f3d916b.png" width="213.6" title="" crop="0,0,1,1" id="u5dc1fffd" class="ne-image">
+![1763991042509-e1dd799a-5d35-409a-89ad-0f4c1f3d916b.png](../assets/1763991042509-e1dd799a-5d35-409a-89ad-0f4c1f3d916b.png)

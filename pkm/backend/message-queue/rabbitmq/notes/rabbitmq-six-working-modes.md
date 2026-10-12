@@ -9,18 +9,18 @@ comment:
 官方文档：[https://www.rabbitmq.com/tutorials](https://www.rabbitmq.com/tutorials)
 
 ## Hello World（简单模式）
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763812743757-bd1a7e6f-76c2-46a2-992a-b3a928d53565.png" width="264" title="" crop="0,0,1,1" id="ucbd4f050" class="ne-image">
+![1763812743757-bd1a7e6f-76c2-46a2-992a-b3a928d53565.png](../assets/1763812743757-bd1a7e6f-76c2-46a2-992a-b3a928d53565.png)
 
 + **一个生产者，一个队列，一个消费者**
 + 最基本点对点模式（点对点：一条消息只被一个消费者消费）
 
 ## **Work Queues（竞争消费者模式）**
 ### 模式的理解
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763812754027-913b04c9-bb65-4e08-aaa6-7971135b159c.png" width="255.2" title="" crop="0,0,1,1" id="ud04cf1c5" class="ne-image">
+![1763812754027-913b04c9-bb65-4e08-aaa6-7971135b159c.png](../assets/1763812754027-913b04c9-bb65-4e08-aaa6-7971135b159c.png)
 
 
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763813286164-824f371b-b050-493d-9874-bf9880bc9fe4.png" width="414.8000183105469" title="" crop="0,0,1,1" id="u610a767c" class="ne-image">
+![1763813286164-824f371b-b050-493d-9874-bf9880bc9fe4.png](../assets/1763813286164-824f371b-b050-493d-9874-bf9880bc9fe4.png)
 
 + **一个生产者，****一个队列****，多个消费者**
 + ****一条消息只被一个消费者处理******（轮询分发：消费者是竞争状态）**
@@ -63,7 +63,7 @@ public class ConnectionUtil {
 
 测试工具类是否能够获取连接：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763816864351-3440a83d-8bb2-4300-b21c-c377678012b8.png" width="297.6" title="" crop="0,0,1,1" id="u0a3c3191" class="ne-image">
+![1763816864351-3440a83d-8bb2-4300-b21c-c377678012b8.png](../assets/1763816864351-3440a83d-8bb2-4300-b21c-c377678012b8.png)
 
 ### 编写生产者端
 循环 10 次，发送 10 条消息：
@@ -97,7 +97,7 @@ public class Producer {
 
 **执行后，查看 web 管理界面：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763817187630-94e86371-3b5a-4bd8-8387-a2451799abcf.png" width="1008" title="" crop="0,0,1,1" id="uf9cb9b9e" class="ne-image">
+![1763817187630-94e86371-3b5a-4bd8-8387-a2451799abcf.png](../assets/1763817187630-94e86371-3b5a-4bd8-8387-a2451799abcf.png)
 
 ### 编写两个消费者端
 **消费者 1：**`**Consumer1**`
@@ -170,21 +170,21 @@ public class Consumer2 {
 ### 测试
 先启动两个消费者端，然后再启动生产者端。
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763817465954-f140df76-5724-4ea8-9265-3dd915436dee.png" width="280" title="" crop="0,0,1,1" id="u78f5b26c" class="ne-image">
+![1763817465954-f140df76-5724-4ea8-9265-3dd915436dee.png](../assets/1763817465954-f140df76-5724-4ea8-9265-3dd915436dee.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763817483560-05530e6a-dfad-45cf-90ff-ec6326cb6d7e.png" width="267.2" title="" crop="0,0,1,1" id="u32598a13" class="ne-image">
+![1763817483560-05530e6a-dfad-45cf-90ff-ec6326cb6d7e.png](../assets/1763817483560-05530e6a-dfad-45cf-90ff-ec6326cb6d7e.png)
 
 通过测试，可以看到，消费者确实是竞争的关系。
 
 查看 web 管理界面，也可以看到所有消息已经全部消费了：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763817557160-4df2520a-938e-4285-a382-51a511013524.png" width="1160.8" title="" crop="0,0,1,1" id="u99efb5e4" class="ne-image">
+![1763817557160-4df2520a-938e-4285-a382-51a511013524.png](../assets/1763817557160-4df2520a-938e-4285-a382-51a511013524.png)
 
 ## **Publish/Subscribe（发布与订阅模式）**
 ### 模式的理解
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763812763977-8b21dbf4-5a5b-4fa0-ac0c-54e3491d3d9f.png" width="331.2" title="" crop="0,0,1,1" id="u48fb8197" class="ne-image">
+![1763812763977-8b21dbf4-5a5b-4fa0-ac0c-54e3491d3d9f.png](../assets/1763812763977-8b21dbf4-5a5b-4fa0-ac0c-54e3491d3d9f.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763813424160-d1688434-0dd2-4503-9edf-9e7ec0fbc727.png" width="587" title="" crop="0,0,1,1" id="u62d10bd2" class="ne-image">
+![1763813424160-d1688434-0dd2-4503-9edf-9e7ec0fbc727.png](../assets/1763813424160-d1688434-0dd2-4503-9edf-9e7ec0fbc727.png)
 
 + **一个生产者，****多个队列****，多个消费者**
 + ****一条消息被所有消费者处理******（每个队列都收到消息的副本）**
@@ -272,19 +272,19 @@ public class Producer {
 
 **运行程序，通过 web 管理界面可以看到，创建了一个交换机：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763827018502-25830d59-3ac9-4f71-9e14-2e32534ad6dd.png" width="854.4" title="" crop="0,0,1,1" id="u9224bdda" class="ne-image">
+![1763827018502-25830d59-3ac9-4f71-9e14-2e32534ad6dd.png](../assets/1763827018502-25830d59-3ac9-4f71-9e14-2e32534ad6dd.png)
 
 
 
 **再查看队列，看看有没有新建的两个队列，并且每个队列中是否各有一条消息：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763827127364-2d84a1e5-b27d-4868-a205-0a87c4e60e0f.png" width="989.6" title="" crop="0,0,1,1" id="uef63f20c" class="ne-image">
+![1763827127364-2d84a1e5-b27d-4868-a205-0a87c4e60e0f.png](../assets/1763827127364-2d84a1e5-b27d-4868-a205-0a87c4e60e0f.png)
 
 
 
 **在 web 管理界面查看具体消息：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763827459580-46edd2d6-97e5-49a0-8106-a001cc1f250a.png" width="840.8" title="" crop="0,0,1,1" id="ua81c9612" class="ne-image">
+![1763827459580-46edd2d6-97e5-49a0-8106-a001cc1f250a.png](../assets/1763827459580-46edd2d6-97e5-49a0-8106-a001cc1f250a.png)
 
 ### 编写两个消费者
 **消费者 1：去消费队列 1 中的消息。**
@@ -316,7 +316,7 @@ public class Consumer1 {
 
 ```
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763827875510-ce69dc72-5c37-428b-9d71-bfd7a779d64a.png" width="491.2" title="" crop="0,0,1,1" id="ua0572b32" class="ne-image">
+![1763827875510-ce69dc72-5c37-428b-9d71-bfd7a779d64a.png](../assets/1763827875510-ce69dc72-5c37-428b-9d71-bfd7a779d64a.png)
 
 
 
@@ -349,15 +349,15 @@ public class Consumer2 {
 
 ```
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763827893870-3f2c6b90-28e1-4d7f-9eae-c4695152a33f.png" width="488.8" title="" crop="0,0,1,1" id="u249d92ca" class="ne-image">
+![1763827893870-3f2c6b90-28e1-4d7f-9eae-c4695152a33f.png](../assets/1763827893870-3f2c6b90-28e1-4d7f-9eae-c4695152a33f.png)
 
 ## **Routing（Direct路由模式）**
 这种模式是我们最常用的，几乎 99%都是使用它。
 
 ### 模式的理解
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763812783407-98de9cf3-2daa-4a8f-a3ab-8ac67af00136.png" width="264.8" title="" crop="0,0,1,1" id="u4a14a94f" class="ne-image">
+![1763812783407-98de9cf3-2daa-4a8f-a3ab-8ac67af00136.png](../assets/1763812783407-98de9cf3-2daa-4a8f-a3ab-8ac67af00136.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763813799660-92f2f352-69f4-4e5e-8d82-27e576145ef0.png" width="736" title="" crop="0,0,1,1" id="u7494a962" class="ne-image">
+![1763813799660-92f2f352-69f4-4e5e-8d82-27e576145ef0.png](../assets/1763813799660-92f2f352-69f4-4e5e-8d82-27e576145ef0.png)
 
 ****生产者发送消息时指定一个路由键，交换机根据路由键的精确匹配，将消息只投递到绑定键完全相同的队列。****
 

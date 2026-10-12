@@ -121,17 +121,17 @@ public class MyMessageListener {
 
 ## 在 web 界面上也可以手动创建
 ### 手动创建交换机
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763872827296-54b69508-2fbd-435f-be63-27aba0ae23c8.png" width="804.8" title="" crop="0,0,1,1" id="ub366651c" class="ne-image">
+![1763872827296-54b69508-2fbd-435f-be63-27aba0ae23c8.png](../assets/1763872827296-54b69508-2fbd-435f-be63-27aba0ae23c8.png)
 
 ### 手动创建队列
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763872880411-d485abb6-1064-4b4f-bdc4-c02521c13464.png" width="841.6" title="" crop="0,0,1,1" id="u19882761" class="ne-image">
+![1763872880411-d485abb6-1064-4b4f-bdc4-c02521c13464.png](../assets/1763872880411-d485abb6-1064-4b4f-bdc4-c02521c13464.png)
 
 ### 手动绑定路由键
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763872936662-e15425a4-d0fe-4621-a421-1bc3e4bd627c.png" width="1008" title="" crop="0,0,1,1" id="ua5e1dd31" class="ne-image">
+![1763872936662-e15425a4-d0fe-4621-a421-1bc3e4bd627c.png](../assets/1763872936662-e15425a4-d0fe-4621-a421-1bc3e4bd627c.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763873006551-f58886fc-0cfb-4ec6-b876-d928c94dc18e.png" width="900" title="" crop="0,0,1,1" id="u3f477e01" class="ne-image">
+![1763873006551-f58886fc-0cfb-4ec6-b876-d928c94dc18e.png](../assets/1763873006551-f58886fc-0cfb-4ec6-b876-d928c94dc18e.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763873036320-5ec456ff-88ce-449a-b41f-345ea69bd248.png" width="585.6" title="" crop="0,0,1,1" id="u9fd1903e" class="ne-image">
+![1763873036320-5ec456ff-88ce-449a-b41f-345ea69bd248.png](../assets/1763873036320-5ec456ff-88ce-449a-b41f-345ea69bd248.png)
 
 ## 创建生产端 SpringBoot 项目引入依赖
 ```xml
@@ -194,4 +194,4 @@ class SpringbootRabbitmqProducerApplicationTests {
 
 运行生产端测试程序，观察消费端是否收到消息：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1763874137388-bb2ce88f-fa51-4fb3-954c-e684482f0838.png" width="299.2" title="" crop="0,0,1,1" id="u9e747acb" class="ne-image">
+![1763874137388-bb2ce88f-fa51-4fb3-954c-e684482f0838.png](../assets/1763874137388-bb2ce88f-fa51-4fb3-954c-e684482f0838.png)

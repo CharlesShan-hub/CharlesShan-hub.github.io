@@ -21,11 +21,11 @@ comment:
 
 **创建队列：**`queue.quorum`
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764067625080-577d37e0-1a89-4d50-94f4-0a4a94a46a5d.png" width="734.4" title="" crop="0,0,1,1" id="u322dfc39" class="ne-image">
+![1764067625080-577d37e0-1a89-4d50-94f4-0a4a94a46a5d.png](../assets/1764067625080-577d37e0-1a89-4d50-94f4-0a4a94a46a5d.png)
 
 创建完成之后，从下图位置就可以看出它与普通队列的区别：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764067660788-728882fa-0b60-43b7-981b-cc15dcb289be.png" width="553.6" title="" crop="0,0,1,1" id="u75dee8fd" class="ne-image">
+![1764067660788-728882fa-0b60-43b7-981b-cc15dcb289be.png](../assets/1764067660788-728882fa-0b60-43b7-981b-cc15dcb289be.png)
 
 **绑定路由键：**`routing.key.quorum`
 
@@ -42,7 +42,7 @@ public void test01() {
 
 执行后，看看 web 管理界面：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764067819276-b0cd40e3-f206-402f-b162-e525940b69e3.png" width="829.6" title="" crop="0,0,1,1" id="u6b0e3144" class="ne-image">
+![1764067819276-b0cd40e3-f206-402f-b162-e525940b69e3.png](../assets/1764067819276-b0cd40e3-f206-402f-b162-e525940b69e3.png)
 
 队列上有一条消息了。
 
@@ -92,7 +92,7 @@ public class MyMessageListener {
 
 可以看到，虽然报错，但是消息还是可以进行消费：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764068223817-bbfff8f9-df78-402b-a909-34e349b9b016.png" width="400.8" title="" crop="0,0,1,1" id="u570db9c6" class="ne-image">
+![1764068223817-bbfff8f9-df78-402b-a909-34e349b9b016.png](../assets/1764068223817-bbfff8f9-df78-402b-a909-34e349b9b016.png)
 
 **最后记得把主节点再启动起来：**
 
