@@ -17,11 +17,11 @@ comment:
 
 传统的WEB应用（非前后端分离）：浏览器页面上展示成什么效果，后端服务器说了算，这是传统web应用最大的特点。
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730789733440-1dc2d749-19c5-4363-b35d-bf6e6008265c.png" width="1168" title="" crop="0,0,1,1" id="u46582415" class="ne-image">
+![1730789733440-1dc2d749-19c5-4363-b35d-bf6e6008265c.png](../assets/1730789733440-1dc2d749-19c5-4363-b35d-bf6e6008265c.png)
 
 前后端分离的应用：前端是一个独立的系统，后端也是一个独立的系统，后端系统不再负责页面的渲染，后端系统只负责给前端系统提供开放的API接口，后端系统只负责数据的收集，然后将数据以JSON/XML等格式响应给前端系统。前端系统拿到接口返回的数据后，将数据填充到页面上。
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730790760614-212e3911-eb37-4dca-88a4-eca6ecd26dba.png" width="1127" title="" crop="0,0,1,1" id="u6f6e55ce" class="ne-image">
+![1730790760614-212e3911-eb37-4dca-88a4-eca6ecd26dba.png](../assets/1730790760614-212e3911-eb37-4dca-88a4-eca6ecd26dba.png)
 
 前后端分离的好处：
 
@@ -98,7 +98,7 @@ public class HelloController {
 
 启动服务器，测试地址为：http://localhost:8080/h
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730792132534-7b9358f0-98ff-43dc-8624-1717683b15aa.png" width="407" title="" crop="0,0,1,1" id="uc5daf1e9" class="ne-image">
+![1730792132534-7b9358f0-98ff-43dc-8624-1717683b15aa.png](../assets/1730792132534-7b9358f0-98ff-43dc-8624-1717683b15aa.png)
 
 ---
 

@@ -9,7 +9,7 @@ comment:
 
 创建一个新的模块，来学习Spring Boot核心注解：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729564104331-5d4976ae-092d-405e-a94b-e69daaae31e6.png" width="252" title="" crop="0,0,1,1" id="ua417a324" class="ne-image">
+![1729564104331-5d4976ae-092d-405e-a94b-e69daaae31e6.png](../assets/1729564104331-5d4976ae-092d-405e-a94b-e69daaae31e6.png)
 
 只加入web启动器。
 
@@ -19,7 +19,7 @@ comment:
 
 Spring Boot的主入口程序被`@SpringBootApplication`注解标注，可见这个注解的重要性，查看它的源码：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729563192417-c03008ef-81f9-4741-ad09-42d49a4b2cc9.png" width="790" title="" crop="0,0,1,1" id="ufc9180ba" class="ne-image">
+![1729563192417-c03008ef-81f9-4741-ad09-42d49a4b2cc9.png](../assets/1729563192417-c03008ef-81f9-4741-ad09-42d49a4b2cc9.png)
 
 可以看出这个注解属于`组合注解`。拥有`@SpringBootConfiguration`、`@EnableAutoConfiguration`、`@ComponentScan`的功能。
 
@@ -29,7 +29,7 @@ Spring Boot的主入口程序被`@SpringBootApplication`注解标注，可见这
 
 @SpringBootConfiguration注解的源码如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729563436496-752f56df-52aa-404b-bf83-c122a06f1312.png" width="611" title="" crop="0,0,1,1" id="u48b891e1" class="ne-image">
+![1729563436496-752f56df-52aa-404b-bf83-c122a06f1312.png](../assets/1729563436496-752f56df-52aa-404b-bf83-c122a06f1312.png)
 
 可以看到这个注解的被`@Configuration`标注，说明`主入口`程序是一个配置类。也就是说主入口中的方法可以被`@Bean`注解标注，被`@Bean`注解的标注的方法会被Spring容器自动调用，并且将该方法的返回对象纳入IoC容器的管理。测试一下：
 
@@ -52,7 +52,7 @@ public class Sb305CoreApplication {
 
 执行结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729564458157-1d953623-9405-4577-8fa4-ed955038be77.png" width="729" title="" crop="0,0,1,1" id="u3f0b40f5" class="ne-image">
+![1729564458157-1d953623-9405-4577-8fa4-ed955038be77.png](../assets/1729564458157-1d953623-9405-4577-8fa4-ed955038be77.png)
 
 通过测试我们也认证了这一点：`SpringBoot主入口类实际上就是一个配置类`。
 
@@ -94,7 +94,7 @@ spring.datasource.password=123456
 
 ### 扫描到
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764858589593-bb48fb45-9a27-4e14-9f48-a52218db3661.png" width="256.8" title="" crop="0,0,1,1" id="u56ca5320" class="ne-image">
+![1764858589593-bb48fb45-9a27-4e14-9f48-a52218db3661.png](../assets/1764858589593-bb48fb45-9a27-4e14-9f48-a52218db3661.png)
 
 `HelloController`代码如下：
 
@@ -110,11 +110,11 @@ public class HelloController {
 
 启动服务器测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729566015788-bfbce42f-90b2-48cf-b583-4490db6da625.png" width="323" title="" crop="0,0,1,1" id="u96014dfb" class="ne-image">
+![1729566015788-bfbce42f-90b2-48cf-b583-4490db6da625.png](../assets/1729566015788-bfbce42f-90b2-48cf-b583-4490db6da625.png)
 
 ### 扫描不到
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764858605501-aa8f51c9-f79c-4957-a569-6f61242b5710.png" width="332.8" title="" crop="0,0,1,1" id="u2d8e0c38" class="ne-image">
+![1764858605501-aa8f51c9-f79c-4957-a569-6f61242b5710.png](../assets/1764858605501-aa8f51c9-f79c-4957-a569-6f61242b5710.png)
 
 可以看到`UserController`没有在`sb305core`包下。
 
@@ -132,7 +132,7 @@ public class UserController {
 
 启动服务器测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729566187896-1d4053bd-d5da-4fd4-a243-ebd80388ac17.png" width="832" title="" crop="0,0,1,1" id="u5707540d" class="ne-image">
+![1729566187896-1d4053bd-d5da-4fd4-a243-ebd80388ac17.png](../assets/1729566187896-1d4053bd-d5da-4fd4-a243-ebd80388ac17.png)
 
 通过测试得知`UserController`没有被纳入IoC容器的管理。
 

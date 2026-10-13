@@ -60,13 +60,13 @@ welcome.message=Bienvenue dans notre application !
 
 **测试1：浏览器默认的语言环境是中文时**
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1731511421500-651602c6-6dac-418c-9d1e-77c7ae40f463.png" width="373" title="" crop="0,0,1,1" id="u77fa5895" class="ne-image">
+![1731511421500-651602c6-6dac-418c-9d1e-77c7ae40f463.png](../assets/1731511421500-651602c6-6dac-418c-9d1e-77c7ae40f463.png)
 
 **测试2：将浏览器默认语言环境修改为法文**
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1731512808484-d61096e2-4d1d-446c-a26f-33c1505d76e4.png" width="696" title="" crop="0,0,1,1" id="u441ef955" class="ne-image">
+![1731512808484-d61096e2-4d1d-446c-a26f-33c1505d76e4.png](../assets/1731512808484-d61096e2-4d1d-446c-a26f-33c1505d76e4.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1731512824927-f649b549-0add-4450-9dc3-9e2a4331c025.png" width="608" title="" crop="0,0,1,1" id="u593fd8ed" class="ne-image">
+![1731512824927-f649b549-0add-4450-9dc3-9e2a4331c025.png](../assets/1731512824927-f649b549-0add-4450-9dc3-9e2a4331c025.png)
 
 ---
 
@@ -74,7 +74,7 @@ welcome.message=Bienvenue dans notre application !
 
 做国际化的自动配置类是：`MessageSourceAutoConfiguration`
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1731513242246-ac4e59e3-a1e9-45c3-a346-41ae1b41f658.png" width="791" title="" crop="0,0,1,1" id="u89d8877d" class="ne-image">
+![1731513242246-ac4e59e3-a1e9-45c3-a346-41ae1b41f658.png](../assets/1731513242246-ac4e59e3-a1e9-45c3-a346-41ae1b41f658.png)
 
 通过以上源码得知，国际化对应的配置前缀是：`spring.message`
 

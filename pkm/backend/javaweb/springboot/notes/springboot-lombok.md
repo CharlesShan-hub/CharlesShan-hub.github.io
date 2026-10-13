@@ -213,7 +213,7 @@ public class Test {
 
 测试结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729148006400-a32df299-5efe-49b7-82e4-34a7a23b4b88.png" width="218" title="" crop="0,0,1,1" id="ufe74f98a" class="ne-image">
+![1729148006400-a32df299-5efe-49b7-82e4-34a7a23b4b88.png](../assets/1729148006400-a32df299-5efe-49b7-82e4-34a7a23b4b88.png)
 
 **以下的注解可以自行测试：**
 
@@ -280,7 +280,7 @@ public class CustomerTest {
 
 运行结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729219457643-9a89e6b4-bc3c-4a3a-b456-462574324d7d.png" width="465" title="" crop="0,0,1,1" id="u9cdaa773" class="ne-image">
+![1729219457643-9a89e6b4-bc3c-4a3a-b456-462574324d7d.png](../assets/1729219457643-9a89e6b4-bc3c-4a3a-b456-462574324d7d.png)
 
 可以查看一下字节码，你会发现，@Value注解的作用只会生成：全参数构造方法、getter方法、hashCode、equals、toString方法。（没有setter方法。）
 
@@ -367,7 +367,7 @@ public class Person {
 
 执行结果如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764939369776-ceb92250-25a2-4511-b955-7dc78218af2d.png" width="543.2" title="" crop="0,0,1,1" id="u9102e10b" class="ne-image">
+![1764939369776-ceb92250-25a2-4511-b955-7dc78218af2d.png](../assets/1764939369776-ceb92250-25a2-4511-b955-7dc78218af2d.png)
 
 ### @Builder
 
@@ -408,7 +408,7 @@ public class Person {
 
 执行结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764939437424-40cb14ff-af28-459d-8674-bef1b04ac985.png" width="484" title="" crop="0,0,1,1" id="uc4eacf67" class="ne-image">
+![1764939437424-40cb14ff-af28-459d-8674-bef1b04ac985.png](../assets/1764939437424-40cb14ff-af28-459d-8674-bef1b04ac985.png)
 
 ### @Singular
 
@@ -451,7 +451,7 @@ public class Person {
 
 执行结果如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764939641595-91256ba4-3e6c-44b2-bbfd-329c66c58785.png" width="722.4" title="" crop="0,0,1,1" id="u2f9023b0" class="ne-image">
+![1764939641595-91256ba4-3e6c-44b2-bbfd-329c66c58785.png](../assets/1764939641595-91256ba4-3e6c-44b2-bbfd-329c66c58785.png)
 
 ### @Slf4j
 

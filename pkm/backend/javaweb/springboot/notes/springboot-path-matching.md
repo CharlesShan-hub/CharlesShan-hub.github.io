@@ -29,5 +29,5 @@ public String path(HttpServletRequest request, @PathVariable String path){
 
 启动服务器测试，可用：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730472772231-d18e628f-1b62-4757-9299-eaa604344ce6.png" width="521" title="" crop="0,0,1,1" id="TkyEb" class="ne-image">
+![1730472772231-d18e628f-1b62-4757-9299-eaa604344ce6.png](../assets/1730472772231-d18e628f-1b62-4757-9299-eaa604344ce6.png)
 

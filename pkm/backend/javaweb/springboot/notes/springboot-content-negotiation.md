@@ -109,9 +109,9 @@ public class User {
 
 **测试：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1765110123829-ecd2c8ca-4445-43f4-96c0-2ce8eba59f8d.png" width="664" title="" crop="0,0,1,1" id="u8b85db29" class="ne-image">
+![1765110123829-ecd2c8ca-4445-43f4-96c0-2ce8eba59f8d.png](../assets/1765110123829-ecd2c8ca-4445-43f4-96c0-2ce8eba59f8d.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1765110157978-4af936e5-611a-4725-8d55-12d22ef090b1.png" width="568" title="" crop="0,0,1,1" id="uf47ba325" class="ne-image">
+![1765110157978-4af936e5-611a-4725-8d55-12d22ef090b1.png](../assets/1765110157978-4af936e5-611a-4725-8d55-12d22ef090b1.png)
 
 ### **通过请求参数（如**`**format**`**）**
 

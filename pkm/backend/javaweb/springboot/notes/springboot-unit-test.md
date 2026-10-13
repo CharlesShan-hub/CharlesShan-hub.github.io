@@ -15,11 +15,11 @@ comment:
 
 使用脚手架创建sb3-06-test模块，不添加任何启动器：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764858731937-5eeb3907-ce7b-4144-8ef0-ab6893b79e81.png" width="334.4" title="" crop="0,0,1,1" id="ufff0d565" class="ne-image">
+![1764858731937-5eeb3907-ce7b-4144-8ef0-ab6893b79e81.png](../assets/1764858731937-5eeb3907-ce7b-4144-8ef0-ab6893b79e81.png)
 
 ### 编写service
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764858745928-2be537af-fd1c-4ddd-8392-e49fd0579dd9.png" width="225.6" title="" crop="0,0,1,1" id="u13581b5e" class="ne-image">
+![1764858745928-2be537af-fd1c-4ddd-8392-e49fd0579dd9.png](../assets/1764858745928-2be537af-fd1c-4ddd-8392-e49fd0579dd9.png)
 
 ```java
 package com.jkweilai.sb306test.service.impl;
@@ -51,7 +51,7 @@ public class Sb306TestApplication {
 
 执行结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729581624703-aa5dfd5f-1a61-48a9-bce3-9d3d615913e5.png" width="252" title="" crop="0,0,1,1" id="ubd3998a7" class="ne-image">
+![1729581624703-aa5dfd5f-1a61-48a9-bce3-9d3d615913e5.png](../assets/1729581624703-aa5dfd5f-1a61-48a9-bce3-9d3d615913e5.png)
 
 这种方式就是手动获取Spring上下文对象`ConfigurableApplicationContext`，然后调用getBean方法从Spring容器中获取service对象，然后调用方法。
 
@@ -65,7 +65,7 @@ public class Sb306TestApplication {
 
 在使用脚手架创建Spring Boot项目时，为我们生成了单元测试类，如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764858829335-de2fae33-630c-4d81-8a34-071382d88988.png" width="432" title="" crop="0,0,1,1" id="ue4d348db" class="ne-image">
+![1764858829335-de2fae33-630c-4d81-8a34-071382d88988.png](../assets/1764858829335-de2fae33-630c-4d81-8a34-071382d88988.png)
 
 当然，如果要使用单元测试，需要引入单元测试启动器，如果使用脚手架创建SpringBoot项目，这个test启动器会自动引入：
 
@@ -111,5 +111,5 @@ class Sb306TestApplicationTests {
 
 测试结果如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729582782987-88067365-fba6-4240-b704-b2f710a96647.png" width="274" title="" crop="0,0,1,1" id="u0febe674" class="ne-image">
+![1729582782987-88067365-fba6-4240-b704-b2f710a96647.png](../assets/1729582782987-88067365-fba6-4240-b704-b2f710a96647.png)
 

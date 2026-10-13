@@ -60,7 +60,7 @@ public class User {
 
 ## SpringBoot 与 Bean Validation 关系
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1765202022187-c728ee2d-a913-4945-baf9-a8baeb642bfb.png" width="2271.2" title="" crop="0,0,1,1" id="u41fc70fc" class="ne-image">
+![1765202022187-c728ee2d-a913-4945-baf9-a8baeb642bfb.png](../assets/1765202022187-c728ee2d-a913-4945-baf9-a8baeb642bfb.png)
 
 **Spring Boot 自动集成了 Bean Validation 标准规范（JSR 380）及其参考实现 Hibernate Validator，使开发者能通过**`**@Valid**`**等注解便捷使用验证功能，但 Bean Validation 本身是独立于 Spring 的技术标准。**
 
@@ -182,7 +182,7 @@ public class GlobalExceptionHandler {
 
 使用 Apipost 工具进行测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1765204305570-d7c94609-cf45-4b93-9336-4d38ff74abc4.png" width="436.8" title="" crop="0,0,1,1" id="ufa42825e" class="ne-image">
+![1765204305570-d7c94609-cf45-4b93-9336-4d38ff74abc4.png](../assets/1765204305570-d7c94609-cf45-4b93-9336-4d38ff74abc4.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1765204332077-3e38db14-5417-4a40-96cb-7c7b981d2d78.png" width="460" title="" crop="0,0,1,1" id="ub98e5584" class="ne-image">
+![1765204332077-3e38db14-5417-4a40-96cb-7c7b981d2d78.png](../assets/1765204332077-3e38db14-5417-4a40-96cb-7c7b981d2d78.png)
 

@@ -15,11 +15,11 @@ Spring Boot项目本身就是基于Spring框架实现的。因此SSM整合时，
 
 ## 使用脚手架创建SpringBoot项目
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764860440431-1b1d9d22-9df1-4188-9a14-60dc1e5d47af.png" width="693.6" title="" crop="0,0,1,1" id="ub0179b14" class="ne-image">
+![1764860440431-1b1d9d22-9df1-4188-9a14-60dc1e5d47af.png](../assets/1764860440431-1b1d9d22-9df1-4188-9a14-60dc1e5d47af.png)
 
 添加依赖：web启动器、mybatis启动器、mysql驱动依赖、lombok依赖
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729239349172-b9c47742-c09f-4f5b-8422-35a7a9dbab72.png" width="961" title="" crop="0,0,1,1" id="uda13af2c" class="ne-image">
+![1729239349172-b9c47742-c09f-4f5b-8422-35a7a9dbab72.png](../assets/1729239349172-b9c47742-c09f-4f5b-8422-35a7a9dbab72.png)
 
 ---
 
@@ -152,11 +152,11 @@ public class VipController {
 
 执行SpringBoot项目主入口的main方法，启动Tomcat服务器：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729242182367-079ee0e1-acaa-42f3-970e-c7ff410b336c.png" width="1209" title="" crop="0,0,1,1" id="ufc9fb32e" class="ne-image">
+![1729242182367-079ee0e1-acaa-42f3-970e-c7ff410b336c.png](../assets/1729242182367-079ee0e1-acaa-42f3-970e-c7ff410b336c.png)
 
 打开浏览器访问：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729242269867-255b4446-4fae-4788-beb6-fc395155ed61.png" width="394" title="" crop="0,0,1,1" id="uf735c5f5" class="ne-image">
+![1729242269867-255b4446-4fae-4788-beb6-fc395155ed61.png](../assets/1729242269867-255b4446-4fae-4788-beb6-fc395155ed61.png)
 
 到此为止，SSM框架就集成完毕了，通过这个集成也可以感觉到SpringBoot简化了SSM三大框架的集成。
 

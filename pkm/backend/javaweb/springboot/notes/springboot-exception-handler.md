@@ -24,9 +24,9 @@ springboot会根据请求头的Accept字段来决定错误的响应格式。
 
 这种机制的好处就是：客户端设备自适应，提高用户的体验。
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1731424148788-8a9c52cc-7683-479a-a8b8-9075d779bc4e.png" width="900" title="" crop="0,0,1,1" id="KuAAC" class="ne-image">
+![1731424148788-8a9c52cc-7683-479a-a8b8-9075d779bc4e.png](../assets/1731424148788-8a9c52cc-7683-479a-a8b8-9075d779bc4e.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1731424190201-4c9b9781-08ae-48f7-8b4a-9956b3b700d7.png" width="791" title="" crop="0,0,1,1" id="A2xwC" class="ne-image">
+![1731424190201-4c9b9781-08ae-48f7-8b4a-9956b3b700d7.png](../assets/1731424190201-4c9b9781-08ae-48f7-8b4a-9956b3b700d7.png)
 
 ---
 

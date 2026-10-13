@@ -13,9 +13,9 @@ spring.mvc.contentnegotiation.favor-parameter=true
 
 测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1765110575841-9db9f89d-a913-4802-963c-244df980dd33.png" width="597.6" title="" crop="0,0,1,1" id="u32889b33" class="ne-image">
+![1765110575841-9db9f89d-a913-4802-963c-244df980dd33.png](../assets/1765110575841-9db9f89d-a913-4802-963c-244df980dd33.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1765110605566-dd3c535b-61b5-4006-b875-0cadaae5a06e.png" width="597.6" title="" crop="0,0,1,1" id="uad2f6564" class="ne-image">
+![1765110605566-dd3c535b-61b5-4006-b875-0cadaae5a06e.png](../assets/1765110605566-dd3c535b-61b5-4006-b875-0cadaae5a06e.png)
 
 可以看到，现在SpringBoot已经优先考虑使用`请求参数format`方式了。
 

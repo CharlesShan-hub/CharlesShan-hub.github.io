@@ -29,15 +29,15 @@ Spring Boot 3要求JDK最低版本是17
 
 ## 第四步：打开Spring Boot 3官方文档，按照文档一步一步进行
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1726111379585-fd90758d-f6bd-4a71-9ba9-b1549dd18c84.png" width="1435" title="" crop="0,0,1,1" id="u20fe7d93" class="ne-image">
+![1726111379585-fd90758d-f6bd-4a71-9ba9-b1549dd18c84.png](../assets/1726111379585-fd90758d-f6bd-4a71-9ba9-b1549dd18c84.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1726111411632-0a5cfc79-f222-4395-ae19-35b8d3868f3d.png" width="1397" title="" crop="0,0,1,1" id="ua754be37" class="ne-image">
+![1726111411632-0a5cfc79-f222-4395-ae19-35b8d3868f3d.png](../assets/1726111411632-0a5cfc79-f222-4395-ae19-35b8d3868f3d.png)
 
 ---
 
 ## 第五步：要使用Spring Boot 3，需要继承这个开源项目。从官方指导文档中复制以下内容：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1726111736067-221c85d6-e3ce-4d41-9b20-2893705b11de.png" width="1193" title="" crop="0,0,1,1" id="uc8da12ee" class="ne-image">
+![1726111736067-221c85d6-e3ce-4d41-9b20-2893705b11de.png](../assets/1726111736067-221c85d6-e3ce-4d41-9b20-2893705b11de.png)
 
 ```xml
 <!--继承Spring Boot 3.5.8开源项目-->
@@ -56,7 +56,7 @@ Spring Boot 3要求JDK最低版本是17
 
 ## 第六步：添加Spring Boot的web starter
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1726112199621-1d90cda6-1bb5-4c66-ac9f-b0f2bedb87b3.png" width="1205" title="" crop="0,0,1,1" id="u50bdf0fc" class="ne-image">
+![1726112199621-1d90cda6-1bb5-4c66-ac9f-b0f2bedb87b3.png](../assets/1726112199621-1d90cda6-1bb5-4c66-ac9f-b0f2bedb87b3.png)
 
 在parent下立即添加如下配置，让Spring Boot项目具备开发web应用的依赖：
 
@@ -72,7 +72,7 @@ Spring Boot 3要求JDK最低版本是17
 
 关联的依赖也被引入进来，如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764847827355-3257c228-5568-4680-8495-fd4321ac4f2f.png" width="444" title="" crop="0,0,1,1" id="u3eec3d7c" class="ne-image">
+![1764847827355-3257c228-5568-4680-8495-fd4321ac4f2f.png](../assets/1764847827355-3257c228-5568-4680-8495-fd4321ac4f2f.png)
 
 可以看到spring mvc被引入了，tomcat服务器也被引入了。
 
@@ -120,7 +120,7 @@ public class HelloController {
 
 ## 第九步：运行main方法就是启动web容器
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764848081916-20d5b937-ce54-405c-8205-3ec8ee9afdda.png" width="1195.2" title="" crop="0,0,1,1" id="u7dc77bce" class="ne-image">
+![1764848081916-20d5b937-ce54-405c-8205-3ec8ee9afdda.png](../assets/1764848081916-20d5b937-ce54-405c-8205-3ec8ee9afdda.png)
 
 ---
 
@@ -128,5 +128,5 @@ public class HelloController {
 
 [http://localhost:8080/hello](http://localhost:8080/hello)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1726113139402-b64d1c16-9055-495c-aa3d-1ef13baf9816.png" width="376" title="" crop="0,0,1,1" id="uf6009535" class="ne-image">
+![1726113139402-b64d1c16-9055-495c-aa3d-1ef13baf9816.png](../assets/1726113139402-b64d1c16-9055-495c-aa3d-1ef13baf9816.png)
 

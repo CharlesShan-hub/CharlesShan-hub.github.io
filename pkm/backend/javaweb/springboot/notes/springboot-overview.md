@@ -11,11 +11,11 @@ comment:
 
 [https://docs.spring.io/spring-boot/index.html](https://docs.spring.io/spring-boot/index.html)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1728875326069-8146a95b-569b-4338-8d28-696fcb647ec8.png" width="1194" title="" crop="0,0,1,1" id="ud409f136" class="ne-image">
+![1728875326069-8146a95b-569b-4338-8d28-696fcb647ec8.png](../assets/1728875326069-8146a95b-569b-4338-8d28-696fcb647ec8.png)
 
 翻译：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1728893860338-bce86e2c-719d-49fe-9932-419fe1e50fb1.png" width="978" title="" crop="0,0,1,1" id="u746c6fee" class="ne-image">
+![1728893860338-bce86e2c-719d-49fe-9932-419fe1e50fb1.png](../assets/1728893860338-bce86e2c-719d-49fe-9932-419fe1e50fb1.png)
 
 Spring Boot倡导`约定优于配置`，将`简化开发`发挥到极致。使用Spring Boot框架可以快速构建Spring应用，再也不需要`大量的繁琐的`的各种配置。Spring Boot框架设计的目标是：程序员关注业务逻辑就行了，环境方面的事儿交给Spring Boot就行。
 

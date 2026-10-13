@@ -157,7 +157,7 @@ vips:
 
 提醒：记得入口程序使用**@ConfigurationPropertiesScan(basePackages = "com.jkweilai.sb307externalconfig.bean")进行标注。编写测试程序，执行结果如下：**
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729680626317-8b45a7b3-9117-47da-ac28-f153ac4d3d49.png" width="1554" title="" crop="0,0,1,1" id="u627f6edf" class="ne-image">
+![1729680626317-8b45a7b3-9117-47da-ac28-f153ac4d3d49.png](../assets/1729680626317-8b45a7b3-9117-47da-ac28-f153ac4d3d49.png)
 
 ### 将配置绑定到第三方对象
 
@@ -258,7 +258,7 @@ public class ApplicationConfig {
 
 运行结果如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729674936611-e86b3cad-c910-4f00-bb9f-8d5f976f8d94.png" width="615" title="" crop="0,0,1,1" id="ubdf95c9b" class="ne-image">
+![1729674936611-e86b3cad-c910-4f00-bb9f-8d5f976f8d94.png](../assets/1729674936611-e86b3cad-c910-4f00-bb9f-8d5f976f8d94.png)
 
 ### 指定数据来源
 
@@ -341,7 +341,7 @@ public class Group {
 
 编写测试程序，测试结果如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729681829431-7e25af75-4618-410a-a5c7-d377c53683d9.png" width="449" title="" crop="0,0,1,1" id="ub262939b" class="ne-image">
+![1729681829431-7e25af75-4618-410a-a5c7-d377c53683d9.png](../assets/1729681829431-7e25af75-4618-410a-a5c7-d377c53683d9.png)
 
 ---
 
@@ -432,7 +432,7 @@ class Sb307ExternalConfigApplicationTests {
 
 执行结果如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729683600179-80efe94a-9aca-4959-a6ee-af938bb4fc61.png" width="358" title="" crop="0,0,1,1" id="uf286517c" class="ne-image">
+![1729683600179-80efe94a-9aca-4959-a6ee-af938bb4fc61.png](../assets/1729683600179-80efe94a-9aca-4959-a6ee-af938bb4fc61.png)
 
 因此，项目中如果有类似于Spring的这种xml配置文件，要想纳入IoC容器管理，需要在入口类上使用`@ImportResource("classpath:applicationContext.xml")`注解即可。
 

@@ -92,7 +92,7 @@ public class TestApplication {
 }
 ```
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1731728106979-3b61f113-9257-42b6-8c82-543d7914a0ce.png" width="341" title="" crop="0,0,1,1" id="u8121ea7a" class="ne-image">
+![1731728106979-3b61f113-9257-42b6-8c82-543d7914a0ce.png](../assets/1731728106979-3b61f113-9257-42b6-8c82-543d7914a0ce.png)
 
 可以看到默认情况下，SpringBoot默认的日志隔离级别是INFO，因此：INFO，WARN，ERROR三个级别的日志都会打印。
 

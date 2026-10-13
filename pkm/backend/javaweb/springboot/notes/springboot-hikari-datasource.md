@@ -169,21 +169,21 @@ public interface VipMapper {
 
 安装`MyBatisX`插件，该插件可以根据我们编写的`VipMapper`接口自动生成mapper的XML配置文件。
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729132285817-67182b8c-487e-4ef5-b061-da4b12174489.png" width="978" title="" crop="0,0,1,1" id="u1321ec4b" class="ne-image">
+![1729132285817-67182b8c-487e-4ef5-b061-da4b12174489.png](../assets/1729132285817-67182b8c-487e-4ef5-b061-da4b12174489.png)
 
 然后在`VipMapper`接口上：alt+enter
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764860020514-4b4abe00-5f98-4e8b-aa21-d642310a0b8e.png" width="544.8" title="" crop="0,0,1,1" id="u18680716" class="ne-image">
+![1764860020514-4b4abe00-5f98-4e8b-aa21-d642310a0b8e.png](../assets/1764860020514-4b4abe00-5f98-4e8b-aa21-d642310a0b8e.png)
 
 生成`mapper of xml`：需要选择一个生成的位置
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729132515796-a056a2c3-e464-4c6e-bf8c-c1a876e36b80.png" width="420" title="" crop="0,0,1,1" id="ub40b00fd" class="ne-image">
+![1729132515796-a056a2c3-e464-4c6e-bf8c-c1a876e36b80.png](../assets/1729132515796-a056a2c3-e464-4c6e-bf8c-c1a876e36b80.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729132546447-714f679f-9b8c-4482-9e8d-d1c7e525a3c5.png" width="247" title="" crop="0,0,1,1" id="uc0fb6b93" class="ne-image">
+![1729132546447-714f679f-9b8c-4482-9e8d-d1c7e525a3c5.png](../assets/1729132546447-714f679f-9b8c-4482-9e8d-d1c7e525a3c5.png)
 
 接下来，你会看到Mapper接口中方法报错了，可以在错误的位置上使用`alt+enter`，选择`Generate statement`：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729132763164-68d5a9b0-76ea-43fb-b89d-01050e82c4e6.png" width="396" title="" crop="0,0,1,1" id="u5a8310a0" class="ne-image">
+![1729132763164-68d5a9b0-76ea-43fb-b89d-01050e82c4e6.png](../assets/1729132763164-68d5a9b0-76ea-43fb-b89d-01050e82c4e6.png)
 
 这个时候在mapper的xml配置文件中便生成了对应的配置。
 
@@ -219,7 +219,7 @@ public interface VipMapper {
 
 在Spring Boot的入口程序上添加如下的注解，来完成`VipMapper`接口的扫描：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764860078496-72abb68d-2a4d-46a2-be4f-0a36d78e8ab9.png" width="352" title="" crop="0,0,1,1" id="ubc64b787" class="ne-image">
+![1764860078496-72abb68d-2a4d-46a2-be4f-0a36d78e8ab9.png](../assets/1764860078496-72abb68d-2a4d-46a2-be4f-0a36d78e8ab9.png)
 
 ---
 
@@ -273,17 +273,17 @@ public class Sb305SpringbootMybatisApplication {
 
 测试结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729135284617-032c08b9-07f8-4d73-ba82-4529aac1f2fb.png" width="653" title="" crop="0,0,1,1" id="u2aba6355" class="ne-image">
+![1729135284617-032c08b9-07f8-4d73-ba82-4529aac1f2fb.png](../assets/1729135284617-032c08b9-07f8-4d73-ba82-4529aac1f2fb.png)
 
 测试结果中可以看到`cardNumber`属性没有赋值成功，原因是：表中的字段名叫做`card_number`，和实体类`Vip`的属性名`cardNumber`对应不上。解决办法两个：
 
 + **第一种方式：查询语句使用as关键字起别名，让查询结果列名和实体类的属性名对应上。**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764860129838-4fc2cced-d930-4e2a-970d-004512e69628.png" width="726.4" title="" crop="0,0,1,1" id="ua9460474" class="ne-image">
+![1764860129838-4fc2cced-d930-4e2a-970d-004512e69628.png](../assets/1764860129838-4fc2cced-d930-4e2a-970d-004512e69628.png)
 
 再次测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729135540950-be358277-5da0-4c5d-868f-075cd2ed8ea0.png" width="717" title="" crop="0,0,1,1" id="u59d75ab0" class="ne-image">
+![1729135540950-be358277-5da0-4c5d-868f-075cd2ed8ea0.png](../assets/1729135540950-be358277-5da0-4c5d-868f-075cd2ed8ea0.png)
 
 + **第二种方式：通过配置自动映射**
 
@@ -303,11 +303,11 @@ map-underscore-to-camel-case 这个配置项的作用就是在查询结果映射
 
 mapper的xml文件中的sql语句仍然使用`*`的方式：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764860151877-f791d6db-6e8d-4535-ab36-81cb31c71b06.png" width="443.2" title="" crop="0,0,1,1" id="u60391fb5" class="ne-image">
+![1764860151877-f791d6db-6e8d-4535-ab36-81cb31c71b06.png](../assets/1764860151877-f791d6db-6e8d-4535-ab36-81cb31c71b06.png)
 
 测试结果如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729135946867-e2f2fda6-25fe-430c-af38-0831056571c9.png" width="700" title="" crop="0,0,1,1" id="u701e2557" class="ne-image">
+![1729135946867-e2f2fda6-25fe-430c-af38-0831056571c9.png](../assets/1729135946867-e2f2fda6-25fe-430c-af38-0831056571c9.png)
 
 ---
 
@@ -366,7 +366,7 @@ public class Sb305SpringbootMybatisApplication {
 
 执行结果如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729136373779-97569876-0b74-4774-b306-a6bbc838462e.png" width="1772" title="" crop="0,0,1,1" id="ubefcb5e9" class="ne-image">
+![1729136373779-97569876-0b74-4774-b306-a6bbc838462e.png](../assets/1729136373779-97569876-0b74-4774-b306-a6bbc838462e.png)
 
 到此为止，我们已经完成了Spring Boot整合MyBatis的操作。
 

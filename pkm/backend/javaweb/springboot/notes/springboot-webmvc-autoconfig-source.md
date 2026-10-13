@@ -71,7 +71,7 @@ public OrderedFormContentFilter formContentFilter() {
 
 在SpringBoot框架的`WebMvcAutoConfiguration`类中提供了一个内部类：`WebMvcAutoConfigurationAdapter`
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730345630650-62e11666-3e95-4c64-9787-c0b18d083c91.png" width="1080" title="" crop="0,0,1,1" id="ue6dbe412" class="ne-image">
+![1730345630650-62e11666-3e95-4c64-9787-c0b18d083c91.png](../assets/1730345630650-62e11666-3e95-4c64-9787-c0b18d083c91.png)
 
 SpringBoot在这个类`WebMvcAutoConfigurationAdapter`中进行了一系列的Spring MVC相关配置。
 
@@ -124,13 +124,13 @@ public interface WebMvcConfigurer {
 
 如果想要改变这些默认配置，应该怎么办呢？看源码：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730353008999-076f3b3f-2a0b-4936-a9f2-5d6cfe88b346.png" width="1010" title="" crop="0,0,1,1" id="u0962da1b" class="ne-image">
+![1730353008999-076f3b3f-2a0b-4936-a9f2-5d6cfe88b346.png](../assets/1730353008999-076f3b3f-2a0b-4936-a9f2-5d6cfe88b346.png)
 
 可以看到，该类上有一个注解`@EnableConfigurationProperties({ WebMvcProperties.class, WebProperties.class })`，该注解负责启用配置属性。会将配置文件`application.properties`或`application.yml`中的配置传递到该类中。因此可以通过`application.properties`或`application.yml`配置文件来改变Spring Boot对SpringMVC的默认配置。`WebMvcProperties`和`WebProperties`源码如下： 
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730354494823-2adf83a4-aa2a-4fed-a5df-66b156de15c5.png" width="565" title="" crop="0,0,1,1" id="ua84cb938" class="ne-image">
+![1730354494823-2adf83a4-aa2a-4fed-a5df-66b156de15c5.png](../assets/1730354494823-2adf83a4-aa2a-4fed-a5df-66b156de15c5.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730354507221-6424a72a-0728-478b-92eb-e52d3d5a6f38.png" width="425" title="" crop="0,0,1,1" id="ue279b932" class="ne-image">
+![1730354507221-6424a72a-0728-478b-92eb-e52d3d5a6f38.png](../assets/1730354507221-6424a72a-0728-478b-92eb-e52d3d5a6f38.png)
 
 通过以上源码得知要改变SpringBoot对SpringMVC的默认配置，需要在配置文件中使用以下前缀的配置：
 
@@ -143,13 +143,13 @@ public interface WebMvcConfigurer {
 
 我们来看一下`WebMvcAutoConfiguration`的生效条件：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730424986145-0d76b7da-06c5-4942-a5f2-3e55f0249c89.png" width="1130" title="" crop="0,0,1,1" id="iBmex" class="ne-image">
+![1730424986145-0d76b7da-06c5-4942-a5f2-3e55f0249c89.png](../assets/1730424986145-0d76b7da-06c5-4942-a5f2-3e55f0249c89.png)
 
 上图红框内表示，要求Spring容器中缺失`WebMvcConfigurationSupport`这个Bean，`WebMvcAutoConfiguration`才会生效。
 
 但是我们来看一下`EnableWebMvcConfiguration`的继承结构：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730425120392-dda2febe-d932-452c-9599-6df5859a2062.png" width="376" title="" crop="0,0,1,1" id="f94jB" class="ne-image">
+![1730425120392-dda2febe-d932-452c-9599-6df5859a2062.png](../assets/1730425120392-dda2febe-d932-452c-9599-6df5859a2062.png)
 
 很明显，`EnableWebMvcConfiguration`就是一个`WebMvcConfigurationSupport`这样的Bean。
 

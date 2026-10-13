@@ -13,7 +13,7 @@ logging.level.root=DEBUG
 
 执行结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1731729136927-1440a2bf-8b96-49c1-9d78-aa9f270a7deb.png" width="205" title="" crop="0,0,1,1" id="ua6eca803" class="ne-image">
+![1731729136927-1440a2bf-8b96-49c1-9d78-aa9f270a7deb.png](../assets/1731729136927-1440a2bf-8b96-49c1-9d78-aa9f270a7deb.png)
 
 更改为最低级别，会打印所有日志信息：
 
@@ -25,7 +25,7 @@ logging.level.root=TRACE
 
 执行结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1731729214172-ae5c8ba3-c73e-40c6-a450-7511953a1402.png" width="204" title="" crop="0,0,1,1" id="ub79457dc" class="ne-image">
+![1731729214172-ae5c8ba3-c73e-40c6-a450-7511953a1402.png](../assets/1731729214172-ae5c8ba3-c73e-40c6-a450-7511953a1402.png)
 
 ---
 

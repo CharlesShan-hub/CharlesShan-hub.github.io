@@ -420,7 +420,7 @@ public class ThymeleafProperties {}
 
 SpringBoot官方文档当中也有指导，告诉你都有哪些`属性类`，告诉你在`application.properties`中都可以配置哪些东西。默认值都是什么：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1731113798084-cbfc2b35-6a1d-42c2-9aec-4ab59806f87d.png" width="1777" title="" crop="0,0,1,1" id="ub655301c" class="ne-image">
+![1731113798084-cbfc2b35-6a1d-42c2-9aec-4ab59806f87d.png](../assets/1731113798084-cbfc2b35-6a1d-42c2-9aec-4ab59806f87d.png)
 
 ---
 
@@ -434,7 +434,7 @@ SpringBoot提供了非常多的自动配置类，有的是`web`相关的自动�
 
 `spring-boot-starter`又关联引入了`spring-boot-autoconfigure`。所有的自动配置类都在这里。
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1731059980138-654ed368-bfc2-42f5-afd5-045d2b2c5762.png" width="456" title="" crop="0,0,1,1" id="ud9fbdf17" class="ne-image">
+![1731059980138-654ed368-bfc2-42f5-afd5-045d2b2c5762.png](../assets/1731059980138-654ed368-bfc2-42f5-afd5-045d2b2c5762.png)
 
 ---
 

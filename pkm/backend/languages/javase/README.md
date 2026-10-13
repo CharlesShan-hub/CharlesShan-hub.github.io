@@ -12,6 +12,25 @@ comment: Java SE 基础笔记：语法、OOP、集合、IO、多线程、JVM
     * 👉 [02-variable-and-datatype](notes/01-basic/02-variable-and-datatype.md)：变量与数据类型
     * 👉 [03-Branch and Loop](notes/01-basic/branch-control.md)：分支与循环
     * 👉 [04-array](notes/01-basic/array.md)：数组
+* OOP
+    * 类与对象
+        * 类与对象引入
+        * 属性与方法
+        * this
+        * 封装与 JavaBean
+        * 访问修饰符
+    * 继承、多态与抽象
+        * extends、super
+        * Object
+        * 多态
+        * abstract
+        * interface
+        * final
+    * 类级别机制
+        * static
+        * enum
+        * 代码块
+        * 内部类
 * OOP Basic
     * [Introduction for Class and Object](notes/02-oop/class-and-object-introduce.md)：引入
     * [Attributes and Methods](notes/02-oop/attributes-and-methods.md)：属性和成员方法

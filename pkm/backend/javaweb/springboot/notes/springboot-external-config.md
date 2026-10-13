@@ -92,7 +92,7 @@ java -jar sb3-01-first-web-1.0-SNAPSHOT.jar --spring.config.location=file:///E:\
 
 使用脚手架创建SpringBoot项目，不添加任何启动器：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729589121331-13dc38dc-a34f-413f-963d-d1833df9686d.png" width="243" title="" crop="0,0,1,1" id="u042ae6c1" class="ne-image">
+![1729589121331-13dc38dc-a34f-413f-963d-d1833df9686d.png](../assets/1729589121331-13dc38dc-a34f-413f-963d-d1833df9686d.png)
 
 在`resources/application.properties`文件中进行如下配置：
 
@@ -140,7 +140,7 @@ class Sb307ExternalConfigApplicationTests {
 
 运行结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729648496732-56988017-05c1-4d2c-9d72-6b88bca91656.png" width="257" title="" crop="0,0,1,1" id="u25a180e1" class="ne-image">
+![1729648496732-56988017-05c1-4d2c-9d72-6b88bca91656.png](../assets/1729648496732-56988017-05c1-4d2c-9d72-6b88bca91656.png)
 
 使用@Value注解时也可以指定默认值，当指定默认值时，如果配置文件中没有指定配置值，则采用默认值。
 
@@ -171,7 +171,7 @@ public class UserService {
 
 执行结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729648777588-90155042-3924-4126-b610-3e201ced970a.png" width="288" title="" crop="0,0,1,1" id="u352c8f1b" class="ne-image">
+![1729648777588-90155042-3924-4126-b610-3e201ced970a.png](../assets/1729648777588-90155042-3924-4126-b610-3e201ced970a.png)
 
 当然，如果配置文件进行了相关的配置，则不会采用默认值，修改配置文件`application.properties`：
 
@@ -184,7 +184,7 @@ myapp.password=888888
 
 执行结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729648891492-48293951-3910-4180-8ace-c2741dc0b378.png" width="289" title="" crop="0,0,1,1" id="ue78d94f6" class="ne-image">
+![1729648891492-48293951-3910-4180-8ace-c2741dc0b378.png](../assets/1729648891492-48293951-3910-4180-8ace-c2741dc0b378.png)
 
 **另外，使用**`**@Value**`**注解也可以读取系统的环境变量，例如 windows 系统有一个环境变量**`**APP_KEY**`**，那么使用**`**@Value("${APP_KEY}")**`**是可以读取到的。但配置文件**`**APP_KEY**`**之后，一定要重启 windows 系统才行。**
 
@@ -280,13 +280,13 @@ myapp:
 
 + `|`      将文本写到这个符号的下层，会自动保留格式。
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764911738962-23784ede-1206-4272-aa19-93950ba84bdb.png" width="315.2" title="" crop="0,0,1,1" id="uf250886d" class="ne-image">
+![1764911738962-23784ede-1206-4272-aa19-93950ba84bdb.png](../assets/1764911738962-23784ede-1206-4272-aa19-93950ba84bdb.png)
 
 **第三：**换行变空格
 
 + `>`     将文本写到这个符号的下层，内容中换行会自动变成空格。
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764911715905-473c2f95-77ee-4c93-8871-d7a951af446f.png" width="134.4" title="" crop="0,0,1,1" id="iQrra" class="ne-image">
+![1764911715905-473c2f95-77ee-4c93-8871-d7a951af446f.png](../assets/1764911715905-473c2f95-77ee-4c93-8871-d7a951af446f.png)
 
 **第四：**文档切割
 
@@ -305,11 +305,11 @@ myapp:
 
 一定要把`resources/config`目录下`application.properties`名字修改为`application2.properties`，这样Spring Boot才会解析`resources/config/application.yml`。
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729654743068-a014695d-b7ea-42fe-91f8-0ea230bcb7d3.png" width="286" title="" crop="0,0,1,1" id="ud9c6ceee" class="ne-image">
+![1729654743068-a014695d-b7ea-42fe-91f8-0ea230bcb7d3.png](../assets/1729654743068-a014695d-b7ea-42fe-91f8-0ea230bcb7d3.png)
 
 运行测试程序：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729654822036-0c4b5c28-1c39-41c7-9321-03225aa3ec7a.png" width="295" title="" crop="0,0,1,1" id="uacb464b5" class="ne-image">
+![1729654822036-0c4b5c28-1c39-41c7-9321-03225aa3ec7a.png](../assets/1729654822036-0c4b5c28-1c39-41c7-9321-03225aa3ec7a.png)
 
 ---
 
@@ -367,7 +367,7 @@ public class UserServiceMulti {
 
 运行测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729662602259-3ebb69e9-600a-4b5e-9536-30814ce5d19d.png" width="297" title="" crop="0,0,1,1" id="u2aafb6be" class="ne-image">
+![1729662602259-3ebb69e9-600a-4b5e-9536-30814ce5d19d.png](../assets/1729662602259-3ebb69e9-600a-4b5e-9536-30814ce5d19d.png)
 
 ### yaml文件
 
@@ -402,7 +402,7 @@ spring:
 
 运行测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729663359961-e28ba636-6675-4e87-86a3-375859017754.png" width="279" title="" crop="0,0,1,1" id="uf3dbb91a" class="ne-image">
+![1729663359961-e28ba636-6675-4e87-86a3-375859017754.png](../assets/1729663359961-e28ba636-6675-4e87-86a3-375859017754.png)
 
 ---
 
@@ -533,7 +533,7 @@ public class AppBean {
 
 1. 被绑定的bean，需要使用`@ConfigurationProperties(prefix = "app")`注解进行标注，prefix用来指定前缀，哪个是前缀，如下图所示：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729667789270-8c85788b-8b00-4d17-bbab-5f87b9a68103.png" width="302" title="" crop="0,0,1,1" id="u391dc507" class="ne-image">
+![1729667789270-8c85788b-8b00-4d17-bbab-5f87b9a68103.png](../assets/1729667789270-8c85788b-8b00-4d17-bbab-5f87b9a68103.png)
 
 配置文件中的`name`、`age`、`email`要和bean对象的属性名`name`、`age`、`email`对应上。（属性名相同）
 
@@ -545,7 +545,7 @@ public class AppBean {
 
 编写测试程序，将bean对象输出，结果如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729668174305-f203b7f0-9ed2-435a-8c89-0f385cc6f50b.png" width="551" title="" crop="0,0,1,1" id="u7d23a56d" class="ne-image">
+![1729668174305-f203b7f0-9ed2-435a-8c89-0f385cc6f50b.png](../assets/1729668174305-f203b7f0-9ed2-435a-8c89-0f385cc6f50b.png)
 
 ### @Configuration注解
 
@@ -588,11 +588,11 @@ public class AppBean {
 
 运行测试程序：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729671038234-ecf76053-a6d2-4100-8942-cf246e71397c.png" width="539" title="" crop="0,0,1,1" id="ub90abe6a" class="ne-image">
+![1729671038234-ecf76053-a6d2-4100-8942-cf246e71397c.png](../assets/1729671038234-ecf76053-a6d2-4100-8942-cf246e71397c.png)
 
 我们把这个Bean对象的类名打印一下看看：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764859292118-89926acf-071e-4220-9193-463bf5c1567a.png" width="504.8" title="" crop="0,0,1,1" id="u82b66397" class="ne-image">
+![1764859292118-89926acf-071e-4220-9193-463bf5c1567a.png](../assets/1764859292118-89926acf-071e-4220-9193-463bf5c1567a.png)
 
 可以发现底层实际上创建了`AppBean`的代理对象`AppBean$$SpringCGLIB`。
 
@@ -611,7 +611,7 @@ public class AppBean {
 
 执行结果如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764859318989-b191024f-a0ba-45ef-98bd-6456a84bf8a9.png" width="355.2" title="" crop="0,0,1,1" id="u93e8ac9c" class="ne-image">
+![1764859318989-b191024f-a0ba-45ef-98bd-6456a84bf8a9.png](../assets/1764859318989-b191024f-a0ba-45ef-98bd-6456a84bf8a9.png)
 
 ### 绑定嵌套bean
 
@@ -741,7 +741,7 @@ public class Address {
 
 执行测试程序，结果如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764859348029-b1a2b1e9-a275-45fa-bb84-9fe4b1684dc1.png" width="908" title="" crop="0,0,1,1" id="uc1372835" class="ne-image">
+![1764859348029-b1a2b1e9-a275-45fa-bb84-9fe4b1684dc1.png](../assets/1764859348029-b1a2b1e9-a275-45fa-bb84-9fe4b1684dc1.png)
 
 ### **@EnableConfigurationProperties与@ConfigurationPropertiesScan知识点列表：**
 
@@ -778,7 +778,7 @@ public class Sb307ExternalConfigApplication {
 
 运行测试程序，执行结果如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764859369700-e1ff53bb-cca8-4613-b8ac-50cf12bab692.png" width="892.8" title="" crop="0,0,1,1" id="ucf259988" class="ne-image">
+![1764859369700-e1ff53bb-cca8-4613-b8ac-50cf12bab692.png](../assets/1764859369700-e1ff53bb-cca8-4613-b8ac-50cf12bab692.png)
 
 ### 将配置赋值到Bean的Map/List/Array属性上**知识点列表：
 

@@ -9,7 +9,7 @@ comment:
 
 **查看官方文档：**
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1731383415638-90d102e9-1fd0-4f31-9736-9e3bef3936d3.png" width="1555" title="" crop="0,0,1,1" id="ub2ad605c" class="ne-image">
+![1731383415638-90d102e9-1fd0-4f31-9736-9e3bef3936d3.png](../assets/1731383415638-90d102e9-1fd0-4f31-9736-9e3bef3936d3.png)
 
 **翻译如下：## 视图解析器
 + **包括 ContentNegotiatingViewResolver 和 BeanNameViewResolver 的 Bean。**

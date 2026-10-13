@@ -13,7 +13,7 @@ comment:
 
 Spring Boot提供了打包插件，可以将Spring Boot项目打包为**可执行 jar 包**。Web服务器（Tomcat）也会连同一块打入jar包中。只要电脑上安装了Java的运行环境（JDK），就可以启动Spring Boot项目。
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1726199029529-6ffc59e1-3d92-4d4e-ab44-31f24cba9585.png" width="993" title="" crop="0,0,1,1" id="u943f6236" class="ne-image">
+![1726199029529-6ffc59e1-3d92-4d4e-ab44-31f24cba9585.png](../assets/1726199029529-6ffc59e1-3d92-4d4e-ab44-31f24cba9585.png)
 
 根据官方文档指导，使用打包功能需要引入以下的插件：
 
@@ -30,19 +30,19 @@ Spring Boot提供了打包插件，可以将Spring Boot项目打包为**可执�
 
 执行打包命令，生成可执行jar包：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1726199412578-3892d163-9341-401d-83b5-a4412a1f7bdf.png" width="429" title="" crop="0,0,1,1" id="u3a9aabf5" class="ne-image">
+![1726199412578-3892d163-9341-401d-83b5-a4412a1f7bdf.png](../assets/1726199412578-3892d163-9341-401d-83b5-a4412a1f7bdf.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1726199440187-2e04d480-92c7-44e2-afb4-17c495fdc415.png" width="388" title="" crop="0,0,1,1" id="u5be0028f" class="ne-image">
+![1726199440187-2e04d480-92c7-44e2-afb4-17c495fdc415.png](../assets/1726199440187-2e04d480-92c7-44e2-afb4-17c495fdc415.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1726199497215-d3080065-f6dc-4c1d-b37c-4af2393faf58.png" width="476" title="" crop="0,0,1,1" id="ue80f36db" class="ne-image">
+![1726199497215-d3080065-f6dc-4c1d-b37c-4af2393faf58.png](../assets/1726199497215-d3080065-f6dc-4c1d-b37c-4af2393faf58.png)
 
 单独的将这个 jar 包可以拷贝到任何位置运行，通过`java -jar sb3-01-first-web-1.0-SNAPSHOT.jar`命令来启动 Spring Boot 项目：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1726199690515-f22a7212-d34a-4644-a6cd-141a58ed490c.png" width="1498" title="" crop="0,0,1,1" id="u5a0f7f0a" class="ne-image">
+![1726199690515-f22a7212-d34a-4644-a6cd-141a58ed490c.png](../assets/1726199690515-f22a7212-d34a-4644-a6cd-141a58ed490c.png)
 
 打开浏览器访问：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1726199728479-c1365c32-65d1-428f-b4fa-3d10f20df2e0.png" width="344" title="" crop="0,0,1,1" id="u57f97959" class="ne-image">
+![1726199728479-c1365c32-65d1-428f-b4fa-3d10f20df2e0.png](../assets/1726199728479-c1365c32-65d1-428f-b4fa-3d10f20df2e0.png)
 
 另外，Spring Boot框架为我们提供了非常灵活的配置，在可执行jar包的同级目录下新建配置文件：application.properties，并配置以下信息：
 
@@ -52,7 +52,7 @@ server.port=8888
 
 重新启动服务器，然后使用新的端口号访问：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1727503630959-3bcc152d-e57d-4723-8630-bc576582e215.png" width="323" title="" crop="0,0,1,1" id="u8b891f28" class="ne-image">
+![1727503630959-3bcc152d-e57d-4723-8630-bc576582e215.png](../assets/1727503630959-3bcc152d-e57d-4723-8630-bc576582e215.png)
 
 ---
 
@@ -74,9 +74,9 @@ Spring Boot 的这些特性使得部署和运行变得更加简单和方便，�
 
 SpringBoot的可执行jar包目录结构：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729577060207-7c7bbf86-12ee-4ea4-9f0a-fb2d44d5774c.png" width="800" title="" crop="0,0,1,1" id="ud2b62745" class="ne-image">
+![1729577060207-7c7bbf86-12ee-4ea4-9f0a-fb2d44d5774c.png](../assets/1729577060207-7c7bbf86-12ee-4ea4-9f0a-fb2d44d5774c.png)
 
 普通jar包的目录结构：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729576629470-76daa653-7d27-4e33-a1c1-05191c529e6a.png" width="132" title="" crop="0,0,1,1" id="u8dde5a8e" class="ne-image">
+![1729576629470-76daa653-7d27-4e33-a1c1-05191c529e6a.png](../assets/1729576629470-76daa653-7d27-4e33-a1c1-05191c529e6a.png)
 

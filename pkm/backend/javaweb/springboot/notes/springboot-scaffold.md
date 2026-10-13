@@ -15,7 +15,7 @@ comment:
 
 在建筑工程领域，“脚手架”指的是临时性的结构，用于支撑建筑物以及建筑材料，同时为建筑工人提供工作平台。这种脚手架通常是由钢管、扣件、木板和其他配件组成的，可以根据施工需要搭建不同高度和形状的结构。
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1728552516494-a4239fdd-4ac0-4dbc-b55c-94eb742a950a.png" width="390" title="" crop="0,0,1,1" id="u6e13660b" class="ne-image">
+![1728552516494-a4239fdd-4ac0-4dbc-b55c-94eb742a950a.png](../assets/1728552516494-a4239fdd-4ac0-4dbc-b55c-94eb742a950a.png)
 
 ### 软件开发中的脚手架
 
@@ -77,29 +77,29 @@ Visual Studio Code 社区提供了多个插件，如 Spring Boot Extension Pack�
 
 Spring Initializr：[https://start.spring.io](https://start.spring.io)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764849320501-e61a3471-b6b5-4e64-be6d-d1ed3840a325.png" width="1366.4" title="" crop="0,0,1,1" id="u64f14c09" class="ne-image">
+![1764849320501-e61a3471-b6b5-4e64-be6d-d1ed3840a325.png](../assets/1764849320501-e61a3471-b6b5-4e64-be6d-d1ed3840a325.png)
 
 点击“GENERATE”后，生成zip压缩包：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1728609413133-c4914cdd-0c38-4c71-ab86-7ba13e3c4dd8.png" width="244" title="" crop="0,0,1,1" id="KHgLI" class="ne-image">
+![1728609413133-c4914cdd-0c38-4c71-ab86-7ba13e3c4dd8.png](../assets/1728609413133-c4914cdd-0c38-4c71-ab86-7ba13e3c4dd8.png)
 
 将其解压后的目录结构是一个标准的maven 工程：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1728609603462-7f1dd559-7b10-4200-9503-08d76df40ebe.png" width="214" title="" crop="0,0,1,1" id="uc3ca0f71" class="ne-image">
+![1728609603462-7f1dd559-7b10-4200-9503-08d76df40ebe.png](../assets/1728609603462-7f1dd559-7b10-4200-9503-08d76df40ebe.png)
 
 ### 将项目放到IDEA当中
 
 接下来将其导入到IDEA当中：直接将解压后的`sb3-02-use-spring-initializr`拷贝到我们新建的空工程`SpringBoot3`下，如图：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1728636406330-1f5945e3-d3d7-4c2c-b9e8-dea3be89ccbf.png" width="330" title="" crop="0,0,1,1" id="u6daadf94" class="ne-image">
+![1728636406330-1f5945e3-d3d7-4c2c-b9e8-dea3be89ccbf.png](../assets/1728636406330-1f5945e3-d3d7-4c2c-b9e8-dea3be89ccbf.png)
 
 打开IDEA工具，你会看到如下图：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1728637409850-6f7b13f1-b98d-4b11-9f17-ba5fac3112f3.png" width="373" title="" crop="0,0,1,1" id="u0f814737" class="ne-image">
+![1728637409850-6f7b13f1-b98d-4b11-9f17-ba5fac3112f3.png](../assets/1728637409850-6f7b13f1-b98d-4b11-9f17-ba5fac3112f3.png)
 
 注意：如果`pom.xml`文件的图标颜色不是蓝色，而是橘色，需要在`pom.xml`文件上右键，选择：add as maven project。这样`pom.xml`文件的图标就会变为蓝色了。
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1728643539990-d4e9061c-1e9e-4b3c-a21a-b2604f165f5b.png" width="425" title="" crop="0,0,1,1" id="u24955417" class="ne-image">
+![1728643539990-d4e9061c-1e9e-4b3c-a21a-b2604f165f5b.png](../assets/1728643539990-d4e9061c-1e9e-4b3c-a21a-b2604f165f5b.png)
 
 ### 脚手架生成的pom.xml文件
 
@@ -165,7 +165,7 @@ Spring Initializr：[https://start.spring.io](https://start.spring.io)
 
 ### 脚手架生成的Spring Boot项目的结构
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764849763329-254ba947-63ce-492a-a5c3-2ebaf9e30762.png" width="711.2" title="" crop="0,0,1,1" id="u4b2e4615" class="ne-image">
+![1764849763329-254ba947-63ce-492a-a5c3-2ebaf9e30762.png](../assets/1764849763329-254ba947-63ce-492a-a5c3-2ebaf9e30762.png)
 
 请仔细阅读上图来学习Spring Boot项目结构。
 
@@ -173,13 +173,13 @@ Spring Initializr：[https://start.spring.io](https://start.spring.io)
 
 新建controller包，并新建HelloController类，如下图：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764850088811-df79e223-3ce4-45a0-abb6-551ecb03d1e6.png" width="384" title="" crop="0,0,1,1" id="u298d7488" class="ne-image">
+![1764850088811-df79e223-3ce4-45a0-abb6-551ecb03d1e6.png](../assets/1764850088811-df79e223-3ce4-45a0-abb6-551ecb03d1e6.png)
 
 **重点：默认情况下，SpringBoot项目只扫描主入口程序所在目录以及子目录，因此创建的Controller类要求放在主入口程序的同级目录下或子目录下。其他位置默认情况下扫描不到。**
 
 启动应用并访问：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1728644098279-12a20878-eb1f-4203-b051-d01b95f79c21.png" width="350" title="" crop="0,0,1,1" id="u8175466e" class="ne-image">
+![1728644098279-12a20878-eb1f-4203-b051-d01b95f79c21.png](../assets/1728644098279-12a20878-eb1f-4203-b051-d01b95f79c21.png)
 
 ---
 
@@ -187,11 +187,11 @@ Spring Initializr：[https://start.spring.io](https://start.spring.io)
 
  IDEA工具自带了Spring Boot脚手架的插件，使用它会更加的方便，让我们来操作一下：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764850264085-fef23e31-9422-487c-b978-bcc84c110bf7.png" width="780" title="" crop="0,0,1,1" id="u29d97cfe" class="ne-image">
+![1764850264085-fef23e31-9422-487c-b978-bcc84c110bf7.png](../assets/1764850264085-fef23e31-9422-487c-b978-bcc84c110bf7.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764850311614-a10e39bc-7c91-45e4-b0f5-1478b5c0f8c9.png" width="773.6" title="" crop="0,0,1,1" id="u1e9a3ad9" class="ne-image">
+![1764850311614-a10e39bc-7c91-45e4-b0f5-1478b5c0f8c9.png](../assets/1764850311614-a10e39bc-7c91-45e4-b0f5-1478b5c0f8c9.png)
 
 编写控制器，启动服务器测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1728716401724-8808d893-408c-4b1e-9e14-70d96ff461fe.png" width="435" title="" crop="0,0,1,1" id="u22bdf23d" class="ne-image"> 
+![1728716401724-8808d893-408c-4b1e-9e14-70d96ff461fe.png](../assets/1728716401724-8808d893-408c-4b1e-9e14-70d96ff461fe.png) 
 

@@ -727,16 +727,16 @@ public class MyApplication {
 
 **第一步：新建并导入项目**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1765324954473-07089f27-0d74-4db5-a780-25aaea32266e.png" width="483.2" title="" crop="0,0,1,1" id="u2d9368dd" class="ne-image">
+![1765324954473-07089f27-0d74-4db5-a780-25aaea32266e.png](../assets/1765324954473-07089f27-0d74-4db5-a780-25aaea32266e.png)
 
 **第二步：填写 OpenAPI 地址：**[**http://localhost:8080/v3/api-docs**](http://localhost:8080/v3/api-docs)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1765325002844-8e3f9967-6efc-4f1f-81ad-dfa0aa48fdb6.png" width="622.4" title="" crop="0,0,1,1" id="u8e05bd04" class="ne-image">
+![1765325002844-8e3f9967-6efc-4f1f-81ad-dfa0aa48fdb6.png](../assets/1765325002844-8e3f9967-6efc-4f1f-81ad-dfa0aa48fdb6.png)
 
 **第三步：设置 Apipost 基础 URL**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1765325058771-ad0e5500-93ff-4b00-9070-88918f8a88a7.png" width="311.2" title="" crop="0,0,1,1" id="ueaef0068" class="ne-image">
+![1765325058771-ad0e5500-93ff-4b00-9070-88918f8a88a7.png](../assets/1765325058771-ad0e5500-93ff-4b00-9070-88918f8a88a7.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1765325087214-d58b4f60-56a8-4716-9daf-3e16c0077156.png" width="1062.4" title="" crop="0,0,1,1" id="udb5831b0" class="ne-image">
+![1765325087214-d58b4f60-56a8-4716-9daf-3e16c0077156.png](../assets/1765325087214-d58b4f60-56a8-4716-9daf-3e16c0077156.png)
 
 然后就可以在 Apipost 中进行接口的测试工作了。

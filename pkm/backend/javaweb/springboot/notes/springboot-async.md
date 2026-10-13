@@ -187,7 +187,7 @@ class SpringAsyncApplicationTests {
 
 执行效果如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1765200075661-99116326-9d77-44b7-91a3-a3fba8c413d7.png" width="471.2" title="" crop="0,0,1,1" id="ue4dc41cd" class="ne-image">
+![1765200075661-99116326-9d77-44b7-91a3-a3fba8c413d7.png](../assets/1765200075661-99116326-9d77-44b7-91a3-a3fba8c413d7.png)
 
 ---
 

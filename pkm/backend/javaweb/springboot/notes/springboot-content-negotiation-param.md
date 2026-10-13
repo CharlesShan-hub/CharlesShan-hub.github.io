@@ -13,7 +13,7 @@ spring.mvc.contentnegotiation.parameter-name=type
 
 再次测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1765110658054-dd06e2f5-da84-4909-bb69-444445f3726a.png" width="547.2" title="" crop="0,0,1,1" id="u2660532f" class="ne-image">
+![1765110658054-dd06e2f5-da84-4909-bb69-444445f3726a.png](../assets/1765110658054-dd06e2f5-da84-4909-bb69-444445f3726a.png)
 
 ---
 
@@ -35,7 +35,7 @@ WebMvcAutoConfiguration.EnableWebMvcConfiguration extends DelegatingWebMvcConfig
 
 通过断点调试，可以发现默认支持6个HttpMessageConverter，如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730774897755-ad87ddc8-4700-40e4-baee-a28d94000e7a.png" width="845" title="" crop="0,0,1,1" id="u0880e2fa" class="ne-image">
+![1730774897755-ad87ddc8-4700-40e4-baee-a28d94000e7a.png](../assets/1730774897755-ad87ddc8-4700-40e4-baee-a28d94000e7a.png)
 
 **这6个**`**HttpMessageConverter**`**作用如下：**
 
@@ -65,9 +65,9 @@ WebMvcAutoConfiguration.EnableWebMvcConfiguration extends DelegatingWebMvcConfig
 
 另外，通过以下源码，也可以看到SpringBoot是根据类路径中是否存在某个类，而决定是否添加对应的消息转换器的：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730775823305-dfc2b0c5-6ca1-4e8f-902b-506e3d86246d.png" width="1361" title="" crop="0,0,1,1" id="u3fadfd38" class="ne-image">
+![1730775823305-dfc2b0c5-6ca1-4e8f-902b-506e3d86246d.png](../assets/1730775823305-dfc2b0c5-6ca1-4e8f-902b-506e3d86246d.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730775878229-960b3144-1727-4467-899a-6bd16f6bc965.png" width="1343" title="" crop="0,0,1,1" id="ub683010f" class="ne-image">
+![1730775878229-960b3144-1727-4467-899a-6bd16f6bc965.png](../assets/1730775878229-960b3144-1727-4467-899a-6bd16f6bc965.png)
 
 因此，我们只要引入相关的依赖，让类路径存在某个类，则对应的消息转换器就会被加载。
 
@@ -120,7 +120,7 @@ public class Jackson2YamlTest {
 
 执行结果如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730778662876-bf7851a4-1e8e-4d64-9584-443fd71cef7e.png" width="263" title="" crop="0,0,1,1" id="uca5f2c46" class="ne-image">
+![1730778662876-bf7851a4-1e8e-4d64-9584-443fd71cef7e.png](../assets/1730778662876-bf7851a4-1e8e-4d64-9584-443fd71cef7e.png)
 
 ### 第二步：新增一种媒体类型yaml
 
@@ -213,5 +213,5 @@ public class WebConfig implements WebMvcConfigurer {
 
 启动服务器并测试：http://localhost:8080/detail?type=yaml
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730783005228-fe11e134-539e-4291-a12a-f2f83f9b9705.png" width="404" title="" crop="0,0,1,1" id="u21aa8574" class="ne-image">
+![1730783005228-fe11e134-539e-4291-a12a-f2f83f9b9705.png](../assets/1730783005228-fe11e134-539e-4291-a12a-f2f83f9b9705.png)
 

@@ -27,7 +27,7 @@ comment:
 
 ## 加载机制：合并所有来源
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764984821891-fe81ca97-fdc3-49e6-8478-20635b149524.png" width="804.4000244140625" title="" crop="0,0,1,1" id="ua9efc3e6" class="ne-image">
+![1764984821891-fe81ca97-fdc3-49e6-8478-20635b149524.png](../assets/1764984821891-fe81ca97-fdc3-49e6-8478-20635b149524.png)
 
 ---
 
@@ -38,13 +38,13 @@ comment:
 3. 核心启动器导入之后，关联导入了一个jar包：`spring-boot-autoconfigure`
     1. 注意：这个jar包中存放的是springboot框架**官方支持的自动配置类**。如下图：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1731120167649-5b43660e-d911-4af1-b609-7ba357483cbb.png" width="523" title="" crop="0,0,1,1" id="FY7Mq" class="ne-image">
+![1731120167649-5b43660e-d911-4af1-b609-7ba357483cbb.png](../assets/1731120167649-5b43660e-d911-4af1-b609-7ba357483cbb.png)
 
     2. 官方支持的自动配置类有多少个呢，可以通过下图位置查看：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1731120316690-38e92299-860c-4f52-8e90-93773af32190.png" width="534" title="" crop="0,0,1,1" id="u73900a9f" class="ne-image">
+![1731120316690-38e92299-860c-4f52-8e90-93773af32190.png](../assets/1731120316690-38e92299-860c-4f52-8e90-93773af32190.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1731120338604-18c536ab-a98f-4ba7-adf3-10f47f02056d.png" width="675" title="" crop="0,0,1,1" id="u769be9ac" class="ne-image">
+![1731120338604-18c536ab-a98f-4ba7-adf3-10f47f02056d.png](../assets/1731120338604-18c536ab-a98f-4ba7-adf3-10f47f02056d.png)
 
 得知`springboot3.3.5`这个版本共`152`个自动配置类。自动配置类的命名规则是`XxxxAutoConfiguration`。
 
@@ -54,7 +54,7 @@ comment:
 
 ## 自动配置实现原理
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764985417738-3e5a53b6-eaec-4801-8fbc-37f2d95f40de.png" width="564.4000244140625" title="" crop="0,0,1,1" id="uce68e9b0" class="ne-image">
+![1764985417738-3e5a53b6-eaec-4801-8fbc-37f2d95f40de.png](../assets/1764985417738-3e5a53b6-eaec-4801-8fbc-37f2d95f40de.png)
 
 ---
 

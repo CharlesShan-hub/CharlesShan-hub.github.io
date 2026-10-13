@@ -21,7 +21,7 @@ Spring Boot的AOP编程和Spring框架中AOP编程的唯一区别是：引入依
 </dependency>
 ```
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729734178510-707a3d64-caf6-407d-ba2b-9633f218c0ed.png" width="399" title="" crop="0,0,1,1" id="uc627e328" class="ne-image">
+![1729734178510-707a3d64-caf6-407d-ba2b-9633f218c0ed.png](../assets/1729734178510-707a3d64-caf6-407d-ba2b-9633f218c0ed.png)
 
 可以看到，当引入`aop启动器`之后，会引入`aop依赖`和`aspectj依赖`。
 
@@ -162,5 +162,5 @@ class Sb308AopApplicationTests {
 
 执行结果如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1729740697956-e1295869-318a-4a47-b9e4-84c05ad3a9dd.png" width="435" title="" crop="0,0,1,1" id="uf31732ae" class="ne-image">
+![1729740697956-e1295869-318a-4a47-b9e4-84c05ad3a9dd.png](../assets/1729740697956-e1295869-318a-4a47-b9e4-84c05ad3a9dd.png)
 

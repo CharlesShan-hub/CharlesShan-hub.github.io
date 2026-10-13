@@ -13,7 +13,7 @@ comment:
 
 **如果是 web 开发，最终会留下 27 个自动配置类：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1765028276659-f02e9956-37a7-4f5f-8f1c-443808c3a385.png" width="399.2" title="" crop="0,0,1,1" id="uf26504a6" class="ne-image">
+![1765028276659-f02e9956-37a7-4f5f-8f1c-443808c3a385.png](../assets/1765028276659-f02e9956-37a7-4f5f-8f1c-443808c3a385.png)
 
 **分别是：**
 

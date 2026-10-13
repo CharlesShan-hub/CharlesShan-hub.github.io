@@ -26,19 +26,19 @@ spring.web.resources.static-locations=classpath:/static1/,classpath:/static2/
 
 **访问静态资源测试结果如下：**
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730433000967-37e76b55-5715-4387-a135-5daacd53a755.png" width="229" title="" crop="0,0,1,1" id="ubdb65472" class="ne-image">
+![1730433000967-37e76b55-5715-4387-a135-5daacd53a755.png](../assets/1730433000967-37e76b55-5715-4387-a135-5daacd53a755.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730433110267-b2f84e91-6b95-48d3-88d6-acff3dca26cc.png" width="410" title="" crop="0,0,1,1" id="u1a2b2598" class="ne-image">
+![1730433110267-b2f84e91-6b95-48d3-88d6-acff3dca26cc.png](../assets/1730433110267-b2f84e91-6b95-48d3-88d6-acff3dca26cc.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730433134598-5ac4583f-e7c1-4a8e-a3bb-77e2a3a33ac7.png" width="331" title="" crop="0,0,1,1" id="ub90c36bc" class="ne-image">
+![1730433134598-5ac4583f-e7c1-4a8e-a3bb-77e2a3a33ac7.png](../assets/1730433134598-5ac4583f-e7c1-4a8e-a3bb-77e2a3a33ac7.png)
 
 如果访问`dog2.jpg`，就无法访问了：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730433508569-ce398096-8cae-42e3-b6a2-5fe94e2a007a.png" width="528" title="" crop="0,0,1,1" id="ue129b260" class="ne-image">
+![1730433508569-ce398096-8cae-42e3-b6a2-5fe94e2a007a.png](../assets/1730433508569-ce398096-8cae-42e3-b6a2-5fe94e2a007a.png)
 
 但是，存储在`classpath:/META-INF/resources/`目录下的`dog1.jpg`仍然是可以访问的：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730433537233-e7fe1330-22d3-4b36-8c43-bbdc9a578f99.png" width="326" title="" crop="0,0,1,1" id="u13abe56d" class="ne-image">
+![1730433537233-e7fe1330-22d3-4b36-8c43-bbdc9a578f99.png](../assets/1730433537233-e7fe1330-22d3-4b36-8c43-bbdc9a578f99.png)
 
 因此，存储在`classpath:/META-INF/resources/`位置的静态资源会被默认加载，不受手动配置的影响。
 
@@ -77,19 +77,19 @@ public class WebConfig implements WebMvcConfigurer {
 
 注意：将`application.properties`文件中之前的所有配置全部注释掉。让其恢复到最原始的默认配置。
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730444156893-d646065e-96dc-449c-a8cc-eff70e23594c.png" width="261" title="" crop="0,0,1,1" id="ueff091e5" class="ne-image">
+![1730444156893-d646065e-96dc-449c-a8cc-eff70e23594c.png](../assets/1730444156893-d646065e-96dc-449c-a8cc-eff70e23594c.png)
 
 启动服务器进行测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730444208880-ca582b52-a68f-4918-9ead-f342c5ebbf38.png" width="275" title="" crop="0,0,1,1" id="u1eeb495d" class="ne-image">
+![1730444208880-ca582b52-a68f-4918-9ead-f342c5ebbf38.png](../assets/1730444208880-ca582b52-a68f-4918-9ead-f342c5ebbf38.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730444226844-d1e40613-8c6c-43a5-95a1-1c0d34d101bb.png" width="239" title="" crop="0,0,1,1" id="ueb89442c" class="ne-image">
+![1730444226844-d1e40613-8c6c-43a5-95a1-1c0d34d101bb.png](../assets/1730444226844-d1e40613-8c6c-43a5-95a1-1c0d34d101bb.png)
 
 通过测试，我们的配置是生效的。
 
 我们再来看看，默认的配置是否还生效？
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730444289901-3304e315-67e2-4d6c-93b8-0db5f48a24a7.png" width="313" title="" crop="0,0,1,1" id="ua9846b46" class="ne-image">
+![1730444289901-3304e315-67e2-4d6c-93b8-0db5f48a24a7.png](../assets/1730444289901-3304e315-67e2-4d6c-93b8-0db5f48a24a7.png)
 
 我们可以看到，Spring Boot对Spring MVC的默认自动配置是生效的。
 
@@ -127,11 +127,11 @@ public class WebConfig2 {
 
 测试结果如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730444971338-0aca22a6-ff00-4644-9e21-2d08765b62e4.png" width="352" title="" crop="0,0,1,1" id="ub73538be" class="ne-image">
+![1730444971338-0aca22a6-ff00-4644-9e21-2d08765b62e4.png](../assets/1730444971338-0aca22a6-ff00-4644-9e21-2d08765b62e4.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730444986018-554aeccd-a0fd-43d2-9b92-7846fea2415c.png" width="318" title="" crop="0,0,1,1" id="u86c7b340" class="ne-image">
+![1730444986018-554aeccd-a0fd-43d2-9b92-7846fea2415c.png](../assets/1730444986018-554aeccd-a0fd-43d2-9b92-7846fea2415c.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730445003557-89783ce1-fdf7-4b22-873b-0fafdc07ecd2.png" width="325" title="" crop="0,0,1,1" id="u8827d14f" class="ne-image">
+![1730445003557-89783ce1-fdf7-4b22-873b-0fafdc07ecd2.png](../assets/1730445003557-89783ce1-fdf7-4b22-873b-0fafdc07ecd2.png)
 
 通过了测试，并且以上代码也是在原有配置基础上进行扩展。
 
@@ -199,7 +199,7 @@ public class WebConfig2 {
 
 启动服务器，打开浏览器，发送请求[http://localhost:8080/static/dog5.jpg](http://localhost:8080/static/dog5.jpg)，后台执行结果如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1730445490551-7c8fbe3f-a792-4307-8c46-21a365e0b25d.png" width="409" title="" crop="0,0,1,1" id="u9c5870cc" class="ne-image">
+![1730445490551-7c8fbe3f-a792-4307-8c46-21a365e0b25d.png](../assets/1730445490551-7c8fbe3f-a792-4307-8c46-21a365e0b25d.png)
 
 这说明拦截器生效。
 
