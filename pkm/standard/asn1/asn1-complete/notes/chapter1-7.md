@@ -1,7 +1,8 @@
 ---
-title:
+title: chapter1-7
 tags:
-date:
+  - book
+date: 2026-10-13
 comment:
 ---
 

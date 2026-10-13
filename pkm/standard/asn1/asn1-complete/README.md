@@ -1,7 +1,9 @@
 ---
-title:
+title: README
 tags:
-date:
+  - catalog
+  - book
+date: 2026-10-13
 comment:
 ---
 
