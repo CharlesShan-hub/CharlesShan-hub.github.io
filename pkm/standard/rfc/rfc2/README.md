@@ -1,7 +1,8 @@
 ---
-title:
+title: rfc2
 tags:
-date:
+  - note
+date: 2026-10-13
 comment:
 ---
 
@@ -44,7 +45,7 @@ RFC 1 只说了"0 号控制 + 31 条数据"。RFC 2 把"数据链路"进一步�
 
 RFC 1 只画了流程图，RFC 2 把状态机写全了（第 2b1d 节）：
 
-```
+```txt
 A 要连 B：
   ① A 从自己的分配表里挑一条没在用的链路
   ② A 通过链路 0 给 B 发「链路连接消息」
@@ -122,14 +123,14 @@ RFC 2 第 3 节把校验和算法定得比 RFC 1 更具体。最精彩的是字�
 
 ## 五、思想传承对照表
 
-| RFC 2 的条款 | 今天的对应物 |
-|---|---|
-| 控制链路（每对 1 条，系统加载时建立） | TCP 连接 / 控制面（SDN、K8s API Server） |
-| 主链路 = 远端把你看成一台 TTY | telnet / SSH 伪终端 |
-| 辅助链路（任意数量、二进制或字符） | FTP 数据通道 / QUIC Stream |
-| getlink 五步状态机 + 超时 panic | 三次握手 + SYN 重传超时 |
-| Na > Nb 时小的让 | TCP simultaneous open 的冲突处理 |
-| 折叠校验和（顺序相关、288-bit 分块） | TCP checksum（含伪头部，顺序相关） |
-| Monitor 维护其他 HOST 状态 | 邻居发现 / ARP 缓存 / 路由表 |
-| Transparent I/O（调试裸管道） | raw socket / AF_PACKET / eBPF |
-| 模拟电话线模式（1 字符/消息） | 串口调试 / loopback 测试 |
+| RFC 2 的条款                | 今天的对应物                           |
+| ------------------------ | -------------------------------- |
+| 控制链路（每对 1 条，系统加载时建立）     | TCP 连接 / 控制面（SDN、K8s API Server） |
+| 主链路 = 远端把你看成一台 TTY       | telnet / SSH 伪终端                 |
+| 辅助链路（任意数量、二进制或字符）        | FTP 数据通道 / QUIC Stream           |
+| getlink 五步状态机 + 超时 panic | 三次握手 + SYN 重传超时                  |
+| Na > Nb 时小的让             | TCP simultaneous open 的冲突处理      |
+| 折叠校验和（顺序相关、288-bit 分块）   | TCP checksum（含伪头部，顺序相关）          |
+| Monitor 维护其他 HOST 状态     | 邻居发现 / ARP 缓存 / 路由表              |
+| Transparent I/O（调试裸管道）   | raw socket / AF_PACKET / eBPF    |
+| 模拟电话线模式（1 字符/消息）         | 串口调试 / loopback 测试               |
