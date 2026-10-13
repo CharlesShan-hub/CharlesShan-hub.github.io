@@ -42,11 +42,11 @@ mybatis-plus:
 
 给`t_wx`表添加一个`deleted`字段，编写代码测试一下：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744429819330-692287d2-c849-4e7b-9f71-d8c52c23d9f9.png" width="568" title="" crop="0,0,1,1" id="udcb4dcda" class="ne-image" style="font-size: 16px">
+![1744429819330-692287d2-c849-4e7b-9f71-d8c52c23d9f9.png](../assets/1744429819330-692287d2-c849-4e7b-9f71-d8c52c23d9f9.png)
 
 WeiXiu这个po上也要添加一个属性：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744430204264-68306fc7-939a-4d96-bfdf-133b43e0ac2c.png" width="512" title="" crop="0,0,1,1" id="ud8d03040" class="ne-image" style="font-size: 16px">
+![1744430204264-68306fc7-939a-4d96-bfdf-133b43e0ac2c.png](../assets/1744430204264-68306fc7-939a-4d96-bfdf-133b43e0ac2c.png)
 
 测试代码：
 
@@ -95,10 +95,10 @@ public void logicDelete(){
 
 执行结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744430279990-59421d5a-b2ad-4ce0-8753-0f03a9cf3918.png" width="1029" title="" crop="0,0,1,1" id="u2ab9e092" class="ne-image" style="font-size: 16px">
+![1744430279990-59421d5a-b2ad-4ce0-8753-0f03a9cf3918.png](../assets/1744430279990-59421d5a-b2ad-4ce0-8753-0f03a9cf3918.png)
 
 数据库数据没有真正删除：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744430312146-03b05c15-36b4-46d3-ad99-699d95fc2c83.png" width="548" title="" crop="0,0,1,1" id="u0e25cce2" class="ne-image" style="font-size: 16px">
+![1744430312146-03b05c15-36b4-46d3-ad99-699d95fc2c83.png](../assets/1744430312146-03b05c15-36b4-46d3-ad99-699d95fc2c83.png)
 
 **注意：保存数据时，可以不用指定 deleted 字段的值，设计数据库表的时候，将 deleted 字段设置默认值为 0 即可。**

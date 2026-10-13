@@ -13,7 +13,7 @@ comment:
 
 假设汽车表中有一个字段是 json 类型，存储了车主的信息。如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1765424229312-d7cd17b2-8134-45b7-b2f7-70109e129a9b.png" width="945.6" title="" crop="0,0,1,1" id="u77a0f9a7" class="ne-image">
+![1765424229312-d7cd17b2-8134-45b7-b2f7-70109e129a9b.png](../assets/1765424229312-d7cd17b2-8134-45b7-b2f7-70109e129a9b.png)
 
 ```json
 
@@ -34,7 +34,7 @@ comment:
 
 ## MP 提供的 json 处理器
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1765424546642-67352e0f-e202-454e-aa56-20e3d46d29b0.png" width="479.2" title="" crop="0,0,1,1" id="u7949dbe4" class="ne-image">
+![1765424546642-67352e0f-e202-454e-aa56-20e3d46d29b0.png](../assets/1765424546642-67352e0f-e202-454e-aa56-20e3d46d29b0.png)
 
 MP 给我们提供了很多 json 处理器，springboot 默认集成的是 jackson，因此我们这里选择 `JacksonTypeHandler`会比较方便，不需要引入额外的 json 处理库。
 
@@ -101,7 +101,7 @@ private Owner owner;
 
 直接通过 Swagger UI 测试之前的接口：通过 id 查询汽车信息的接口。
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1765425952884-d4409c4b-a80c-429b-bcdf-93fe25f00764.png" width="338.4" title="" crop="0,0,1,1" id="u90f78992" class="ne-image">
+![1765425952884-d4409c4b-a80c-429b-bcdf-93fe25f00764.png](../assets/1765425952884-d4409c4b-a80c-429b-bcdf-93fe25f00764.png)
 
 ### 第四步：测试插入
 
@@ -130,4 +130,4 @@ public void testSave(){
 
 测试结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1765426213984-aa09478f-f210-49fe-b757-c01f65d932b9.png" width="948" title="" crop="0,0,1,1" id="u53ee3ce8" class="ne-image">
+![1765426213984-aa09478f-f210-49fe-b757-c01f65d932b9.png](../assets/1765426213984-aa09478f-f210-49fe-b757-c01f65d932b9.png)

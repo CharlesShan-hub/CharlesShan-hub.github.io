@@ -127,7 +127,7 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
 
 ****IService接口的继承结构如下：****
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744336178236-0441b8f3-ca31-40a4-a9cd-a0438e01f2c1.png" width="550" title="" crop="0,0,1,1" id="VAV50" class="ne-image" style="font-size: 16px">
+![1744336178236-0441b8f3-ca31-40a4-a9cd-a0438e01f2c1.png](../assets/1744336178236-0441b8f3-ca31-40a4-a9cd-a0438e01f2c1.png)
 
 ---
 
@@ -135,7 +135,7 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
 
 ### 负责新增的方法
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744336381917-1e255d47-67f0-4af9-9598-e857ff051848.png" width="465" title="" crop="0,0,1,1" id="u0422ddb9" class="ne-image" style="font-size: 16px">
+![1744336381917-1e255d47-67f0-4af9-9598-e857ff051848.png](../assets/1744336381917-1e255d47-67f0-4af9-9598-e857ff051848.png)
 
 + save(T) 保存
 + saveBatch(Collection<T>) 批量保存
@@ -143,7 +143,7 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
 
 ### 负责删除的方法
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744336400274-077afd2b-f307-408b-bfec-3f2d943cc5bc.png" width="444" title="" crop="0,0,1,1" id="uf47464a7" class="ne-image" style="font-size: 16px">
+![1744336400274-077afd2b-f307-408b-bfec-3f2d943cc5bc.png](../assets/1744336400274-077afd2b-f307-408b-bfec-3f2d943cc5bc.png)
 
 + removeById(Serializable) 根据主键删除
 + removeByIds(Collection<?>) 根据多个主键删除多条记录，底层用 `in(id1, id2, id3)`
@@ -151,30 +151,30 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
 
 ### 负责修改的方法
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744336479166-0bbbbbe3-e8e7-4387-9f87-c9fe5afb7958.png" width="452" title="" crop="0,0,1,1" id="u9045ce42" class="ne-image" style="font-size: 16px">
+![1744336479166-0bbbbbe3-e8e7-4387-9f87-c9fe5afb7958.png](../assets/1744336479166-0bbbbbe3-e8e7-4387-9f87-c9fe5afb7958.png)
 
 + updateById(T) 根据id更新
 + updateBatchById(Collection<T>) 根据id批量更新
 
 ### 负责查询的方法
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744337340527-47aec78b-c34e-48a1-8d7f-6019bd8bed09.png" width="260" title="" crop="0,0,1,1" id="u6c82ac35" class="ne-image" style="font-size: 16px">
+![1744337340527-47aec78b-c34e-48a1-8d7f-6019bd8bed09.png](../assets/1744337340527-47aec78b-c34e-48a1-8d7f-6019bd8bed09.png)
 
 + 这几个方法都是查一个。
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744337480761-c157a80d-fb26-4635-8694-0cbb7a5413b8.png" width="366" title="" crop="0,0,1,1" id="u53178914" class="ne-image" style="font-size: 16px">
+![1744337480761-c157a80d-fb26-4635-8694-0cbb7a5413b8.png](../assets/1744337480761-c157a80d-fb26-4635-8694-0cbb7a5413b8.png)
 
 + 这几个方法都是查多个
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744336558292-010dea5b-18ee-4439-96c2-212c6e831b98.png" width="258" title="" crop="0,0,1,1" id="u8dfb8967" class="ne-image" style="font-size: 16px">
+![1744336558292-010dea5b-18ee-4439-96c2-212c6e831b98.png](../assets/1744336558292-010dea5b-18ee-4439-96c2-212c6e831b98.png)
 
 + 这几个方法是查数量
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744336698246-3fe6be3f-b343-413f-b8e9-e2c7b5e3c447.png" width="215" title="" crop="0,0,1,1" id="u55ad9b7e" class="ne-image" style="font-size: 16px">
+![1744336698246-3fe6be3f-b343-413f-b8e9-e2c7b5e3c447.png](../assets/1744336698246-3fe6be3f-b343-413f-b8e9-e2c7b5e3c447.png)
 
 + 这几个方法负责分页查询
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744336716976-4717df5e-140e-47ed-ab88-a4cc0c57d46a.png" width="375" title="" crop="0,0,1,1" id="ua98fb993" class="ne-image" style="font-size: 16px">
+![1744336716976-4717df5e-140e-47ed-ab88-a4cc0c57d46a.png](../assets/1744336716976-4717df5e-140e-47ed-ab88-a4cc0c57d46a.png)
 
 + 复杂条件的查询和更新建议使用这几个方法。
 + ****提示：如果是通过主键查询或更新建议使用之前的方法，如果是复杂条件的查询或更新使用这几个方法更方便。****
@@ -201,15 +201,15 @@ public class CarServiceImpl extends ServiceImpl<CarMapper, Car> implements CarSe
 
 1. 创建SpringBoot项目
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744341745714-523efd46-d369-4170-a06e-b8c28ea69a11.png" width="775" title="" crop="0,0,1,1" id="ud659f683" class="ne-image" style="font-size: 16px">
+![1744341745714-523efd46-d369-4170-a06e-b8c28ea69a11.png](../assets/1744341745714-523efd46-d369-4170-a06e-b8c28ea69a11.png)
 
 2. 创建SpringBoot项目过程中引入依赖
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744351469957-b3f6df83-b790-4407-abbb-ee3da3d69240.png" width="207" title="" crop="0,0,1,1" id="uf6cc7783" class="ne-image" style="font-size: 16px">
+![1744351469957-b3f6df83-b790-4407-abbb-ee3da3d69240.png](../assets/1744351469957-b3f6df83-b790-4407-abbb-ee3da3d69240.png)
 
 3. SpringBoot项目创建完成后，`application.properties`修改为`application.yml`
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744343146621-0bce9e0d-0274-4dff-a226-17cd15768edc.png" width="312" title="" crop="0,0,1,1" id="u5c9e60a6" class="ne-image" style="font-size: 16px">
+![1744343146621-0bce9e0d-0274-4dff-a226-17cd15768edc.png](../assets/1744343146621-0bce9e0d-0274-4dff-a226-17cd15768edc.png)
 
 4. 引入依赖：MyBatis-Plus、Swagger、Hutool
 

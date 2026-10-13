@@ -9,7 +9,7 @@ comment:
 
 mp的配置可以参考官方文档：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744276728852-f1b08204-42fb-4254-bb5b-a50765a97028.png" width="1584" title="" crop="0,0,1,1" id="u4e9c9a33" class="ne-image" style="font-size: 16px">
+![1744276728852-f1b08204-42fb-4254-bb5b-a50765a97028.png](../assets/1744276728852-f1b08204-42fb-4254-bb5b-a50765a97028.png)
 
 常用配置如下：
 
@@ -41,6 +41,6 @@ mybatis-plus:
 
 **小细节**：`classpath:`和`classpath*:`的区别？
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744277884879-dd57ca99-9679-4034-9f68-67baa03e9aea.png" width="656" title="" crop="0,0,1,1" id="u369d77f1" class="ne-image" style="font-size: 16px">
+![1744277884879-dd57ca99-9679-4034-9f68-67baa03e9aea.png](../assets/1744277884879-dd57ca99-9679-4034-9f68-67baa03e9aea.png)
 
 classpath*: 的星号表示跨模块/跨 JAR 加载资源，确保不会遗漏分散在不同位置的 XML 文件。但是要注意，这种方式效率较低，不要滥用。

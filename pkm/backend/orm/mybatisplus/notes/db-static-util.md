@@ -15,27 +15,27 @@ comment:
 
 1. 增
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744379838552-3d1b6a62-78f0-4e95-9ced-153ac50927dd.png" width="398" title="" crop="0,0,1,1" id="ua4c3cca3" class="ne-image" style="font-size: 16px">
+![1744379838552-3d1b6a62-78f0-4e95-9ced-153ac50927dd.png](../assets/1744379838552-3d1b6a62-78f0-4e95-9ced-153ac50927dd.png)
 
 2. 删
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744379879613-a97aaa06-9577-4605-9531-d9f95324f0df.png" width="508" title="" crop="0,0,1,1" id="u22982222" class="ne-image" style="font-size: 16px">
+![1744379879613-a97aaa06-9577-4605-9531-d9f95324f0df.png](../assets/1744379879613-a97aaa06-9577-4605-9531-d9f95324f0df.png)
 
 3. 改
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744379969894-38d8d299-c939-4217-a70f-301e22528f36.png" width="333" title="" crop="0,0,1,1" id="u91a7bb7c" class="ne-image" style="font-size: 16px">
+![1744379969894-38d8d299-c939-4217-a70f-301e22528f36.png](../assets/1744379969894-38d8d299-c939-4217-a70f-301e22528f36.png)
 
 4. 查
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744380054930-af582d90-e0d4-488d-823d-05dbc74807bd.png" width="332" title="" crop="0,0,1,1" id="u91c6fd64" class="ne-image" style="font-size: 16px">
+![1744380054930-af582d90-e0d4-488d-823d-05dbc74807bd.png](../assets/1744380054930-af582d90-e0d4-488d-823d-05dbc74807bd.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744380130810-be45dac1-a3b0-4034-9dd9-0ae0f7c2b68a.png" width="413" title="" crop="0,0,1,1" id="ub550de5a" class="ne-image" style="font-size: 16px">
+![1744380130810-be45dac1-a3b0-4034-9dd9-0ae0f7c2b68a.png](../assets/1744380130810-be45dac1-a3b0-4034-9dd9-0ae0f7c2b68a.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744380155936-0916ecd0-e116-40fe-9a19-c3a00d70599d.png" width="370" title="" crop="0,0,1,1" id="u6499aaac" class="ne-image" style="font-size: 16px">
+![1744380155936-0916ecd0-e116-40fe-9a19-c3a00d70599d.png](../assets/1744380155936-0916ecd0-e116-40fe-9a19-c3a00d70599d.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744380170477-43b7351a-a986-447a-bc8f-c2e726a8aebd.png" width="219" title="" crop="0,0,1,1" id="uf75204bd" class="ne-image" style="font-size: 16px">
+![1744380170477-43b7351a-a986-447a-bc8f-c2e726a8aebd.png](../assets/1744380170477-43b7351a-a986-447a-bc8f-c2e726a8aebd.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744380221861-049ba810-073c-4b2c-895d-837b79fca7e3.png" width="420" title="" crop="0,0,1,1" id="ubad46c88" class="ne-image" style="font-size: 16px">
+![1744380221861-049ba810-073c-4b2c-895d-837b79fca7e3.png](../assets/1744380221861-049ba810-073c-4b2c-895d-837b79fca7e3.png)
 
 可以看到以上的方法基本上都是`IService`接口中的方法。
 
@@ -51,11 +51,11 @@ comment:
 
 汽车表：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744418354574-6d424729-fe5c-4064-86f9-623c3360c7d7.png" width="314" title="" crop="0,0,1,1" id="uc53f7cdb" class="ne-image" style="font-size: 16px">
+![1744418354574-6d424729-fe5c-4064-86f9-623c3360c7d7.png](../assets/1744418354574-6d424729-fe5c-4064-86f9-623c3360c7d7.png)
 
 维修记录表：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744418614986-6917d5d1-fee4-4597-b3b5-53a5251a4c56.png" width="374" title="" crop="0,0,1,1" id="u7666c744" class="ne-image" style="font-size: 16px">
+![1744418614986-6917d5d1-fee4-4597-b3b5-53a5251a4c56.png](../assets/1744418614986-6917d5d1-fee4-4597-b3b5-53a5251a4c56.png)
 
 ```sql
 
@@ -184,7 +184,7 @@ public class WeiXiuVO {
 
 ### `CarVO`中添加`List<WeiXiuVO>`
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744427707462-cc4ff4a5-17ba-4ff9-8f03-7e0aa1106ed5.png" width="771" title="" crop="0,0,1,1" id="u11a873e0" class="ne-image" style="font-size: 16px">
+![1744427707462-cc4ff4a5-17ba-4ff9-8f03-7e0aa1106ed5.png](../assets/1744427707462-cc4ff4a5-17ba-4ff9-8f03-7e0aa1106ed5.png)
 
 ### `CarController`中添加业务接口
 
@@ -226,6 +226,6 @@ public CarVO queryCarAndWeiXiuById(Long id) {
 
 测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744427830630-96ed7d4d-6954-4c84-a339-1d8088034bea.png" width="571" title="" crop="0,0,1,1" id="uada41765" class="ne-image" style="font-size: 16px">
+![1744427830630-96ed7d4d-6954-4c84-a339-1d8088034bea.png](../assets/1744427830630-96ed7d4d-6954-4c84-a339-1d8088034bea.png)
 
 ****课后练习：给定多个车辆的id，查询这些车辆的信息以及每个车辆关联的维修记录信息。****
