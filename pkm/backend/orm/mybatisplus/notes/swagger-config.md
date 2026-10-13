@@ -303,7 +303,7 @@ public interface CarMapper extends BaseMapper<Car> {
 
 **最后**，启动项目，打开浏览器，输入`Swagger`地址：http://localhost:8080/doc.html 来进行接口的测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744360643972-df1da6d7-871a-40e3-9930-23d9327ecb78.png" width="1717" title="" crop="0,0,1,1" id="ud4efd0e8" class="ne-image" style="font-size: 16px">
+![1744360643972-df1da6d7-871a-40e3-9930-23d9327ecb78.png](../assets/1744360643972-df1da6d7-871a-40e3-9930-23d9327ecb78.png)
 
 ### IService的lambdaQuery()方法
 
@@ -317,7 +317,7 @@ public interface CarMapper extends BaseMapper<Car> {
 
 实际查询时，不知道用户提供了哪些条件。如果使用原生的`mybatis`实现的话`SQL`应该是这样写：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744362927181-94c01deb-74e3-4cda-8688-95cc0cf44182.png" width="593" title="" crop="0,0,1,1" id="u44451229" class="ne-image" style="font-size: 16px">
+![1744362927181-94c01deb-74e3-4cda-8688-95cc0cf44182.png](../assets/1744362927181-94c01deb-74e3-4cda-8688-95cc0cf44182.png)
 
 在mp中应该怎么做呢？可以使用我们之前学过的`Wrapper`，也可以使用`IService`中提供的`lambdaQuery()`方法。下面演示`lambdaQuery()`的用法：
 
@@ -449,7 +449,7 @@ void testSave() {
 
 ```
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744372402863-22556ef5-fc53-4a2c-9643-ab3f0815c489.png" width="163" title="" crop="0,0,1,1" id="udbcf2268" class="ne-image" style="font-size: 16px">
+![1744372402863-22556ef5-fc53-4a2c-9643-ab3f0815c489.png](../assets/1744372402863-22556ef5-fc53-4a2c-9643-ab3f0815c489.png)
 
 2. 第二种方式：使用批处理操作并记录耗时
 
@@ -481,20 +481,20 @@ void testSaveBatch() {
 
 ```
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744372598941-ca856d4c-382d-43b3-a80b-260b97e93c49.png" width="135" title="" crop="0,0,1,1" id="uc6370e5e" class="ne-image" style="font-size: 16px">
+![1744372598941-ca856d4c-382d-43b3-a80b-260b97e93c49.png](../assets/1744372598941-ca856d4c-382d-43b3-a80b-260b97e93c49.png)
 
 效率得到提升，原理是：每100条`insert`语句打包一次批量发给数据。
 
 3. 在`application.yml`中的`url`后面添加`rewriteBatchedStatements=true`并记录耗时
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744373051588-13dd3192-2f5a-4d43-8068-8354900bb890.png" width="161" title="" crop="0,0,1,1" id="ubfb75374" class="ne-image" style="font-size: 16px">
+![1744373051588-13dd3192-2f5a-4d43-8068-8354900bb890.png](../assets/1744373051588-13dd3192-2f5a-4d43-8068-8354900bb890.png)
 
 它的作用是将这种写法
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744372873640-bc99c91c-2142-4809-8936-a9ebb3d0c8ca.png" width="325" title="" crop="0,0,1,1" id="uad8149b3" class="ne-image" style="font-size: 16px">
+![1744372873640-bc99c91c-2142-4809-8936-a9ebb3d0c8ca.png](../assets/1744372873640-bc99c91c-2142-4809-8936-a9ebb3d0c8ca.png)
 
 转换成这种写法
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744372883742-2335e86b-2836-4905-8ac2-83c5f3259683.png" width="434" title="" crop="0,0,1,1" id="ub923bf3e" class="ne-image" style="font-size: 16px">
+![1744372883742-2335e86b-2836-4905-8ac2-83c5f3259683.png](../assets/1744372883742-2335e86b-2836-4905-8ac2-83c5f3259683.png)
 
 这是mysql驱动实现的，不是mp的功能。

@@ -17,11 +17,11 @@ mp默认生成的CRUD的SQL语句，都是基于主键id的，例如：deleteByI
 
 来自官方的一段描述：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744286634938-7d863454-cc00-4452-80ab-fa2320e779bf.png" width="924" title="" crop="0,0,1,1" id="u825e8b6e" class="ne-image" style="font-size: 16px">
+![1744286634938-7d863454-cc00-4452-80ab-fa2320e779bf.png](../assets/1744286634938-7d863454-cc00-4452-80ab-fa2320e779bf.png)
 
 以下是条件构造器`Wrapper`的继承结构图：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1744287684456-1fc1448b-0e13-46f7-b4a4-0789213abc40.png" width="863" title="" crop="0,0,1,1" id="u13d61d24" class="ne-image" style="font-size: 16px">
+![1744287684456-1fc1448b-0e13-46f7-b4a4-0789213abc40.png](../assets/1744287684456-1fc1448b-0e13-46f7-b4a4-0789213abc40.png)
 
 ---
 
