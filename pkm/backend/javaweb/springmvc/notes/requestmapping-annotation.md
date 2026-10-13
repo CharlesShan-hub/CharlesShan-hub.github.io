@@ -17,7 +17,7 @@ comment:
 
 ## RequestMapping的出现位置
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710318777635-df02afe3-e065-4a05-877e-3a6f8a6eea4e.png" width="774" title="" crop="0,0,1,1" id="u2ad3fa51" class="ne-image" style="font-size: 16px">
+![1710318777635-df02afe3-e065-4a05-877e-3a6f8a6eea4e.png](../assets/1710318777635-df02afe3-e065-4a05-877e-3a6f8a6eea4e.png)
 
 通过RequestMapping的源码可以看到RequestMapping注解只能出现在类上或者方法上。
 
@@ -63,7 +63,7 @@ public class ProductController {
 
 以上两个Controller的RequestMapping相同，都是"/detail"，我们来启动服务器看会不会出现问题：异常发生了，异常信息如下
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764337200143-cbad8375-8420-4ed4-8755-ecd6a1902878.png" width="1050" title="" crop="0,0,1,1" id="u5b989313" class="ne-image" style="font-size: 16px">
+![1764337200143-cbad8375-8420-4ed4-8755-ecd6a1902878.png](../assets/1764337200143-cbad8375-8420-4ed4-8755-ecd6a1902878.png)
 
 以上异常信息大致的意思是：不明确的映射。无法映射UserController中的toDetail()方法，因为已经在ProductController中映射过了！！！！
 
@@ -98,7 +98,7 @@ public String toDetail(){
 
 为这两个请求分别提供对应的视图页面：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710321603074-a058da54-46c1-45c2-9a16-08759212e879.png" width="301" title="" crop="0,0,1,1" id="u5429a195" class="ne-image" style="font-size: 16px">
+![1710321603074-a058da54-46c1-45c2-9a16-08759212e879.png](../assets/1710321603074-a058da54-46c1-45c2-9a16-08759212e879.png)
 
 ```html
 
@@ -151,13 +151,13 @@ public String toDetail(){
 
 启动Tomcat服务器，并测试：http://localhost:8080/springmvc/
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710321765401-8615ea50-6537-4a23-9c28-e91cf8d3a957.png" width="398" title="" crop="0,0,1,1" id="u543e5fcb" class="ne-image" style="font-size: 16px">
+![1710321765401-8615ea50-6537-4a23-9c28-e91cf8d3a957.png](../assets/1710321765401-8615ea50-6537-4a23-9c28-e91cf8d3a957.png)
 
 点击用户详情，点击商品详情，都可以正常显示：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710323998528-e38bedfd-8915-4dd5-a5ff-47c7f65df143.png" width="493" title="" crop="0,0,1,1" id="u353f7f40" class="ne-image" style="font-size: 16px">
+![1710323998528-e38bedfd-8915-4dd5-a5ff-47c7f65df143.png](../assets/1710323998528-e38bedfd-8915-4dd5-a5ff-47c7f65df143.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710324010676-719ba465-0cc1-49bf-a9e6-3d1375dfdc65.png" width="402" title="" crop="0,0,1,1" id="u66baa171" class="ne-image" style="font-size: 16px">
+![1710324010676-719ba465-0cc1-49bf-a9e6-3d1375dfdc65.png](../assets/1710324010676-719ba465-0cc1-49bf-a9e6-3d1375dfdc65.png)
 
 ### 第二种方案
 
@@ -218,7 +218,7 @@ public class ProductController {
 
 ****value 属性是一个数组，也就是说：它支持多个请求路径映射到同一个方法上。****
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710329488513-948e1e58-9984-458f-9c01-75601de3c0c8.png" width="387" title="" crop="0,0,1,1" id="ua2fa9331" class="ne-image" style="font-size: 16px">
+![1710329488513-948e1e58-9984-458f-9c01-75601de3c0c8.png](../assets/1710329488513-948e1e58-9984-458f-9c01-75601de3c0c8.png)
 
 既然是数组，就表示可以提供多个路径，也就是说，在SpringMVC中，多个不同的请求路径可以映射同一个控制器的同一个方法：
 
@@ -284,11 +284,11 @@ public class RequestMappingTestController {
 
 启动服务器，测试，点击以下的两个超链接，发送请求，都可以正常访问到同一个控制器上的同一个方法：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710380856084-a7199701-367e-49d4-856c-843902882df4.png" width="359" title="" crop="0,0,1,1" id="u53a1c730" class="ne-image" style="font-size: 16px">
+![1710380856084-a7199701-367e-49d4-856c-843902882df4.png](../assets/1710380856084-a7199701-367e-49d4-856c-843902882df4.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710380869186-247c7c9d-4fa7-4896-91ac-16c227cf0751.png" width="513" title="" crop="0,0,1,1" id="ucd526467" class="ne-image" style="font-size: 16px">
+![1710380869186-247c7c9d-4fa7-4896-91ac-16c227cf0751.png](../assets/1710380869186-247c7c9d-4fa7-4896-91ac-16c227cf0751.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710380880908-39caa3a2-020d-4f4b-821d-9a14ab6cfb03.png" width="512" title="" crop="0,0,1,1" id="u2e13e589" class="ne-image" style="font-size: 16px">
+![1710380880908-39caa3a2-020d-4f4b-821d-9a14ab6cfb03.png](../assets/1710380880908-39caa3a2-020d-4f4b-821d-9a14ab6cfb03.png)
 
 ### value 支持模糊匹配
 
@@ -340,25 +340,25 @@ public String testValueAnt(){
 
 测试结果如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710408304774-c8fdaa73-4aad-43b2-a0b5-27600e45078b.png" width="332" title="" crop="0,0,1,1" id="u81d8f0f8" class="ne-image" style="font-size: 16px">
+![1710408304774-c8fdaa73-4aad-43b2-a0b5-27600e45078b.png](../assets/1710408304774-c8fdaa73-4aad-43b2-a0b5-27600e45078b.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710408334347-3ecdd6de-4281-4dda-a31e-bb267496bf76.png" width="801" title="" crop="0,0,1,1" id="ud3097a67" class="ne-image" style="font-size: 16px">
+![1710408334347-3ecdd6de-4281-4dda-a31e-bb267496bf76.png](../assets/1710408334347-3ecdd6de-4281-4dda-a31e-bb267496bf76.png)
 
 通过修改浏览器地址栏上的路径，可以反复测试通配符 ? 的语法：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710408441950-b058d7cc-5d1a-42c0-9188-57d294e36c05.png" width="813" title="" crop="0,0,1,1" id="udb55bc6f" class="ne-image" style="font-size: 16px">
+![1710408441950-b058d7cc-5d1a-42c0-9188-57d294e36c05.png](../assets/1710408441950-b058d7cc-5d1a-42c0-9188-57d294e36c05.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710408497513-91234ca4-74ae-4681-87b6-066bf68cb60d.png" width="789" title="" crop="0,0,1,1" id="u006e21d6" class="ne-image" style="font-size: 16px">
+![1710408497513-91234ca4-74ae-4681-87b6-066bf68cb60d.png](../assets/1710408497513-91234ca4-74ae-4681-87b6-066bf68cb60d.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710408554224-46bdf1bb-0fb9-4214-b30c-9b9a73973ff7.png" width="786" title="" crop="0,0,1,1" id="ufc167ac5" class="ne-image" style="font-size: 16px">
+![1710408554224-46bdf1bb-0fb9-4214-b30c-9b9a73973ff7.png](../assets/1710408554224-46bdf1bb-0fb9-4214-b30c-9b9a73973ff7.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710408520959-fdf3be9b-341c-4f9f-9d48-0b1b76e1b5b3.png" width="562" title="" crop="0,0,1,1" id="u6694dbe1" class="ne-image" style="font-size: 16px">
+![1710408520959-fdf3be9b-341c-4f9f-9d48-0b1b76e1b5b3.png](../assets/1710408520959-fdf3be9b-341c-4f9f-9d48-0b1b76e1b5b3.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710408535497-902d0a9a-8fbf-4b9d-b171-a6fa5b425900.png" width="557" title="" crop="0,0,1,1" id="u0149d972" class="ne-image" style="font-size: 16px">
+![1710408535497-902d0a9a-8fbf-4b9d-b171-a6fa5b425900.png](../assets/1710408535497-902d0a9a-8fbf-4b9d-b171-a6fa5b425900.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710408461985-6de127ca-d27f-40af-be89-71f2d1e298f1.png" width="572" title="" crop="0,0,1,1" id="ub4603a17" class="ne-image" style="font-size: 16px">
+![1710408461985-6de127ca-d27f-40af-be89-71f2d1e298f1.png](../assets/1710408461985-6de127ca-d27f-40af-be89-71f2d1e298f1.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710408477041-0b7f3fc7-8ab2-4b1b-acb0-54fa009c5df1.png" width="577" title="" crop="0,0,1,1" id="u844d5d11" class="ne-image" style="font-size: 16px">
+![1710408477041-0b7f3fc7-8ab2-4b1b-acb0-54fa009c5df1.png](../assets/1710408477041-0b7f3fc7-8ab2-4b1b-acb0-54fa009c5df1.png)
 
 将 ? 通配符修改为 * 通配符：
 
@@ -374,11 +374,11 @@ public String testValueAnt(){
 
 打开浏览器直接在地址栏上输入路径进行测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710409236128-4faa78a0-8da7-46b5-a466-58259918354a.png" width="797" title="" crop="0,0,1,1" id="udaa45e31" class="ne-image" style="font-size: 16px">
+![1710409236128-4faa78a0-8da7-46b5-a466-58259918354a.png](../assets/1710409236128-4faa78a0-8da7-46b5-a466-58259918354a.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710409281578-57812acc-e94c-441f-91cf-35ed19c0912d.png" width="823" title="" crop="0,0,1,1" id="u8c48fc58" class="ne-image" style="font-size: 16px">
+![1710409281578-57812acc-e94c-441f-91cf-35ed19c0912d.png](../assets/1710409281578-57812acc-e94c-441f-91cf-35ed19c0912d.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710409267167-adb48ec7-861c-40f2-8a92-c1a4368de9fe.png" width="556" title="" crop="0,0,1,1" id="u685780a5" class="ne-image" style="font-size: 16px">
+![1710409267167-adb48ec7-861c-40f2-8a92-c1a4368de9fe.png](../assets/1710409267167-adb48ec7-861c-40f2-8a92-c1a4368de9fe.png)
 
 将 * 通配符修改为 ** 通配符：
 
@@ -391,7 +391,7 @@ public String testValueAnt(){
 
 ```
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710409419674-7475d2c4-989a-4547-9f8c-a2964b2d7eb7.png" width="600" title="" crop="0,0,1,1" id="ub986b869" class="ne-image" style="font-size: 16px">
+![1710409419674-7475d2c4-989a-4547-9f8c-a2964b2d7eb7.png](../assets/1710409419674-7475d2c4-989a-4547-9f8c-a2964b2d7eb7.png)
 
 注意：/x**z/ 实际上并没有使用通配符 **，本质上还是使用的 *，因为通配符 ** 在使用的时候，左右两边都不能有任何字符，必须是 /。
 
@@ -406,7 +406,7 @@ public String testValueAnt(){
 
 启动服务器发现报错了：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710410631877-81bfcc14-3ead-4f2c-99cf-69e0e39c9b3e.png" width="963" title="" crop="0,0,1,1" id="u4e591839" class="ne-image" style="font-size: 16px">
+![1710410631877-81bfcc14-3ead-4f2c-99cf-69e0e39c9b3e.png](../assets/1710410631877-81bfcc14-3ead-4f2c-99cf-69e0e39c9b3e.png)
 
 以上写法在Spring5的时候是支持的，但是在Spring6中进行了严格的规定，** 通配符只能出现在路径的末尾，例如：
 
@@ -421,9 +421,9 @@ public String testValueAnt(){
 
 测试结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710410734275-31609763-9ca9-46ec-b8d4-539612055ffe.png" width="792" title="" crop="0,0,1,1" id="u013d4106" class="ne-image" style="font-size: 16px">
+![1710410734275-31609763-9ca9-46ec-b8d4-539612055ffe.png](../assets/1710410734275-31609763-9ca9-46ec-b8d4-539612055ffe.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710410746239-dcb5b607-28e9-4996-88b6-4e94b411cc6f.png" width="796" title="" crop="0,0,1,1" id="ud86c7b22" class="ne-image" style="font-size: 16px">
+![1710410746239-dcb5b607-28e9-4996-88b6-4e94b411cc6f.png](../assets/1710410746239-dcb5b607-28e9-4996-88b6-4e94b411cc6f.png)
 
 ### value中的占位符（重点）
 
@@ -485,11 +485,11 @@ public String testRESTful(
 
 启动服务器测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710414703219-b27d6ea5-cbee-4e42-a11d-cb743563507e.png" width="462" title="" crop="0,0,1,1" id="u0bd8dc6d" class="ne-image" style="font-size: 16px">
+![1710414703219-b27d6ea5-cbee-4e42-a11d-cb743563507e.png](../assets/1710414703219-b27d6ea5-cbee-4e42-a11d-cb743563507e.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710414717194-86932dc5-5c6c-46b5-acb0-ab04778051ad.png" width="569" title="" crop="0,0,1,1" id="uee30dc98" class="ne-image" style="font-size: 16px">
+![1710414717194-86932dc5-5c6c-46b5-acb0-ab04778051ad.png](../assets/1710414717194-86932dc5-5c6c-46b5-acb0-ab04778051ad.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710414728167-7b3f3348-feb3-4b62-89c4-047c30e6f3ee.png" width="481" title="" crop="0,0,1,1" id="ud5db4289" class="ne-image" style="font-size: 16px">
+![1710414728167-7b3f3348-feb3-4b62-89c4-047c30e6f3ee.png](../assets/1710414728167-7b3f3348-feb3-4b62-89c4-047c30e6f3ee.png)
 
 ---
 
@@ -507,11 +507,11 @@ HTTP状态码405，这种机制的作用是：限制客户端的请求方式，�
 
 通过RequestMapping源码可以看到，method属性也是一个数组：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710383145104-28befda6-4f03-4cc0-888d-f0c68e802489.png" width="656" title="" crop="0,0,1,1" id="ub2730852" class="ne-image" style="font-size: 16px">
+![1710383145104-28befda6-4f03-4cc0-888d-f0c68e802489.png](../assets/1710383145104-28befda6-4f03-4cc0-888d-f0c68e802489.png)
 
 数组中的每个元素是 RequestMethod，而RequestMethod是一个枚举类型的数据：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710383181561-c7807a8e-1e03-48bd-93ab-044900f7b52c.png" width="730" title="" crop="0,0,1,1" id="ufc6e6501" class="ne-image" style="font-size: 16px">
+![1710383181561-c7807a8e-1e03-48bd-93ab-044900f7b52c.png](../assets/1710383181561-c7807a8e-1e03-48bd-93ab-044900f7b52c.png)
 
 因此如果要求前端发送POST请求，该注解应该这样用：
 
@@ -569,9 +569,9 @@ public String testMethod(){
 
 启动服务器，测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710383700474-55cf63ab-7f36-4ab7-b5f7-41046000472d.png" width="399" title="" crop="0,0,1,1" id="u86e908b5" class="ne-image" style="font-size: 16px">
+![1710383700474-55cf63ab-7f36-4ab7-b5f7-41046000472d.png](../assets/1710383700474-55cf63ab-7f36-4ab7-b5f7-41046000472d.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710383716323-ad5bf478-30e9-48ed-8238-ebacaf395625.png" width="414" title="" crop="0,0,1,1" id="ud54dba53" class="ne-image" style="font-size: 16px">
+![1710383716323-ad5bf478-30e9-48ed-8238-ebacaf395625.png](../assets/1710383716323-ad5bf478-30e9-48ed-8238-ebacaf395625.png)
 
 通过测试，前端发送的请求方式post，后端处理请求的方式也是post，就不会有问题。
 
@@ -590,7 +590,7 @@ public String testMethod(){
 
 再次测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710383866495-ea6560e6-b458-4385-95cb-c9a9b24b08cd.png" width="614" title="" crop="0,0,1,1" id="u8c5a2905" class="ne-image" style="font-size: 16px">
+![1710383866495-ea6560e6-b458-4385-95cb-c9a9b24b08cd.png](../assets/1710383866495-ea6560e6-b458-4385-95cb-c9a9b24b08cd.png)
 
 ****因此，可以看出，对于RequestMapping注解来说，多一个属性，就相当于多了一个映射的条件，如果value和method属性都有，则表示只有前端发送的请求路径 + 请求方式都满足时才能与控制器上的方法建立映射关系，只要有一个不满足，则无法建立映射关系。例如：@RequestMapping(value="/login", method = RequestMethod.POST) 表示当前端发送的请求路径是 /login，并且发送请求的方式是POST的时候才会建立映射关系。如果前端发送的是get请求，或者前端发送的请求路径不是 /login，则都是无法建立映射的。****
 
@@ -610,11 +610,11 @@ public String testMethod(){
 
 当前端发送get请求时，测试一下：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710384745231-3f0f3e3d-e151-4ac8-bde2-e48798aadde0.png" width="611" title="" crop="0,0,1,1" id="ue0d397c5" class="ne-image" style="font-size: 16px">
+![1710384745231-3f0f3e3d-e151-4ac8-bde2-e48798aadde0.png](../assets/1710384745231-3f0f3e3d-e151-4ac8-bde2-e48798aadde0.png)
 
 当前端发送post请求时，测试一下：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710384819897-64de621f-fb7d-495e-98d3-5e7b192c458d.png" width="465" title="" crop="0,0,1,1" id="u2e7e5b8d" class="ne-image" style="font-size: 16px">
+![1710384819897-64de621f-fb7d-495e-98d3-5e7b192c458d.png](../assets/1710384819897-64de621f-fb7d-495e-98d3-5e7b192c458d.png)
 
 在SpringMVC中不仅提供了 ****PostMaping****注解，像这样的注解还有几个，包括：
 
@@ -677,7 +677,7 @@ public String testMethod(){
 
 测试结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710387909246-423bd4a6-9e73-40ca-ab7e-fac29f98f61f.png" width="627" title="" crop="0,0,1,1" id="u5026a61a" class="ne-image" style="font-size: 16px">
+![1710387909246-423bd4a6-9e73-40ca-ab7e-fac29f98f61f.png](../assets/1710387909246-423bd4a6-9e73-40ca-ab7e-fac29f98f61f.png)
 
 通过测试得知，即使form中method设置为put方式，但仍然采用get方式发送请求。
 
@@ -695,7 +695,7 @@ public String testMethod(){
 
 再次测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710388055974-40f19d04-9b29-459e-9821-f330066e1e2c.png" width="589" title="" crop="0,0,1,1" id="ua8a0b6a6" class="ne-image" style="font-size: 16px">
+![1710388055974-40f19d04-9b29-459e-9821-f330066e1e2c.png](../assets/1710388055974-40f19d04-9b29-459e-9821-f330066e1e2c.png)
 
 ---
 
@@ -711,7 +711,7 @@ params属性用来设置通过请求参数来映射请求。
 + method属性也是一个数组，只要满足数组中任意一个请求方式，就能映射成功。
 + ****params属性也是一个数组，不过要求请求参数必须和params数组中要求的所有参数完全一致后，才能映射成功。****
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710398311030-55ee91e0-b4d0-4b43-9d65-36a552eb6d3a.png" width="570" title="" crop="0,0,1,1" id="u18907e9f" class="ne-image" style="font-size: 16px">
+![1710398311030-55ee91e0-b4d0-4b43-9d65-36a552eb6d3a.png](../assets/1710398311030-55ee91e0-b4d0-4b43-9d65-36a552eb6d3a.png)
 
 ### params属性的4种用法
 
@@ -776,9 +776,9 @@ public String testParams(){
 
 启动服务器，测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710400506148-f404474f-771b-4fb7-97a8-5a322012fb33.png" width="396" title="" crop="0,0,1,1" id="u8efb554c" class="ne-image" style="font-size: 16px">
+![1710400506148-f404474f-771b-4fb7-97a8-5a322012fb33.png](../assets/1710400506148-f404474f-771b-4fb7-97a8-5a322012fb33.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710400526780-f4691915-7952-4d91-bb5b-704cf40ab6fd.png" width="685" title="" crop="0,0,1,1" id="u446cb135" class="ne-image" style="font-size: 16px">
+![1710400526780-f4691915-7952-4d91-bb5b-704cf40ab6fd.png](../assets/1710400526780-f4691915-7952-4d91-bb5b-704cf40ab6fd.png)
 
 假如发送请求时，没有传递username参数会怎样？
 
@@ -790,9 +790,9 @@ public String testParams(){
 
 启动服务器，测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710400622164-d051b747-dbc7-4044-bbfb-2d3e40602b65.png" width="439" title="" crop="0,0,1,1" id="u0718a0ff" class="ne-image" style="font-size: 16px">
+![1710400622164-d051b747-dbc7-4044-bbfb-2d3e40602b65.png](../assets/1710400622164-d051b747-dbc7-4044-bbfb-2d3e40602b65.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710400640376-f181e4a5-79a3-4a55-a1d9-1d55582102e0.png" width="846" title="" crop="0,0,1,1" id="u807d8a54" class="ne-image" style="font-size: 16px">
+![1710400640376-f181e4a5-79a3-4a55-a1d9-1d55582102e0.png](../assets/1710400640376-f181e4a5-79a3-4a55-a1d9-1d55582102e0.png)
 
 提示无效的请求参数，服务器无法或不会处理当前请求。
 
@@ -810,7 +810,7 @@ headers和params原理相同，用法也相同。
 
 请求头信息怎么查看？在chrome浏览器中，F12打开控制台，找到Network，可以查看具体的请求协议和响应协议。在请求协议中可以看到请求头信息，例如：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710402265257-e2b13b8d-52e7-4088-842a-4246be3e866a.png" width="987" title="" crop="0,0,1,1" id="u0b591958" class="ne-image" style="font-size: 16px">
+![1710402265257-e2b13b8d-52e7-4088-842a-4246be3e866a.png](../assets/1710402265257-e2b13b8d-52e7-4088-842a-4246be3e866a.png)
 
 请求头信息和请求参数信息一样，都是键值对形式，例如上图中：
 
@@ -870,9 +870,9 @@ public String testHeaders(){
 
 启动服务器，测试结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710403104850-63f4c9fb-28ac-483a-b4c4-cdcea6b49e97.png" width="457" title="" crop="0,0,1,1" id="ua3cc6168" class="ne-image" style="font-size: 16px">
+![1710403104850-63f4c9fb-28ac-483a-b4c4-cdcea6b49e97.png](../assets/1710403104850-63f4c9fb-28ac-483a-b4c4-cdcea6b49e97.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710403163821-dd5ae672-3b0a-4ae3-b978-48c8bef4f63a.png" width="687" title="" crop="0,0,1,1" id="u82c3b349" class="ne-image" style="font-size: 16px">
+![1710403163821-dd5ae672-3b0a-4ae3-b978-48c8bef4f63a.png](../assets/1710403163821-dd5ae672-3b0a-4ae3-b978-48c8bef4f63a.png)
 
 将后端控制器中的headers属性值进行修改：
 
@@ -887,6 +887,6 @@ public String testHeaders(){
 
 再次测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710403270750-77c19967-a2a8-423d-9fea-c9632e48cf8c.png" width="554" title="" crop="0,0,1,1" id="u63c4ff7f" class="ne-image" style="font-size: 16px">
+![1710403270750-77c19967-a2a8-423d-9fea-c9632e48cf8c.png](../assets/1710403270750-77c19967-a2a8-423d-9fea-c9632e48cf8c.png)
 
 其他情况自行测试！！！！

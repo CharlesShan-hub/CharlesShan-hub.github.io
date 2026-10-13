@@ -17,29 +17,29 @@ Servlet3.0新特性：web.xml文件可以不写了。
 
 在Servlet3.0的时候，规范中提供了一个接口：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711700341492-8c9a85d9-bca5-484f-8d5d-c3939f48db95.png" width="921" title="" crop="0,0,1,1" id="u141ebb8e" class="ne-image">
+![1711700341492-8c9a85d9-bca5-484f-8d5d-c3939f48db95.png](../assets/1711700341492-8c9a85d9-bca5-484f-8d5d-c3939f48db95.png)
 
 服务器在启动的时候会自动从容器中找 `ServletContainerInitializer`接口的实现类，自动调用它的`onStartup`方法来完成Servlet上下文的初始化。
 
 在Spring3.1版本的时候，提供了这样一个类，实现以上的接口：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711700544729-77092224-626d-4b76-8408-f3744fe2ad72.png" width="939" title="" crop="0,0,1,1" id="ua7872bf7" class="ne-image">
+![1711700544729-77092224-626d-4b76-8408-f3744fe2ad72.png](../assets/1711700544729-77092224-626d-4b76-8408-f3744fe2ad72.png)
 
 它的核心方法如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711700669446-3bcc469c-71d3-423a-86f7-52e95b73f344.png" width="1149" title="" crop="0,0,1,1" id="uf4b1d92d" class="ne-image">
+![1711700669446-3bcc469c-71d3-423a-86f7-52e95b73f344.png](../assets/1711700669446-3bcc469c-71d3-423a-86f7-52e95b73f344.png)
 
 可以看到在服务器启动的时候，它会去加载所有实现`WebApplicationInitializer`接口的类：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711700736674-05682c42-1904-4311-aede-b2e7994bfabf.png" width="803" title="" crop="0,0,1,1" id="ub1510e11" class="ne-image">
+![1711700736674-05682c42-1904-4311-aede-b2e7994bfabf.png](../assets/1711700736674-05682c42-1904-4311-aede-b2e7994bfabf.png)
 
 这个接口下有一个子类是我们需要的：`AbstractAnnotationConfigDispatcherServletInitializer`
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711700804612-90b68082-5b55-4084-90fb-c230f6aed3a9.png" width="681" title="" crop="0,0,1,1" id="u1135318a" class="ne-image">
+![1711700804612-90b68082-5b55-4084-90fb-c230f6aed3a9.png](../assets/1711700804612-90b68082-5b55-4084-90fb-c230f6aed3a9.png)
 
 当我们编写类继承`AbstractAnnotationConfigDispatcherServletInitializer`之后，web服务器在启动的时候会根据它来初始化Servlet上下文。
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711701535524-d2635ca6-3bae-4613-9dbb-ed6cb0b7dca6.png" width="813" title="" crop="0,0,1,1" id="uc2f1acbd" class="ne-image">
+![1711701535524-d2635ca6-3bae-4613-9dbb-ed6cb0b7dca6.png](../assets/1711701535524-d2635ca6-3bae-4613-9dbb-ed6cb0b7dca6.png)
 
 ### 编写WebAppInitializer
 
@@ -303,7 +303,7 @@ public void addInterceptors(InterceptorRegistry registry) {
 
 **创建好对应的文件、目录及程序：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764837321272-9f6fb38a-7d7c-4aad-a627-fb8d38efdba9.png" width="326.4" title="" crop="0,0,1,1" id="u28e32141" class="ne-image">
+![1764837321272-9f6fb38a-7d7c-4aad-a627-fb8d38efdba9.png](../assets/1764837321272-9f6fb38a-7d7c-4aad-a627-fb8d38efdba9.png)
 
 `**index.html**`
 
@@ -364,12 +364,12 @@ public class TestController {
 
 **访问首页面：**[**http://localhost:8080/springmvc/**](http://localhost:8080/springmvc/)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764837484207-1688c52b-0046-4d91-8fe6-a0dbde5268df.png" width="467.2" title="" crop="0,0,1,1" id="u038812f9" class="ne-image">
+![1764837484207-1688c52b-0046-4d91-8fe6-a0dbde5268df.png](../assets/1764837484207-1688c52b-0046-4d91-8fe6-a0dbde5268df.png)
 
 **观察后端，拦截器是否执行：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764837513997-59b144e7-a8a6-45cb-97c3-b2538052daf6.png" width="341.6" title="" crop="0,0,1,1" id="u361a425a" class="ne-image">
+![1764837513997-59b144e7-a8a6-45cb-97c3-b2538052daf6.png](../assets/1764837513997-59b144e7-a8a6-45cb-97c3-b2538052daf6.png)
 
 **再发送 **`**/test**`**请求：**[**http://localhost:8080/springmvc/test**](http://localhost:8080/springmvc/test)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764837543320-be1f1649-4b13-47d7-be8d-475a98739f3d.png" width="415.2" title="" crop="0,0,1,1" id="uc8f30306" class="ne-image">
+![1764837543320-be1f1649-4b13-47d7-be8d-475a98739f3d.png](../assets/1764837543320-be1f1649-4b13-47d7-be8d-475a98739f3d.png)

@@ -451,15 +451,15 @@ a {
 
 在应用的根下新建目录：static，将user.css文件拷贝进去。
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710922471241-f7ec47fc-9106-4d52-bd88-24b1005e99c6.png" width="303" title="" crop="0,0,1,1" id="u19a749a5" class="ne-image" style="font-size: 16px">
+![1710922471241-f7ec47fc-9106-4d52-bd88-24b1005e99c6.png](../assets/1710922471241-f7ec47fc-9106-4d52-bd88-24b1005e99c6.png)
 
 将user_index.html拷贝到WEB-INF/thymeleaf目录下：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710922711285-f6d7e3ea-ee9f-4b95-a454-0f1b41204a46.png" width="309" title="" crop="0,0,1,1" id="u413f67b2" class="ne-image" style="font-size: 16px">
+![1710922711285-f6d7e3ea-ee9f-4b95-a454-0f1b41204a46.png](../assets/1710922711285-f6d7e3ea-ee9f-4b95-a454-0f1b41204a46.png)
 
 代码有两处需要修改：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710922744668-a8863a20-0635-4c69-b461-a182949678d6.png" width="828" title="" crop="0,0,1,1" id="u16a044a8" class="ne-image" style="font-size: 16px">
+![1710922744668-a8863a20-0635-4c69-b461-a182949678d6.png](../assets/1710922744668-a8863a20-0635-4c69-b461-a182949678d6.png)
 
 重要：在springmvc.xml文件中配置视图控制器映射：
 
@@ -472,7 +472,7 @@ a {
 
 部署，启动服务器，测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710922946129-cfb0cded-a7de-4b37-9f89-38b01b642655.png" width="1915" title="" crop="0,0,1,1" id="u63e0b047" class="ne-image" style="font-size: 16px">
+![1710922946129-cfb0cded-a7de-4b37-9f89-38b01b642655.png](../assets/1710922946129-cfb0cded-a7de-4b37-9f89-38b01b642655.png)
 
 ---
 
@@ -648,7 +648,7 @@ public class UserController {
 
 在用户列表页面，修改`新增用户`的超链接：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710924492210-29f6afb3-551b-478e-adda-4b1952ba2971.png" width="690" title="" crop="0,0,1,1" id="u596104c4" class="ne-image" style="font-size: 16px">
+![1710924492210-29f6afb3-551b-478e-adda-4b1952ba2971.png](../assets/1710924492210-29f6afb3-551b-478e-adda-4b1952ba2971.png)
 
 将user_add.html拷贝到thymeleaf目录下，并进行代码修改如下：
 
@@ -694,7 +694,7 @@ public class UserController {
 
 启动服务器测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710924719699-451900a1-ead4-463f-8536-8db72ac56b0b.png" width="1589" title="" crop="0,0,1,1" id="u4c32fb33" class="ne-image" style="font-size: 16px">
+![1710924719699-451900a1-ead4-463f-8536-8db72ac56b0b.png](../assets/1710924719699-451900a1-ead4-463f-8536-8db72ac56b0b.png)
 
 ### 实现新增功能
 

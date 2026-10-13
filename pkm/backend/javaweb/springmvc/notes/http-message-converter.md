@@ -70,7 +70,7 @@ comment:
 
 ### **@ResponseBody 可以出现的位置**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764666381864-bafe3e4c-545c-4216-acac-416ddb313800.png" width="435.2" title="" crop="0,0,1,1" id="u61904f2e" class="ne-image" style="font-size: 16px">
+![1764666381864-bafe3e4c-545c-4216-acac-416ddb313800.png](../assets/1764666381864-bafe3e4c-545c-4216-acac-416ddb313800.png)
 
 1. 出现在方法上：只作用于当前方法。
 2. 出现在类上：作用于当前类中所有的方法。
@@ -137,7 +137,7 @@ public class ResponseBodyController {
 
 **第三步：测试**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764667149639-b1911edf-23d9-4935-ac1f-eb154e6f48c9.png" width="104.8" title="" crop="0,0,1,1" id="u36a44e72" class="ne-image" style="font-size: 16px">
+![1764667149639-b1911edf-23d9-4935-ac1f-eb154e6f48c9.png](../assets/1764667149639-b1911edf-23d9-4935-ac1f-eb154e6f48c9.png)
 
 **总结：**使用@ResponseBody，`return "hello";`不再是逻辑视图名了，是一个普通的字符串，底层将自动使用 `StringHttpMessageConverter`转换器，将字符串直接写入响应体。
 
@@ -238,7 +238,7 @@ public class ResponseBodyController {
 
 **第五步：测试**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764668498115-0cb02a8c-5752-417e-bf13-22243d8554c7.png" width="476" title="" crop="0,0,1,1" id="u3b483f43" class="ne-image" style="font-size: 16px">
+![1764668498115-0cb02a8c-5752-417e-bf13-22243d8554c7.png](../assets/1764668498115-0cb02a8c-5752-417e-bf13-22243d8554c7.png)
 
 **总结：使用@ResponseBody注解标注，并且**`**return obj;**`**时，另外也引入了解析 json 的 java 库之后，会自动使用**`**MappingJackson2HttpMessageConverter**`**消息转换器。**
 
@@ -291,7 +291,7 @@ public class ResponseBodyController {
 
 `@RequestBody`经常使用在：前端提交一个 JSON 字符串。后端要将 JSON 字符串转换成 Java 对象。
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764669597129-7308113b-2153-4a11-a0e6-f4f9add26571.png" width="392" title="" crop="0,0,1,1" id="uf93a8b3b" class="ne-image" style="font-size: 16px">
+![1764669597129-7308113b-2153-4a11-a0e6-f4f9add26571.png](../assets/1764669597129-7308113b-2153-4a11-a0e6-f4f9add26571.png)
 
 **第一步：引入 jackson 依赖**
 
@@ -354,7 +354,7 @@ public class ResponseBodyController {
 
 **第五步：测试**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764669405713-b9607dc0-7cdc-436d-9e49-626036a8cae2.png" width="464" title="" crop="0,0,1,1" id="ub62c0df9" class="ne-image" style="font-size: 16px">
+![1764669405713-b9607dc0-7cdc-436d-9e49-626036a8cae2.png](../assets/1764669405713-b9607dc0-7cdc-436d-9e49-626036a8cae2.png)
 
 ---
 
@@ -414,11 +414,11 @@ public class UserController {
 
 测试：当用户不存在时
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711032765280-343794d6-b262-460b-8c03-e14bd8946850.png" width="1159" title="" crop="0,0,1,1" id="i4wT6" class="ne-image" style="font-size: 16px">
+![1711032765280-343794d6-b262-460b-8c03-e14bd8946850.png](../assets/1711032765280-343794d6-b262-460b-8c03-e14bd8946850.png)
 
 测试：当用户存在时
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711032830325-866fe36b-cc47-4493-b9bb-8ebd34c7a86c.png" width="515" title="" crop="0,0,1,1" id="llYjP" class="ne-image" style="font-size: 16px">
+![1711032830325-866fe36b-cc47-4493-b9bb-8ebd34c7a86c.png](../assets/1711032830325-866fe36b-cc47-4493-b9bb-8ebd34c7a86c.png)
 
 ---
 

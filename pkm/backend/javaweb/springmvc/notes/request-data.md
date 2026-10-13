@@ -177,21 +177,21 @@ public String register(
 
 注意：对于@RequestParam注解来说，属性有value和name，这两个属性的作用相同，都是用来指定提交数据的name。
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710428008416-73b3a547-46ab-47bb-922c-b3d090e0cfc9.png" width="494" title="" crop="0,0,1,1" id="uaf3c3ba7" class="ne-image" style="font-size: 16px">
+![1710428008416-73b3a547-46ab-47bb-922c-b3d090e0cfc9.png](../assets/1710428008416-73b3a547-46ab-47bb-922c-b3d090e0cfc9.png)
 
 例如：发送请求时提交的数据是：name1=value1&name2=value2，则这个注解应该这样写：@RequestParam(value="name1")、@RequestParam(value="name2")
 
 一定要注意： @RequestParam(value="name2") 中value一定不要写错，写错就会出现以下问题：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710428081389-9ac88bba-c37c-4fb8-9b9d-f7a9091b97ab.png" width="608" title="" crop="0,0,1,1" id="ua16f46af" class="ne-image" style="font-size: 16px">
+![1710428081389-9ac88bba-c37c-4fb8-9b9d-f7a9091b97ab.png](../assets/1710428081389-9ac88bba-c37c-4fb8-9b9d-f7a9091b97ab.png)
 
 测试结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710428139767-d3888c35-e2f8-407f-accb-f744a7098148.png" width="741" title="" crop="0,0,1,1" id="u1fdff3b9" class="ne-image" style="font-size: 16px">
+![1710428139767-d3888c35-e2f8-407f-accb-f744a7098148.png](../assets/1710428139767-d3888c35-e2f8-407f-accb-f744a7098148.png)
 
 ### RequestParam注解的required属性
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710465027479-caeb1d78-c92d-4fca-b9fa-80e6bcf06c7a.png" width="670" title="" crop="0,0,1,1" id="u05ce0a11" class="ne-image" style="font-size: 16px">
+![1710465027479-caeb1d78-c92d-4fca-b9fa-80e6bcf06c7a.png](../assets/1710465027479-caeb1d78-c92d-4fca-b9fa-80e6bcf06c7a.png)
 
 required属性用来设置该方法参数是否为必须的。
 
@@ -201,21 +201,21 @@ required属性用来设置该方法参数是否为必须的。
 
 测试，修改register方法，如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710468078605-3c6a2dd2-e9c4-4450-9712-02f11b5543d3.png" width="610" title="" crop="0,0,1,1" id="ue64914c9" class="ne-image" style="font-size: 16px">
+![1710468078605-3c6a2dd2-e9c4-4450-9712-02f11b5543d3.png](../assets/1710468078605-3c6a2dd2-e9c4-4450-9712-02f11b5543d3.png)
 
 添加了一个 age 形参，没有指定 required 属性时，默认是true，表示必需的，但前端表单中没有年龄age，我们来看报错信息：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710468194109-56b8df42-2110-4b2b-9e73-064884f2e04b.png" width="807" title="" crop="0,0,1,1" id="u1a3fb4dc" class="ne-image" style="font-size: 16px">
+![1710468194109-56b8df42-2110-4b2b-9e73-064884f2e04b.png](../assets/1710468194109-56b8df42-2110-4b2b-9e73-064884f2e04b.png)
 
 错误信息告诉我们：参数age是必需的。没有提供这个请求参数，HTTP状态码 400
 
 如果将 required 属性设置为 false。则该参数则不是必须的，如果请求参数仍然未提供时，我们来看结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710468402437-7395c6e2-6ab4-4bdc-a66e-cb82811be4e4.png" width="685" title="" crop="0,0,1,1" id="u3168e498" class="ne-image" style="font-size: 16px">
+![1710468402437-7395c6e2-6ab4-4bdc-a66e-cb82811be4e4.png](../assets/1710468402437-7395c6e2-6ab4-4bdc-a66e-cb82811be4e4.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710468358266-82e27b39-b24a-4aca-902e-9a69c5630ca7.png" width="488" title="" crop="0,0,1,1" id="u0b40f7d7" class="ne-image" style="font-size: 16px">
+![1710468358266-82e27b39-b24a-4aca-902e-9a69c5630ca7.png](../assets/1710468358266-82e27b39-b24a-4aca-902e-9a69c5630ca7.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710468442095-a0aa03e0-390e-440c-b9db-61139b8098cb.png" width="290" title="" crop="0,0,1,1" id="uf8a54914" class="ne-image" style="font-size: 16px">
+![1710468442095-a0aa03e0-390e-440c-b9db-61139b8098cb.png](../assets/1710468442095-a0aa03e0-390e-440c-b9db-61139b8098cb.png)
 
 通过测试得知，如果一个参数被设置为`不是必需的`，当没有提交对应的请求参数时，形参默认值null。
 
@@ -225,27 +225,27 @@ required属性用来设置该方法参数是否为必须的。
 
 **使用 Apipost 发送 get 请求，携带查询参数：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764495647856-59d7c579-1696-4426-92d9-05a655fb3333.png" width="553.6" title="" crop="0,0,1,1" id="uc3431823" class="ne-image" style="font-size: 16px">
+![1764495647856-59d7c579-1696-4426-92d9-05a655fb3333.png](../assets/1764495647856-59d7c579-1696-4426-92d9-05a655fb3333.png)
 
 **使用 Apipost 发送 post 请求，以普通文本形式提交表单数据：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764495789233-7daadea7-40f2-4dc5-a5c0-f3701794a167.png" width="547.2" title="" crop="0,0,1,1" id="u085eb63f" class="ne-image" style="font-size: 16px">
+![1764495789233-7daadea7-40f2-4dc5-a5c0-f3701794a167.png](../assets/1764495789233-7daadea7-40f2-4dc5-a5c0-f3701794a167.png)
 
 **使用 Apipost 发送 post 请求，以二进制的方式提交表单数据：（适合文件上传）**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764495917686-99311377-3e74-4b25-988e-0a4bfd9a4f37.png" width="593.6" title="" crop="0,0,1,1" id="u4e78698a" class="ne-image" style="font-size: 16px">
+![1764495917686-99311377-3e74-4b25-988e-0a4bfd9a4f37.png](../assets/1764495917686-99311377-3e74-4b25-988e-0a4bfd9a4f37.png)
 
 **使用 Apipost 发送 post 请求，并且提交 JSON 字符串到服务器：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764496082736-acc6506c-f8b4-4197-8892-b95cd4b12db4.png" width="650.4" title="" crop="0,0,1,1" id="u072e2fb2" class="ne-image" style="font-size: 16px">
+![1764496082736-acc6506c-f8b4-4197-8892-b95cd4b12db4.png](../assets/1764496082736-acc6506c-f8b4-4197-8892-b95cd4b12db4.png)
 
 **使用 Apipost 工具发送请求时，设置请求头：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764496187497-29597aed-7976-4807-a66b-880656ea95e9.png" width="650.4" title="" crop="0,0,1,1" id="u3101b1bf" class="ne-image" style="font-size: 16px">
+![1764496187497-29597aed-7976-4807-a66b-880656ea95e9.png](../assets/1764496187497-29597aed-7976-4807-a66b-880656ea95e9.png)
 
 **使用 Apipost 工作提交纯二进制数据，例如做单文件上传：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764496419092-5687f07c-4d95-44c7-8621-af888667dfce.png" width="720" title="" crop="0,0,1,1" id="u55d8dfc6" class="ne-image" style="font-size: 16px">
+![1764496419092-5687f07c-4d95-44c7-8621-af888667dfce.png](../assets/1764496419092-5687f07c-4d95-44c7-8621-af888667dfce.png)
 
 ### RequestParam注解的defaultValue属性
 
@@ -253,21 +253,21 @@ defaultValue属性用来设置形参的默认值，当`没有提供对应的请�
 
 **当前端页面没有提交email的时候：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764496959630-5ca32659-fda5-4544-8438-23435d293a3b.png" width="677.6" title="" crop="0,0,1,1" id="u3ce279cc" class="ne-image" style="font-size: 16px">
+![1764496959630-5ca32659-fda5-4544-8438-23435d293a3b.png](../assets/1764496959630-5ca32659-fda5-4544-8438-23435d293a3b.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764496981766-b5dc6d20-aec2-4fb2-974c-3fa170c2504e.png" width="200" title="" crop="0,0,1,1" id="UodRn" class="ne-image" style="font-size: 16px">
+![1764496981766-b5dc6d20-aec2-4fb2-974c-3fa170c2504e.png](../assets/1764496981766-b5dc6d20-aec2-4fb2-974c-3fa170c2504e.png)
 
 **当前端页面提交的email是空字符串的时候：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764497016535-d8e10530-4012-4fe5-8884-c1d7a298b1da.png" width="638.4" title="" crop="0,0,1,1" id="u33cba45d" class="ne-image" style="font-size: 16px">
+![1764497016535-d8e10530-4012-4fe5-8884-c1d7a298b1da.png](../assets/1764497016535-d8e10530-4012-4fe5-8884-c1d7a298b1da.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764496981766-b5dc6d20-aec2-4fb2-974c-3fa170c2504e.png" width="200" title="" crop="0,0,1,1" id="nMmHO" class="ne-image" style="font-size: 16px">
+![1764496981766-b5dc6d20-aec2-4fb2-974c-3fa170c2504e.png](../assets/1764496981766-b5dc6d20-aec2-4fb2-974c-3fa170c2504e.png)
 
 **当前端提交的email不是空字符串的时候：**
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764497068703-6a9e6352-92f9-4fdd-8c21-5916c1d3f099.png" width="553.6" title="" crop="0,0,1,1" id="u766b6549" class="ne-image" style="font-size: 16px">
+![1764497068703-6a9e6352-92f9-4fdd-8c21-5916c1d3f099.png](../assets/1764497068703-6a9e6352-92f9-4fdd-8c21-5916c1d3f099.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764497048835-480702a7-7869-4344-a4f5-cca96e8c584f.png" width="185.6" title="" crop="0,0,1,1" id="u2d8acedd" class="ne-image" style="font-size: 16px">
+![1764497048835-480702a7-7869-4344-a4f5-cca96e8c584f.png](../assets/1764497048835-480702a7-7869-4344-a4f5-cca96e8c584f.png)
 
 ---
 
@@ -319,9 +319,9 @@ public String register(String username, String password, String sex, String[] ho
 
 如果形参名和提交的数据的name不一致时：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710428636791-b1c4eb79-ce31-4ecf-9ee5-4db8e6ffb0d6.png" width="1252" title="" crop="0,0,1,1" id="u3d867463" class="ne-image" style="font-size: 16px">
+![1710428636791-b1c4eb79-ce31-4ecf-9ee5-4db8e6ffb0d6.png](../assets/1710428636791-b1c4eb79-ce31-4ecf-9ee5-4db8e6ffb0d6.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710428682813-4c2440c7-0500-4d02-a66a-7a3852ebd981.png" width="465" title="" crop="0,0,1,1" id="u4de014af" class="ne-image" style="font-size: 16px">
+![1710428682813-4c2440c7-0500-4d02-a66a-7a3852ebd981.png](../assets/1710428682813-4c2440c7-0500-4d02-a66a-7a3852ebd981.png)
 
 另外，还有一点，对于提交的hobby数据，也可以采用String来接收，不一定使用数组方式：
 
@@ -489,17 +489,17 @@ public class User {
 
 测试结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710471772183-af36c134-1f73-4cb4-afc6-4a6a827aacbd.png" width="1139" title="" crop="0,0,1,1" id="u0d56b9d1" class="ne-image" style="font-size: 16px">
+![1710471772183-af36c134-1f73-4cb4-afc6-4a6a827aacbd.png](../assets/1710471772183-af36c134-1f73-4cb4-afc6-4a6a827aacbd.png)
 
 通过测试，我们得知：`请求参数名`可以和`JavaBean的属性名`不一致。
 
 我们继续将其中一个属性的setter和getter方法名修改一下：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710471908862-89d1b430-cff1-43e2-9678-49017f49d663.png" width="455" title="" crop="0,0,1,1" id="u86492b81" class="ne-image" style="font-size: 16px">
+![1710471908862-89d1b430-cff1-43e2-9678-49017f49d663.png](../assets/1710471908862-89d1b430-cff1-43e2-9678-49017f49d663.png)
 
 再次测试：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710471961917-33f50796-7f73-4d40-a0ef-2befe83d5ebf.png" width="1179" title="" crop="0,0,1,1" id="u358b10f2" class="ne-image" style="font-size: 16px">
+![1710471961917-33f50796-7f73-4d40-a0ef-2befe83d5ebf.png](../assets/1710471961917-33f50796-7f73-4d40-a0ef-2befe83d5ebf.png)
 
 ****通过测试可以看到：username属性没有赋上值。可见请求参数是否可以赋值到JavaBean对应的属性上，不是取决于属性名，而是setter方法名****。
 
@@ -530,7 +530,7 @@ public String register(User user,
 
 执行结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710472685320-fa79ddc4-04e0-4f8e-b97e-56f3f28ee60f.png" width="1131" title="" crop="0,0,1,1" id="u968684d7" class="ne-image" style="font-size: 16px">
+![1710472685320-fa79ddc4-04e0-4f8e-b97e-56f3f28ee60f.png](../assets/1710472685320-fa79ddc4-04e0-4f8e-b97e-56f3f28ee60f.png)
 
 ---
 
@@ -575,7 +575,7 @@ public String register(User user,
 
 测试结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710473271244-7a95563a-fff4-458e-914f-25b314c78bd1.png" width="989" title="" crop="0,0,1,1" id="ue186aba0" class="ne-image" style="font-size: 16px">
+![1710473271244-7a95563a-fff4-458e-914f-25b314c78bd1.png](../assets/1710473271244-7a95563a-fff4-458e-914f-25b314c78bd1.png)
 
 ---
 
@@ -591,11 +591,11 @@ public String register(User user,
 
 有可能很多同学使用的不是Tomcat10，如果不是Tomcat10，则会出现乱码问题，我们来模拟一下乱码的产生，将apache-tomcat-10.1.19\conf\web.xml文件中的UTF-8配置修改为ISO-8859-1：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710732413713-0f034192-e4d4-4c33-aeb3-169726468251.png" width="1076" title="" crop="0,0,1,1" id="u2e406be6" class="ne-image" style="font-size: 16px">
+![1710732413713-0f034192-e4d4-4c33-aeb3-169726468251.png](../assets/1710732413713-0f034192-e4d4-4c33-aeb3-169726468251.png)
 
 ****一定要重启Tomcat10****，新的配置才能生效，来测试一下是否存在乱码：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710732483068-b356942a-9183-4734-812d-041a151df48d.png" width="1261" title="" crop="0,0,1,1" id="u6f629e75" class="ne-image" style="font-size: 16px">
+![1710732483068-b356942a-9183-4734-812d-041a151df48d.png](../assets/1710732483068-b356942a-9183-4734-812d-041a151df48d.png)
 
 那么，在SpringMVC中如何解决请求体的中文乱码问题呢？当然，还是使用`request.setCharacterEncoding("UTF-8")`
 
@@ -638,7 +638,7 @@ public String register(User user, HttpServletRequest request) throws Unsupported
 
 测试结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710732483068-b356942a-9183-4734-812d-041a151df48d.png" width="1261" title="" crop="0,0,1,1" id="prLSj" class="ne-image" style="font-size: 16px">
+![1710732483068-b356942a-9183-4734-812d-041a151df48d.png](../assets/1710732483068-b356942a-9183-4734-812d-041a151df48d.png)
 
 通过测试可以看到：在Controller当中调用`request.setCharacterEncoding("UTF-8")`是无法解决POST乱码问题的。
 
@@ -908,7 +908,7 @@ protected void doFilterInternal(
 
 我们再来测试，重启Tomcat10，看看乱码是否能够解决？
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710733643651-29370350-6188-4ada-a8b0-99c6264f3b7a.png" width="1166" title="" crop="0,0,1,1" id="ubacc784a" class="ne-image" style="font-size: 16px">
+![1710733643651-29370350-6188-4ada-a8b0-99c6264f3b7a.png](../assets/1710733643651-29370350-6188-4ada-a8b0-99c6264f3b7a.png)
 
 注意：针对于我们当前的Tomcat10的配置来说，它有默认的字符集ISO-8859-1，因此以下在web.xml文件中的配置是不能缺少的：
 

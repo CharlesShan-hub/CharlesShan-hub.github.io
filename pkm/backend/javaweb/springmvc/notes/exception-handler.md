@@ -17,7 +17,7 @@ Spring MVC在`处理器方法`执行过程中出现了异常，可以采用`异�
 
 SpringMVC为异常处理提供了一个接口：HandlerExceptionResolver
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711683439894-1af197f8-20d1-401b-8704-11d51b131670.png" width="1165" title="" crop="0,0,1,1" id="uf9c002eb" class="ne-image" style="font-size: 16px">
+![1711683439894-1af197f8-20d1-401b-8704-11d51b131670.png](../assets/1711683439894-1af197f8-20d1-401b-8704-11d51b131670.png)
 
 核心方法是：resolveException。
 
@@ -36,11 +36,11 @@ DefaultHandlerExceptionResolver 是默认的异常处理器。
 
 核心方法：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711683759071-a2b84ecf-92c8-46e2-a040-8b5c113446f2.png" width="1115" title="" crop="0,0,1,1" id="u1bc95b7f" class="ne-image" style="font-size: 16px">
+![1711683759071-a2b84ecf-92c8-46e2-a040-8b5c113446f2.png](../assets/1711683759071-a2b84ecf-92c8-46e2-a040-8b5c113446f2.png)
 
 当请求方式和处理方式不同时，DefaultHandlerExceptionResolver的默认处理态度是：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711683899955-8f7b2a54-716a-4b36-8550-e4630f695bca.png" width="557" title="" crop="0,0,1,1" id="uf6787e7a" class="ne-image" style="font-size: 16px">
+![1711683899955-8f7b2a54-716a-4b36-8550-e4630f695bca.png](../assets/1711683899955-8f7b2a54-716a-4b36-8550-e4630f695bca.png)
 
 ---
 
@@ -88,7 +88,7 @@ DefaultHandlerExceptionResolver 是默认的异常处理器。
 
 ```
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711684183329-eb0e9b03-4d1d-442e-9d6b-22384e3bd776.png" width="977" title="" crop="0,0,1,1" id="u1cc798bf" class="ne-image" style="font-size: 16px">
+![1711684183329-eb0e9b03-4d1d-442e-9d6b-22384e3bd776.png](../assets/1711684183329-eb0e9b03-4d1d-442e-9d6b-22384e3bd776.png)
 
 ### 注解方式
 

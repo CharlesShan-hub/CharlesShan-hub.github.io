@@ -72,19 +72,19 @@ Spring MVC支持的常见视图包括：
     1. 职责：**Spring MVC 的中央调度器，协调所有组件完成请求处理流程**。
     2. 核心方法：**doDispatch**
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710824946253-84de4b12-1985-4976-ae39-dd62e77b43b8.png" width="893" title="" crop="0,0,1,1" id="ue3be2feb" class="ne-image" style="font-size: 16px">
+![1710824946253-84de4b12-1985-4976-ae39-dd62e77b43b8.png](../assets/1710824946253-84de4b12-1985-4976-ae39-dd62e77b43b8.png)
 
 2. ViewResolver接口（视图解析器）：
     1. 职责：**将******逻辑视图名******解析为具体的******View******对象**。
     2. 核心方法：resolveViewName
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710824983130-13d175e9-be25-4e76-bccf-d50f63cee853.png" width="774" title="" crop="0,0,1,1" id="u9237c0b9" class="ne-image" style="font-size: 16px">
+![1710824983130-13d175e9-be25-4e76-bccf-d50f63cee853.png](../assets/1710824983130-13d175e9-be25-4e76-bccf-d50f63cee853.png)
 
 3. View接口（视图）:
     1. 职责：**将模型数据渲染为具体的视图格式（HTML、JSON等），并输出到客户端**
     2. 核心方法：render
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710825045618-8ca7d10a-9f8f-4210-a871-8b7d34885311.png" width="802" title="" crop="0,0,1,1" id="uc64e1281" class="ne-image" style="font-size: 16px">
+![1710825045618-8ca7d10a-9f8f-4210-a871-8b7d34885311.png](../assets/1710825045618-8ca7d10a-9f8f-4210-a871-8b7d34885311.png)
 
 4. ViewResolverRegistry（视图解析器注册器）：
     1. 负责在 Spring 容器启动的时候，完成视图解析器的注册。如果有多个视图解析器，会将视图解析器对象按照order的配置放入List集合。
@@ -272,25 +272,25 @@ public class IndexController {
 
 添加断点：在DispatcherServlet的doDispatch方法的下图位置添加断点
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710835859057-703d8177-8e9c-4a42-9f8d-e36d0bfb1e42.png" width="1004" title="" crop="0,0,1,1" id="uc3fe801e" class="ne-image" style="font-size: 16px">
+![1710835859057-703d8177-8e9c-4a42-9f8d-e36d0bfb1e42.png](../assets/1710835859057-703d8177-8e9c-4a42-9f8d-e36d0bfb1e42.png)
 
 启动Tomcat，在浏览器地址栏上发送请求：http://localhost:8080/springmvc/index
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710835931836-b1a27108-f01b-49ad-a5f7-308ad0cf7f8b.png" width="687" title="" crop="0,0,1,1" id="u700a1239" class="ne-image" style="font-size: 16px">
+![1710835931836-b1a27108-f01b-49ad-a5f7-308ad0cf7f8b.png](../assets/1710835931836-b1a27108-f01b-49ad-a5f7-308ad0cf7f8b.png)
 
 程序走到以上位置，这行代码是调用对应的Controller，并且Controller最终会返回ModelAndView对象：mv
 
 按照我们之前所讲，返回mv之后，接下来就是视图处理与渲染，接着往下走，走到下图这一行：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710836061330-46ee32ce-5549-4758-85f3-0dd8c0b20079.png" width="783" title="" crop="0,0,1,1" id="u28cd67a9" class="ne-image" style="font-size: 16px">
+![1710836061330-46ee32ce-5549-4758-85f3-0dd8c0b20079.png](../assets/1710836061330-46ee32ce-5549-4758-85f3-0dd8c0b20079.png)
 
 这个方法的作用是处理分发结果，就是在这个方法当中进行了视图的处理与渲染，进入该方法：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710836134539-34cc0424-ea05-4045-810d-56b063b59fb4.png" width="816" title="" crop="0,0,1,1" id="u73ef7405" class="ne-image" style="font-size: 16px">
+![1710836134539-34cc0424-ea05-4045-810d-56b063b59fb4.png](../assets/1710836134539-34cc0424-ea05-4045-810d-56b063b59fb4.png)
 
 进去之后走到上图位置：这个方法就是用来渲染页面的方法，再进入该方法：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710836196992-3d3ef841-db8b-4642-aa9a-fa2ffef5ef0e.png" width="580" title="" crop="0,0,1,1" id="u048d73aa" class="ne-image" style="font-size: 16px">
+![1710836196992-3d3ef841-db8b-4642-aa9a-fa2ffef5ef0e.png](../assets/1710836196992-3d3ef841-db8b-4642-aa9a-fa2ffef5ef0e.png)
 
 走到上图位置就可以看到底层创建的是ThymeleafView对象。
 
@@ -363,7 +363,7 @@ public class IndexController {
 
 启动web容器，添加断点跟踪：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710836651520-2ea9a9ba-0a71-4f3e-977c-4bce0ddfdcf8.png" width="481" title="" crop="0,0,1,1" id="ua9f75b72" class="ne-image" style="font-size: 16px">
+![1710836651520-2ea9a9ba-0a71-4f3e-977c-4bce0ddfdcf8.png](../assets/1710836651520-2ea9a9ba-0a71-4f3e-977c-4bce0ddfdcf8.png)
 
 通过测试得知：对于JSP视图来说，底层创建的视图对象是InternalResourceView。
 
@@ -444,15 +444,15 @@ public class IndexController {
 
 启动服务器，浏览器地址栏上输入：http://localhost:8080/springmvc/a
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710839187256-3c823090-ff26-4d46-8dca-d7727e800da9.png" width="403" title="" crop="0,0,1,1" id="u9c3cee51" class="ne-image" style="font-size: 16px">
+![1710839187256-3c823090-ff26-4d46-8dca-d7727e800da9.png](../assets/1710839187256-3c823090-ff26-4d46-8dca-d7727e800da9.png)
 
 通过测试，可以顺利的完成转发，转发是一次请求，可以看到地址栏上的地址没有发生改变。
 
 我们来跟踪一下源码，看看以上程序执行过程中，创建了几个视图对象，分别是什么？
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710846891647-16906724-4f82-4a5f-9bae-655b3ce869e3.png" width="1289" title="" crop="0,0,1,1" id="ua9ef9d83" class="ne-image" style="font-size: 16px">
+![1710846891647-16906724-4f82-4a5f-9bae-655b3ce869e3.png](../assets/1710846891647-16906724-4f82-4a5f-9bae-655b3ce869e3.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710846943388-ff000327-18e6-4920-96d7-f96e59c62202.png" width="642" title="" crop="0,0,1,1" id="u2688da80" class="ne-image" style="font-size: 16px">
+![1710846943388-ff000327-18e6-4920-96d7-f96e59c62202.png](../assets/1710846943388-ff000327-18e6-4920-96d7-f96e59c62202.png)
 
 通过源码的跟踪得知：整个请求处理过程中，一共创建了两个视图对象
 
@@ -507,15 +507,15 @@ public class IndexController {
 
 启动服务器，浏览器地址栏上输入：http://localhost:8080/springmvc/a
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710857817456-baf96179-4ce2-4897-8873-aa1232ed8462.png" width="426" title="" crop="0,0,1,1" id="u2487522b" class="ne-image" style="font-size: 16px">
+![1710857817456-baf96179-4ce2-4897-8873-aa1232ed8462.png](../assets/1710857817456-baf96179-4ce2-4897-8873-aa1232ed8462.png)
 
 可见，重定向是两次请求，地址栏上的地址发生了改变。
 
 可以看一下源码，在重定向的时候，Spring MVC创建哪个视图对象？
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710857964522-8ccd525e-e458-41e2-abc8-6336a46bc17c.png" width="999" title="" crop="0,0,1,1" id="u67e2c7f3" class="ne-image" style="font-size: 16px">
+![1710857964522-8ccd525e-e458-41e2-abc8-6336a46bc17c.png](../assets/1710857964522-8ccd525e-e458-41e2-abc8-6336a46bc17c.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710858016866-c2e30ccf-0b94-494d-9b89-0853fb2fa7af.png" width="610" title="" crop="0,0,1,1" id="u75288812" class="ne-image" style="font-size: 16px">
+![1710858016866-c2e30ccf-0b94-494d-9b89-0853fb2fa7af.png](../assets/1710858016866-c2e30ccf-0b94-494d-9b89-0853fb2fa7af.png)
 
 通过断点调试可以看出，当重定向的时候，SpringMVC会创建一个重定向视图对象：****RedirectView****。这个视图对象也是SpringMVC框架内置的。
 
@@ -616,9 +616,9 @@ public String a(){
 
 ********
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710919316908-f4fb4a3a-7f7f-48f4-b135-9c8476a1c49b.png" width="678" title="" crop="0,0,1,1" id="u1c3362ec" class="ne-image" style="font-size: 16px">
+![1710919316908-f4fb4a3a-7f7f-48f4-b135-9c8476a1c49b.png](../assets/1710919316908-f4fb4a3a-7f7f-48f4-b135-9c8476a1c49b.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710919337577-14f47775-113c-4316-8a15-84278d9cb6f7.png" width="417" title="" crop="0,0,1,1" id="ud68554f3" class="ne-image" style="font-size: 16px">
+![1710919337577-14f47775-113c-4316-8a15-84278d9cb6f7.png](../assets/1710919337577-14f47775-113c-4316-8a15-84278d9cb6f7.png)
 
 ### 使用 mvc:resources 标签配置静态资源
 

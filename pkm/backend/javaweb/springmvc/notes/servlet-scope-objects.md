@@ -135,7 +135,7 @@ public class RequestScopeTestController {
 
 测试结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710747192867-9c718af0-41ad-4be9-8d48-c2ecdbd90789.png" width="489" title="" crop="0,0,1,1" id="u50ed1ef3" class="ne-image" style="font-size: 16px">
+![1710747192867-9c718af0-41ad-4be9-8d48-c2ecdbd90789.png](../assets/1710747192867-9c718af0-41ad-4be9-8d48-c2ecdbd90789.png)
 
 这种方式当然可以，用SpringMVC框架，不建议使用原生Servlet API。
 
@@ -182,25 +182,25 @@ public String testModelMap(ModelMap modelMap){
 
 可以在以上Model、Map、ModelMap的测试程序中将其输出，看看输出什么：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710748328132-7ec71a48-8879-4758-824a-a9d669f1594a.png" width="845" title="" crop="0,0,1,1" id="u85bdc93d" class="ne-image" style="font-size: 16px">
+![1710748328132-7ec71a48-8879-4758-824a-a9d669f1594a.png](../assets/1710748328132-7ec71a48-8879-4758-824a-a9d669f1594a.png)
 
 看不出来什么区别，从输出结果上可以看到都是一样的。
 
 可以将其运行时类名输出：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710748490407-0ab2044c-0261-498d-b55d-ce563afda27d.png" width="788" title="" crop="0,0,1,1" id="u0cb00398" class="ne-image" style="font-size: 16px">
+![1710748490407-0ab2044c-0261-498d-b55d-ce563afda27d.png](../assets/1710748490407-0ab2044c-0261-498d-b55d-ce563afda27d.png)
 
 通过输出结果可以看出，无论是Model、Map还是ModelMap，底层实例化的对象都是：BindingAwareModelMap。
 
 可以查看BindingAwareModelMap的继承结构：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710748694354-caf9941e-9ce9-4215-bfe7-2d2a759ef206.png" width="511" title="" crop="0,0,1,1" id="u6b7fdd17" class="ne-image" style="font-size: 16px">
+![1710748694354-caf9941e-9ce9-4215-bfe7-2d2a759ef206.png](../assets/1710748694354-caf9941e-9ce9-4215-bfe7-2d2a759ef206.png)
 
 通过继承结构可以看出：BindingAwareModelMap继承了ModelMap，而ModelMap又实现了Map接口。
 
 另外，请看以下源码：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710748884799-5bad9d0f-9926-4ef0-a29e-7f9e5d6bd383.png" width="757" title="" crop="0,0,1,1" id="ubf08d967" class="ne-image" style="font-size: 16px">
+![1710748884799-5bad9d0f-9926-4ef0-a29e-7f9e5d6bd383.png](../assets/1710748884799-5bad9d0f-9926-4ef0-a29e-7f9e5d6bd383.png)
 
 可以看出ModelMap又实现了Model接口。因此表面上是采用了不同方式，底层本质上是相同的。
 
@@ -241,25 +241,25 @@ public ModelAndView testModelAndView(){
 
 在以上四种方式中，拿Model举例，添加断点进行调试：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710750710855-53e8ffdd-b563-453e-afb4-70648684e619.png" width="749" title="" crop="0,0,1,1" id="u579b6322" class="ne-image" style="font-size: 16px">
+![1710750710855-53e8ffdd-b563-453e-afb4-70648684e619.png](../assets/1710750710855-53e8ffdd-b563-453e-afb4-70648684e619.png)
 
 启动服务器，发送请求，走到断点：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710750795816-555dfc56-ccf2-43b4-b516-a737336d1e4f.png" width="591" title="" crop="0,0,1,1" id="u38449060" class="ne-image" style="font-size: 16px">
+![1710750795816-555dfc56-ccf2-43b4-b516-a737336d1e4f.png](../assets/1710750795816-555dfc56-ccf2-43b4-b516-a737336d1e4f.png)
 
 查看VM Stack信息：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764502506969-7d415950-4424-4c95-989c-02838aa265b8.png" width="604.8" title="" crop="0,0,1,1" id="u878d6b36" class="ne-image" style="font-size: 16px">
+![1764502506969-7d415950-4424-4c95-989c-02838aa265b8.png](../assets/1764502506969-7d415950-4424-4c95-989c-02838aa265b8.png)
 
 查看DispatcherServlet的1089行，源码如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710750933440-8254f738-2716-4f56-8610-4814e6fdecbf.png" width="1123" title="" crop="0,0,1,1" id="u56c3d766" class="ne-image" style="font-size: 16px">
+![1710750933440-8254f738-2716-4f56-8610-4814e6fdecbf.png](../assets/1710750933440-8254f738-2716-4f56-8610-4814e6fdecbf.png)
 
 可以看到这里，无论你使用哪种方式，最终都要返回一个ModelAndView对象。
 
 提醒：大家可以通过以下断点调试方式，采用一级一级返回，最终可以看到都会返回ModelAndView对象。
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710751055879-078ad592-a894-45fe-8d4d-1a74d9c8db79.png" width="357" title="" crop="0,0,1,1" id="u09e6abc5" class="ne-image" style="font-size: 16px">
+![1710751055879-078ad592-a894-45fe-8d4d-1a74d9c8db79.png](../assets/1710751055879-078ad592-a894-45fe-8d4d-1a74d9c8db79.png)
 
 ---
 

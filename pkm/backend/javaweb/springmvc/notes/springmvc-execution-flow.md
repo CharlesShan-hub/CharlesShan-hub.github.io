@@ -154,7 +154,7 @@ public interface View {
 
 ## 从画图角度看执行流程
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711943505835-476f954e-ba6c-4a78-b16b-683524e25520.png" width="1508" title="" crop="0,0,1,1" id="u96674032" class="ne-image" style="font-size: 16px">
+![1711943505835-476f954e-ba6c-4a78-b16b-683524e25520.png](../assets/1711943505835-476f954e-ba6c-4a78-b16b-683524e25520.png)
 
 **SpringMVC 执行流程文字性的描述：**
 
@@ -185,21 +185,21 @@ public interface View {
 1. 初始化Spring上下文，也就是创建所有的bean，让IoC容器将其管理起来。
 2. 初始化SpringMVC相关的对象：处理器映射器，处理器适配器等。。。
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711945073073-1466293a-37a5-4e04-a628-00225ec9ad8f.png" width="1035" title="" crop="0,0,1,1" id="u358e4869" class="ne-image" style="font-size: 16px">
+![1711945073073-1466293a-37a5-4e04-a628-00225ec9ad8f.png](../assets/1711945073073-1466293a-37a5-4e04-a628-00225ec9ad8f.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711945189838-6546c84c-23c9-479d-b2df-893851fdb912.png" width="842" title="" crop="0,0,1,1" id="u1c451def" class="ne-image" style="font-size: 16px">
+![1711945189838-6546c84c-23c9-479d-b2df-893851fdb912.png](../assets/1711945189838-6546c84c-23c9-479d-b2df-893851fdb912.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711945264590-8b563ba5-bf2a-4e27-8695-9a0ee2577f2a.png" width="1280" title="" crop="0,0,1,1" id="udcc03fa7" class="ne-image" style="font-size: 16px">
+![1711945264590-8b563ba5-bf2a-4e27-8695-9a0ee2577f2a.png](../assets/1711945264590-8b563ba5-bf2a-4e27-8695-9a0ee2577f2a.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711945298853-016466d1-3882-461f-8ac5-296983a67d24.png" width="1348" title="" crop="0,0,1,1" id="ufef5ee9d" class="ne-image" style="font-size: 16px">
+![1711945298853-016466d1-3882-461f-8ac5-296983a67d24.png](../assets/1711945298853-016466d1-3882-461f-8ac5-296983a67d24.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711945338150-b4f14a20-cc75-4915-9651-51acbffcd872.png" width="805" title="" crop="0,0,1,1" id="u3f47fae4" class="ne-image" style="font-size: 16px">
+![1711945338150-b4f14a20-cc75-4915-9651-51acbffcd872.png](../assets/1711945338150-b4f14a20-cc75-4915-9651-51acbffcd872.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711945352375-01882059-ab91-4668-a595-eb83ca01344c.png" width="815" title="" crop="0,0,1,1" id="u935e0db6" class="ne-image" style="font-size: 16px">
+![1711945352375-01882059-ab91-4668-a595-eb83ca01344c.png](../assets/1711945352375-01882059-ab91-4668-a595-eb83ca01344c.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711945371377-87ac618e-495f-4fe9-92c4-50a1f2c199d8.png" width="757" title="" crop="0,0,1,1" id="u63c8bc73" class="ne-image" style="font-size: 16px">
+![1711945371377-87ac618e-495f-4fe9-92c4-50a1f2c199d8.png](../assets/1711945371377-87ac618e-495f-4fe9-92c4-50a1f2c199d8.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711945408231-6e96abeb-ceff-480e-9f2c-72bfa2a5d419.png" width="748" title="" crop="0,0,1,1" id="u9d958078" class="ne-image" style="font-size: 16px">
+![1711945408231-6e96abeb-ceff-480e-9f2c-72bfa2a5d419.png](../assets/1711945408231-6e96abeb-ceff-480e-9f2c-72bfa2a5d419.png)
 
 ---
 

@@ -272,15 +272,15 @@ HiddenHttpMethodFilter是Spring MVC框架提供的，专门用于RESTful编程�
 
 实现原理可以通过源码查看：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710981996209-5c66441b-0aa9-41a7-b71d-26b2ffb0f4f5.png" width="1291" title="" crop="0,0,1,1" id="u35d657b9" class="ne-image" style="font-size: 16px">
+![1710981996209-5c66441b-0aa9-41a7-b71d-26b2ffb0f4f5.png](../assets/1710981996209-5c66441b-0aa9-41a7-b71d-26b2ffb0f4f5.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710982160559-ffe20024-a10a-4aa2-b39e-44bebd0d3945.png" width="699" title="" crop="0,0,1,1" id="u4b2501ea" class="ne-image" style="font-size: 16px">
+![1710982160559-ffe20024-a10a-4aa2-b39e-44bebd0d3945.png](../assets/1710982160559-ffe20024-a10a-4aa2-b39e-44bebd0d3945.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710982194265-720a0b49-aa95-475f-900b-7234280f5c9c.png" width="925" title="" crop="0,0,1,1" id="u4e856ede" class="ne-image" style="font-size: 16px">
+![1710982194265-720a0b49-aa95-475f-900b-7234280f5c9c.png](../assets/1710982194265-720a0b49-aa95-475f-900b-7234280f5c9c.png)
 
 通过源码可以看到，if语句中，首先判断是否为POST请求，如果是POST请求，调用`request.getParameter(this.methodParam)`。可以看到`this.methodParam`是`_method`，这样就要求我们在提交请求方式的时候必须采用这个格式：`_method=put`。获取到请求方式之后，调用了toUpperCase转换成大写了。因此前端页面中小写的put或者大写的PUT都是可以的。if语句中嵌套的if语句说的是，只有请求方式是 PUT,DELETE,PATCH的时候会创建HttpMethodRequestWrapper对象。而HttpMethodRequestWrapper对象的构造方法是这样的：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710984179119-96331e0b-ae39-45b0-bba1-b8db3ec7107f.png" width="905" title="" crop="0,0,1,1" id="udaf4f43c" class="ne-image" style="font-size: 16px">
+![1710984179119-96331e0b-ae39-45b0-bba1-b8db3ec7107f.png](../assets/1710984179119-96331e0b-ae39-45b0-bba1-b8db3ec7107f.png)
 
 这样method就从POST变成了：PUT/DELETE/PATCH。
 
@@ -288,6 +288,6 @@ HiddenHttpMethodFilter是Spring MVC框架提供的，专门用于RESTful编程�
 
 细心的同学应该注意到了，在**HiddenHttpMethodFilter源码中有这样一行代码：**
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710984264334-7df83331-ddbb-4ead-a58c-cb4dc6c19ef6.png" width="614" title="" crop="0,0,1,1" id="ue805f02f" class="ne-image" style="font-size: 16px">
+![1710984264334-7df83331-ddbb-4ead-a58c-cb4dc6c19ef6.png](../assets/1710984264334-7df83331-ddbb-4ead-a58c-cb4dc6c19ef6.png)
 
 大家是否还记得，字符编码过滤器执行之前不能调用 request.getParameter方法，如果提前调用了，乱码问题就无法解决了。因为request.setCharacterEncoding()方法的执行必须在所有request.getParameter()方法之前执行。因此这两个过滤器就有先后顺序的要求，在web.xml文件中，应该先配置CharacterEncodingFilter，然后再配置HiddenHttpMethodFilter。

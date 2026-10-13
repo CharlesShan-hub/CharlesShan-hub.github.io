@@ -25,7 +25,7 @@ MVC将应用分为三块，每一块各司其职，都有自己专注的事情�
 
 MVC架构模式如下所示：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710142469881-5dee11e1-80e8-4cbc-8f0c-726d4e42bbfa.png" width="1378" title="" crop="0,0,1,1" id="u4dd05c22" class="ne-image" style="font-size: 16px">
+![1710142469881-5dee11e1-80e8-4cbc-8f0c-726d4e42bbfa.png](../assets/1710142469881-5dee11e1-80e8-4cbc-8f0c-726d4e42bbfa.png)
 
 MVC架构模式的描述：前端浏览器发送请求给web服务器，web服务器中的Controller接收到用户的请求，Controller负责将前端提交的数据进行封装，然后Controller调用Model来处理业务，当Model处理完业务后会返回处理之后的数据给Controller，Controller再调用View来完成数据的展示，最终将结果响应给浏览器，浏览器进行渲染展示页面。
 
@@ -38,7 +38,7 @@ MVC架构模式的描述：前端浏览器发送请求给web服务器，web服�
 
 ****
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764331586696-acdd037f-01b1-45ab-a711-15115ed4f728.png" width="220" title="" crop="0,0,1,1" id="ueb153103" class="ne-image" style="font-size: 16px">
+![1764331586696-acdd037f-01b1-45ab-a711-15115ed4f728.png](../assets/1764331586696-acdd037f-01b1-45ab-a711-15115ed4f728.png)
 
 ---
 
@@ -151,7 +151,7 @@ SpringMVC框架帮我们做了什么，与纯粹的Servlet开发有什么区别�
 
 添加web支持后的目录结构：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764332865455-5135bf3b-bfd1-4265-a8d1-d8e326c88b28.png" width="285" title="" crop="0,0,1,1" id="uc568c006" class="ne-image" style="font-size: 16px">
+![1764332865455-5135bf3b-bfd1-4265-a8d1-d8e326c88b28.png](../assets/1764332865455-5135bf3b-bfd1-4265-a8d1-d8e326c88b28.png)
 
 ### 配置web.xml文件
 
@@ -262,7 +262,7 @@ SpringMVC框架有它自己的配置文件，该配置文件的名字默认为�
 
 在WEB-INF目录下新建springmvc-servlet.xml文件，并且提供以上配置信息。
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710309679329-4454ce41-d80a-42dc-abb7-683bd9397856.png" width="296" title="" crop="0,0,1,1" id="ueec9abf4" class="ne-image" style="font-size: 16px">
+![1710309679329-4454ce41-d80a-42dc-abb7-683bd9397856.png](../assets/1710309679329-4454ce41-d80a-42dc-abb7-683bd9397856.png)
 
 以上配置主要两项：
 
@@ -297,7 +297,7 @@ SpringMVC框架有它自己的配置文件，该配置文件的名字默认为�
 
 对于每一个Thymeleaf文件来说 xmlns:th="[http://www.thymeleaf.org"](http://www.thymeleaf.org") 是必须要写的，为了方便后续开发，可以将其添加到html模板文件中：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710310831388-377e7bc4-f5b2-4fa3-9410-d90bfdd894b8.png" width="1159" title="" crop="0,0,1,1" id="u0d2806df" class="ne-image" style="font-size: 16px">
+![1710310831388-377e7bc4-f5b2-4fa3-9410-d90bfdd894b8.png](../assets/1710310831388-377e7bc4-f5b2-4fa3-9410-d90bfdd894b8.png)
 
 ### 控制器FirstController处理请求返回逻辑视图名称
 
@@ -330,11 +330,11 @@ public class FirstController {
 
 第四步：打开浏览器，在浏览器地址栏上输入地址：http://localhost:8080/springmvc/haha
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710312173540-4e975a51-c0df-47a3-8bdd-f2fbdb8ad831.png" width="482" title="" crop="0,0,1,1" id="u8c054553" class="ne-image" style="font-size: 16px">
+![1710312173540-4e975a51-c0df-47a3-8bdd-f2fbdb8ad831.png](../assets/1710312173540-4e975a51-c0df-47a3-8bdd-f2fbdb8ad831.png)
 
 后端控制台输出：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710312475793-dfb94231-5efe-4a72-840f-63d72143d47f.png" width="297" title="" crop="0,0,1,1" id="ude4fd229" class="ne-image" style="font-size: 16px">
+![1710312475793-dfb94231-5efe-4a72-840f-63d72143d47f.png](../assets/1710312475793-dfb94231-5efe-4a72-840f-63d72143d47f.png)
 
 ### 执行流程总结
 
@@ -407,11 +407,11 @@ public class FirstController {
 
 启动Tomcat，打开浏览器，输入请求路径：http://localhost:8080/springmvc/haha
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710313350020-eaecbfaf-c1ba-44d1-9422-3371248f69a2.png" width="470" title="" crop="0,0,1,1" id="u5a81f52c" class="ne-image" style="font-size: 16px">
+![1710313350020-eaecbfaf-c1ba-44d1-9422-3371248f69a2.png](../assets/1710313350020-eaecbfaf-c1ba-44d1-9422-3371248f69a2.png)
 
 点击超链接：other请求
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710313367394-acfcdb9e-576c-4cc2-8d08-2858854a947e.png" width="416" title="" crop="0,0,1,1" id="u773a31a3" class="ne-image" style="font-size: 16px">
+![1710313367394-acfcdb9e-576c-4cc2-8d08-2858854a947e.png](../assets/1710313367394-acfcdb9e-576c-4cc2-8d08-2858854a947e.png)
 
 ---
 
@@ -485,7 +485,7 @@ public class IndexController {
 
 ### 提供视图
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710316353838-aac1cd57-12e3-47e4-8b73-2ea2a07a0954.png" width="289" title="" crop="0,0,1,1" id="u9a159361" class="ne-image" style="font-size: 16px">
+![1710316353838-aac1cd57-12e3-47e4-8b73-2ea2a07a0954.png](../assets/1710316353838-aac1cd57-12e3-47e4-8b73-2ea2a07a0954.png)
 
 ```html
 
@@ -506,4 +506,4 @@ public class IndexController {
 
 部署到web服务器，启动web服务器，打开浏览器，在地址栏上输入：[http://localhost:8080/springmvc/](http://localhost:8080/springmvc/)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1710317491301-4104920d-3537-40d1-b950-2ad1f3398a2d.png" width="421" title="" crop="0,0,1,1" id="uc8b7b484" class="ne-image" style="font-size: 16px">
+![1710317491301-4104920d-3537-40d1-b950-2ad1f3398a2d.png](../assets/1710317491301-4104920d-3537-40d1-b950-2ad1f3398a2d.png)

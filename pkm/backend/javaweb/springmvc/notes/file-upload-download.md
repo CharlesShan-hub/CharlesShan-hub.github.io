@@ -126,11 +126,11 @@ public class FileController {
 
 最终测试结果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711331360045-38714fe4-a729-4068-b0a8-f805117da5bf.png" width="372" title="" crop="0,0,1,1" id="ub22497ea" class="ne-image" style="font-size: 16px">
+![1711331360045-38714fe4-a729-4068-b0a8-f805117da5bf.png](../assets/1711331360045-38714fe4-a729-4068-b0a8-f805117da5bf.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711331351567-6b421e6f-b5b6-4bf4-95b8-69404a864530.png" width="388" title="" crop="0,0,1,1" id="u050475b2" class="ne-image" style="font-size: 16px">
+![1711331351567-6b421e6f-b5b6-4bf4-95b8-69404a864530.png](../assets/1711331351567-6b421e6f-b5b6-4bf4-95b8-69404a864530.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1764670157207-0861a883-7630-4a8c-9681-978099360172.png" width="260.8" title="" crop="0,0,1,1" id="u8dd224d7" class="ne-image" style="font-size: 16px">
+![1764670157207-0861a883-7630-4a8c-9681-978099360172.png](../assets/1764670157207-0861a883-7630-4a8c-9681-978099360172.png)
 
 ****建议：上传文件时，文件起名采用UUID。以防文件覆盖。****
 
@@ -168,6 +168,6 @@ public ResponseEntity<byte[]> downloadFile(HttpServletResponse response, HttpSer
 
 效果：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711332732449-ed2ddda1-7b8e-405a-af51-e5e2f8452558.png" width="324" title="" crop="0,0,1,1" id="u82ac9055" class="ne-image" style="font-size: 16px">
+![1711332732449-ed2ddda1-7b8e-405a-af51-e5e2f8452558.png](../assets/1711332732449-ed2ddda1-7b8e-405a-af51-e5e2f8452558.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711332745775-3de01f16-df6d-41bd-bc4d-905bedf34687.png" width="1001" title="" crop="0,0,1,1" id="uaf265e4e" class="ne-image" style="font-size: 16px">
+![1711332745775-3de01f16-df6d-41bd-bc4d-905bedf34687.png](../assets/1711332745775-3de01f16-df6d-41bd-bc4d-905bedf34687.png)

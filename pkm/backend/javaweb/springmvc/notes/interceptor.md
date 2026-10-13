@@ -29,7 +29,7 @@ Spring MVC的拦截器作用是在请求到达控制器之前或之后进行拦�
 
 ****Filter、Servlet、Interceptor、Controller的执行顺序：****
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711639953694-56fde7e8-af9f-4abc-b680-48ccf30b9df9.png" width="1604" title="" crop="0,0,1,1" id="ua69c486c" class="ne-image" style="font-size: 16px">
+![1711639953694-56fde7e8-af9f-4abc-b680-48ccf30b9df9.png](../assets/1711639953694-56fde7e8-af9f-4abc-b680-48ccf30b9df9.png)
 
 **面试题：过滤器和拦截器有什么区别？**
 
@@ -77,7 +77,7 @@ Spring MVC的拦截器作用是在请求到达控制器之前或之后进行拦�
 + 前提1：包扫描，要保证能扫描到 `Interceptor1`
 + 前提2：使用 @Component 注解进行标注
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711677132812-77ff787c-8f94-41d6-abd8-721037ff0160.png" width="603" title="" crop="0,0,1,1" id="u059bcc9b" class="ne-image" style="font-size: 16px">
+![1711677132812-77ff787c-8f94-41d6-abd8-721037ff0160.png](../assets/1711677132812-77ff787c-8f94-41d6-abd8-721037ff0160.png)
 
 ****注意：对于这种基本配置来说，拦截器是拦截所有请求的。****
 
@@ -191,7 +191,7 @@ public class HandlerExecutionChain {
 
 执行顺序：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711680479220-91b54971-fc52-47b6-a711-4425dfa1617a.png" width="419" title="" crop="0,0,1,1" id="u13f6736b" class="ne-image" style="font-size: 16px">
+![1711680479220-91b54971-fc52-47b6-a711-4425dfa1617a.png](../assets/1711680479220-91b54971-fc52-47b6-a711-4425dfa1617a.png)
 
 #### 如果其中一个拦截器preHandle返回false
 
@@ -206,7 +206,7 @@ public class HandlerExecutionChain {
 
 如果`interceptor2`的preHandle返回false，执行顺序：
 
-<img src="https://cdn.nlark.com/yuque/0/2024/png/21376908/1711680589053-dbc8883c-eabe-476c-a8f3-da24b4f8de70.png" width="356" title="" crop="0,0,1,1" id="u52dd80be" class="ne-image" style="font-size: 16px">
+![1711680589053-dbc8883c-eabe-476c-a8f3-da24b4f8de70.png](../assets/1711680589053-dbc8883c-eabe-476c-a8f3-da24b4f8de70.png)
 
 规则：只要有一个拦截器`preHandle`返回false，任何`postHandle`都不执行。但返回false的拦截器的前面的拦截器按照逆序执行`afterCompletion`。
 
