@@ -34,7 +34,7 @@ comment:
 
 采用三层架构搭建：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1749727730298-3fbf26a7-40a4-4ee2-bd8b-6ed01adec552.png)
+![1749727730298-3fbf26a7-40a4-4ee2-bd8b-6ed01adec552.png](../assets/1749727730298-3fbf26a7-40a4-4ee2-bd8b-6ed01adec552.png)
 
 ### 没有异常时
 
@@ -42,21 +42,21 @@ comment:
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763901498342-1c544b5d-7f7c-4d3e-8b80-3fab3d9d7824.png)
+![1763901498342-1c544b5d-7f7c-4d3e-8b80-3fab3d9d7824.png](../assets/1763901498342-1c544b5d-7f7c-4d3e-8b80-3fab3d9d7824.png)
 
 数据变化：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1666497727323-b2ca34c9-99c6-4b23-8d3b-8dbe3009d3e9.png)
+![1666497727323-b2ca34c9-99c6-4b23-8d3b-8dbe3009d3e9.png](../assets/1666497727323-b2ca34c9-99c6-4b23-8d3b-8dbe3009d3e9.png)
 
 ### 模拟异常后
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763901514771-99a5964c-e344-4ed6-b879-649b329fffd4.png)
+![1763901514771-99a5964c-e344-4ed6-b879-649b329fffd4.png](../assets/1763901514771-99a5964c-e344-4ed6-b879-649b329fffd4.png)
 
 数据库表中数据：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1666497824308-bdd8f11f-8f99-4195-81c4-c37721627f4c.png)
+![1666497824308-bdd8f11f-8f99-4195-81c4-c37721627f4c.png](../assets/1666497824308-bdd8f11f-8f99-4195-81c4-c37721627f4c.png)
 
 ****丢了1万。****
 
@@ -78,7 +78,7 @@ comment:
 
 Spring对事务的管理底层实现方式是基于AOP实现的。采用AOP的方式进行了封装。所以Spring专门针对事务开发了一套API，API的核心接口如下：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1666504216275-1b6a9ac4-6958-4cdf-9323-7a79a08d059d.png)
+![1666504216275-1b6a9ac4-6958-4cdf-9323-7a79a08d059d.png](../assets/1666504216275-1b6a9ac4-6958-4cdf-9323-7a79a08d059d.png)
 
 PlatformTransactionManager接口：spring事务管理器的核心接口。在****Spring****中它有两个实现：
 
@@ -164,22 +164,22 @@ public class AccountServiceImpl implements AccountService {
 
 当前数据库表中的数据：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1666505321919-85dd9adb-bceb-49ef-826f-5a3ddf7699a0.png)
+![1666505321919-85dd9adb-bceb-49ef-826f-5a3ddf7699a0.png](../assets/1666505321919-85dd9adb-bceb-49ef-826f-5a3ddf7699a0.png)
 
 执行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763901573349-937ac896-28c4-41a6-b719-d2f1c0f6a8d9.png)
+![1763901573349-937ac896-28c4-41a6-b719-d2f1c0f6a8d9.png](../assets/1763901573349-937ac896-28c4-41a6-b719-d2f1c0f6a8d9.png)
 
 虽然出现异常了，再次查看数据库表中数据：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1666505321919-85dd9adb-bceb-49ef-826f-5a3ddf7699a0.png)
+![1666505321919-85dd9adb-bceb-49ef-826f-5a3ddf7699a0.png](../assets/1666505321919-85dd9adb-bceb-49ef-826f-5a3ddf7699a0.png)
 
 通过测试，发现数据没有变化，事务起作用了。
 
 ### 事务属性
 
 #### 事务属性包括哪些
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1666506552984-8a4f9d42-73ba-4ded-853d-564d27340db5.png)
+![1666506552984-8a4f9d42-73ba-4ded-853d-564d27340db5.png](../assets/1666506552984-8a4f9d42-73ba-4ded-853d-564d27340db5.png)
 
 事务中的重点属性：
 
@@ -197,7 +197,7 @@ public class AccountServiceImpl implements AccountService {
 
 事务传播行为在spring框架中被定义为枚举类型：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1666505960049-06173489-15fc-4d16-94f3-1a9025f85d8c.png)
+![1666505960049-06173489-15fc-4d16-94f3-1a9025f85d8c.png](../assets/1666505960049-06173489-15fc-4d16-94f3-1a9025f85d8c.png)
 
 一共有七种传播行为：
 
@@ -254,7 +254,7 @@ public void save(Account act) {
 
 隔离级别在spring中以枚举类型存在：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1666508609641-2c838566-7334-4cf1-b452-0fed9aaebf3d.png)
+![1666508609641-2c838566-7334-4cf1-b452-0fed9aaebf3d.png](../assets/1666508609641-2c838566-7334-4cf1-b452-0fed9aaebf3d.png)
 
 ```java
 @Transactional(isolation = Isolation.READ_COMMITTED)
@@ -519,10 +519,10 @@ public void testNoXml(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763901697717-7b9ec7b7-cc65-4195-ae11-8435e38e8311.png)
+![1763901697717-7b9ec7b7-cc65-4195-ae11-8435e38e8311.png](../assets/1763901697717-7b9ec7b7-cc65-4195-ae11-8435e38e8311.png)
 
 数据库表中数据：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1666511460275-5ede53ce-9ad1-4bce-935a-32436a46c83a.png)
+![1666511460275-5ede53ce-9ad1-4bce-935a-32436a46c83a.png](../assets/1666511460275-5ede53ce-9ad1-4bce-935a-32436a46c83a.png)
 
 ****

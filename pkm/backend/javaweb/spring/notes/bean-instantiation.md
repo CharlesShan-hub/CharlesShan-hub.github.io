@@ -110,7 +110,7 @@ public void testSimpleFactory(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763720944420-97b46ad8-ca40-4071-90b3-7297a2664440.png)
+![1763720944420-97b46ad8-ca40-4071-90b3-7297a2664440.png](../assets/1763720944420-97b46ad8-ca40-4071-90b3-7297a2664440.png)
 
 ---
 
@@ -161,7 +161,7 @@ public void testSelfFactoryBean(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763722184748-17b7c7b6-3b55-455c-beaa-27e7fef64918.png)
+![1763722184748-17b7c7b6-3b55-455c-beaa-27e7fef64918.png](../assets/1763722184748-17b7c7b6-3b55-455c-beaa-27e7fef64918.png)
 
 ---
 
@@ -228,7 +228,7 @@ public void testFactoryBean(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763775964052-66cd25d3-f271-4f66-b4e7-459bc827bd2e.png)
+![1763775964052-66cd25d3-f271-4f66-b4e7-459bc827bd2e.png](../assets/1763775964052-66cd25d3-f271-4f66-b4e7-459bc827bd2e.png)
 
 ****FactoryBean在Spring中是一个接口。被称为“工厂Bean”。“工厂Bean”是一种特殊的Bean。所有的“工厂Bean”都是用来协助Spring框架来创建其他Bean对象的。****
 
@@ -294,7 +294,7 @@ public void testDate(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763779641428-c59bda56-3e06-4b9e-9942-f5952880c7e9.png)
+![1763779641428-c59bda56-3e06-4b9e-9942-f5952880c7e9.png](../assets/1763779641428-c59bda56-3e06-4b9e-9942-f5952880c7e9.png)
 
 如果把日期格式修改一下：
 
@@ -306,7 +306,7 @@ public void testDate(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1665383871708-89cd2ac9-6d31-40fc-a4a8-27d27cd35ad2.png)
+![1665383871708-89cd2ac9-6d31-40fc-a4a8-27d27cd35ad2.png](../assets/1665383871708-89cd2ac9-6d31-40fc-a4a8-27d27cd35ad2.png)
 
 这种情况下，我们就可以使用FactoryBean来完成这个骚操作。
 
@@ -351,4 +351,4 @@ public class DateFactoryBean implements FactoryBean<Date> {
 
 执行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763779706597-06ce0ec2-17e5-4c8e-9e04-da407da067cc.png)
+![1763779706597-06ce0ec2-17e5-4c8e-9e04-da407da067cc.png](../assets/1763779706597-06ce0ec2-17e5-4c8e-9e04-da407da067cc.png)

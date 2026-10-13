@@ -153,7 +153,7 @@ public class AnnotationTest {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763804203105-01de403b-0c38-49b2-b97a-539b080ff2ce.png)
+![1763804203105-01de403b-0c38-49b2-b97a-539b080ff2ce.png](../assets/1763804203105-01de403b-0c38-49b2-b97a-539b080ff2ce.png)
 
 ****如果注解的属性名是value，那么value是可以省略的。****
 
@@ -178,7 +178,7 @@ public class AnnotationTest {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763804235969-ee73d66b-b32a-45e1-bd5a-14be1d80c299.png)
+![1763804235969-ee73d66b-b32a-45e1-bd5a-14be1d80c299.png](../assets/1763804235969-ee73d66b-b32a-45e1-bd5a-14be1d80c299.png)
 
 ****如果把value属性彻底去掉，spring会为 Bean自动取名吗？会的。并且默认名字的规律是：Bean类名首字母小写。****
 
@@ -206,7 +206,7 @@ public class AnnotationTest {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763804278652-8433e88b-d875-44b4-b035-8088bc3849a3.png)
+![1763804278652-8433e88b-d875-44b4-b035-8088bc3849a3.png](../assets/1763804278652-8433e88b-d875-44b4-b035-8088bc3849a3.png)
 
 我们将Component注解换成其它三个注解，看看是否可以用：
 
@@ -219,7 +219,7 @@ public class BankDao {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763804296741-fd026e58-9034-448f-8c7f-29d26316ba8d.png)
+![1763804296741-fd026e58-9034-448f-8c7f-29d26316ba8d.png](../assets/1763804296741-fd026e58-9034-448f-8c7f-29d26316ba8d.png)
 
 剩下的两个注解大家可以测试一下。
 
@@ -270,7 +270,7 @@ public class AnnotationTest {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763804341646-5c51361e-bd26-4f3b-b86e-af784a6051f5.png)
+![1763804341646-5c51361e-bd26-4f3b-b86e-af784a6051f5.png](../assets/1763804341646-5c51361e-bd26-4f3b-b86e-af784a6051f5.png)
 
 我们再来看看，指定共同的父包行不行：
 
@@ -287,7 +287,7 @@ public class AnnotationTest {
 
 执行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763804354597-61388add-ec5c-4121-88b2-273cfafd7a12.png)
+![1763804354597-61388add-ec5c-4121-88b2-273cfafd7a12.png](../assets/1763804354597-61388add-ec5c-4121-88b2-273cfafd7a12.png)
 
 ---
 
@@ -372,7 +372,7 @@ public void testChoose(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763804449496-e4d1f7c3-436d-4f66-baff-b698715d56bf.png)
+![1763804449496-e4d1f7c3-436d-4f66-baff-b698715d56bf.png](../assets/1763804449496-e4d1f7c3-436d-4f66-baff-b698715d56bf.png)
 
 也可以将use-default-filters设置为true（不写就是true），并且采用exclude-filter方式排出哪些注解标注的Bean不参与实例化：
 
@@ -386,7 +386,7 @@ public void testChoose(){
 
 执行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763804479326-d90316fa-ca13-4a1e-b50d-f69afe8bd63e.png)
+![1763804479326-d90316fa-ca13-4a1e-b50d-f69afe8bd63e.png](../assets/1763804479326-d90316fa-ca13-4a1e-b50d-f69afe8bd63e.png)
 
 ---
 
@@ -446,7 +446,7 @@ public void testValue(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763804917630-cc7f0031-f604-4fc9-aab3-80642ab35aa9.png)
+![1763804917630-cc7f0031-f604-4fc9-aab3-80642ab35aa9.png](../assets/1763804917630-cc7f0031-f604-4fc9-aab3-80642ab35aa9.png)
 
 通过以上代码可以发现，我们并没有给属性提供setter方法，但仍然可以完成属性赋值。
 
@@ -483,7 +483,7 @@ public class User {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763804943343-e101a0a8-fbce-4e33-be2f-05a95c64f7a6.png)
+![1763804943343-e101a0a8-fbce-4e33-be2f-05a95c64f7a6.png](../assets/1763804943343-e101a0a8-fbce-4e33-be2f-05a95c64f7a6.png)
 
 通过测试可以得知，@Value注解可以直接使用在属性上，也可以使用在setter方法上。都是可以的。都可以完成属性的赋值。
 
@@ -517,7 +517,7 @@ public class User {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763804995156-d949008f-37c3-4c67-8e6c-691963c4dca5.png)
+![1763804995156-d949008f-37c3-4c67-8e6c-691963c4dca5.png](../assets/1763804995156-d949008f-37c3-4c67-8e6c-691963c4dca5.png)
 
 通过测试得知：@Value注解可以出现在属性上、setter方法上、以及构造方法的形参上。可见Spring给我们提供了多样化的注入。太灵活了。
 
@@ -611,7 +611,7 @@ public void testAutowired(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763805114065-6361a6f4-61c9-474b-9ae9-ef0ed63f6865.png)
+![1763805114065-6361a6f4-61c9-474b-9ae9-ef0ed63f6865.png](../assets/1763805114065-6361a6f4-61c9-474b-9ae9-ef0ed63f6865.png)
 
 以上构造方法和setter方法都没有提供，经过测试，仍然可以注入成功。
 
@@ -637,7 +637,7 @@ public class UserService {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763805143555-f1d1626f-416f-4812-87b2-c347277c2399.png)
+![1763805143555-f1d1626f-416f-4812-87b2-c347277c2399.png](../assets/1763805143555-f1d1626f-416f-4812-87b2-c347277c2399.png)
 
 ****我们再来看看能不能出现在构造方法上：****
 
@@ -661,7 +661,7 @@ public class UserService {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763805158158-1864aedd-717b-4cbc-a174-1b8cf56b0907.png)
+![1763805158158-1864aedd-717b-4cbc-a174-1b8cf56b0907.png](../assets/1763805158158-1864aedd-717b-4cbc-a174-1b8cf56b0907.png)
 
 ****再来看看，这个注解能不能只标注在构造方法的形参上：****
 
@@ -684,7 +684,7 @@ public class UserService {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763805183577-c0a54642-14c1-45aa-98a7-2353dc7c0dc9.png)
+![1763805183577-c0a54642-14c1-45aa-98a7-2353dc7c0dc9.png](../assets/1763805183577-c0a54642-14c1-45aa-98a7-2353dc7c0dc9.png)
 
 ****还有更劲爆的，当有参数的构造方法只有一个时，@Autowired注解可以省略。****
 
@@ -707,7 +707,7 @@ public class UserService {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763805219740-0dd5b10c-b852-4a76-9d3d-72913af93ffc.png)
+![1763805219740-0dd5b10c-b852-4a76-9d3d-72913af93ffc.png](../assets/1763805219740-0dd5b10c-b852-4a76-9d3d-72913af93ffc.png)
 
 ****当然，如果有多个构造方法，@Autowired肯定是不能省略的。****
 
@@ -734,7 +734,7 @@ public class UserService {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763805250282-dae28d2e-04b3-450c-bfb9-c3cd14458593.png)
+![1763805250282-dae28d2e-04b3-450c-bfb9-c3cd14458593.png](../assets/1763805250282-dae28d2e-04b3-450c-bfb9-c3cd14458593.png)
 
 到此为止，我们已经清楚@Autowired注解可以出现在哪些位置了。
 
@@ -753,7 +753,7 @@ public class UserDaoForOracle implements UserDao{
 
 当你写完这个新的实现类之后，此时IDEA工具已经提示错误信息了：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763805295378-ca25b98c-bab2-4d28-b7bb-190ea894aa40.png)
+![1763805295378-ca25b98c-bab2-4d28-b7bb-190ea894aa40.png](../assets/1763805295378-ca25b98c-bab2-4d28-b7bb-190ea894aa40.png)
 
 错误信息中说：不能装配，UserDao这个Bean的数量大于1.
 
@@ -792,7 +792,7 @@ public class UserService {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763805339010-607a6347-00c3-40f2-8e95-826b07e2641f.png)
+![1763805339010-607a6347-00c3-40f2-8e95-826b07e2641f.png](../assets/1763805339010-607a6347-00c3-40f2-8e95-826b07e2641f.png)
 
 总结：
 
@@ -825,7 +825,7 @@ public class UserService {
 
 @Resource注解的源码如下：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1665565515435-2ad5614a-8572-4c6f-80c1-efa236dbe35f.png)
+![1665565515435-2ad5614a-8572-4c6f-80c1-efa236dbe35f.png](../assets/1665565515435-2ad5614a-8572-4c6f-80c1-efa236dbe35f.png)
 
 测试一下：
 
@@ -854,7 +854,7 @@ public class UserService {
 
 执行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763805703043-58f861ec-79ca-409e-bc92-b731277c6dd3.png)
+![1763805703043-58f861ec-79ca-409e-bc92-b731277c6dd3.png](../assets/1763805703043-58f861ec-79ca-409e-bc92-b731277c6dd3.png)
 
 **我们把UserDaoForOracle的名字xyz修改为userDao，让这个Bean的名字和UserService类中的UserDao属性名一致：**
 
@@ -885,7 +885,7 @@ public class UserService {
 
 执行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763805728365-2326f7c4-ecf6-440e-a6f7-e6dd40eb914b.png)
+![1763805728365-2326f7c4-ecf6-440e-a6f7-e6dd40eb914b.png](../assets/1763805728365-2326f7c4-ecf6-440e-a6f7-e6dd40eb914b.png)
 
 通过测试得知，当@Resource注解使用时没有指定name的时候，还是根据name进行查找，这个name是属性名。
 
@@ -907,7 +907,7 @@ public class UserService {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763805768831-da788b4d-49b5-4dd0-a444-e2b0bed95b37.png)
+![1763805768831-da788b4d-49b5-4dd0-a444-e2b0bed95b37.png](../assets/1763805768831-da788b4d-49b5-4dd0-a444-e2b0bed95b37.png)
 
 根据异常信息得知：显然当通过name找不到的时候，自然会启动byType进行注入。以上的错误是因为UserDao接口下有两个实现类导致的。所以根据类型注入就会报错。
 
@@ -935,7 +935,7 @@ public class UserService {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763805795181-a8d504f6-ae7f-4ed0-af53-d42600cc3a52.png)
+![1763805795181-a8d504f6-ae7f-4ed0-af53-d42600cc3a52.png](../assets/1763805795181-a8d504f6-ae7f-4ed0-af53-d42600cc3a52.png)
 
 当然，也可以指定name：
 
@@ -959,7 +959,7 @@ public class UserService {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763805810622-0e5e2cb0-7aa9-45b6-bf56-f35c991e7ed4.png)
+![1763805810622-0e5e2cb0-7aa9-45b6-bf56-f35c991e7ed4.png](../assets/1763805810622-0e5e2cb0-7aa9-45b6-bf56-f35c991e7ed4.png)
 
 一句话总结@Resource注解：默认byName注入，没有指定name时把属性名当做name，根据name找不到时，才会byType注入。byType注入时，某种类型的Bean只能有一个。
 

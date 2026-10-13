@@ -15,13 +15,13 @@ comment:
 
 打开Spring官网后，可以看到Spring Framework，以及通过Spring Framework衍生的其它框架：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1663749081947-b895cb4e-b7f6-4120-a1fe-a14651044847.png)
+![1663749081947-b895cb4e-b7f6-4120-a1fe-a14651044847.png](../assets/1663749081947-b895cb4e-b7f6-4120-a1fe-a14651044847.png)
 
 ---
 
 ## Spring的jar文件
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763645880150-75b14f50-e64f-4260-8267-12050cfb0de5.png)
+![1763645880150-75b14f50-e64f-4260-8267-12050cfb0de5.png](../assets/1763645880150-75b14f50-e64f-4260-8267-12050cfb0de5.png)
 
 以上是 Spring Framework 的 jar 包，可以看到有 20+个。以前的开发是需要下载这些 jar 包的，需要什么功能就下载对应的 jar 包，放到项目当中，现在有 Maven，方便多了，不需要下载 jar 包了。只需要引入 GAV 坐标即可。
 
@@ -66,7 +66,7 @@ comment:
 
 当加入spring context的依赖之后，会关联引入其他依赖：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763649527180-d0d3dc0c-3b6a-428c-92a1-2c579820ba1c.png)
+![1763649527180-d0d3dc0c-3b6a-428c-92a1-2c579820ba1c.png](../assets/1763649527180-d0d3dc0c-3b6a-428c-92a1-2c579820ba1c.png)
 
 ### 添加junit5依赖
 
@@ -92,7 +92,7 @@ public class User {
 
 beans.xml。**该文件放在类的根路径下**。
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1663816617460-ee35243c-fddc-4771-af28-0017f8af2ab5.png)
+![1663816617460-ee35243c-fddc-4771-af28-0017f8af2ab5.png](../assets/1663816617460-ee35243c-fddc-4771-af28-0017f8af2ab5.png)
 
 配置文件中进行bean的配置。
 
@@ -137,7 +137,7 @@ public class SpringTest {
 
 运行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763650025240-e128f903-3ae4-4ee8-8b78-6b28565bf228.png)
+![1763650025240-e128f903-3ae4-4ee8-8b78-6b28565bf228.png](../assets/1763650025240-e128f903-3ae4-4ee8-8b78-6b28565bf228.png)
 
 ---
 
@@ -213,7 +213,7 @@ Object obj = clazz.newInstance();
 
 ### 把创建好的对象存储到一个什么样的数据结构当中了呢？
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1663829973365-59ca2f4c-4d81-471f-8e4c-aa272f8c2b81.png)
+![1663829973365-59ca2f4c-4d81-471f-8e4c-aa272f8c2b81.png](../assets/1663829973365-59ca2f4c-4d81-471f-8e4c-aa272f8c2b81.png)
 
 ### spring配置文件的名字必须叫做beans.xml吗？
 
@@ -263,7 +263,7 @@ public class SpringTest {
 
 通过测试得知，spring的配置文件可以有多个，在ClassPathXmlApplicationContext构造方法的参数上传递文件路径即可。这是为什么呢？通过源码可以看到：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1663830614508-d00ecc07-5b51-4d2d-bc1d-8f2cb4f0c785.png)
+![1663830614508-d00ecc07-5b51-4d2d-bc1d-8f2cb4f0c785.png](../assets/1663830614508-d00ecc07-5b51-4d2d-bc1d-8f2cb4f0c785.png)
 
 ### 在配置文件中配置的类必须是自定义的吗，可以使用JDK中的类吗，例如：java.util.Date？
 
@@ -284,11 +284,11 @@ public class SpringTest {
 
 ### getBean()方法调用时，如果指定的id不存在会怎样？
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1663831841228-eda809d8-3e51-4b08-913c-76ff78efae1f.png)
+![1663831841228-eda809d8-3e51-4b08-913c-76ff78efae1f.png](../assets/1663831841228-eda809d8-3e51-4b08-913c-76ff78efae1f.png)
 
 运行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763650804850-03cc33c1-dcf0-40eb-b07a-d816d6dad4b8.png)
+![1763650804850-03cc33c1-dcf0-40eb-b07a-d816d6dad4b8.png](../assets/1763650804850-03cc33c1-dcf0-40eb-b07a-d816d6dad4b8.png)
 
 通过测试得知，当id不存在的时候，会出现异常。
 

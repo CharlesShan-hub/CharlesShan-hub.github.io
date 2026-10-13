@@ -25,7 +25,7 @@ FactoryBean是典型的工厂方法模式。在配置文件中通过factory-meth
 
 Spring用的是双重判断加锁的单例模式。请看下面代码，我们之前讲解Bean的循环依赖的时候见过：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1666663352271-4ba8d737-1e32-4f0e-b01a-aa305ad3abea.png)
+![1666663352271-4ba8d737-1e32-4f0e-b01a-aa305ad3abea.png](../assets/1666663352271-4ba8d737-1e32-4f0e-b01a-aa305ad3abea.png)
 
 ---
 

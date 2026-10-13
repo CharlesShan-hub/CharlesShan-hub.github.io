@@ -103,7 +103,7 @@ public class DITest {
 
 运行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763703270197-41c911da-b886-43e5-9412-e31e91cdbb2b.png)
+![1763703270197-41c911da-b886-43e5-9412-e31e91cdbb2b.png](../assets/1763703270197-41c911da-b886-43e5-9412-e31e91cdbb2b.png)
 
 重点内容是，什么原理：
 
@@ -125,7 +125,7 @@ public class DITest {
 
 **可以把set方法注释掉，再测试一下**：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718228299-478ab23d-ebde-4f03-867e-fe4a91bf8d3c.png)
+![1763718228299-478ab23d-ebde-4f03-867e-fe4a91bf8d3c.png](../assets/1763718228299-478ab23d-ebde-4f03-867e-fe4a91bf8d3c.png)
 
 通过测试得知，底层实际上调用了setUserDao()方法。所以需要确保这个方法的存在。
 
@@ -151,7 +151,7 @@ public class UserService {
 
 运行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763703431816-e00a0a7f-80e6-41c6-851a-484a6e0fc93a.png)
+![1763703431816-e00a0a7f-80e6-41c6-851a-484a6e0fc93a.png](../assets/1763703431816-e00a0a7f-80e6-41c6-851a-484a6e0fc93a.png)
 
 通过测试看到程序仍然可以正常执行，说明property标签的name是：setUserDao()方法名演变得到的。演变的规律是：
 
@@ -220,7 +220,7 @@ public void testConstructorDI(){
 
 运行结果如下：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763703541233-f144603f-0a7c-4efc-be49-7e4cb31ee9f0.png)
+![1763703541233-f144603f-0a7c-4efc-be49-7e4cb31ee9f0.png](../assets/1763703541233-f144603f-0a7c-4efc-be49-7e4cb31ee9f0.png)
 
 ****
 
@@ -262,7 +262,7 @@ spring配置文件：
 
 执行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763703565658-98132ed3-4e4c-4524-9633-89ecbb517c76.png)
+![1763703565658-98132ed3-4e4c-4524-9633-89ecbb517c76.png](../assets/1763703565658-98132ed3-4e4c-4524-9633-89ecbb517c76.png)
 
 ****
 
@@ -282,7 +282,7 @@ spring配置文件：
 
 执行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763703580933-9558d7db-975e-4289-969b-d910c1b3d3ee.png)
+![1763703580933-9558d7db-975e-4289-969b-d910c1b3d3ee.png](../assets/1763703580933-9558d7db-975e-4289-969b-d910c1b3d3ee.png)
 
 ****不指定参数下标，不指定参数名字，可以吗？****
 
@@ -299,7 +299,7 @@ spring配置文件：
 
 执行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763703580933-9558d7db-975e-4289-969b-d910c1b3d3ee.png)
+![1763703580933-9558d7db-975e-4289-969b-d910c1b3d3ee.png](../assets/1763703580933-9558d7db-975e-4289-969b-d910c1b3d3ee.png)
 
 ****
 
@@ -319,7 +319,7 @@ spring配置文件：
 
 执行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763703580933-9558d7db-975e-4289-969b-d910c1b3d3ee.png)
+![1763703580933-9558d7db-975e-4289-969b-d910c1b3d3ee.png](../assets/1763703580933-9558d7db-975e-4289-969b-d910c1b3d3ee.png)
 
 通过测试得知，通过构造方法注入的时候：
 
@@ -370,7 +370,7 @@ public void testInnerBean(){
 
 执行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763703724923-3d6fe488-4cc4-464a-9fb4-46737d190786.png)
+![1763703724923-3d6fe488-4cc4-464a-9fb4-46737d190786.png](../assets/1763703724923-3d6fe488-4cc4-464a-9fb4-46737d190786.png)
 
 这种方式作为了解。
 
@@ -455,7 +455,7 @@ public void testSimpleType(){
 
 第四步：运行测试程序
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763703886349-7e587def-2b4f-4abf-aff0-6c0f41011328.png)
+![1763703886349-7e587def-2b4f-4abf-aff0-6c0f41011328.png](../assets/1763703886349-7e587def-2b4f-4abf-aff0-6c0f41011328.png)
 
 ****
 
@@ -463,11 +463,11 @@ public void testSimpleType(){
 
 简单类型包括哪些呢？可以通过Spring的源码来分析一下：BeanUtils类、ClassUtils类：
 
-![](https://cdn.nlark.com/yuque/0/2024/png/21376908/1726729479656-34799374-2f4a-4d05-a2ce-89defea2ad21.png)
+![1726729479656-34799374-2f4a-4d05-a2ce-89defea2ad21.png](../assets/1726729479656-34799374-2f4a-4d05-a2ce-89defea2ad21.png)
 
 简单类型包括：
 
-![](https://cdn.nlark.com/yuque/0/2024/png/21376908/1726729370217-81b396a1-bf0b-4459-9b15-2c1e77c37093.png)
+![1726729370217-81b396a1-bf0b-4459-9b15-2c1e77c37093.png](../assets/1726729370217-81b396a1-bf0b-4459-9b15-2c1e77c37093.png)
 
 **经典案例：给数据源的属性注入值：**
 
@@ -585,7 +585,7 @@ public void testDataSource(){
 
 执行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763703988968-74f61c13-64c3-4af9-aa3f-0124482b808d.png)
+![1763703988968-74f61c13-64c3-4af9-aa3f-0124482b808d.png](../assets/1763703988968-74f61c13-64c3-4af9-aa3f-0124482b808d.png)
 
 你学会了吗？
 
@@ -682,7 +682,7 @@ public void testCascade(){
 
 运行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763704075496-763dcaba-4244-4d90-8b1b-a2b6c8148730.png)
+![1763704075496-763dcaba-4244-4d90-8b1b-a2b6c8148730.png](../assets/1763704075496-763dcaba-4244-4d90-8b1b-a2b6c8148730.png)
 
 ****要点：****
 
@@ -828,7 +828,7 @@ public void testArray(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763717431738-ef375752-075c-43bd-bf25-d62f957e52f2.png)
+![1763717431738-ef375752-075c-43bd-bf25-d62f957e52f2.png](../assets/1763717431738-ef375752-075c-43bd-bf25-d62f957e52f2.png)
 
 ****要点：****
 
@@ -885,7 +885,7 @@ public void testCollection(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763717474219-f00a5de9-fe99-401d-8540-0dfb59671bb2.png)
+![1763717474219-f00a5de9-fe99-401d-8540-0dfb59671bb2.png](../assets/1763717474219-f00a5de9-fe99-401d-8540-0dfb59671bb2.png)
 
 ****注意：注入List集合的时候使用list标签，如果List集合中是简单类型使用value标签，反之使用ref标签。****
 
@@ -935,7 +935,7 @@ public class People {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763717525860-5898bf62-8e74-438d-afee-979fb446ff0f.png)
+![1763717525860-5898bf62-8e74-438d-afee-979fb446ff0f.png](../assets/1763717525860-5898bf62-8e74-438d-afee-979fb446ff0f.png)
 
 ****要点：****
 
@@ -1035,7 +1035,7 @@ public class People {
 
 执行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763717687274-17ec7c70-16b4-4a1a-b67b-d252ccfef797.png)
+![1763717687274-17ec7c70-16b4-4a1a-b67b-d252ccfef797.png](../assets/1763717687274-17ec7c70-16b4-4a1a-b67b-d252ccfef797.png)
 
 ****要点：****
 
@@ -1098,7 +1098,7 @@ public void testNull(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763717731445-35c6fea4-2f21-4450-b29c-2111f2ce1d7a.png)
+![1763717731445-35c6fea4-2f21-4450-b29c-2111f2ce1d7a.png](../assets/1763717731445-35c6fea4-2f21-4450-b29c-2111f2ce1d7a.png)
 
 + 怎么注入null呢？
 
@@ -1117,7 +1117,7 @@ public void testNull(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763717749034-ffa72b1d-fb17-4b6d-8f2c-d6b88208bae1.png)
+![1763717749034-ffa72b1d-fb17-4b6d-8f2c-d6b88208bae1.png](../assets/1763717749034-ffa72b1d-fb17-4b6d-8f2c-d6b88208bae1.png)
 
 第二种方式：使用<null/>
 
@@ -1138,7 +1138,7 @@ public void testNull(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763717759124-7724e7c6-92ba-4ae8-b3e1-d9cd847c712e.png)
+![1763717759124-7724e7c6-92ba-4ae8-b3e1-d9cd847c712e.png](../assets/1763717759124-7724e7c6-92ba-4ae8-b3e1-d9cd847c712e.png)
 
 ### 注入的值中含有特殊符号
 
@@ -1146,7 +1146,7 @@ XML中有5个特殊字符，分别是：`<``>``'``"``&`
 
 以上5个特殊符号在XML中会被特殊对待，会被当做XML语法的一部分进行解析，如果这些特殊符号直接出现在注入的字符串当中，会报错。
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718169577-c2150391-6ada-4ba4-8d78-ed66ce8db5f4.png)
+![1763718169577-c2150391-6ada-4ba4-8d78-ed66ce8db5f4.png](../assets/1763718169577-c2150391-6ada-4ba4-8d78-ed66ce8db5f4.png)
 
 解决方案包括两种：
 
@@ -1200,7 +1200,7 @@ public void testSpecial(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763717850747-fe3fa73b-806c-4ae2-ab0f-06e5359075e6.png)
+![1763717850747-fe3fa73b-806c-4ae2-ab0f-06e5359075e6.png](../assets/1763717850747-fe3fa73b-806c-4ae2-ab0f-06e5359075e6.png)
 
 我们再来使用CDATA方式：
 
@@ -1217,7 +1217,7 @@ public void testSpecial(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763717882333-4ff84443-b20b-499b-bf88-bc489e189fe1.png)
+![1763717882333-4ff84443-b20b-499b-bf88-bc489e189fe1.png](../assets/1763717882333-4ff84443-b20b-499b-bf88-bc489e189fe1.png)
 
 ---
 
@@ -1277,11 +1277,11 @@ public void testP(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718009839-ade48dfb-1431-4f10-a994-4ab8374ef367.png)
+![1763718009839-ade48dfb-1431-4f10-a994-4ab8374ef367.png](../assets/1763718009839-ade48dfb-1431-4f10-a994-4ab8374ef367.png)
 
 把setter方法去掉：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718119042-3c78856d-6f8b-4b23-8559-51d174a399f9.png)
+![1763718119042-3c78856d-6f8b-4b23-8559-51d174a399f9.png](../assets/1763718119042-3c78856d-6f8b-4b23-8559-51d174a399f9.png)
 
 所以p命名空间实际上是对set注入的简化。
 
@@ -1344,11 +1344,11 @@ public void testC(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718096636-e9af0497-bb5a-4341-bf38-eabde32ba060.png)
+![1763718096636-e9af0497-bb5a-4341-bf38-eabde32ba060.png](../assets/1763718096636-e9af0497-bb5a-4341-bf38-eabde32ba060.png)
 
 把构造方法注释掉：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718138114-98841768-357f-4408-aef7-7c57107cdb3e.png)
+![1763718138114-98841768-357f-4408-aef7-7c57107cdb3e.png](../assets/1763718138114-98841768-357f-4408-aef7-7c57107cdb3e.png)
 
 所以，c命名空间是依靠构造方法的。
 
@@ -1364,7 +1364,7 @@ public void testC(){
 
 使用util命名空间的前提是：在spring配置文件头部添加配置信息。如下：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1665218059794-30411b76-a22c-4339-ab60-acad8f02ab28.png)
+![1665218059794-30411b76-a22c-4339-ab60-acad8f02ab28.png](../assets/1665218059794-30411b76-a22c-4339-ab60-acad8f02ab28.png)
 
 ```java
 public class MyDataSource1 {
@@ -1442,7 +1442,7 @@ public void testUtil(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718455643-7d9355ac-8556-47fe-ab67-1e2349d580e2.png)
+![1763718455643-7d9355ac-8556-47fe-ab67-1e2349d580e2.png](../assets/1763718455643-7d9355ac-8556-47fe-ab67-1e2349d580e2.png)
 
 ---
 
@@ -1503,7 +1503,7 @@ public void testAutowireByName(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718549628-c1b58d51-d746-4d9e-aeb0-c8c5ee1f0a59.png)
+![1763718549628-c1b58d51-d746-4d9e-aeb0-c8c5ee1f0a59.png](../assets/1763718549628-c1b58d51-d746-4d9e-aeb0-c8c5ee1f0a59.png)
 
 我们来测试一下，byName装配是和属性名有关还是和set方法名有关系：
 
@@ -1530,7 +1530,7 @@ public class UserService {
 
 在执行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718582395-53105c38-4844-412e-bcba-cc52e90013ab.png)
+![1763718582395-53105c38-4844-412e-bcba-cc52e90013ab.png](../assets/1763718582395-53105c38-4844-412e-bcba-cc52e90013ab.png)
 
 通过测试得知，aaa属性并没有赋值成功。也就是并没有装配成功。
 
@@ -1551,7 +1551,7 @@ public class UserService {
 
 执行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718621703-01a7eaa0-f0cb-44c1-80f6-d113eb52eb86.png)
+![1763718621703-01a7eaa0-f0cb-44c1-80f6-d113eb52eb86.png](../assets/1763718621703-01a7eaa0-f0cb-44c1-80f6-d113eb52eb86.png)
 
 这说明，如果根据名称装配(byName)，底层会调用set方法进行注入。
 
@@ -1608,11 +1608,11 @@ public void testAutowireByType(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718680599-8c83ff07-8541-4638-9607-6b2a2585c4c3.png)
+![1763718680599-8c83ff07-8541-4638-9607-6b2a2585c4c3.png](../assets/1763718680599-8c83ff07-8541-4638-9607-6b2a2585c4c3.png)
 
 我们把UserService中的set方法注释掉，再执行：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718687238-6eb11940-af46-4b9f-81cd-7715d0605040.png)
+![1763718687238-6eb11940-af46-4b9f-81cd-7715d0605040.png](../assets/1763718687238-6eb11940-af46-4b9f-81cd-7715d0605040.png)
 
 可以看到无论是byName还是byType，在装配的时候都是基于set方法的。所以set方法是必须要提供的。提供构造方法是不行的，大家可以测试一下。这里就不再赘述。
 
@@ -1634,7 +1634,7 @@ public void testAutowireByType(){
 
 执行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718715528-42fe5699-776e-4cd1-b4d2-6bc55d8590be.png)
+![1763718715528-42fe5699-776e-4cd1-b4d2-6bc55d8590be.png](../assets/1763718715528-42fe5699-776e-4cd1-b4d2-6bc55d8590be.png)
 
 测试结果说明了，当byType进行自动装配的时候，配置文件中某种类型的Bean必须是唯一的，不能出现多个。
 
@@ -1740,7 +1740,7 @@ public void testProperties(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763718790927-1686291f-2da2-4f2b-a8b5-e22901e90044.png)
+![1763718790927-1686291f-2da2-4f2b-a8b5-e22901e90044.png](../assets/1763718790927-1686291f-2da2-4f2b-a8b5-e22901e90044.png)
 
 ****这里有一个坑。******配置文件中用户名是**`**root**`**，但是取出来的是**`**Adminitrator**`**。什么原因？**
 

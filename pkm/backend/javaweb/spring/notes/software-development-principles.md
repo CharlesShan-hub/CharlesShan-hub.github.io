@@ -120,7 +120,7 @@ public class UserServiceImpl implements UserService {
 
 这样一来就违背了开闭原则OCP。开闭原则是这样说的：在软件开发过程中应当对扩展开放，对修改关闭。也就是说，如果在进行功能扩展的时候，添加额外的类是没问题的，但因为功能扩展而修改之前运行正常的程序，这是忌讳的，不被允许的。因为一旦修改之前运行正常的程序，就会导致项目整体要进行全方位的重新测试。这是相当麻烦的过程。导致以上问题的主要原因是：代码和代码之间的耦合度太高。如下图所示：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1663658802926-4c783887-3bd3-4a35-b32a-b2cd57d0061c.png)
+![1663658802926-4c783887-3bd3-4a35-b32a-b2cd57d0061c.png](../assets/1663658802926-4c783887-3bd3-4a35-b32a-b2cd57d0061c.png)
 
 可以很明显的看出，****上层****是依赖****下层****的。UserController依赖UserServiceImpl，而UserServiceImpl依赖UserDaoImplForMySQL，这样就会导致****下面只要改动****，****上面必然会受牵连（跟着也会改）****，所谓牵一发而动全身。这样也就同时违背了另一个开发原则：依赖倒置原则。
 
@@ -132,11 +132,11 @@ public class UserServiceImpl implements UserService {
 
 你可能会说，上面的代码已经面向接口编程了呀：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1663663167652-73de3acd-61de-4f32-8a78-6c7698e910d3.png)
+![1663663167652-73de3acd-61de-4f32-8a78-6c7698e910d3.png](../assets/1663663167652-73de3acd-61de-4f32-8a78-6c7698e910d3.png)
 
 确实已经面向接口编程了，但对象的创建是：new UserDaoImplForOracle()显然并没有完全面向接口编程，还是使用到了具体的接口实现类。什么叫做完全面向接口编程？什么叫做完全符合依赖倒置原则呢？请看以下代码：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1663663356201-4e57a395-503b-41ec-b98a-c3cd38f9279a.png)
+![1663663356201-4e57a395-503b-41ec-b98a-c3cd38f9279a.png](../assets/1663663356201-4e57a395-503b-41ec-b98a-c3cd38f9279a.png)
 
 如果代码是这样编写的，才算是完全面向接口编程，才符合依赖倒置原则。那你可能会问，这样userDao是null，在执行的时候就会出现空指针异常呀。你说的有道理，确实是这样的，所以我们要解决这个问题。解决空指针异常的问题，其实就是解决两个核心的问题：
 
@@ -149,7 +149,7 @@ public class UserServiceImpl implements UserService {
 
 在Spring框架中，它可以帮助我们new对象，并且它还可以将new出来的对象赋到属性上。换句话说，Spring框架可以帮助我们创建对象，并且可以帮助我们维护对象和对象之间的关系。比如：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1663664672011-b1f5c534-5c8b-412b-adb3-f7c60a3ab359.png)
+![1663664672011-b1f5c534-5c8b-412b-adb3-f7c60a3ab359.png](../assets/1663664672011-b1f5c534-5c8b-412b-adb3-f7c60a3ab359.png)
 
 Spring可以new出来UserDaoImplForMySQL对象，也可以new出来UserDaoImplForOracle对象，并且还可以让new出来的dao对象和service对象产生关系（产生关系其实本质上就是给属性赋值）。
 

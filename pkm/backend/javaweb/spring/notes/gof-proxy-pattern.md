@@ -31,7 +31,7 @@ comment:
 
 代理模式的类图：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1665651817094-af9ecbad-24ae-4c11-9fa2-efe46653df25.png)
+![1665651817094-af9ecbad-24ae-4c11-9fa2-efe46653df25.png](../assets/1665651817094-af9ecbad-24ae-4c11-9fa2-efe46653df25.png)
 
 代理模式在代码实现上，包括两种形式：
 
@@ -277,7 +277,7 @@ public class Client {
 
 运行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763899986560-1ffb9314-4127-4514-9e6e-b8427fc725b5.png)
+![1763899986560-1ffb9314-4127-4514-9e6e-b8427fc725b5.png](../assets/1763899986560-1ffb9314-4127-4514-9e6e-b8427fc725b5.png)
 
 以上就是代理模式中的静态代理，其中OrderService接口是代理类和目标类的共同接口。OrderServiceImpl是目标类。OrderServiceProxy是代理类。
 
@@ -515,7 +515,7 @@ public class Client {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763900041906-2f1f20aa-9f0a-4a22-8fb8-8c92a5cb4063.png)
+![1763900041906-2f1f20aa-9f0a-4a22-8fb8-8c92a5cb4063.png](../assets/1763900041906-2f1f20aa-9f0a-4a22-8fb8-8c92a5cb4063.png)
 
 学到这里可能会感觉有点懵，折腾半天，到最后这不是还得写一个接口的实现类吗？没省劲儿呀？
 
@@ -529,7 +529,7 @@ public class Client {
 
 不过我们看以下这个代码确实有点繁琐，对于客户端来说，用起来不方便：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1665716434406-4e092df4-b1a7-4d16-bbc1-1f134b8f51f7.png)
+![1665716434406-4e092df4-b1a7-4d16-bbc1-1f134b8f51f7.png](../assets/1665716434406-4e092df4-b1a7-4d16-bbc1-1f134b8f51f7.png)
 
 我们可以提供一个工具类：ProxyUtil，封装一个方法：
 
@@ -578,7 +578,7 @@ public class Client {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763900073143-1738ce13-7f3d-4452-92bb-1d89797c4637.png)
+![1763900073143-1738ce13-7f3d-4452-92bb-1d89797c4637.png](../assets/1763900073143-1738ce13-7f3d-4452-92bb-1d89797c4637.png)
 
 ### CGLIB动态代理
 
@@ -734,11 +734,11 @@ public class Client {
 
 对于高版本的JDK，如果使用CGLIB，需要在启动项中添加两个启动参数：****（下图第一个红色框需要点击 Modify options来 Add vm options才能显示）****
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1764241276991-95dffe8b-56b2-49e6-85c3-4a0568d4016a.png)
+![1764241276991-95dffe8b-56b2-49e6-85c3-4a0568d4016a.png](../assets/1764241276991-95dffe8b-56b2-49e6-85c3-4a0568d4016a.png)
 
 + `--add-opens java.base/java.lang=ALL-UNNAMED`
 + `--add-opens java.base/sun.net.util=ALL-UNNAMED`
 
 **执行结果：**
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763900217070-16caaae5-163f-49f4-97dc-74b9f02338cf.png)
+![1763900217070-16caaae5-163f-49f4-97dc-74b9f02338cf.png](../assets/1763900217070-16caaae5-163f-49f4-97dc-74b9f02338cf.png)

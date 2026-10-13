@@ -34,7 +34,7 @@ Spring的AOP使用的动态代理是：JDK动态代理 + CGLIB动态代理技术
 
 请看下图，可以帮助你快速理解AOP的思想：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1665732609757-d8ae52ba-915e-49cf-9ef4-c7bcada0d601.png)
+![1665732609757-d8ae52ba-915e-49cf-9ef4-c7bcada0d601.png](../assets/1665732609757-d8ae52ba-915e-49cf-9ef4-c7bcada0d601.png)
 
 ****用一句话总结AOP：将与核心业务无关的代码独立的抽取出来，形成一个独立的组件，然后以横向交叉的方式应用到业务流程当中的过程被称为AOP。****
 
@@ -357,7 +357,7 @@ public class AOPTest {
 
 运行结果：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1665843923087-e1116f09-2470-46cb-b21a-1526f62cab50.png)
+![1665843923087-e1116f09-2470-46cb-b21a-1526f62cab50.png](../assets/1665843923087-e1116f09-2470-46cb-b21a-1526f62cab50.png)
 
 ### 全注解式开发AOP
 
@@ -486,7 +486,7 @@ public class AOPTest {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2024/png/21376908/1727354763970-e62d8306-982e-4d23-881d-802a4213f2d3.png)
+![1727354763970-e62d8306-982e-4d23-881d-802a4213f2d3.png](../assets/1727354763970-e62d8306-982e-4d23-881d-802a4213f2d3.png)
 
 通过上面的执行结果就可以判断他们的执行顺序了，这里不再赘述。
 
@@ -512,7 +512,7 @@ public class OrderService {
 
 再次执行测试程序，结果如下：
 
-![](https://cdn.nlark.com/yuque/0/2024/png/21376908/1727354892988-43f912b5-9d3d-4ae4-b5ee-640a69d7359c.png)
+![1727354892988-43f912b5-9d3d-4ae4-b5ee-640a69d7359c.png](../assets/1727354892988-43f912b5-9d3d-4ae4-b5ee-640a69d7359c.png)
 
 通过测试得知，当发生异常之后，后置通知也会执行。
 
@@ -619,11 +619,11 @@ public class MyAspect {
 
 执行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2024/png/21376908/1727355165649-0a4443b6-5ac5-4f38-a23f-756af6585dbc.png)
+![1727355165649-0a4443b6-5ac5-4f38-a23f-756af6585dbc.png](../assets/1727355165649-0a4443b6-5ac5-4f38-a23f-756af6585dbc.png)
 
 通过修改@Order注解的整数值来切换顺序，执行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2024/png/21376908/1727355225994-ecb4fbe1-2611-477b-a319-d64a5a897153.png)
+![1727355225994-ecb4fbe1-2611-477b-a319-d64a5a897153.png](../assets/1727355225994-ecb4fbe1-2611-477b-a319-d64a5a897153.png)
 
 ### 优化使用切点表达式
 
@@ -985,7 +985,7 @@ public class AOPTest2 {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763900978755-59d9c5ec-850c-40b3-8d90-98163a7d2429.png)
+![1763900978755-59d9c5ec-850c-40b3-8d90-98163a7d2429.png](../assets/1763900978755-59d9c5ec-850c-40b3-8d90-98163a7d2429.png)
 
 通过测试可以看到，所有的业务方法都添加了事务控制的代码。
 
@@ -1095,4 +1095,4 @@ public void testSecurity(){
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763901002972-6212a72e-2316-44ba-80a2-9c2817a277df.png)
+![1763901002972-6212a72e-2316-44ba-80a2-9c2817a277df.png](../assets/1763901002972-6212a72e-2316-44ba-80a2-9c2817a277df.png)

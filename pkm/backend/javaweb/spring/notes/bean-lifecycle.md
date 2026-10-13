@@ -51,7 +51,7 @@ Bean生命周期可以粗略的划分为五大步：
 + 第四步：使用Bean
 + 第五步：销毁Bean
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1665388735200-444405f6-283d-4b3a-8cdf-8c3e01743618.png)
+![1665388735200-444405f6-283d-4b3a-8cdf-8c3e01743618.png](../assets/1665388735200-444405f6-283d-4b3a-8cdf-8c3e01743618.png)
 
 编写测试程序：
 
@@ -109,7 +109,7 @@ public class BeanLifecycleTest {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763779901212-2d884ee4-3595-431e-9069-52bd00213814.png)
+![1763779901212-2d884ee4-3595-431e-9069-52bd00213814.png](../assets/1763779901212-2d884ee4-3595-431e-9069-52bd00213814.png)
 
 需要注意的：
 
@@ -153,11 +153,11 @@ public class LogBeanPostProcessor implements BeanPostProcessor {
 
 执行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763780009201-436ef7c3-8bc0-44ad-a368-fcfe4de77b54.png)
+![1763780009201-436ef7c3-8bc0-44ad-a368-fcfe4de77b54.png](../assets/1763780009201-436ef7c3-8bc0-44ad-a368-fcfe4de77b54.png)
 
 如果加上Bean后处理器的话，Bean的生命周期就是7步了：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1665393936765-0ea5dcdd-859a-4ac5-9407-f06022c498b9.png)
+![1665393936765-0ea5dcdd-859a-4ac5-9407-f06022c498b9.png](../assets/1665393936765-0ea5dcdd-859a-4ac5-9407-f06022c498b9.png)
 
 ---
 
@@ -165,7 +165,7 @@ public class LogBeanPostProcessor implements BeanPostProcessor {
 
 如果根据源码跟踪，可以划分更细粒度的步骤，10步：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1665394697870-15de433a-8d50-4b31-9b75-b2ca7090c1c6.png)
+![1665394697870-15de433a-8d50-4b31-9b75-b2ca7090c1c6.png](../assets/1665394697870-15de433a-8d50-4b31-9b75-b2ca7090c1c6.png)
 
 上图中检查Bean是否实现了Aware的相关接口是什么意思？
 
@@ -253,7 +253,7 @@ public class LogBeanPostProcessor implements BeanPostProcessor {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763780194137-98ac319c-369a-4fa1-a83f-4789887ccb22.png)
+![1763780194137-98ac319c-369a-4fa1-a83f-4789887ccb22.png](../assets/1763780194137-98ac319c-369a-4fa1-a83f-4789887ccb22.png)
 
 ****通过测试可以看出来：****
 
@@ -396,7 +396,7 @@ Spring 根据Bean的作用域来选择管理方式。
 
 执行测试程序：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763780370388-000f1c5f-eb90-4d6c-be76-ac5e39231729.png)
+![1763780370388-000f1c5f-eb90-4d6c-be76-ac5e39231729.png](../assets/1763780370388-000f1c5f-eb90-4d6c-be76-ac5e39231729.png)
 
 通过测试一目了然。只执行了前8步，第9和10都没有执行。
 
@@ -435,4 +435,4 @@ public class RegisterBeanTest {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763780413264-6a23ba14-d5ea-493f-a3da-1c458c62ecbb.png)
+![1763780413264-6a23ba14-d5ea-493f-a3da-1c458c62ecbb.png](../assets/1763780413264-6a23ba14-d5ea-493f-a3da-1c458c62ecbb.png)

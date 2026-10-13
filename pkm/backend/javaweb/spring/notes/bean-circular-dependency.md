@@ -15,7 +15,7 @@ A对象中有B属性。B对象中有A属性。这就是循环依赖。我依赖�
 
 比如：丈夫类Husband，妻子类Wife。Husband中有Wife的引用。Wife中有Husband的引用。
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1665452274046-82594b87-2974-4e08-a6ab-2218d001d14f.png)
+![1665452274046-82594b87-2974-4e08-a6ab-2218d001d14f.png](../assets/1665452274046-82594b87-2974-4e08-a6ab-2218d001d14f.png)
 
 ```java
 public class Husband {
@@ -125,7 +125,7 @@ public class CircularDependencyTest {
 
 执行结果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763786197531-47f4054d-19e8-4364-93e8-f7d366cdd880.png)
+![1763786197531-47f4054d-19e8-4364-93e8-f7d366cdd880.png](../assets/1763786197531-47f4054d-19e8-4364-93e8-f7d366cdd880.png)
 
 ****通过测试得知：在singleton + set注入的情况下，循环依赖是没有问题的。Spring可以解决这个问题。****
 
@@ -281,7 +281,7 @@ Caused by: org.springframework.beans.factory.****BeanCurrentlyInCreationExceptio
 
 ### 三个缓存
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1665456331018-18c45ae3-fa4c-4cd8-aabf-d9bace567693.png)
+![1665456331018-18c45ae3-fa4c-4cd8-aabf-d9bace567693.png](../assets/1665456331018-18c45ae3-fa4c-4cd8-aabf-d9bace567693.png)
 
 | ****缓存级别**** | ****名称**** | ****存储内容**** | ****作用**** | ****类比**** |
 | --- | --- | --- | --- | --- |
@@ -293,11 +293,11 @@ Caused by: org.springframework.beans.factory.****BeanCurrentlyInCreationExceptio
 
 在该类中有这样一个方法addSingletonFactory()，这个方法的作用是：将创建Bean对象的ObjectFactory对象提前曝光。
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1665460724682-2222366d-cc07-43db-a8d0-fb27712b20a4.png)
+![1665460724682-2222366d-cc07-43db-a8d0-fb27712b20a4.png](../assets/1665460724682-2222366d-cc07-43db-a8d0-fb27712b20a4.png)
 
 再分析下面的源码：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1665460240687-3d0794c4-e6ed-4653-9463-767a7f943ff9.png)
+![1665460240687-3d0794c4-e6ed-4653-9463-767a7f943ff9.png](../assets/1665460240687-3d0794c4-e6ed-4653-9463-767a7f943ff9.png)
 
 从源码中可以看到，spring会先从一级缓存中获取Bean，如果获取不到，则从二级缓存中获取Bean，如果二级缓存还是获取不到，则从三级缓存中获取之前曝光的ObjectFactory对象，通过ObjectFactory对象获取Bean实例。
 
@@ -332,7 +332,7 @@ Caused by: org.springframework.beans.factory.****BeanCurrentlyInCreationExceptio
     - **此时，ClassA的**`**getBean("classB")**`**调用返回，将创建好的ClassB实例注入到ClassA的**`**classB**`**属性中。**
     - **ClassA完成属性填充和后续初始化，最终也被放入******第一级缓存******。**
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1763803781026-9807d217-2e77-4023-b378-fabc277c811f.png)
+![1763803781026-9807d217-2e77-4023-b378-fabc277c811f.png](../assets/1763803781026-9807d217-2e77-4023-b378-fabc277c811f.png)
 
 ### **面试题：为什么需要三级，两级不行吗？**
 
