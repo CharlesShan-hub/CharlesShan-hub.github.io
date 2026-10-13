@@ -19,7 +19,7 @@ git log --oneline
 
 ```
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1766970760344-23bc2328-6135-488d-be0a-08b9fba5b282.png" width="529.6" title="" crop="0,0,1,1" id="ub3e330cc" class="ne-image">
+![1766970760344-23bc2328-6135-488d-be0a-08b9fba5b282.png](../assets/1766970760344-23bc2328-6135-488d-be0a-08b9fba5b282.png)
 
 ---
 

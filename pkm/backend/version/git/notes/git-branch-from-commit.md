@@ -39,7 +39,7 @@ git merge order
 
 ```
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1766972642113-c60de22d-110c-40ac-aae0-a650fd3db55b.png" width="596" title="" crop="0,0,1,1" id="u343b0241" class="ne-image">
+![1766972642113-c60de22d-110c-40ac-aae0-a650fd3db55b.png](../assets/1766972642113-c60de22d-110c-40ac-aae0-a650fd3db55b.png)
 
 合并后可以看看 master 分支上是否存在 Test.java 文件。
 
@@ -78,7 +78,7 @@ git merge order
 
 冲突如下：
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1766972975611-1fc11b51-b807-433b-8eeb-1e06fae9f3bc.png" width="792" title="" crop="0,0,1,1" id="u54e9612c" class="ne-image">
+![1766972975611-1fc11b51-b807-433b-8eeb-1e06fae9f3bc.png](../assets/1766972975611-1fc11b51-b807-433b-8eeb-1e06fae9f3bc.png)
 
 必须人为干涉解决冲突：
 

@@ -7,7 +7,7 @@ comment:
 
 # 程序员的一天
 
-<img src="https://cdn.nlark.com/yuque/0/2025/jpeg/21376908/1757681056420-39d1bc52-55fe-4f3b-8183-b4d7ba79b166.jpeg" width="4308" title="" crop="0,0,1,1" id="TnDmi" class="ne-image">
+![1757681056420-39d1bc52-55fe-4f3b-8183-b4d7ba79b166.jpeg](../assets/1757681056420-39d1bc52-55fe-4f3b-8183-b4d7ba79b166.jpeg)
 
 **核心理念**：**“永远在正确的分支上做正确的事，先拉后推。”**
 
@@ -15,7 +15,7 @@ comment:
 
 ## 第一步：早上一来，更新代码（防冲突）
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1766979051598-001c1a4a-cb24-4e69-b3de-9ebd62e31a73.png" width="311.2" title="" crop="0,0,1,1" id="ud1f919fa" class="ne-image">
+![1766979051598-001c1a4a-cb24-4e69-b3de-9ebd62e31a73.png](../assets/1766979051598-001c1a4a-cb24-4e69-b3de-9ebd62e31a73.png)
 
 `**Update Project**`**更智能、更安全**，**`**Pull**`**是直接执行默认的合并。公司一般推荐**`**Update Project...**`
 
@@ -23,11 +23,11 @@ comment:
 
 ## 第二步：开始新功能？创建分支（隔离开发）
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1766979208679-012e3665-f830-4ab5-a055-f4772d234c9d.png" width="309.6" title="" crop="0,0,1,1" id="ud9b4116a" class="ne-image">
+![1766979208679-012e3665-f830-4ab5-a055-f4772d234c9d.png](../assets/1766979208679-012e3665-f830-4ab5-a055-f4772d234c9d.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1766979231174-aa6c83eb-5938-4f96-bfca-f26875cdce7a.png" width="367.2" title="" crop="0,0,1,1" id="u38c55531" class="ne-image">
+![1766979231174-aa6c83eb-5938-4f96-bfca-f26875cdce7a.png](../assets/1766979231174-aa6c83eb-5938-4f96-bfca-f26875cdce7a.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1766979253245-bc448fb3-ab9a-42c3-ab47-7db4bc29498a.png" width="424.8" title="" crop="0,0,1,1" id="u1929e107" class="ne-image">
+![1766979253245-bc448fb3-ab9a-42c3-ab47-7db4bc29498a.png](../assets/1766979253245-bc448fb3-ab9a-42c3-ab47-7db4bc29498a.png)
 
 _命名规则：_`feature/功能`_、_`fix/修复`_、_`hotfix/紧急修复`_。_
 
@@ -39,7 +39,7 @@ _命名规则：_`feature/功能`_、_`fix/修复`_、_`hotfix/紧急修复`_。
 
 **写一部分代码就提交**，别等到下班。
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1766979727746-4e6c3c11-e79f-45b6-9c39-5c029173e962.png" width="338.4" title="" crop="0,0,1,1" id="u789b51f0" class="ne-image">
+![1766979727746-4e6c3c11-e79f-45b6-9c39-5c029173e962.png](../assets/1766979727746-4e6c3c11-e79f-45b6-9c39-5c029173e962.png)
 
 + **勾选**要提交的文件。
 + **写清晰的提交信息**，例如：“新增用户登录验证逻辑”。
@@ -49,13 +49,13 @@ _命名规则：_`feature/功能`_、_`fix/修复`_、_`hotfix/紧急修复`_。
 
 ## 第四步：推送代码到远程（备份与协作）
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1766979686730-0368e693-4779-4881-a114-ed744a0b512d.png" width="292" title="" crop="0,0,1,1" id="ud7e112d9" class="ne-image">
+![1766979686730-0368e693-4779-4881-a114-ed744a0b512d.png](../assets/1766979686730-0368e693-4779-4881-a114-ed744a0b512d.png)
 
 _**注意：push 推送到远程仓库只是推送到远程仓库的对应分支上了。所以你不需要担心。你需要关注的是在远程仓库中你的分支与 master 主分支的合并，这个千万不要随便来。**_
 
 _**推送之后 git 仓库中就有你创建的分支了：**_
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1766979664823-53f445df-e5bc-426c-85b9-ee3ea312ab0e.png" width="413.6" title="" crop="0,0,1,1" id="uc075016b" class="ne-image">
+![1766979664823-53f445df-e5bc-426c-85b9-ee3ea312ab0e.png](../assets/1766979664823-53f445df-e5bc-426c-85b9-ee3ea312ab0e.png)
 
 ---
 
@@ -86,9 +86,9 @@ _**推送之后 git 仓库中就有你创建的分支了：**_
 
 1. 回到 IDEA，**切换回 **`master` 分支。
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1766980289804-7d4cf4d9-1b95-477b-9a62-0777e9389aa0.png" width="282.4" title="" crop="0,0,1,1" id="u953ba2ff" class="ne-image">
+![1766980289804-7d4cf4d9-1b95-477b-9a62-0777e9389aa0.png](../assets/1766980289804-7d4cf4d9-1b95-477b-9a62-0777e9389aa0.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1766980323640-39219f53-bfb9-4370-a966-5e79d17973a0.png" width="556" title="" crop="0,0,1,1" id="uc738bd10" class="ne-image">
+![1766980323640-39219f53-bfb9-4370-a966-5e79d17973a0.png](../assets/1766980323640-39219f53-bfb9-4370-a966-5e79d17973a0.png)
 
 2. 对 `master` 执行 **第一步的 **`Update`，拉取刚才合并的新代码。
 3. 基于最新的 `master`，**回到第二步**，创建下一个功能分支。**注意哈：以上说的更新是更新主分支哈。**+**第一步：手动切换到主分支上。**+**第二步：**`**Update Project**`**更新主分支。**+**第三步：将最新的主分支合并到当前工作分支。以上三步联合起来就完成了代码更新。

@@ -35,11 +35,11 @@ ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCqKHFj6S2UDdd7/+dToSSpGhTbiag2rGidwnNsGfLe
 
 **第三步：**把这个文件中的公钥复制一下，打开 gitee 的后台，找到 SSH 公钥位置，添加公钥并保存。
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1766977034481-0e748596-1609-4e0e-a69a-f56c1de39d30.png" width="156.8" title="" crop="0,0,1,1" id="u369e1ab7" class="ne-image">
+![1766977034481-0e748596-1609-4e0e-a69a-f56c1de39d30.png](../assets/1766977034481-0e748596-1609-4e0e-a69a-f56c1de39d30.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1766977048738-70c02506-1925-4f33-bbc6-985691c81255.png" width="219.2" title="" crop="0,0,1,1" id="u0a8d39f9" class="ne-image">
+![1766977048738-70c02506-1925-4f33-bbc6-985691c81255.png](../assets/1766977048738-70c02506-1925-4f33-bbc6-985691c81255.png)
 
-<img src="https://cdn.nlark.com/yuque/0/2025/png/21376908/1766977080465-fde58f04-4b64-46e3-80a4-6fc95c52951c.png" width="820" title="" crop="0,0,1,1" id="ua2112233" class="ne-image">
+![1766977080465-fde58f04-4b64-46e3-80a4-6fc95c52951c.png](../assets/1766977080465-fde58f04-4b64-46e3-80a4-6fc95c52951c.png)
 
 ### 再次推送
 
