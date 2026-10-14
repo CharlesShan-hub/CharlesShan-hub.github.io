@@ -41,11 +41,11 @@ comment:
 
 + 部署两个tomcat服务器，1号服务器和2号服务器，两个服务器设置的端口不同，1号服务器如下所示：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1654049493291-95fc4c8c-881b-477e-83c9-5506c4488297.png)
+![1654049493291-95fc4c8c-881b-477e-83c9-5506c4488297.png](../assets/1654049493291-95fc4c8c-881b-477e-83c9-5506c4488297.png)
 
 + 2号服务器如下所示，注意端口是不同的：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1654049601618-483007b4-8493-45e5-b27b-c5812c7d14d8.png)
+![1654049601618-483007b4-8493-45e5-b27b-c5812c7d14d8.png](../assets/1654049601618-483007b4-8493-45e5-b27b-c5812c7d14d8.png)
 
 + 访问两台服务器的地址如下：
     - 1号服务器：http://localhost:8080
@@ -106,11 +106,11 @@ public class HelloServlet extends HttpServlet {
 + a应用部署到1号服务器，b应用部署到2号服务器，将1号和2号服务器都启动。
 + 服务器启动成功后，打开浏览器，在地址栏上输入请求地址：http://localhost:8080/a/index.html
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1655278866144-5cdc939d-369b-4970-9e12-b52bbe9ec3c4.png)
+![1655278866144-5cdc939d-369b-4970-9e12-b52bbe9ec3c4.png](../assets/1655278866144-5cdc939d-369b-4970-9e12-b52bbe9ec3c4.png)
 
 + F12，打开谷歌浏览器的控制台窗口，然后点击上图中的按钮，发送ajax请求，结果如下图：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1655278984925-ead6c98a-dfad-45cf-83d4-4b0556283612.png)
+![1655278984925-ead6c98a-dfad-45cf-83d4-4b0556283612.png](../assets/1655278984925-ead6c98a-dfad-45cf-83d4-4b0556283612.png)
 
 报错了，错误信息中描述了：从 `http://localhost:8080` 上访问 `http://localhost:8081/b/hello` 被同源策略阻止：请求的资源上不存在“Access Control Allow Origin”标头。这就是ajax跨域问题。
 
@@ -176,11 +176,11 @@ public class HelloServlet extends HttpServlet {
 
 + 将a应用部署到1号服务器，将b应用部署到2号服务器，将两台服务器都启动起来，打开浏览器，输入地址：http://localhost:8080/a/index.html，如下图：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1655283835672-ba311028-ae93-4ca1-9291-0bc9e4c1ed32.png)
+![1655283835672-ba311028-ae93-4ca1-9291-0bc9e4c1ed32.png](../assets/1655283835672-ba311028-ae93-4ca1-9291-0bc9e4c1ed32.png)
 
 + 点击上图的按钮，发送ajax请求，结果如下图所示：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1655284013139-78c8c9d5-7b9f-4bc0-bb09-dd498fe91091.png)
+![1655284013139-78c8c9d5-7b9f-4bc0-bb09-dd498fe91091.png](../assets/1655284013139-78c8c9d5-7b9f-4bc0-bb09-dd498fe91091.png)
 
 **对于 SpringBoot 项目来说可以做以下的全局配置**：
 
@@ -200,7 +200,7 @@ public class CorsConfig implements WebMvcConfigurer {
 
 这种方式主要是通过后端java程序来完成跨域访问。因为跨域的限制只针对XMLHttpRequest对象，java程序是可以跨域访问的，原理如下图：
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1655476145124-153a35c4-f336-4342-a35f-d4e90fb122a9.png)
+![1655476145124-153a35c4-f336-4342-a35f-d4e90fb122a9.png](../assets/1655476145124-153a35c4-f336-4342-a35f-d4e90fb122a9.png)
 
 ****核心原理：a站点中的按钮无法直接发送ajax请求访问b站点中的TargetServlet，但是可以发送ajax请求访问当前站点中的ProxyServlet，将它当作一个代理，然后通过代理发送get/post请求访问b站点中的TargetServlet。****
 
@@ -210,7 +210,7 @@ public class CorsConfig implements WebMvcConfigurer {
 
 首选需要引入 httpclient 的 jar 包：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1750401194695-8febc260-5a0a-418f-bd3e-d4c32d842c4f.png)
+![1750401194695-8febc260-5a0a-418f-bd3e-d4c32d842c4f.png](../assets/1750401194695-8febc260-5a0a-418f-bd3e-d4c32d842c4f.png)
 
 使用 httpclient 发送 get 请求：
 

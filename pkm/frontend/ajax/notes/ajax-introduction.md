@@ -21,7 +21,7 @@ comment:
 
 **以下是 AJAX 请求示意图：**
 
-![](https://cdn.nlark.com/yuque/0/2022/png/21376908/1651892721562-fc94479f-932b-4a6f-87ff-85cb12067bb4.png)
+![1651892721562-fc94479f-932b-4a6f-87ff-85cb12067bb4.png](../assets/1651892721562-fc94479f-932b-4a6f-87ff-85cb12067bb4.png)
 
 ---
 

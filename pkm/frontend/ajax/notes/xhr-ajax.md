@@ -230,9 +230,9 @@ const xhr = new XMLHttpRequest();
 
 页面效果如下：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1750209811297-4cbeb3cc-71a9-4672-9425-cd20dda9027a.png)
+![1750209811297-4cbeb3cc-71a9-4672-9425-cd20dda9027a.png](../assets/1750209811297-4cbeb3cc-71a9-4672-9425-cd20dda9027a.png)
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1750209825223-5a0189f6-3d34-4482-ab3b-d0ee0e8fa7e2.png)
+![1750209825223-5a0189f6-3d34-4482-ab3b-d0ee0e8fa7e2.png](../assets/1750209825223-5a0189f6-3d34-4482-ab3b-d0ee0e8fa7e2.png)
 
 ### 准备数据库表
 
@@ -255,7 +255,7 @@ INSERT INTO `t_user` VALUES (2, 'test');
 SET FOREIGN_KEY_CHECKS = 1;
 ```
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1750211064304-5655b731-2f8c-4aad-b431-b73e85e8ab31.png)
+![1750211064304-5655b731-2f8c-4aad-b431-b73e85e8ab31.png](../assets/1750211064304-5655b731-2f8c-4aad-b431-b73e85e8ab31.png)
 
 ### 编写后端 Servlet
 
@@ -335,7 +335,7 @@ public class CheckUsernameServlet extends HttpServlet {
 
 将之前编写的页面中的以下代码注释掉：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1750212594949-3986de9c-0e66-45a2-8b24-81efbf3836d2.png)
+![1750212594949-3986de9c-0e66-45a2-8b24-81efbf3836d2.png](../assets/1750212594949-3986de9c-0e66-45a2-8b24-81efbf3836d2.png)
 
 然后在注释掉的代码位置上编写使用 xhr 发送 ajax get 请求的代码，如下：
 

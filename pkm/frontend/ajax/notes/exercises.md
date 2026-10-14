@@ -319,7 +319,7 @@ comment:
 
 最终效果如下：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1750389964707-b6d8b7ef-21cd-4881-bc85-808b9e7cdca2.png)
+![1750389964707-b6d8b7ef-21cd-4881-bc85-808b9e7cdca2.png](../assets/1750389964707-b6d8b7ef-21cd-4881-bc85-808b9e7cdca2.png)
 
 ---
 
@@ -638,4 +638,4 @@ comment:
 
 最终效果：
 
-![](https://cdn.nlark.com/yuque/0/2025/png/21376908/1750390450511-b06da9a2-d4d4-4573-8aee-78d49256b14a.png)
+![1750390450511-b06da9a2-d4d4-4573-8aee-78d49256b14a.png](../assets/1750390450511-b06da9a2-d4d4-4573-8aee-78d49256b14a.png)
