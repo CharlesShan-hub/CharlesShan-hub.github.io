@@ -1,7 +1,8 @@
 ---
-title:
+title: frequceial-transform
 tags:
-date:
+  - note
+date: 2026-10-15
 comment:
 ---
 
@@ -53,4 +54,8 @@ $$
 ---
 ## References
 
-\[1] [https://mathworld.wolfram.com/HaarFunction.html](https://mathworld.wolfram.com/HaarFunction.html)
+
+## Reference
+
+1. [https://mathworld.wolfram.com/HaarFunction.html](https://mathworld.wolfram.com/HaarFunction.html)
+2. 岳亚伟，薛晓琴，等. 数字图像处理与 Python 实现（第2版）[M]. 北京：人民邮电出版社，2024.

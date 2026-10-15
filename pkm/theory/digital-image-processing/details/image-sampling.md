@@ -1,7 +1,8 @@
 ---
-title:
+title: image-sampling
 tags:
-date:
+  - attachment
+date: 2026-10-15
 comment:
 ---
 

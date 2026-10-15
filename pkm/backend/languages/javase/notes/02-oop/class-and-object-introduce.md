@@ -1,7 +1,8 @@
 ---
-title:
+title: class-and-object-introduce
 tags:
-date:
+  - note
+date: 2026-10-15
 comment:
 ---
 
@@ -153,7 +154,6 @@ System.out.println(a.age);
 ```
 
 这里b与a同是指向同一个地址。注意后来b指向了空，但不影响a指向原来的对象，所以输出20。
-
 
 ---
 

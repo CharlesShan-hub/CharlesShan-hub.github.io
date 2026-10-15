@@ -1,7 +1,8 @@
 ---
-title:
+title: YCbCr
 tags:
-date:
+  - note
+date: 2026-10-15
 comment:
 ---
 
@@ -14,7 +15,9 @@ YIQ，YCbCr 和 YUV 彼此十分类似，都是亮度加两个色彩通道。只
 人们发现，人眼对 Y 通道的变化很敏感，而对后两个颜色通道的变化不敏感，所以可以采用去除颜色通道高频成分的方式来压缩图片。
 
 ![ycbcr2](../assets/ycbcr2.png)
-\[2]
+[2]
 
-1.  https://blog.csdn.net/machh/article/details/51799403](https://blog.csdn.net/machh/article/details/51799403)
+## Reference
+
+1. https://blog.csdn.net/machh/article/details/51799403](https://blog.csdn.net/machh/article/details/51799403)
 2. [https://www.youtube.com/watch?v=P3F3EwvU0m4](https://www.youtube.com/watch?v=P3F3EwvU0m4)

@@ -1,7 +1,8 @@
 ---
-title:
+title: image-feature
 tags:
-date:
+  - note
+date: 2026-10-15
 comment:
 ---
 
@@ -654,7 +655,7 @@ SUSAN算法：
 
 ***
 
-## References
+## Reference
 
 \[1] [https://blog.51cto.com/u\_13984132/5477443](https://blog.51cto.com/u\_13984132/5477443)
 
@@ -683,3 +684,6 @@ SUSAN算法：
 \[13] [https://core.ac.uk/download/41438484.pdf](https://core.ac.uk/download/41438484.pdf)
 
 \[14] [https://baike.baidu.com/item/susan%E7%AE%97%E5%AD%90/5532045](https://baike.baidu.com/item/susan%E7%AE%97%E5%AD%90/5532045)
+
+
+1. 岳亚伟，薛晓琴，等. 数字图像处理与 Python 实现（第2版）[M]. 北京：人民邮电出版社，2024.

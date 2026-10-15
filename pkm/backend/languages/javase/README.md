@@ -14,7 +14,7 @@ comment: Java SE 基础笔记：语法、OOP、集合、IO、多线程、JVM
     * 👉 [04-array](notes/01-basic/array.md)：数组
 * OOP
     * 类与对象
-        * 类与对象引入
+        *  👉 [Introduction for Class and Object](notes/02-oop/class-and-object-introduce.md)：类与对象引入
         * 属性与方法
         * this
         * 封装与 JavaBean
@@ -32,7 +32,7 @@ comment: Java SE 基础笔记：语法、OOP、集合、IO、多线程、JVM
         * 代码块
         * 内部类
 * OOP Basic
-    * [Introduction for Class and Object](notes/02-oop/class-and-object-introduce.md)：引入
+
     * [Attributes and Methods](notes/02-oop/attributes-and-methods.md)：属性和成员方法
     * [this](notes/02-oop/this.md)
     * [Encapsulation](notes/02-oop/encapsulation.md)：封装，javabean

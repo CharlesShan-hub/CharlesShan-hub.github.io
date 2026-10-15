@@ -1,7 +1,8 @@
 ---
-title:
+title: todo
 tags:
-date:
+  - note
+date: 2026-10-15
 comment:
 ---
 
@@ -14,3 +15,7 @@ comment:
 * javase
 	* strictfp关键字
 	* 多线程：volatile
+* dip
+    * 笔记整理（目前很多内容还没从gitbook弄回来）
+* minecraft
+    * 打算加一些游戏里面的进度安排

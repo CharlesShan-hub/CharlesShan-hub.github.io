@@ -1,7 +1,8 @@
 ---
-title:
+title: skimage.data
 tags:
-date:
+  - note
+date: 2026-10-15
 comment:
 ---
 
@@ -16,7 +17,7 @@ image = Image.fromarray(data.astronaut())
 image.show()
 ```
 
-![astronaut.jpg](assets/astronaut.jpg){: width=256}
+![astronaut.jpg](assets/astronaut.jpg)
 
 skimage.data模块有很多demo 图片python
 

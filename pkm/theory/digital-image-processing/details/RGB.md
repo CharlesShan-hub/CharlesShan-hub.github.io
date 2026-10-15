@@ -1,5 +1,5 @@
 ---
-title: RGB色彩模式
+title: RGB
 tags:
   - RGB
 date: 2026-10-06

@@ -1,7 +1,8 @@
 ---
-title:
+title: image-compression
 tags:
-date:
+  - note
+date: 2026-10-15
 comment:
 ---
 
@@ -483,3 +484,6 @@ if __name__ == '__main__':
 \[7] [https://en.wikipedia.org/wiki/Differential\_pulse-code\_modulation](https://en.wikipedia.org/wiki/Differential\_pulse-code\_modulation)
 
 \[8] [https://blog.csdn.net/gmynebula/article/details/134887145](https://blog.csdn.net/gmynebula/article/details/134887145)
+
+
+1. 岳亚伟，薛晓琴，等. 数字图像处理与 Python 实现（第2版）[M]. 北京：人民邮电出版社，2024.

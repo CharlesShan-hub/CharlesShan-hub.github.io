@@ -1,7 +1,8 @@
 ---
-title:
+title: attributes-and-methods
 tags:
-date:
+  - note
+date: 2026-10-15
 comment:
 ---
 
