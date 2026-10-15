@@ -1,7 +1,8 @@
 ---
-title:
+title: image-basic
 tags:
-date:
+  - note
+date: 2026-10-15
 comment:
 ---
 
@@ -22,7 +23,7 @@ comment:
 ### Sampling
 
 * 采样：从连续信号到离散信号。
-* 通过不同尺寸的灰度图像，展示不同采样对图片的影响：👉 [image-sampling](../details/image-sampling.md)
+* 通过不同尺寸的灰度图像，展示不同等级的采样对图片的影响：👉 [image-sampling](../details/image-sampling.md)
 	![../assets/sampling.png](../assets/sampling.png)
 
 ### Quantization
@@ -44,3 +45,7 @@ $(x,y)$与$(s,t)$的距离：
 *  欧氏距离：$D_e = \sqrt{(x-s)^2+(x-t)^2}$
 * $D_4$距离：$D_4 = |x-s|+|y-t|$
 * $D_8$距离：$D_8 = \max(|x-s|+|y-t|)$
+
+## Reference
+
+1. 岳亚伟，薛晓琴，等. 数字图像处理与 Python 实现（第2版）[M]. 北京：人民邮电出版社，2024.
