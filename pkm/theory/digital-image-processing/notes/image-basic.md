@@ -2,7 +2,7 @@
 title: image-basic
 tags:
   - note
-date: 2026-10-15
+date: 2026-10-16
 comment:
 ---
 
@@ -24,13 +24,13 @@ comment:
 
 * 采样：从连续信号到离散信号。
 * 通过不同尺寸的灰度图像，展示不同等级的采样对图片的影响：👉 [image-sampling](../details/image-sampling.md)
-	![../assets/sampling.png](../assets/sampling.png)
+	![../assets/sampling.png](../assets/basic-sampling.png)
 
 ### Quantization
 
 * 量化：用多少比特代表每个像素的颜色。
 * 不同量化级别对图片颜色的影响：👉 [image-quantization](../details/image-quantization.md)
-	![../assets/quantization.png](../assets/quantization.png)
+	![quantization.png](../assets/basic-quantization.png)
 
 ### Neighbor
 
