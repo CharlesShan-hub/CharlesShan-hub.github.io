@@ -1490,7 +1490,8 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
       } else { fallback(); }
     };
     var init = function () {
-      var pres = document.querySelectorAll("#pkm-content pre[lang]");
+      // pre[lang]：普通代码块；pre[data-filename]：附件下载块（可能无语言，也要挂下载按钮）
+      var pres = document.querySelectorAll("#pkm-content pre[lang], #pkm-content pre[data-filename]");
       for (var i = 0; i < pres.length; i++) {
         // 用 let 块级作用域：var 在循环里只有一份，闭包会把所有按钮的 handler
         // 都指向最后一个代码块（复制到错误内容、换行加错块）
@@ -1500,12 +1501,15 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
         if (!code) continue;
         let tools = document.createElement("div");
         tools.className = "pkm-code-tools";
-        let lang = document.createElement("button");
-        lang.type = "button"; lang.className = "pkm-code-lang";
-        lang.setAttribute("title", "点击复制代码");
-        lang.textContent = pre.getAttribute("lang");
-        lang.addEventListener("click", function () { copyText(code.textContent, lang); });
-        tools.appendChild(lang);
+        let langName = pre.getAttribute("lang");
+        if (langName) {
+          let lang = document.createElement("button");
+          lang.type = "button"; lang.className = "pkm-code-lang";
+          lang.setAttribute("title", "点击复制代码");
+          lang.textContent = langName;
+          lang.addEventListener("click", function () { copyText(code.textContent, lang); });
+          tools.appendChild(lang);
+        }
         let copyBtn = document.createElement("button");
         copyBtn.type = "button"; copyBtn.className = "pkm-code-btn";
         copyBtn.setAttribute("title", "复制代码"); copyBtn.setAttribute("aria-label", "复制代码");
@@ -1526,6 +1530,27 @@ window.__pkmInitWidgets = window.__pkmInitWidgets || function () {
           wrapBtn.setAttribute("aria-label", wrapBtn.getAttribute("title"));
         });
         tools.appendChild(wrapBtn);
+        // 附件页下载按钮：pre 带 data-filename（导出端注入）时才出现，
+        // 用 Blob + a[download] 生成文件，站点无需放实体文件
+        var fname = pre.getAttribute("data-filename");
+        if (fname) {
+          var dlBtn = document.createElement("button");
+          dlBtn.type = "button"; dlBtn.className = "pkm-code-btn";
+          dlBtn.setAttribute("title", "下载 " + fname); dlBtn.setAttribute("aria-label", "下载文件");
+          dlBtn.innerHTML = '<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">' +
+            '<path d="M12 3v11" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>' +
+            '<path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+            '<path d="M5 20h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+          dlBtn.addEventListener("click", function () {
+            var blob = new Blob([code.textContent], { type: "text/plain;charset=utf-8" });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement("a");
+            a.href = url; a.download = fname;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          });
+          tools.appendChild(dlBtn);
+        }
         pre.insertBefore(tools, pre.firstChild);
       }
     };

@@ -4,6 +4,7 @@ tags:
   - attachment
 date: 2026-10-12
 comment: 封装的案例：getter和setter（与构造器结合）
+filename: Person.java
 ---
 
 ```java

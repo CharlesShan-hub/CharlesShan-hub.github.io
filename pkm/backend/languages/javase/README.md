@@ -2,7 +2,7 @@
 title: Javase
 tags:
   - catalog
-date: 2026-10-10
+date: 2026-10-16
 comment: Java SE 基础笔记：语法、OOP、集合、IO、多线程、JVM
 ---
 
@@ -15,45 +15,23 @@ comment: Java SE 基础笔记：语法、OOP、集合、IO、多线程、JVM
 * OOP
     * 类与对象
         *  👉 [Introduction for Class and Object](notes/02-oop/class-and-object-introduce.md)：类与对象引入
-        * 属性与方法
-        * this
-        * 封装与 JavaBean
-        * 访问修饰符
+        * 👉 [Attributes and Methods](notes/02-oop/attributes-and-methods.md)：属性与成员方法
+        * 👉 [this](notes/02-oop/this.md)：this
+        * 👉 [Encapsulation](notes/02-oop/encapsulation.md)：封装与 JavaBean
+        * 👉 [Access Modifiers](notes/02-oop/access-modifiers.md)：访问修饰符
     * 继承、多态与抽象
-        * extends、super
-        * Object
-        * 多态
-        * abstract
-        * interface
-        * final
+        * 👉 [extends](notes/02-oop/extends.md)：extends
+        * 👉 [super](notes/02-oop/super.md)：super
+        * 👉 [Object](notes/02-oop/Object.md)：Object类
+        * 👉 [Polymorphism](notes/02-oop/polymorphism.md)：多态
+        * 👉 [abstract](notes/03-oop-advanced/abstract.md)：抽象类与抽象方法
+        * 👉 [interface](notes/03-oop-advanced/interface.md)：接口
+        * 👉 [final](notes/03-oop-advanced/final.md)：final
     * 类级别机制
-        * static
-        * enum
-        * 代码块
-        * 内部类
-* OOP Basic
-
-    * [Attributes and Methods](notes/02-oop/attributes-and-methods.md)：属性和成员方法
-    * [this](notes/02-oop/this.md)
-    * [Encapsulation](notes/02-oop/encapsulation.md)：封装，javabean
-    * [static](notes/02-oop/static.md)：类变量(静态变量) 与 类方法(静态方法)
-    * [extends](notes/02-oop/extends.md)：继承，super
-    * [Access Modifiers](notes/02-oop/access-modifiers.md)：public protected 缺省 private
-    * [Object](notes/02-oop/Object.md)：所有类都继承了Object
-    * [super](notes/02-oop/super.md)
-    * [Polymorphism](notes/02-oop/polymorphism.md)：多态
-* OOP Advanced
-    * [final](notes/03-oop-advanced/final.md)
-    * [abstract](notes/03-oop-advanced/abstract.md)：抽象类与抽象方法
-    * [interface](notes/03-oop-advanced/interface.md)：接口
-    * [enum](notes/03-oop-advanced/enum.md)：枚举
-    * [Code Block](notes/03-oop-advanced/code-block.md)：代码块
-    * [Inner Class](notes/03-oop-advanced/inner-class.md)：内部类
-    * [lambda](notes/03-oop-advanced/lambda.md)：表达式、方法引用
-    * [Exception](notes/03-oop-advanced/exception.md)：异常
-    * [Generic](notes/03-oop-advanced/generic.md)：泛型
-    * [Collection](notes/03-oop-advanced/Collection.md)：集合
-    * [Stream](notes/03-oop-advanced/stream.md)：stream流
+        * 👉 [static](notes/02-oop/static.md)：类变量(静态变量) 与 类方法(静态方法)
+        * 👉 [enum](notes/03-oop-advanced/enum.md)：枚举
+        * 👉 [Code Block](notes/03-oop-advanced/code-block.md)：代码块
+        * 👉 [Inner Class](notes/03-oop-advanced/inner-class.md)：内部类
 * Utils Classes
     * [String](notes/04-utils/String.md)：⚠️内存分布
     * [StringBuilder and StringBuffer](notes/04-utils/StringBuilder-and-StringBuffer.md)：⚠️扩容机制
@@ -81,3 +59,9 @@ comment: Java SE 基础笔记：语法、OOP、集合、IO、多线程、JVM
 * Others
     * [Remember](details/remember.md)：反思总结
     * [Plan](details/plan.md)：进度追踪
+* 其他
+    * [lambda](notes/03-oop-advanced/lambda.md)：表达式、方法引用
+    * [Exception](notes/03-oop-advanced/exception.md)：异常
+    * [Generic](notes/03-oop-advanced/generic.md)：泛型
+    * [Collection](notes/03-oop-advanced/Collection.md)：集合
+    * [Stream](notes/03-oop-advanced/stream.md)：stream流

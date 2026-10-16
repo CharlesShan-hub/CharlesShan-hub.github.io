@@ -2,15 +2,11 @@
 title: README
 tags:
   - catalog
-date: 2026-10-15
+date: 2026-10-16
 comment:
 ---
 
 # Digital Image Processing
-
-## Overview
-
-![PKM-NEW/dip/assets/ADG-drawing|1000](assets/ADG-drawing.excalidraw.md)
 
 ## Notes
 

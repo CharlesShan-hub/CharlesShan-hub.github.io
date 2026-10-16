@@ -7,8 +7,6 @@ comment:
 
 # 访问修饰符（权限修饰符）
 
-> [Java访问控制修饰符详解（public、 private、protected 和 friendly）](http://c.biancheng.net/view/965.html)
-
 ---
 ## 精华总结
 
@@ -210,3 +208,7 @@ public class TextProcessor {
       }
   }
   ```
+
+## 参考资料
+
+1. [Java访问控制修饰符详解（public、 private、protected 和 friendly）](http://c.biancheng.net/view/965.html)
