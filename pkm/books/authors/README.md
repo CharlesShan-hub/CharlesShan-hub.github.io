@@ -519,3 +519,4 @@
 | luo-xiang | 罗翔 | 罗翔 |
 | john-rabe | John Rabe | 拉贝 |
 | david-ogilvy | David Ogilvy | 大卫•奥格威 |
+| jared-diamond | Jared Diamond | 贾雷德·戴蒙德 |
