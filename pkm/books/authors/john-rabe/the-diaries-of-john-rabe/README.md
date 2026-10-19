@@ -5,3 +5,7 @@ tags:
 date:
 comment:
 ---
+
+# 拉贝日记
+
+## 笔记

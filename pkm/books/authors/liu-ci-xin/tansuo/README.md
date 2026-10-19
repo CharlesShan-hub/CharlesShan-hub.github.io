@@ -5,3 +5,7 @@ tags:
 date:
 comment:
 ---
+
+# 坍缩
+
+## 笔记

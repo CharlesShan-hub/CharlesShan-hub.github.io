@@ -5,3 +5,7 @@ tags:
 date:
 comment:
 ---
+
+# 荒原狼
+
+## 笔记

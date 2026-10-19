@@ -5,3 +5,7 @@ tags:
 date:
 comment:
 ---
+
+# 朝闻道
+
+## 笔记

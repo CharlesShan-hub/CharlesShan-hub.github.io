@@ -5,3 +5,7 @@ tags:
 date:
 comment:
 ---
+
+# 光荣与梦想
+
+## 笔记

@@ -5,3 +5,7 @@ tags:
 date:
 comment:
 ---
+
+# 黄金原野
+
+## 笔记

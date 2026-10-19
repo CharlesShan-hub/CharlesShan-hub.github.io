@@ -5,3 +5,7 @@ tags:
 date:
 comment:
 ---
+
+# 思想者
+
+## 笔记

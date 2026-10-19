@@ -5,3 +5,7 @@ tags:
 date:
 comment:
 ---
+
+# 活着
+
+## 笔记

@@ -5,3 +5,7 @@ tags:
 date:
 comment:
 ---
+
+# 洗澡
+
+## 笔记

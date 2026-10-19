@@ -5,3 +5,7 @@ tags:
 date:
 comment:
 ---
+
+# 克苏鲁的呼唤
+
+## 笔记

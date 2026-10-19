@@ -5,3 +5,7 @@ tags:
 date:
 comment:
 ---
+
+# 超新星纪元
+
+## 笔记

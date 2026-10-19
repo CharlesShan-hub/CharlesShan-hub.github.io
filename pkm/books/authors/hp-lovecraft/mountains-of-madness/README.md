@@ -5,3 +5,7 @@ tags:
 date:
 comment:
 ---
+
+# 疯狂的山脉
+
+## 笔记
