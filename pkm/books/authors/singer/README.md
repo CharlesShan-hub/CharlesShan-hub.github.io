@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 卢布林的魔术师
+- [卢布林的魔术师](magician-of-lublin/README.md)

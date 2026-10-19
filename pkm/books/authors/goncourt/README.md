@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 日记
-- 勒内·莫普兰
-- 热尔米妮·拉赛特
+- [日记](goncourt-journal/README.md)
+- [勒内·莫普兰](renee-mauperin/README.md)
+- [热尔米妮·拉赛特](germinie-lacerteux/README.md)

@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 军人不是天生的
-- 最后一个夏天
-- 生者与死者
+- [军人不是天生的](soldiers-are-not-born/README.md)
+- [最后一个夏天](last-summer/README.md)
+- [生者与死者](living-and-the-dead/README.md)

@@ -19,9 +19,9 @@ comment:
 
 ## 书目
 
-- 第三种黑猩猩
-- 枪炮、病菌与钢铁
-- 性趣何来
-- 崩溃
-- 昨日之前的世界
-- 剧变
+- [第三种黑猩猩](third-chimpanzee/README.md)
+- [枪炮、病菌与钢铁](guns-germs-and-steel/README.md)
+- [性趣何来](why-is-sex-fun/README.md)
+- [崩溃](collapse/README.md)
+- [昨日之前的世界](world-until-yesterday/README.md)
+- [剧变](upheaval/README.md)

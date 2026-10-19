@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 西厢记诸宫调
-- 董西厢
+- [西厢记诸宫调](xixiangji-zhugongdiao/README.md)
+- [董西厢](dong-xixiang/README.md)

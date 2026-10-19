@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 查泰莱夫人的情人
-- 儿子与情人
+- [查泰莱夫人的情人](lady-chatterleys-lover/README.md)
+- [儿子与情人](sons-and-lovers/README.md)

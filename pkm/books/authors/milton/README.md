@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 失乐园
-- 复乐园
+- [失乐园](paradise-lost/README.md)
+- [复乐园](paradise-regained/README.md)

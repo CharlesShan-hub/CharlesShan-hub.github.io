@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 今古观奇
+- [今古观奇](jingu-guanqi/README.md)

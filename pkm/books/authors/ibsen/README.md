@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 玩偶之家
-- 群鬼
-- 人民公敌
+- [玩偶之家](dolls-house/README.md)
+- [群鬼](ghosts/README.md)
+- [人民公敌](enemy-of-the-people/README.md)

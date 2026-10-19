@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 敌后武工队
+- [敌后武工队](dihou-wugongdui/README.md)

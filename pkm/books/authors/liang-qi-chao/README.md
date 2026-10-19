@@ -19,7 +19,7 @@ comment:
 
 ## 书目
 
-- 少年中国说
-- 新小说
-- 论小说与群治之关系
-- 译印政治小说序
+- [少年中国说](shaonian-zhongguo-shuo/README.md)
+- [新小说](xin-xiaoshuo/README.md)
+- [论小说与群治之关系](lun-xiaoshuo-yu-qunzhi-zhi-guanxi/README.md)
+- [译印政治小说序](yiyin-zhengzhi-xiaoshuo-xu/README.md)

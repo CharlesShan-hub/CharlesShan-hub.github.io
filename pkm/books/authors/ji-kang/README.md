@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 与山巨源决绝书
-- 述志
-- 游仙
+- [与山巨源决绝书](yu-shan-ju-yuan-jue-jue-shu/README.md)
+- [述志](shu-zhi/README.md)
+- [游仙](you-xian/README.md)

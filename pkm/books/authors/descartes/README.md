@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 方法论
+- [方法论](discourse-on-the-method/README.md)

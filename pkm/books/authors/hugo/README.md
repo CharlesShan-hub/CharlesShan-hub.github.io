@@ -19,14 +19,14 @@ comment:
 
 ## 书目
 
-- 颂歌与民谣集
-- 克伦威尔
-- 欧那尼
-- 巴黎圣母院
-- 悲惨世界
-- 海上劳工
-- 笑面人
-- 九三年
-- 惩罚集
-- 静观集
-- 历代传奇
+- [颂歌与民谣集](odes-and-ballads/README.md)
+- [克伦威尔](cromwell/README.md)
+- [欧那尼](hernani/README.md)
+- [巴黎圣母院](hunchback-of-notre-dame/README.md)
+- [悲惨世界](les-miserables/README.md)
+- [海上劳工](toilers-of-the-sea/README.md)
+- [笑面人](man-who-laughs/README.md)
+- [九三年](ninety-three/README.md)
+- [惩罚集](punishments/README.md)
+- [静观集](contemplations/README.md)
+- [历代传奇](legend-of-the-ages/README.md)

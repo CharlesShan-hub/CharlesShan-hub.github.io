@@ -19,7 +19,7 @@ comment:
 
 ## 书目
 
-- 死魂灵
-- 狂人日记
-- 外套
-- 钦差大臣
+- [死魂灵](dead-souls/README.md)
+- [狂人日记](diary-of-a-madman/README.md)
+- [外套](overcoat/README.md)
+- [钦差大臣](government-inspector/README.md)

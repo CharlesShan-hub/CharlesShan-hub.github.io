@@ -19,8 +19,8 @@ comment:
 
 ## 书目
 
-- 一个人的遭遇
-- 顿河的故事
-- 浅蓝的原野
-- 静静的顿河
-- 被开垦的处女地
+- [一个人的遭遇](fate-of-a-man/README.md)
+- [顿河的故事](tales-of-the-don/README.md)
+- [浅蓝的原野](azure-steppe/README.md)
+- [静静的顿河](and-quiet-flows-don/README.md)
+- [被开垦的处女地](virgin-soil-upturned/README.md)

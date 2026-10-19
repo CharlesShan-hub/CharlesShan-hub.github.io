@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 怜农诗
+- [怜农诗](liannong-shi/README.md)

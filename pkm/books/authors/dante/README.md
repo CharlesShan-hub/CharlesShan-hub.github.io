@@ -19,8 +19,8 @@ comment:
 
 ## 书目
 
-- 神曲
-- 新生
-- 论俗语
-- 飨食
-- 帝制论
+- [神曲](divine-comedy/README.md)
+- [新生](vita-nuova/README.md)
+- [论俗语](de-vulgari-eloquentia/README.md)
+- [飨食](convivio/README.md)
+- [帝制论](de-monarchia/README.md)

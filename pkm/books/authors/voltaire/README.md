@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 老实人
-- 天真汉
-- 哲学通信
+- [老实人](candide/README.md)
+- [天真汉](ingenu/README.md)
+- [哲学通信](philosophical-letters/README.md)

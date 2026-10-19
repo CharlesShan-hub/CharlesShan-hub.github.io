@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 欧·亨利短篇小说精选
+- [欧·亨利短篇小说精选](o-henry-short-stories/README.md)

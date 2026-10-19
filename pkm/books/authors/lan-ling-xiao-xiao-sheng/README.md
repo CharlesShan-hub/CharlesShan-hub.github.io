@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 金瓶梅
+- [金瓶梅](plum-in-the-golden-vase/README.md)

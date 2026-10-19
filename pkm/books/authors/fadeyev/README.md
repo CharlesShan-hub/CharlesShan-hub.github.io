@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 毁灭
-- 青年近卫军
+- [毁灭](rout/README.md)
+- [青年近卫军](young-guard/README.md)

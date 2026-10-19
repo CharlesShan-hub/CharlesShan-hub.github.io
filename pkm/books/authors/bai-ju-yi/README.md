@@ -19,8 +19,8 @@ comment:
 
 ## 书目
 
-- 长恨歌
-- 琵琶行
-- 白氏长庆集
-- 卖炭翁
-- 观刈麦
+- [长恨歌](changhen-ge/README.md)
+- [琵琶行](pipa-xing/README.md)
+- [白氏长庆集](baishi-changqing-ji/README.md)
+- [卖炭翁](maitan-weng/README.md)
+- [观刈麦](guan-yi-mai/README.md)

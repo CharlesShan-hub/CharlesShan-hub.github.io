@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 埃涅阿斯纪
-- 布匿战争
+- [埃涅阿斯纪](aeneid/README.md)
+- [布匿战争](punic-war/README.md)

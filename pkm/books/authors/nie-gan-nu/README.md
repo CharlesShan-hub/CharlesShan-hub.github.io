@@ -19,10 +19,10 @@ comment:
 
 ## 书目
 
-- 论黄色文化
-- 论“中国之大患 ”
-- 论六个文盲卫士当局长
-- 茫然
-- 关于伍修权将军
-- 傅斯年与阶级斗争
-- 由一篇“社论” 引起的
+- [论黄色文化](lun-huangse-wenhua/README.md)
+- [论“中国之大患 ”](lun-zhongguo-zhidahuan/README.md)
+- [论六个文盲卫士当局长](lun-liuge-wenmang-weishi-dang-juzhang/README.md)
+- [茫然](mang-ran/README.md)
+- [关于伍修权将军](guanyu-wuxiuquan-jiangjun/README.md)
+- [傅斯年与阶级斗争](fusinian-yu-jiejidouzheng/README.md)
+- [由一篇“社论” 引起的](you-yipian-shelun-yinqi-de/README.md)

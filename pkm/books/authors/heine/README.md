@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 论浪漫派
-- 西里西亚的纺织工人
-- 德国——一个冬天的童话
+- [论浪漫派](romantic-school/README.md)
+- [西里西亚的纺织工人](silesian-weavers/README.md)
+- [德国——一个冬天的童话](germany-a-winters-tale/README.md)

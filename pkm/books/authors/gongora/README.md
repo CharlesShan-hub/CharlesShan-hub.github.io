@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 孤独
+- [孤独](soledades/README.md)

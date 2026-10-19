@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 佩德罗·帕拉莫
+- [佩德罗·帕拉莫](pedro-paramo/README.md)

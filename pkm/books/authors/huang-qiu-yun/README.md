@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 锈损了灵魂的悲剧
+- [锈损了灵魂的悲剧](xiusun-le-linghun-de-beiju/README.md)

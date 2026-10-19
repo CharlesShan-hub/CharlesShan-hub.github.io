@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 裸者与死者
-- 一场美国梦
+- [裸者与死者](naked-and-the-dead/README.md)
+- [一场美国梦](american-dream/README.md)

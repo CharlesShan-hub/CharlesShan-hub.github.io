@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 孙子兵法
+- [孙子兵法](art-of-war/README.md)

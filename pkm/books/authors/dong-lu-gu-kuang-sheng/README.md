@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 醉醒石
+- [醉醒石](zuixing-shi/README.md)

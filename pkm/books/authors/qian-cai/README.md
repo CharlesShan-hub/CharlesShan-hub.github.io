@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 说岳全传
+- [说岳全传](shuoyue-quanzhuan/README.md)

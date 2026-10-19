@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 奧勃洛摩夫
+- [奧勃洛摩夫](oblomov/README.md)

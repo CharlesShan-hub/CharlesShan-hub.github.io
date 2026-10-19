@@ -19,12 +19,12 @@ comment:
 
 ## 书目
 
-- 可笑的女才子
-- 太太学堂
-- 伪君子
-- 唐璜
-- 恨世者
-- 悭吝人
-- 浦尔叟雅克先生
-- 贵人迷
-- 无病呻吟
+- [可笑的女才子](affected-young-ladies/README.md)
+- [太太学堂](school-for-wives/README.md)
+- [伪君子](tartuffe/README.md)
+- [唐璜](don-juan/README.md)
+- [恨世者](misanthrope/README.md)
+- [悭吝人](miser/README.md)
+- [浦尔叟雅克先生](monsieur-de-pourceaugnac/README.md)
+- [贵人迷](bourgeois-gentleman/README.md)
+- [无病呻吟](imaginary-invalid/README.md)

@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 帖木儿
-- 马尔他岛的犹太人
-- 浮士德博士的悲剧
+- [帖木儿](tamburlaine/README.md)
+- [马尔他岛的犹太人](jew-of-malta/README.md)
+- [浮士德博士的悲剧](doctor-faustus/README.md)

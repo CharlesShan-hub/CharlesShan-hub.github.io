@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 墨子
+- [墨子](mozi/README.md)

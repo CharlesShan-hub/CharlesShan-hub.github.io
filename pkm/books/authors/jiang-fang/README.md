@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 霍小玉传
+- [霍小玉传](huoxiaoyu-zhuan/README.md)

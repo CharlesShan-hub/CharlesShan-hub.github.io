@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 登楼赋
-- 七哀诗
+- [登楼赋](deng-lou-fu/README.md)
+- [七哀诗](qiai-shi/README.md)

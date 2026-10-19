@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- “反动的无聊的小说”质疑
+- [“反动的无聊的小说”质疑](fandong-de-wuliao-de-xiaoshuo-zhiyi/README.md)

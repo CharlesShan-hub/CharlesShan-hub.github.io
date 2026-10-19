@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 神学大全
-- 反异教大全
+- [神学大全](summa-theologica/README.md)
+- [反异教大全](summa-contra-gentiles/README.md)

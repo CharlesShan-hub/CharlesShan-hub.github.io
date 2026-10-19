@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 龙泉记
+- [龙泉记](longquan-ji/README.md)

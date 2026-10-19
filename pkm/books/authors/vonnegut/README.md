@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 猫的摇篮
-- 第五号屠场
+- [猫的摇篮](cats-cradle/README.md)
+- [第五号屠场](slaughterhouse-five/README.md)

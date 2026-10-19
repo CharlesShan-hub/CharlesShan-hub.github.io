@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 和平的最强音
+- [和平的最强音](heping-de-zuiqiangyin/README.md)

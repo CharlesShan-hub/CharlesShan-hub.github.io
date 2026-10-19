@@ -19,9 +19,9 @@ comment:
 
 ## 书目
 
-- 局外人
-- 坠落
-- 快乐的死
-- 西西弗神话
-- 鼠疫
-- 反抗者
+- [局外人](stranger/README.md)
+- [坠落](fall/README.md)
+- [快乐的死](happy-death/README.md)
+- [西西弗神话](myth-of-sisyphus/README.md)
+- [鼠疫](plague/README.md)
+- [反抗者](rebel/README.md)

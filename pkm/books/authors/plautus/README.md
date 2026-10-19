@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 双生子
-- 一坛黄金
+- [双生子](menaechmi/README.md)
+- [一坛黄金](pot-of-gold/README.md)

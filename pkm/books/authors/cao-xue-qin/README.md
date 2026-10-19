@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 红楼梦
+- [红楼梦](dream-of-the-red-chamber/README.md)

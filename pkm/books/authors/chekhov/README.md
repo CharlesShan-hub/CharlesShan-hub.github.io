@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 契诃夫短篇小说
-- 樱桃园
+- [契诃夫短篇小说](chekhovs-short-stories/README.md)
+- [樱桃园](cherry-orchard/README.md)

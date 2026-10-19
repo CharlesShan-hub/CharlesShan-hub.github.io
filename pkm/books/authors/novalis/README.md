@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 夜的颂歌
+- [夜的颂歌](hymns-to-the-night/README.md)

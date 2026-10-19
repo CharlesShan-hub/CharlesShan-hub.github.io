@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 白云鄂博交响诗
+- [白云鄂博交响诗](baiyun-ebo-jiaoxiangshi/README.md)

@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 莫泊桑短篇小说
+- [莫泊桑短篇小说](maupassants-short-stories/README.md)

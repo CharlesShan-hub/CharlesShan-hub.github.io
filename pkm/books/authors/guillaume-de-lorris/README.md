@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 玫瑰传奇
+- [玫瑰传奇](romance-of-the-rose/README.md)

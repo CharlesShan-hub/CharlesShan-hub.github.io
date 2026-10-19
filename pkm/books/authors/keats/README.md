@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 夜莺颂
-- 希腊古瓮颂
+- [夜莺颂](ode-to-a-nightingale/README.md)
+- [希腊古瓮颂](ode-on-a-grecian-urn/README.md)

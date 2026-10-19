@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 典论·论文
-- 燕歌行
+- [典论·论文](dianlun-lunwen/README.md)
+- [燕歌行](yan-gexing/README.md)

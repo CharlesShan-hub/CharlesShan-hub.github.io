@@ -19,8 +19,8 @@ comment:
 
 ## 书目
 
-- 开会迷
-- 列宁
-- 好
-- 放开喉咙歌唱
-- 穿裤子的云
+- [开会迷](meeting-fans/README.md)
+- [列宁](lenin/README.md)
+- [好](good/README.md)
+- [放开喉咙歌唱](at-the-top-of-my-voice/README.md)
+- [穿裤子的云](cloud-in-trousers/README.md)

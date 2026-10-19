@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 盘缠在一起的毒蛇
-- 爱的荒漠
+- [盘缠在一起的毒蛇](knot-of-vipers/README.md)
+- [爱的荒漠](desert-of-love/README.md)

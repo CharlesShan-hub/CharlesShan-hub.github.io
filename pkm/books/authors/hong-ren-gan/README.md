@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 资政新篇
+- [资政新篇](zizheng-xinpian/README.md)

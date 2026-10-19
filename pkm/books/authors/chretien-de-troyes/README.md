@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 兰斯洛特或小车骑士
-- 伊凡或狮骑士
-- 培斯华勒或圣杯传奇
+- [兰斯洛特或小车骑士](lancelot-or-the-knight-of-the-cart/README.md)
+- [伊凡或狮骑士](yvain-or-the-knight-of-the-lion/README.md)
+- [培斯华勒或圣杯传奇](perceval-story-of-the-grail/README.md)

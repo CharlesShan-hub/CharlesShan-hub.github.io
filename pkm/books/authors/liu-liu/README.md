@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 烈火金刚
+- [烈火金刚](liehuo-jingang/README.md)

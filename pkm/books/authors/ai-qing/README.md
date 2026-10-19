@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 藏枪记
-- 我想念我的祖国
+- [藏枪记](cangqiangji/README.md)
+- [我想念我的祖国](wo-xiangnian-wo-de-zuguo/README.md)

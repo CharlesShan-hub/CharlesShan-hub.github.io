@@ -19,7 +19,7 @@ comment:
 
 ## 书目
 
-- 约翰·克利斯朵夫
-- 贝多芬传
-- 米开朗琪罗传
-- 托尔斯泰传
+- [约翰·克利斯朵夫](jean-christophe/README.md)
+- [贝多芬传](life-of-beethoven/README.md)
+- [米开朗琪罗传](life-of-michelangelo/README.md)
+- [托尔斯泰传](life-of-tolstoy/README.md)

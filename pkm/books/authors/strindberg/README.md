@@ -19,7 +19,7 @@ comment:
 
 ## 书目
 
-- 被放逐者
-- 奥洛夫老师
-- 鬼魂奏鸣曲
-- 在罗马
+- [被放逐者](outlaw/README.md)
+- [奥洛夫老师](master-olof/README.md)
+- [鬼魂奏鸣曲](ghost-sonata/README.md)
+- [在罗马](in-rome/README.md)

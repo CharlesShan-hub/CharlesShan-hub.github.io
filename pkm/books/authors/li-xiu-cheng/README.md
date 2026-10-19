@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 忠王李秀成自述手稿
+- [忠王李秀成自述手稿](zhongwang-lixiucheng-zishu-shougao/README.md)

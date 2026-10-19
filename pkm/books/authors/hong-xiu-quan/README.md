@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 原道救世歌
-- 原道醒世训
-- 原道觉世训
+- [原道救世歌](yuandao-jiushi-ge/README.md)
+- [原道醒世训](yuandao-xingshi-xun/README.md)
+- [原道觉世训](yuandao-jueshi-xun/README.md)

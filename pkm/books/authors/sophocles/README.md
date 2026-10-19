@@ -19,8 +19,8 @@ comment:
 
 ## 书目
 
-- 安提戈涅
-- 俄狄浦斯王
-- 厄勒克特拉
-- 特刺咯斯少女
-- 俄狄浦斯在克洛诺斯
+- [安提戈涅](antigone/README.md)
+- [俄狄浦斯王](oedipus-rex/README.md)
+- [厄勒克特拉](electra/README.md)
+- [特刺咯斯少女](trachiniae/README.md)
+- [俄狄浦斯在克洛诺斯](oedipus-at-colonus/README.md)

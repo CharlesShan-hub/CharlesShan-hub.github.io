@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 禅与摩托车维修艺术
+- [禅与摩托车维修艺术](zen-and-the-art-of-motorcycle-maintenance/README.md)

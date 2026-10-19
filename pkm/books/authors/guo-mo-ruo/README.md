@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 新华颂
+- [新华颂](xinhua-song/README.md)

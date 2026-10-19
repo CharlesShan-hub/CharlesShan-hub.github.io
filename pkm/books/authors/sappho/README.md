@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 阿佛洛狄忒颂
+- [阿佛洛狄忒颂](hymn-to-aphrodite/README.md)

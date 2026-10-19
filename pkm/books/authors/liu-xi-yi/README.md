@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 代悲白头翁
-- 孤松篇
+- [代悲白头翁](daibei-baitouweng/README.md)
+- [孤松篇](gusong-pian/README.md)

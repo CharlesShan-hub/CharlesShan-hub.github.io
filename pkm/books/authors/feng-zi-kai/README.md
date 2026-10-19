@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 庐山面目——庐山游记之一
+- [庐山面目——庐山游记之一](lushanmianmu-lushan-youji-zhiyi/README.md)

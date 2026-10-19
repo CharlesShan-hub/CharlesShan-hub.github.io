@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 太阳骑士
+- [太阳骑士](knight-of-the-sun/README.md)

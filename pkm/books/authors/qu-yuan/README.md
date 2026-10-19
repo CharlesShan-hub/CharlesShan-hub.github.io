@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 楚辞
-- 离骚
+- [楚辞](chu-ci/README.md)
+- [离骚](li-sao/README.md)

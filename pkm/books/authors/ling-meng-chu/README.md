@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 拍案惊奇
-- 二拍
+- [拍案惊奇](paian-jingqi/README.md)
+- [二拍](erpai/README.md)

@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 一篇功德无量的文章
+- [一篇功德无量的文章](yipian-gongdewuliang-de-wenzhang/README.md)

@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 阿马迪斯·德·高拉
-- 埃斯普兰迪安的英雄业绩
-- 骑士西法尔
+- [阿马迪斯·德·高拉](amadis-de-gaula/README.md)
+- [埃斯普兰迪安的英雄业绩](sergas-de-esplandian/README.md)
+- [骑士西法尔](knight-zifar/README.md)

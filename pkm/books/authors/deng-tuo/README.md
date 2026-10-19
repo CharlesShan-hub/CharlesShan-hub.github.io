@@ -19,10 +19,10 @@ comment:
 
 ## 书目
 
-- 燕山夜话
-- 一个鸡蛋的家当
-- 说大话的故事
-- 主观和虛心
-- 王道和箱道
-- 变三不知为三知
-- 智谋是可靠的吗
+- [燕山夜话](yanshan-yehua/README.md)
+- [一个鸡蛋的家当](yige-jidan-de-jiadang/README.md)
+- [说大话的故事](shuodahua-de-gushi/README.md)
+- [主观和虛心](zhuguan-he-xuxin/README.md)
+- [王道和箱道](wangdao-he-xiang-dao/README.md)
+- [变三不知为三知](biansan-buzhi-wei-sanzhi/README.md)
+- [智谋是可靠的吗](zhimou-shi-kekao-de-ma/README.md)

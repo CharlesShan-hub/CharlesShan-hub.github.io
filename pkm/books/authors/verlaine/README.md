@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 魏尔伦诗选
+- [魏尔伦诗选](verlaine-selected-poems/README.md)

@@ -19,7 +19,7 @@ comment:
 
 ## 书目
 
-- 法律的悖论
-- 刑法学讲义
-- 法治的细节
-- 刑罚的历史
+- [法律的悖论](falv-de-beilun/README.md)
+- [刑法学讲义](xingfaxue-jiangyi/README.md)
+- [法治的细节](fazhi-de-xijie/README.md)
+- [刑罚的历史](xingfa-de-lishi/README.md)

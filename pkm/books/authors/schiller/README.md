@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 阴谋与爱情
-- 论朴素的诗与感伤的诗
-- 审美教育书简
+- [阴谋与爱情](intrigue-and-love/README.md)
+- [论朴素的诗与感伤的诗](naive-and-sentimental-poetry/README.md)
+- [审美教育书简](aesthetic-education-letters/README.md)

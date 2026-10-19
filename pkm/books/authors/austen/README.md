@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 傲慢与偏见
-- 理智与情感
-- 爱玛
+- [傲慢与偏见](pride-and-prejudice/README.md)
+- [理智与情感](sense-and-sensibility/README.md)
+- [爱玛](emma/README.md)

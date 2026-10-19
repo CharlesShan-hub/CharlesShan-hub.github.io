@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 童区寄传
-- 捕蛇者说
+- [童区寄传](tongquji-zhuan/README.md)
+- [捕蛇者说](bushezhe-shuo/README.md)

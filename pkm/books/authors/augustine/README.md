@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 忏悔录
-- 上帝之城
+- [忏悔录](confessions/README.md)
+- [上帝之城](city-of-god/README.md)

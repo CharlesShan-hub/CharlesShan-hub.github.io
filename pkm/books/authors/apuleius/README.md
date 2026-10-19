@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 金驴记
+- [金驴记](golden-ass/README.md)

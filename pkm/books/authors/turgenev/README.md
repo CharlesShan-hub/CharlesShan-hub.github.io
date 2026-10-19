@@ -19,9 +19,9 @@ comment:
 
 ## 书目
 
-- 猎人笔记
-- 罗亭
-- 贵族之家
-- 前夜
-- 父与子
-- 处女地
+- [猎人笔记](sportsmans-sketches/README.md)
+- [罗亭](rudin/README.md)
+- [贵族之家](nest-of-gentlefolk/README.md)
+- [前夜](on-the-eve/README.md)
+- [父与子](fathers-and-sons/README.md)
+- [处女地](virgin-soil/README.md)

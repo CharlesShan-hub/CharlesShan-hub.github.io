@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 魔鬼的万灵药水
-- 金罐
-- 侏儒查克斯
+- [魔鬼的万灵药水](devils-elixirs/README.md)
+- [金罐](golden-pot/README.md)
+- [侏儒查克斯](little-zaches/README.md)

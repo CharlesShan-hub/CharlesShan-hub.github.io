@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 西厢记
+- [西厢记](romance-of-the-western-chamber/README.md)

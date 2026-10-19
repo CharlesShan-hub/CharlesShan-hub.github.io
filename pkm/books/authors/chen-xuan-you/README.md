@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 离魂记
+- [离魂记](lihun-ji/README.md)

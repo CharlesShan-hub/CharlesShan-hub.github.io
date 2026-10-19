@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 巴黎的乡下人
+- [巴黎的乡下人](paris-peasant/README.md)

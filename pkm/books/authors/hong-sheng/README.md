@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 长生殿
+- [长生殿](palace-of-eternal-life/README.md)

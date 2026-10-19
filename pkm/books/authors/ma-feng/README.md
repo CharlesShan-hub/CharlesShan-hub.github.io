@@ -19,7 +19,7 @@ comment:
 
 ## 书目
 
-- 吕梁英雄传
-- 我的第一个上级
-- 一架弹花机
-- 三年早知道
+- [吕梁英雄传](lvliang-yingxiongzhuan/README.md)
+- [我的第一个上级](wo-de-diyige-shangji/README.md)
+- [一架弹花机](yijia-danhuaji/README.md)
+- [三年早知道](sannian-zao-zhidao/README.md)

@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 窥视者
-- 橡皮
+- [窥视者](voyeur/README.md)
+- [橡皮](erasers/README.md)

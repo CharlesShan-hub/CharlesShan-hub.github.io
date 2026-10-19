@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 基督教真谛
+- [基督教真谛](genius-of-christianity/README.md)

@@ -19,7 +19,7 @@ comment:
 
 ## 书目
 
-- 皇甫村三年
-- 狠透铁
-- 创业史
-- 王家斌
+- [皇甫村三年](huangfu-cun-sannian/README.md)
+- [狠透铁](hentoutie/README.md)
+- [创业史](chuangyeshi/README.md)
+- [王家斌](wangjia-bin/README.md)

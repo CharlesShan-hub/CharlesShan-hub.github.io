@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 远离尘嚣
-- 还乡
+- [远离尘嚣](far-from-the-madding-crowd/README.md)
+- [还乡](return-of-the-native/README.md)
 - [德伯家的苔丝](tess-of-the-durbervilles/README.md)

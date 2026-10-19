@@ -19,11 +19,11 @@ comment:
 
 ## 书目
 
-- 自由颂
-- 高加索的俘虏
-- 叶甫盖尼·奥涅金
-- 上尉的女儿
-- 驿站长
-- 自由颂
-- 高加索的俘虏
-- 茨冈
+- [自由颂](ode-to-liberty/README.md)
+- [高加索的俘虏](prisoner-of-the-caucasus/README.md)
+- [叶甫盖尼·奥涅金](eugene-onegin/README.md)
+- [上尉的女儿](captains-daughter/README.md)
+- [驿站长](station-master/README.md)
+- [自由颂](ode-to-liberty/README.md)
+- [高加索的俘虏](prisoner-of-the-caucasus/README.md)
+- [茨冈](gypsies/README.md)

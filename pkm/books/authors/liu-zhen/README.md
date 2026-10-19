@@ -19,11 +19,11 @@ comment:
 
 ## 书目
 
-- 核桃的秘密
-- 我和小荣
-- 长长的流水
-- 英雄的乐章
-- 好大娘
-- 弟弟
-- 豆
-- 小舞台和大舞台
+- [核桃的秘密](hetao-de-mimi/README.md)
+- [我和小荣](wo-he-xiaorong/README.md)
+- [长长的流水](changchangde-liushui/README.md)
+- [英雄的乐章](yingxiong-de-yuezhang/README.md)
+- [好大娘](hao-daniang/README.md)
+- [弟弟](di-di/README.md)
+- [豆](dou/README.md)
+- [小舞台和大舞台](xiao-wutai-he-da-wutai/README.md)

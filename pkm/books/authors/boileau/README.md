@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 诗的艺术
+- [诗的艺术](art-of-poetry/README.md)

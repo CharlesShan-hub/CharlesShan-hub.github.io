@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 怎么办？
-- 艺术对现实的审美关系
-- 俄国文学果戈理时期概观
+- [怎么办？](what-is-to-be-done/README.md)
+- [艺术对现实的审美关系](aesthetic-relation-of-art-to-reality/README.md)
+- [俄国文学果戈理时期概观](essays-on-the-gogol-period-of-russian-literature/README.md)

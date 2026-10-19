@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 自由与爱情
+- [自由与爱情](liberty-and-love/README.md)

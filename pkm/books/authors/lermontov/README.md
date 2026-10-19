@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 当代英雄
+- [当代英雄](hero-of-our-time/README.md)

@@ -19,14 +19,14 @@ comment:
 
 ## 书目
 
-- 恰尔德·哈洛尔德游记
-- 唐璜
-- 审判的幻景
-- 异教徒
-- 阿比道斯的新娘
-- 海盗
-- 莱拉
-- 柯林斯之围
-- 巴里西纳
-- 曼弗雷德
-- 该隐
+- [恰尔德·哈洛尔德游记](childe-harolds-pilgrimage/README.md)
+- [唐璜](don-juan/README.md)
+- [审判的幻景](vision-of-judgment/README.md)
+- [异教徒](giaour/README.md)
+- [阿比道斯的新娘](bride-of-abydos/README.md)
+- [海盗](corsair/README.md)
+- [莱拉](lara/README.md)
+- [柯林斯之围](siege-of-corinth/README.md)
+- [巴里西纳](parisina/README.md)
+- [曼弗雷德](manfred/README.md)
+- [该隐](cain/README.md)

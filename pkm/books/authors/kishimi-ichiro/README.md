@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 被讨厌的勇气
+- [被讨厌的勇气](kirawareru-yuki/README.md)

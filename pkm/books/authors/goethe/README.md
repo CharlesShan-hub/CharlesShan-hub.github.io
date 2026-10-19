@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 浮士德
-- 少年维特之烦恼
+- [浮士德](faust/README.md)
+- [少年维特之烦恼](sorrows-of-young-werther/README.md)

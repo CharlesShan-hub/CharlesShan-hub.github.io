@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 琼斯皇
-- 毛猿
+- [琼斯皇](emperor-jones/README.md)
+- [毛猿](hairy-ape/README.md)

@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 春晓
-- 鹿柴
-- 过故人庄
+- [春晓](chun-xiao/README.md)
+- [鹿柴](lu-zhai/README.md)
+- [过故人庄](guo-guren-zhuang/README.md)

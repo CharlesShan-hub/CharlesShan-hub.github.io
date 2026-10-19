@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 拉辛与莎士比亚
-- 论爱情
-- 红与黑
+- [拉辛与莎士比亚](racine-and-shakespeare/README.md)
+- [论爱情](on-love/README.md)
+- [红与黑](red-and-the-black/README.md)

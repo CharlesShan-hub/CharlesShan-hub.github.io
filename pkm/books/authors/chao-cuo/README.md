@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 论贵粟疏
-- 募民迁塞疏
+- [论贵粟疏](lun-gui-su-shu/README.md)
+- [募民迁塞疏](mu-min-qian-sai-shu/README.md)

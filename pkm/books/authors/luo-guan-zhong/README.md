@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 三国演义
-- 三遂平妖传
-- 水浒传
+- [三国演义](romance-of-the-three-kingdoms/README.md)
+- [三遂平妖传](sansui-pingyao-zhuan/README.md)
+- [水浒传](water-margin/README.md)

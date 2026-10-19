@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 奥特朗图堡
+- [奥特朗图堡](castle-of-otranto/README.md)

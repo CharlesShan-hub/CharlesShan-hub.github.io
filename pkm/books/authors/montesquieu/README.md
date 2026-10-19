@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 论法的精神
-- 波斯人信札
+- [论法的精神](spirit-of-the-laws/README.md)
+- [波斯人信札](persian-letters/README.md)

@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 伊凡·杰尼索维奇的一天
+- [伊凡·杰尼索维奇的一天](one-day-in-the-life-of-ivan-denisovich/README.md)

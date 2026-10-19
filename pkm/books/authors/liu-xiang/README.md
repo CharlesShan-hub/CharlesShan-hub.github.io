@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 战国策
-- 列女传
-- 新序
+- [战国策](stratagems-of-the-warring-states/README.md)
+- [列女传](lie-nv-zhuan/README.md)
+- [新序](xin-xu/README.md)

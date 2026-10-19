@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 帕米拉
-- 克拉丽莎
+- [帕米拉](pamela/README.md)
+- [克拉丽莎](clarissa/README.md)

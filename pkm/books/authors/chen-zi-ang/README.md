@@ -19,7 +19,7 @@ comment:
 
 ## 书目
 
-- 修竹篇序
-- 与东方公书
-- 感遇
-- 登幽州台歌
+- [修竹篇序](xiuzhupian-xu/README.md)
+- [与东方公书](yu-dongfang-gongshu/README.md)
+- [感遇](gan-yu/README.md)
+- [登幽州台歌](deng-youzhou-taige/README.md)

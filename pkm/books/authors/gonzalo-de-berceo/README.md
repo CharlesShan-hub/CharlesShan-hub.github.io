@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 圣母显圣记
+- [圣母显圣记](miracles-of-our-lady/README.md)

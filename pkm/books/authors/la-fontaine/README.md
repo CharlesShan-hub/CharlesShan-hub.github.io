@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 寓言诗
+- [寓言诗](fables/README.md)

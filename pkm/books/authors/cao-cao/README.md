@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 蒿里行
-- 短歌行
+- [蒿里行](haoli-xing/README.md)
+- [短歌行](duange-xing/README.md)

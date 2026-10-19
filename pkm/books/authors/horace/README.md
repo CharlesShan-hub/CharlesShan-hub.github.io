@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 诗艺
-- 歌集
+- [诗艺](ars-poetica/README.md)
+- [歌集](odes/README.md)

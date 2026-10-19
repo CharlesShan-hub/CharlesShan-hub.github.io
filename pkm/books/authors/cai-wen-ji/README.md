@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 悲愤诗
-- 胡笳十八拍
+- [悲愤诗](bei-fen-shi/README.md)
+- [胡笳十八拍](hu-jia-shi-ba-pai/README.md)

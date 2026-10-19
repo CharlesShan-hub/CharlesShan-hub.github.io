@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 亚历山大传奇
-- 特洛伊传奇
+- [亚历山大传奇](romance-of-alexander/README.md)
+- [特洛伊传奇](romance-of-troy/README.md)

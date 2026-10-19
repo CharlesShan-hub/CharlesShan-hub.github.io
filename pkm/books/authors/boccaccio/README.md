@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 十日谈
+- [十日谈](decameron/README.md)

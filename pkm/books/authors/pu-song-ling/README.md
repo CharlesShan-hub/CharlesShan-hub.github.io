@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 聊斋志异
+- [聊斋志异](strange-stories-from-a-chinese-studio/README.md)

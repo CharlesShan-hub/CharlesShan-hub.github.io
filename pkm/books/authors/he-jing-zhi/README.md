@@ -19,13 +19,13 @@ comment:
 
 ## 书目
 
-- 放声歌唱
-- 西去列车的窗口
-- 三门峡歌
-- 桂林山水歌
-- 十年领歇
-- 东风万里
-- 雷锋之歌
-- 三门峡—梳妆台
-- 放歌集
-- 贺敬之诗选
+- [放声歌唱](fangshenggechang/README.md)
+- [西去列车的窗口](xi-qu-lieche-de-chuangkou/README.md)
+- [三门峡歌](sanmenxia-ge/README.md)
+- [桂林山水歌](guilinshanshui-ge/README.md)
+- [十年领歇](shinian-lingxie/README.md)
+- [东风万里](dongfeng-wanli/README.md)
+- [雷锋之歌](leifeng-zhige/README.md)
+- [三门峡—梳妆台](sanmenxia-shuzhuangtai/README.md)
+- [放歌集](fangge-ji/README.md)
+- [贺敬之诗选](hejingzhi-shixuan/README.md)

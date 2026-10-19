@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 养花
-- 文艺学徒
+- [养花](yang-hua/README.md)
+- [文艺学徒](wenyi-xuetu/README.md)
 - [猫城记](mao-chengji/README.md)

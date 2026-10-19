@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 诗学
+- [诗学](poetics/README.md)

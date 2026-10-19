@@ -19,7 +19,7 @@ comment:
 
 ## 书目
 
-- 太阳照常升起
-- 永别了，武器
-- 丧钟为谁而鸣
-- 老人与海
+- [太阳照常升起](sun-also-rises/README.md)
+- [永别了，武器](farewell-to-arms/README.md)
+- [丧钟为谁而鸣](for-whom-the-bell-tolls/README.md)
+- [老人与海](old-man-and-the-sea/README.md)

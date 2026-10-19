@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 龙潭
+- [龙潭](long-tan/README.md)

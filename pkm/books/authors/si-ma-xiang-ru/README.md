@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 长门赋
-- 子虚赋
+- [长门赋](chang-men-fu/README.md)
+- [子虚赋](zi-xu-fu/README.md)

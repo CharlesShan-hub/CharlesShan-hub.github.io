@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 最后一个莫西干人
-- 皮袜子故事集
+- [最后一个莫西干人](last-of-the-mohicans/README.md)
+- [皮袜子故事集](leatherstocking-tales/README.md)

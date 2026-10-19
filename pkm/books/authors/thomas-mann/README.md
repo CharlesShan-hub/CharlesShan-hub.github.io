@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 布登勃洛克一家
+- [布登勃洛克一家](buddenbrooks/README.md)

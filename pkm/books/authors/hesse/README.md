@@ -21,6 +21,6 @@ comment:
 
 - [荒原狼](steppenwolf/README.md)
 - [悉达多](siddhartha/README.md)
-- 在轮下
-- 纳尔奇思与歌尔得蒙
-- 德米安:彷徨少年时
+- [在轮下](beneath-the-wheel/README.md)
+- [纳尔奇思与歌尔得蒙](narcissus-and-goldmund/README.md)
+- [德米安:彷徨少年时](demian/README.md)

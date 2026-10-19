@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 古镜记
+- [古镜记](gujing-ji/README.md)

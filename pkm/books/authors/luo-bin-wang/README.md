@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 讨武氏檄
+- [讨武氏檄](taowushi-xi/README.md)

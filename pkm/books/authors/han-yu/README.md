@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 师说
-- 毛颖传
+- [师说](shi-shuo/README.md)
+- [毛颖传](maoying-zhuan/README.md)

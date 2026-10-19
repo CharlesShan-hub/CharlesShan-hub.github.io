@@ -19,9 +19,9 @@ comment:
 
 ## 书目
 
-- 通往威根码头之路
-- 巴黎伦敦落魄记
-- 向加泰罗尼亚致敬
-- 动物农场
+- [通往威根码头之路](road-to-wigan-pier/README.md)
+- [巴黎伦敦落魄记](down-and-out-in-paris-and-london/README.md)
+- [向加泰罗尼亚致敬](homage-to-catalonia/README.md)
+- [动物农场](animal-farm/README.md)
 - [1984](1984/README.md)
-- 缅甸岁月
+- [缅甸岁月](burmese-days/README.md)

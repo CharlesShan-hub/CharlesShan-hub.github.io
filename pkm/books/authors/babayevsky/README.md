@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 金星英雄
+- [金星英雄](cavalier-of-the-golden-star/README.md)

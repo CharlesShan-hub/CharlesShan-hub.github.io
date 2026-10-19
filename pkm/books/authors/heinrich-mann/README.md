@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 臣仆
-- 穷人
-- 首脑
+- [臣仆](loyal-subject/README.md)
+- [穷人](poor/README.md)
+- [首脑](head/README.md)

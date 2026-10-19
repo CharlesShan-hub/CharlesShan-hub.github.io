@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 小东西
-- 都德短篇小说选
+- [小东西](petit-chose/README.md)
+- [都德短篇小说选](daudets-short-stories/README.md)

@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 追风筝的人
-- 灿烂千阳
-- 群山回唱
+- [追风筝的人](kite-runner/README.md)
+- [灿烂千阳](thousand-splendid-suns/README.md)
+- [群山回唱](mountains-echoed/README.md)

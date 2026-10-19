@@ -19,9 +19,9 @@ comment:
 
 ## 书目
 
-- 菊花石
-- 杨高传
-- 向昆仑
-- 生活之歌
-- 海誓
-- 剑歌
+- [菊花石](juhuashi/README.md)
+- [杨高传](yanggao-zhuan/README.md)
+- [向昆仑](xiang-kunlun/README.md)
+- [生活之歌](shenghuo-zhige/README.md)
+- [海誓](hai-shi/README.md)
+- [剑歌](jian-ge/README.md)

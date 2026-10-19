@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 阿尔卡拉的胡安
-- 堂吉柯德
-- 训诫小说集
+- [阿尔卡拉的胡安](juan-of-alcala/README.md)
+- [堂吉柯德](don-quixote/README.md)
+- [训诫小说集](exemplary-novels/README.md)

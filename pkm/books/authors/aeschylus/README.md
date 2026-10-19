@@ -19,10 +19,10 @@ comment:
 
 ## 书目
 
-- 乞援人
-- 波斯人
-- 七将攻忒拜
-- 普罗米修斯
-- 阿伽门农
-- 奠酒人
-- 报仇神
+- [乞援人](suppliants/README.md)
+- [波斯人](persians/README.md)
+- [七将攻忒拜](seven-against-thebes/README.md)
+- [普罗米修斯](prometheus-bound/README.md)
+- [阿伽门农](agamemnon/README.md)
+- [奠酒人](libation-bearers/README.md)
+- [报仇神](eumenides/README.md)

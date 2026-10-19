@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 一个世纪儿的忏悔
+- [一个世纪儿的忏悔](confession-of-a-child-of-the-century/README.md)

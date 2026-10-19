@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 海滨墓园
+- [海滨墓园](cemetery-by-the-sea/README.md)

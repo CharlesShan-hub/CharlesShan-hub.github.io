@@ -19,10 +19,10 @@ comment:
 
 ## 书目
 
-- 生活在英雄们的中间
-- 我们会见了彭德怀司令员
-- 志愿军一日
-- 志愿军英雄传
-- 朗鲜通讯报告选
-- 秋夜
-- “艰苦”和“浪费”
+- [生活在英雄们的中间](shenghuo-zai-yingxiong-men-de-zhongjian/README.md)
+- [我们会见了彭德怀司令员](women-huijian-le-pengdehuai-silingyuan/README.md)
+- [志愿军一日](zhiyuanjun-yiri/README.md)
+- [志愿军英雄传](zhiyuanjun-yingxiongzhuan/README.md)
+- [朗鲜通讯报告选](langxian-tongxun-baogao-xuan/README.md)
+- [秋夜](qiu-ye/README.md)
+- [“艰苦”和“浪费”](jianku-he-langfei/README.md)

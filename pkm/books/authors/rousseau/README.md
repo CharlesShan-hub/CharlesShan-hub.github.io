@@ -19,9 +19,9 @@ comment:
 
 ## 书目
 
-- 论科学与艺术
-- 论人类不平等的起源和基础
-- 社会契约论
-- 爱弥尔
-- 新爱洛依丝
-- 忏悔录
+- [论科学与艺术](discourse-on-the-sciences-and-arts/README.md)
+- [论人类不平等的起源和基础](discourse-on-the-origin-of-inequality/README.md)
+- [社会契约论](social-contract/README.md)
+- [爱弥尔](emile/README.md)
+- [新爱洛依丝](new-heloise/README.md)
+- [忏悔录](confessions/README.md)

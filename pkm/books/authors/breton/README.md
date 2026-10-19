@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 娜嘉
-- 黑色幽默
+- [娜嘉](nadja/README.md)
+- [黑色幽默](anthology-of-black-humor/README.md)

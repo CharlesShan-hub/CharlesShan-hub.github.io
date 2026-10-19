@@ -19,7 +19,7 @@ comment:
 
 ## 书目
 
-- 百年孤独
-- 霍乱时期的爱情
-- 活着为了讲述
-- 一场事先张扬的凶杀案
+- [百年孤独](one-hundred-years-of-solitude/README.md)
+- [霍乱时期的爱情](love-in-the-time-of-cholera/README.md)
+- [活着为了讲述](living-to-tell-the-tale/README.md)
+- [一场事先张扬的凶杀案](chronicle-of-a-death-foretold/README.md)

@@ -19,8 +19,8 @@ comment:
 
 ## 书目
 
-- 鸟
-- 财神
-- 公民大会妇女
-- 阿卡奈人
-- 蛙
+- [鸟](birds/README.md)
+- [财神](wealth/README.md)
+- [公民大会妇女](assemblywomen/README.md)
+- [阿卡奈人](acharnians/README.md)
+- [蛙](frogs/README.md)

@@ -19,8 +19,8 @@ comment:
 
 ## 书目
 
-- 朝鲜在战火中前进
-- 英雄城——平壤
-- 红玛瑙集
-- 长江三日
-- 平明小札
+- [朝鲜在战火中前进](chaoxian-zai-zhanhuo-zhong-qianjin/README.md)
+- [英雄城——平壤](yingxiongcheng-pingrang/README.md)
+- [红玛瑙集](hongmanao-ji/README.md)
+- [长江三日](changjiang-sanri/README.md)
+- [平明小札](pingming-xiaozha/README.md)

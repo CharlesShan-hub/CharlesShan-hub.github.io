@@ -19,18 +19,18 @@ comment:
 
 ## 书目
 
-- 党费
-- 七根火柴
-- 后代
-- 普通劳动者
-- 三人行
-- 粮食的故事
-- 灯光
-- 三人行
-- 支队政委
-- 妈妈
-- 赶队
-- 珍贵的纪念品
-- 小游击队员
-- 草
-- 闪闪的红星
+- [党费](dang-fei/README.md)
+- [七根火柴](qigen-huochai/README.md)
+- [后代](hou-dai/README.md)
+- [普通劳动者](putong-laodongzhe/README.md)
+- [三人行](sanrenxing/README.md)
+- [粮食的故事](liangshi-de-gushi/README.md)
+- [灯光](deng-guang/README.md)
+- [三人行](sanrenxing/README.md)
+- [支队政委](zhidui-zhengwei/README.md)
+- [妈妈](ma-ma/README.md)
+- [赶队](gan-dui/README.md)
+- [珍贵的纪念品](zhengui-de-jinianpin/README.md)
+- [小游击队员](xiao-youjiduiyuan/README.md)
+- [草](cao/README.md)
+- [闪闪的红星](shanshan-de-hongxing/README.md)

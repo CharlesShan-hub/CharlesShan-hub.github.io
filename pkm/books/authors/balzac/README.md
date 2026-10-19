@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 人间喜剧
-- 欧也妮·葛朗台
+- [人间喜剧](comedie-humaine/README.md)
+- [欧也妮·葛朗台](eugenie-grandet/README.md)

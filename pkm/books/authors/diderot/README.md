@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 宿命论者雅克
-- 拉摩的侄儿
-- 修女
+- [宿命论者雅克](jacques-the-fatalist/README.md)
+- [拉摩的侄儿](rameaus-nephew/README.md)
+- [修女](nun/README.md)

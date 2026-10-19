@@ -20,9 +20,9 @@ comment:
 ## 书目
 
 - [鲁滨逊漂流记](robinson-crusoe/README.md)
-- 辛格尔顿船长
-- 摩尔·弗兰德斯
-- 大疫年日记
-- 一个骑士的回忆录
-- 家庭指导手册
-- 新版家庭指导手册
+- [辛格尔顿船长](captain-singleton/README.md)
+- [摩尔·弗兰德斯](moll-flanders/README.md)
+- [大疫年日记](journal-of-the-plague-year/README.md)
+- [一个骑士的回忆录](memoirs-of-a-cavalier/README.md)
+- [家庭指导手册](family-instructor/README.md)
+- [新版家庭指导手册](new-family-instructor/README.md)

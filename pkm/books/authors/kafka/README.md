@@ -19,9 +19,9 @@ comment:
 
 ## 书目
 
-- 判决
-- 饥饿艺术家
+- [判决](judgment/README.md)
+- [饥饿艺术家](hunger-artist/README.md)
 - [变形记](metamorphosis/README.md)
-- 城堡
-- 诉讼
-- 美国
+- [城堡](castle/README.md)
+- [诉讼](trial/README.md)
+- [美国](amerika/README.md)

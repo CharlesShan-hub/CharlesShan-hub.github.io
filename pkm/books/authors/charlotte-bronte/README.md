@@ -20,5 +20,5 @@ comment:
 ## 书目
 
 - [简·爱](jane-eyre/README.md)
-- 教师
-- 谢利
+- [教师](professor/README.md)
+- [谢利](shirley/README.md)

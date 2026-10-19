@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 内蒙访古
+- [内蒙访古](neimeng-fanggu/README.md)

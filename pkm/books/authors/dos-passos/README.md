@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 北纬四十二度
-- 一九一九
-- 赚大钱
+- [北纬四十二度](42nd-parallel/README.md)
+- [一九一九](1919/README.md)
+- [赚大钱](big-money/README.md)

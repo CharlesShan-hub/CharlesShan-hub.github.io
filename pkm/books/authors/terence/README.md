@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 婆母
-- 两兄弟
-- 福尔弥昂
+- [婆母](mother-in-law/README.md)
+- [两兄弟](brothers/README.md)
+- [福尔弥昂](phormio/README.md)

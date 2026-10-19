@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 王永淮
-- 姚良成
-- 老羊工
+- [王永淮](wangyonghuai/README.md)
+- [姚良成](yaoliangcheng/README.md)
+- [老羊工](lao-yanggong/README.md)
