@@ -10,4 +10,4 @@ comment:
 
 ## 书目
 
-* [格列佛游记](格列佛游记/README.md)
+* [格列佛游记](gullivers-travels/README.md)

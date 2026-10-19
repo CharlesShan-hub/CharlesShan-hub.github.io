@@ -10,6 +10,6 @@ comment:
 
 ## 书目
 
-* [在细雨中呼喊](在细雨中呼喊/README.md)
-* [活着](活着/README.md)
-* [许三观卖血记](许三观卖血记/README.md)
+* [在细雨中呼喊](zai-xiyu-zhong-huhan/README.md)
+* [活着](huozhe/README.md)
+* [许三观卖血记](xu-sanguan-maixueji/README.md)

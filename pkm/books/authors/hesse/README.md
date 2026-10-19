@@ -10,5 +10,5 @@ comment:
 
 ## 书目
 
-* [悉达多](悉达多/README.md)
-* [荒原狼](荒原狼/README.md)
+* [悉达多](siddhartha/README.md)
+* [荒原狼](steppenwolf/README.md)

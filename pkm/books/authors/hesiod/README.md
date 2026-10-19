@@ -10,5 +10,5 @@ comment:
 
 ## 书目
 
-* [工作与时日](工作与时日/README.md)
-* [神谱](神谱/README.md)
+* [工作与时日](works-and-days/README.md)
+* [神谱](theogony/README.md)

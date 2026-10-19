@@ -10,4 +10,4 @@ comment:
 
 ## 书目
 
-* [一个广告人的自白](一个广告人的自白/README.md)
+* [一个广告人的自白](confessions-of-an-advertising-man/README.md)

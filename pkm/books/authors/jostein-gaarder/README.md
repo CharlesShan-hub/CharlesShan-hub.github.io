@@ -10,4 +10,4 @@ comment:
 
 ## 书目
 
-* [苏菲的世界](苏菲的世界/README.md)
+* [苏菲的世界](sophies-world/README.md)

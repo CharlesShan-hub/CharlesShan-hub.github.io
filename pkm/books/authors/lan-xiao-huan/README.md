@@ -10,4 +10,4 @@ comment:
 
 ## 书目
 
-* [置身事内](置身事内/README.md)
+* [置身事内](zhishen-shinei/README.md)

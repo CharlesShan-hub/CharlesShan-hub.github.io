@@ -10,4 +10,4 @@ comment:
 
 ## 书目
 
-* [拉贝日记](拉贝日记/README.md)
+* [拉贝日记](the-diaries-of-john-rabe/README.md)

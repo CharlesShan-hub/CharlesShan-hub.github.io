@@ -10,4 +10,4 @@ comment:
 
 ## 书目
 
-* [彼得潘](彼得潘/README.md)
+* [彼得潘](peter-pan/README.md)

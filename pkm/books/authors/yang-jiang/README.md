@@ -10,5 +10,5 @@ comment:
 
 ## 书目
 
-* [我们仨](我们仨/README.md)
-* [洗澡](洗澡/README.md)
+* [我们仨](womensa/README.md)
+* [洗澡](xizao/README.md)

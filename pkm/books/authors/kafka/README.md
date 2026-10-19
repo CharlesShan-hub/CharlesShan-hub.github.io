@@ -10,4 +10,4 @@ comment:
 
 ## 书目
 
-* [变形记](变形记/README.md)
+* [变形记](metamorphosis/README.md)

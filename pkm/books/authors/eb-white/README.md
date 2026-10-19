@@ -10,6 +10,6 @@ comment:
 
 ## 书目
 
-* [吹小号的天鹅](吹小号的天鹅/README.md)
-* [夏洛的网](夏洛的网/README.md)
-* [精灵鼠小弟](精灵鼠小弟/README.md)
+* [吹小号的天鹅](trumpet-of-the-swan/README.md)
+* [夏洛的网](charlottes-web/README.md)
+* [精灵鼠小弟](stuart-little/README.md)

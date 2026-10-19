@@ -10,4 +10,4 @@ comment:
 
 ## 书目
 
-* [窄门](窄门/README.md)
+* [窄门](strait-is-the-gate/README.md)

@@ -10,4 +10,4 @@ comment:
 
 ## 书目
 
-* [我们](我们/README.md)
+* [我们](we/README.md)

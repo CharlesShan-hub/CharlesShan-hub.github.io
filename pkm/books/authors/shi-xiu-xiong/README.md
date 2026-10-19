@@ -10,4 +10,4 @@ comment:
 
 ## 书目
 
-* [假性亲密关系](假性亲密关系/README.md)
+* [假性亲密关系](jiaxing-qinmiguanxi/README.md)

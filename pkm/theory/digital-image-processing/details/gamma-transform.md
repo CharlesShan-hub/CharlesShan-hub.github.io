@@ -12,14 +12,15 @@ Gamma变换（幂次变换）：用于改变亮度。
 ```python
 from skimage import data,io,exposure
 from matplotlib import pyplot as plt
-
+  
 image=data.coffee()
-
+  
 for i,gamma in enumerate([1,0.2,0.67,25]):
     plt.subplot(1,4,i+1)
     plt.title(f'gamma={gamma}')
     plt.axis('off')
     io.imshow(exposure.adjust_gamma(image,gamma))
+plt.savefig('filter-gamma.png', transparent=True, bbox_inches='tight')
 plt.show()
 ```
 

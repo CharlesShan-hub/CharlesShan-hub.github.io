@@ -10,6 +10,6 @@ comment:
 
 ## 书目
 
-* [南方邮航](南方邮航/README.md)
-* [夜航](夜航/README.md)
-* [小王子](小王子/README.md)
+* [南方邮航](southern-mail/README.md)
+* [夜航](night-flight/README.md)
+* [小王子](little-prince/README.md)

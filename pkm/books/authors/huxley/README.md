@@ -10,4 +10,4 @@ comment:
 
 ## 书目
 
-* [美丽新世界](美丽新世界/README.md)
+* [美丽新世界](brave-new-world/README.md)

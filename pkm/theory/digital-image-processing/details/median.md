@@ -1,8 +1,10 @@
 ---
-title:
+title: median
 tags:
-date:
+  - attachment
+date: 2026-10-16
 comment:
+filename: dip-filter-median.py
 ---
 
 ![image](../assets/median.png)

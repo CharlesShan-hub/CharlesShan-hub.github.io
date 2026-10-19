@@ -10,4 +10,4 @@ comment:
 
 ## 书目
 
-* [南京大屠杀](南京大屠杀/README.md)
+* [南京大屠杀](the-rape-of-nanking/README.md)

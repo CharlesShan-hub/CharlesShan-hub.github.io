@@ -3,7 +3,7 @@ title: image-basic
 tags:
   - note
 date: 2026-10-16
-comment:
+comment: 图像的采样和量化、图像特征（邻域与距离）
 ---
 
 # Image Basic

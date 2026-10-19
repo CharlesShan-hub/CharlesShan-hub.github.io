@@ -10,5 +10,5 @@ comment:
 
 ## 书目
 
-* [小癞子](小癞子/README.md)
-* [荷马史诗](荷马史诗/README.md)
+* [小癞子](lazarillo-de-tormes/README.md)
+* [荷马史诗](homeric-epics/README.md)
