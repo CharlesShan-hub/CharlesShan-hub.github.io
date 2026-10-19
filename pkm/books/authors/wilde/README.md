@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 谎言的衰朽
-- 莎乐美
-- 快乐王子
+- [谎言的衰朽](decay-of-lying/README.md)
+- [莎乐美](salome/README.md)
+- [快乐王子](happy-prince/README.md)

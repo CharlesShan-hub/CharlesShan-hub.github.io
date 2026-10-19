@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 青春之歌
+- [青春之歌](qingchun-zhi-ge/README.md)

@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 录鬼簿
+- [录鬼簿](lugui-bu/README.md)

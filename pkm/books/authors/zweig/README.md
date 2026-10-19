@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 象棋的故事
+- [象棋的故事](chess-story/README.md)

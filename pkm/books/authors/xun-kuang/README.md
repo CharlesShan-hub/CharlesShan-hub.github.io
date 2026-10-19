@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 荀子
+- [荀子](xunzi/README.md)

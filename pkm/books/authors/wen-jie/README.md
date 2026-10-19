@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 复仇的火焰
-- 祖国!光辉的十月!
+- [复仇的火焰](fuchou-de-huoyan/README.md)
+- [祖国!光辉的十月!](zuguo-guanghui-de-shiyue/README.md)

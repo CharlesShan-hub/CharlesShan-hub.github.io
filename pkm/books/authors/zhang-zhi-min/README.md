@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 红旗颂
+- [红旗颂](hongqi-song/README.md)

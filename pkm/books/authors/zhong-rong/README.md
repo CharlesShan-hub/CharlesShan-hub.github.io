@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 诗品
+- [诗品](shi-pin/README.md)

@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 封神演义
+- [封神演义](creation-of-the-gods/README.md)

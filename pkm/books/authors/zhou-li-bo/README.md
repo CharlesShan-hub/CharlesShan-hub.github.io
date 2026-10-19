@@ -19,6 +19,6 @@ comment:
 
 ## 书目
 
-- 暴风骤雨
-- 太阳照在桑干河上
-- 山乡巨变
+- [暴风骤雨](baofengzhouyu/README.md)
+- [太阳照在桑干河上](taiyang-zhao-zai-sangganhe-shang/README.md)
+- [山乡巨变](shanxiang-jubian/README.md)

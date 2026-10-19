@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 竞赛
+- [竞赛](jing-sai/README.md)

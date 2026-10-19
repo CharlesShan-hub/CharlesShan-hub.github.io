@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 颜氏家训
+- [颜氏家训](yan-shi-jia-xun/README.md)

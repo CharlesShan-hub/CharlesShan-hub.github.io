@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- “孟泰仓库”
+- [“孟泰仓库”](mengtai-cangku/README.md)

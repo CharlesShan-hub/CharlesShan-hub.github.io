@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 七哀
+- [七哀](qi-ai/README.md)

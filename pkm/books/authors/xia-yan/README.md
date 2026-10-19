@@ -19,9 +19,9 @@ comment:
 
 ## 书目
 
-- 一个奇迹
-- 冷面孔
-- 刮目相看
-- 新生的力量
-- 给远行者
-- 艺术家的路
+- [一个奇迹](yige-qiji/README.md)
+- [冷面孔](leng-miankong/README.md)
+- [刮目相看](guamuxiangkan/README.md)
+- [新生的力量](xinsheng-de-liliang/README.md)
+- [给远行者](gei-yuan-xingzhe/README.md)
+- [艺术家的路](yishujia-de-lu/README.md)

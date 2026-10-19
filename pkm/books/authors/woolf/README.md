@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 墙上的斑点
-- 到灯塔去
+- [墙上的斑点](mark-on-the-wall/README.md)
+- [到灯塔去](to-the-lighthouse/README.md)

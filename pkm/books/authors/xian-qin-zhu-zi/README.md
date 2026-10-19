@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 尚书
+- [尚书](book-of-documents/README.md)

@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 俄国军营的歌手
+- [俄国军营的歌手](singer-in-the-russian-camp/README.md)

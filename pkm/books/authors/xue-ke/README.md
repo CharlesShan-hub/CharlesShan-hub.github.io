@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 战斗的青春
+- [战斗的青春](zhandou-de-qingchun/README.md)

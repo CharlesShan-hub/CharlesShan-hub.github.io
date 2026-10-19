@@ -19,5 +19,5 @@ comment:
 
 ## 书目
 
-- 凉州词
-- 登鹳雀楼
+- [凉州词](liangzhou-ci/README.md)
+- [登鹳雀楼](deng-guanquelou/README.md)

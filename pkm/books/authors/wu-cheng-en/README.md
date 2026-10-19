@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 西游记
+- [西游记](journey-to-the-west/README.md)

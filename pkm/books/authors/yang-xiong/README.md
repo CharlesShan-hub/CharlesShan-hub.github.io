@@ -19,4 +19,4 @@ comment:
 
 ## 书目
 
-- 甘泉赋
+- [甘泉赋](gan-quan-fu/README.md)
