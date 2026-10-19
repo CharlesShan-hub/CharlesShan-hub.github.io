@@ -8,6 +8,4 @@ comment:
 
 # 史铁生
 
-## 书目
-
-* [我与地坛](wo-yu-ditan/README.md)
+## 简介

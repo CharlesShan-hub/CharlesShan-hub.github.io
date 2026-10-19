@@ -8,6 +8,4 @@ comment:
 
 # 阿道司·赫胥黎
 
-## 书目
-
-* [美丽新世界](brave-new-world/README.md)
+## 简介

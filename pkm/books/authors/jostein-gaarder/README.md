@@ -8,6 +8,4 @@ comment:
 
 # 乔斯坦·贾德
 
-## 书目
-
-* [苏菲的世界](sophies-world/README.md)
+## 简介

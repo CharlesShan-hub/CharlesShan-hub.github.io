@@ -8,6 +8,4 @@ comment:
 
 # 兰小欢
 
-## 书目
-
-* [置身事内](zhishen-shinei/README.md)
+## 简介

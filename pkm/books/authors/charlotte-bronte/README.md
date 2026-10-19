@@ -8,6 +8,4 @@ comment:
 
 # 夏洛蒂·勃朗特
 
-## 书目
-
-* [简·爱](jane-eyre/README.md)
+## 简介

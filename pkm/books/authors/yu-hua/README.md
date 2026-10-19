@@ -8,8 +8,4 @@ comment:
 
 # 余华
 
-## 书目
-
-* [在细雨中呼喊](zai-xiyu-zhong-huhan/README.md)
-* [活着](huozhe/README.md)
-* [许三观卖血记](xu-sanguan-maixueji/README.md)
+## 简介

@@ -8,6 +8,4 @@ comment:
 
 # 东野圭吾
 
-## 书目
-
-* [恶意](akui/README.md)
+## 简介

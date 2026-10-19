@@ -8,6 +8,4 @@ comment:
 
 # 儒勒·列那尔
 
-## 书目
-
-* [胡萝卜须](carrots/README.md)
+## 简介

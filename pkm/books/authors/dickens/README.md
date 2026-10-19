@@ -8,6 +8,4 @@ comment:
 
 # 狄更斯
 
-## 书目
-
-* [雾都孤儿](oliver-twist/README.md)
+## 简介

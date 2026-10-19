@@ -8,6 +8,4 @@ comment:
 
 # 张纯如
 
-## 书目
-
-* [南京大屠杀](the-rape-of-nanking/README.md)
+## 简介

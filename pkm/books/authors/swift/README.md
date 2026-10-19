@@ -8,6 +8,4 @@ comment:
 
 # 乔纳森·斯威夫特
 
-## 书目
-
-* [格列佛游记](gullivers-travels/README.md)
+## 简介

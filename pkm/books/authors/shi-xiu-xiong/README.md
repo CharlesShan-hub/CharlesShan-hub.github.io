@@ -8,6 +8,4 @@ comment:
 
 # 史秀雄
 
-## 书目
-
-* [假性亲密关系](jiaxing-qinmiguanxi/README.md)
+## 简介

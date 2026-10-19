@@ -8,6 +8,4 @@ comment:
 
 # 詹姆斯·马修·巴里
 
-## 书目
-
-* [彼得潘](peter-pan/README.md)
+## 简介

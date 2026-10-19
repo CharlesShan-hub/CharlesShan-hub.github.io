@@ -8,7 +8,4 @@ comment:
 
 # 杨绛
 
-## 书目
-
-* [我们仨](womensa/README.md)
-* [洗澡](xizao/README.md)
+## 简介

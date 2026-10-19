@@ -8,6 +8,4 @@ comment:
 
 # 温斯顿·葛鲁姆
 
-## 书目
-
-* [阿甘正传](forrest-gump/README.md)
+## 简介

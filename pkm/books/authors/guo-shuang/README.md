@@ -8,6 +8,4 @@ comment:
 
 # 郭爽
 
-## 书目
-
-* [月球](yueqiu/README.md)
+## 简介

@@ -8,6 +8,4 @@ comment:
 
 # 卡夫卡
 
-## 书目
-
-* [变形记](metamorphosis/README.md)
+## 简介
