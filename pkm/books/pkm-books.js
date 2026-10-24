@@ -7,11 +7,18 @@
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
-  function stars(n) {
-    if (n == null || n < 1) return "";
-    if (n > 5) n = 5;
+  var R_NAMES = ["新思想", "语言表达", "时代意义", "社会名气", "重读意愿"];
+  // 五维评分星：ratings[i] 为 1=亮★ / 0=灭☆ / 空=不可见占位（保持五位置对齐）；
+  // hover 提示维度名：是/否
+  function stars(ratings) {
     var s = "";
-    for (var i = 0; i < n; i++) s += "★";
+    for (var i = 0; i < 5; i++) {
+      var v = ratings ? ratings[i] : null;
+      var tip = R_NAMES[i];
+      if (v === 1) s += '<span class="bk-s on" data-tip="' + tip + '：是">★</span>';
+      else if (v === 0) s += '<span class="bk-s off" data-tip="' + tip + '：否">☆</span>';
+      else s += '<span class="bk-s slot">☆</span>';
+    }
     return '<span class="bk-stars">' + s + "</span>";
   }
   function compare(a, b, key, asc, get) {
@@ -85,5 +92,48 @@
     });
     return { close: close };
   }
-  window.PKMBooks = { esc: esc, stars: stars, sort: sort, bindSort: bindSort, fill: fill, dd: dd };
+  // 评分维度多选下拉：复选框点选/清除，不收起；onPick 回调传选中的维度下标数组
+  function rateDD(root, onPick) {
+    var trigger = root.querySelector(".pkm-dd-trigger");
+    var list = root.querySelector(".pkm-dd-list");
+    var label = root.querySelector(".pkm-dd-label");
+    var boxes = Array.prototype.slice.call(list.querySelectorAll('input[type="checkbox"]'));
+    var clear = list.querySelector(".pkm-dd-clear");
+    var hideTimer = null;
+    function open() { clearTimeout(hideTimer); root.classList.add("open"); }
+    function close() { root.classList.remove("open"); }
+    function scheduleClose() { clearTimeout(hideTimer); hideTimer = setTimeout(close, 150); }
+    function picked() {
+      return boxes.filter(function (b) { return b.checked; })
+                  .map(function (b) { return b.getAttribute("data-i"); });
+    }
+    function update() {
+      var n = picked().length;
+      label.textContent = n ? "评分 " + n + " 项" : "评分全部";
+    }
+    trigger.addEventListener("click", function () {
+      if (root.classList.contains("open")) close(); else open();
+    });
+    trigger.addEventListener("mouseenter", open);
+    trigger.addEventListener("mouseleave", scheduleClose);
+    list.addEventListener("mouseenter", function () { clearTimeout(hideTimer); });
+    list.addEventListener("mouseleave", scheduleClose);
+    list.addEventListener("click", function (e) {
+      var box = e.target.closest('input[type="checkbox"]');
+      if (box) { box.checked = !box.checked; update(); if (onPick) onPick(picked()); return; }
+      if (clear && e.target.closest(".pkm-dd-clear")) {
+        boxes.forEach(function (b) { b.checked = false; });
+        update();
+        if (onPick) onPick([]);
+      }
+    });
+    document.addEventListener("click", function (e) {
+      if (!root.contains(e.target)) close();
+    });
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape") close();
+    });
+    return { close: close };
+  }
+  window.PKMBooks = { esc: esc, stars: stars, sort: sort, bindSort: bindSort, fill: fill, dd: dd, rateDD: rateDD };
 })();

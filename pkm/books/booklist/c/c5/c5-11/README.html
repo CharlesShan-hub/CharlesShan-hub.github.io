@@ -70,12 +70,7 @@
 <p>《大唐三藏取经诗话》叙唐三藏法师奉敕去天竺取经，登程便有化作白衣秀才的八万四千岁的猕猴王前来相助，途径香山寺、蛇子国、狮子国、树人国、火类坳、长坑、大蛇岭、九龙池、鬼子母国、女人国、西王母池、优钵罗国，于天竺国取得五千四十八卷经，返程又到盘律国得定光佛授《心经》。这本《诗话》不仅十分粗糙，而且有错乱，是个较为拙劣的文本，显然是唐玄奘天竺取经史事初步神怪故事化的一种形态，有猴行者随行降妖、毗沙门大梵天王随时相助，改恶从善的深沙神无疑是后来西天取经故事中的沙僧。可以说《大唐三藏取经诗话》已形成唐僧西天取经故事的雏形，其中详略不一的情节、话语，经过宋元说话人的演绎、书会才人的增饰，或照原“话”扩展，或移花接木式的嫁接、繁衍，汇入后出的文本中，元末明初的《西游记平话》便有了巨大的发展①。最后出的《西游记》小说中的许多情节仍然可以从这本《大唐三藏取经诗话》中找到其原生态和生长点。</p></div>
   <div class="pkm-books-tools">
     <input id="bk-search" type="search" placeholder="搜索书名 / 作者 / 体裁…" autocomplete="off">
-    <div class="pkm-dd" id="bk-rating-dd">
-      <button type="button" class="pkm-dd-trigger"><span class="pkm-dd-label">评分全部</span><span class="bk-caret">▾</span></button>
-      <div class="pkm-dd-list">
-        <div class="pkm-dd-item" data-v="">评分全部</div><div class="pkm-dd-item" data-v="=1">=1</div><div class="pkm-dd-item" data-v="=2">=2</div><div class="pkm-dd-item" data-v="=3">=3</div><div class="pkm-dd-item" data-v="=4">=4</div><div class="pkm-dd-item" data-v="=5">=5</div><div class="pkm-dd-item" data-v="&gt;1">&gt;1</div><div class="pkm-dd-item" data-v="&gt;2">&gt;2</div><div class="pkm-dd-item" data-v="&gt;3">&gt;3</div><div class="pkm-dd-item" data-v="&gt;4">&gt;4</div><div class="pkm-dd-item" data-v="&gt;5">&gt;5</div><div class="pkm-dd-item" data-v="&lt;2">&lt;2</div><div class="pkm-dd-item" data-v="&lt;3">&lt;3</div><div class="pkm-dd-item" data-v="&lt;4">&lt;4</div><div class="pkm-dd-item" data-v="&lt;5">&lt;5</div>
-      </div>
-    </div>
+    <div class="pkm-dd" id="bk-rating-dd"><button type="button" class="pkm-dd-trigger"><span class="pkm-dd-label">评分全部</span><span class="bk-caret">▾</span></button><div class="pkm-dd-list"><label class="pkm-dd-check"><input type="checkbox" data-i="0">新思想</label><label class="pkm-dd-check"><input type="checkbox" data-i="1">语言表达</label><label class="pkm-dd-check"><input type="checkbox" data-i="2">时代意义</label><label class="pkm-dd-check"><input type="checkbox" data-i="3">社会名气</label><label class="pkm-dd-check"><input type="checkbox" data-i="4">重读意愿</label><div class="pkm-dd-clear">清除</div></div></div>
   </div>
   <table id="bk-table">
     <thead><tr>
@@ -99,7 +94,7 @@
   "use strict";
   var PB = window.PKMBooks;
   var DATA = window.PKM_BOOKS || [];
-  var S = { q: "", rating: "", key: "name", asc: true };
+  var S = { q: "", rate: {}, key: "name", asc: true };
   var $search = document.getElementById("bk-search");
   var $tbody = document.querySelector("#bk-table tbody");
   var $ths = Array.prototype.slice.call(document.querySelectorAll("#bk-table th[data-k]"));
@@ -107,18 +102,19 @@
     var q = S.q.trim().toLowerCase();
     return DATA.filter(function (b) {
       if (q && (b.name + " " + b.author + " " + b.genre).toLowerCase().indexOf(q) < 0) return false;
-      if (S.rating) {
-        var op = S.rating.charAt(0), n = parseInt(S.rating.slice(1), 10);
-        if (b.rating == null) return false;
-        if (op === "=" && b.rating !== n) return false;
-        if (op === ">" && b.rating <= n) return false;
-        if (op === "<" && b.rating >= n) return false;
+      // 评分维度筛选：点亮某维度 = 该维度为 1（亮星），多选取交集（AND）
+      for (var i in S.rate) {
+        if ((b.ratings || [])[i] !== 1) return false;
       }
       return true;
     });
   }
+  // 按亮星总数排序（评分列排序用）
+  function ratingOn(b) {
+    return (b.ratings || []).filter(function (v) { return v === 1; }).length;
+  }
   function makeRow(b) {
-    var r = PB.stars(b.rating);
+    var r = PB.stars(b.ratings);
     var mat = b.material ? '<a href="' + PB.esc(b.material) + '" target="_blank" rel="noopener">资料</a>' : "";
     var author = b.authorId ? '<a href="../../../../authors/' + PB.esc(b.authorId) + '/README.html">' + PB.esc(b.author) + "</a>" : PB.esc(b.author);
     var name = b.bookId ? '<a href="../../../../authors/' + PB.esc(b.authorId) + '/' + PB.esc(b.bookId) + '/README.html">' + PB.esc(b.name) + "</a>" : PB.esc(b.name);
@@ -134,12 +130,18 @@
       "</tr>";
   }
   function render() {
-    var rows = PB.sort(filtered(), S);
+    var rows = PB.sort(filtered(), S, function (b, key) {
+      return key === "rating" ? ratingOn(b) : b[key];
+    });
     PB.fill($tbody, rows, makeRow, '<tr><td colspan="6" class="empty">没有匹配的书</td></tr>');
   }
   PB.bindSort($ths, S, render);
   $search.addEventListener("input", function () { S.q = $search.value; render(); });
-  PB.dd(document.getElementById("bk-rating-dd"), function (v) { S.rating = v; render(); });
+  PB.rateDD(document.getElementById("bk-rating-dd"), function (sel) {
+    S.rate = {};
+    sel.forEach(function (i) { S.rate[i] = true; });
+    render();
+  });
   render();
 })();
 </script>
