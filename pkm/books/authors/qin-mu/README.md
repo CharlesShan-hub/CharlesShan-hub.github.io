@@ -12,7 +12,7 @@ comment:
 > - 生卒：1919–1992
 > - 国籍/朝代：中国·20世纪
 > - 体裁/流派：散文、随笔
-> - 书目数：10
+> - 书目数：9
 
 ## 简介
 
@@ -24,7 +24,6 @@ comment:
 - [花城](hua-cheng/README.md)
 - [艺海拾贝](yihaishibei/README.md)
 - [土地](tu-di/README.md)
-- [花城](hua-cheng/README.md)
 - [社稷坛抒情](sheji-tan-shuqing/README.md)
 - [古战场春晓](guzhanchang-chunxiao/README.md)
 - [天坛幻想录](tiantan-huanxiang-lu/README.md)

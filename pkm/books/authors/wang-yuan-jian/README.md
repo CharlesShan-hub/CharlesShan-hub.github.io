@@ -12,7 +12,7 @@ comment:
 > - 生卒：1929–1991
 > - 国籍/朝代：中国·20世纪
 > - 体裁/流派：小说、革命战争
-> - 书目数：15
+> - 书目数：14
 
 ## 简介
 
@@ -25,7 +25,6 @@ comment:
 - [三人行](sanrenxing/README.md)
 - [粮食的故事](liangshi-de-gushi/README.md)
 - [灯光](deng-guang/README.md)
-- [三人行](sanrenxing/README.md)
 - [支队政委](zhidui-zhengwei/README.md)
 - [妈妈](ma-ma/README.md)
 - [赶队](gan-dui/README.md)

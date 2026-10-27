@@ -19,7 +19,7 @@ comment:
 ## 书目
 
 - [恰尔德·哈洛尔德游记](childe-harolds-pilgrimage/README.md)
-- [唐璜](don-juan/README.md)
+- [唐璜](don-juan-1/README.md)
 - [审判的幻景](vision-of-judgment/README.md)
 - [异教徒](giaour/README.md)
 - [阿比道斯的新娘](bride-of-abydos/README.md)

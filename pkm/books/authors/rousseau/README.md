@@ -23,4 +23,4 @@ comment:
 - [社会契约论](social-contract/README.md)
 - [爱弥尔](emile/README.md)
 - [新爱洛依丝](new-heloise/README.md)
-- [忏悔录](confessions/README.md)
+- [忏悔录](confessions-1/README.md)

@@ -12,7 +12,7 @@ comment:
 > - 生卒：1958–
 > - 国籍/朝代：日本·20世纪
 > - 体裁/流派：小说、推理
-> - 书目数：102
+> - 书目数：108
 
 ## 简介
 
@@ -43,11 +43,12 @@ comment:
 - [美丽的凶器](utsukushiki-kyoki/README.md)
 - [同级生](dokyusei/README.md)
 - [分身](bunshin/README.md)
+- [再见了，忍老师](shinobu-sense-ni-sayonara/README.md)
 - [怪人们](ayashii-hitobito/README.md)
 - [从前我死去的家](mukashi-boku-ga-shinda-ie/README.md)
 - [造彩虹的人](niji-wo-ayatsuru-shonen/README.md)
 - [平行世界·爱情故事](parareru-warudo-rabusutori/README.md)
-- [那个时候我们是傻瓜](anokoro-bokuraha-ahodeshita/README.md)
+- [我的晃荡的青春](anokoro-bokuraha-ahodeshita/README.md)
 - [怪笑小说](kaisho-shosetsu/README.md)
 - [天空之蜂](tenku-no-hachi/README.md)
 - [名侦探的守则](meitantei-no-okite/README.md)
@@ -68,7 +69,7 @@ comment:
 - [时生](tokio/README.md)
 - [绑架游戏](geemu-no-na-wa-yukai/README.md)
 - [信](tegami/README.md)
-- [我是非常勤](ore-wa-hijokin/README.md)
+- [酷酷的代课老师](ore-wa-hijokin/README.md)
 - [杀人之门](satsujin-no-mon/README.md)
 - [幻夜](genya/README.md)
 - [挑战？](charenji/README.md)
@@ -79,7 +80,7 @@ comment:
 - [梦回都灵](yume-wa-torino-wo-kakemeguru/README.md)
 - [红手指](akai-yubi/README.md)
 - [使命与魂的尽头](shimei-to-tamashii-no-rimitto/README.md)
-- [也许是最后的寒暄](tabun-saigo-no-goaisatsu/README.md)
+- [东野圭吾的最后致意](tabun-saigo-no-goaisatsu/README.md)
 - [黎明之街](reimei-no-machi/README.md)
 - [濒死之眼](daiingu-ai/README.md)
 - [流星之绊](ryusei-no-kizuna/README.md)
@@ -98,17 +99,14 @@ comment:
 - [歪笑小说](waisho-shosetsu/README.md)
 - [伽利略系列第七作·虚像的小丑](kyozo-no-dokeshi/README.md)
 - [解忧杂货店](namiya-zakkaten-no-kiseki/README.md)
-- [伽利略系列第八作·禁断的魔术](kindan-no-majutsu/README.md)
+- [禁断的魔术](kindan-no-majutsu/README.md)
 - [梦幻花](mugenka/README.md)
 - [祈祷落幕时](inori-no-maku-ga-oriru-toki/README.md)
-- [东野圭吾的最后致意](tabun-saigo-no-goaisatsu/README.md)
 - [疾风回旋曲](shippu-rondo/README.md)
 - [虚无的十字架](utsuro-na-jujika/README.md)
 - [假面前夜](masukarede-ibu/README.md)
 - [拉普拉斯的魔女](raprasu-no-majo/README.md)
 - [沉睡的人鱼之家](ningyo-no-nemuru-ie/README.md)
-- [我的晃荡的青春](anokoro-bokuraha-ahodeshita/README.md)
-- [酷酷的代课老师](ore-wa-hijokin/README.md)
 - [危险的维纳斯](kiken-na-biinasu/README.md)
 - [恋爱的贡多拉](koi-no-gondora/README.md)
 - [风雪追击](yukikemuri-cheisu/README.md)
@@ -119,4 +117,12 @@ comment:
 - [魔力的胎动](maryoku-no-taido/README.md)
 - [祈念守护人](kusunoki-no-bannin/README.md)
 - [无名之町](black-showman-to-namonaki-machi-no-satsujin/README.md)
-- [神探伽利略·禁断的魔术](kindan-no-majutsu/README.md)
+- [天鹅与蝙蝠](hakuchou-to-koumori/README.md)
+- [透明的螺旋](toumei-na-rasen/README.md)
+- [假面游戏](masukarede-geemu/README.md)
+- [和魔女共度的七天](majo-to-sugoshita-nanokakan/README.md)
+- [你杀了谁](anata-ga-dareka-wo-koroshita/README.md)
+- [谎言里的魔术师](black-showman-to-kakusei-suru-onnatachi/README.md)
+- [祈愿女神](kusunoki-no-megami/README.md)
+- [谁杀了我](dareka-ga-watashi-wo-koroshita/README.md)
+- [架空犯](kakuu-han/README.md)
