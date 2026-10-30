@@ -1,7 +1,8 @@
 ---
-title:
+title: powershell
 tags:
-date:
+  - note
+date: 2026-10-29
 comment:
 ---
 
