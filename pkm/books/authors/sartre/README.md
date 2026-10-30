@@ -12,7 +12,7 @@ comment:
 > - 生卒：1905–1980
 > - 国籍/朝代：法国·存在主义
 > - 体裁/流派：戏剧、存在主义
-> - 书目数：10
+> - 书目数：9
 
 ## 简介
 
@@ -26,5 +26,4 @@ comment:
 - [必恭必敬的妓女](respectful-prostitute/README.md)
 - [存在与虚无](being-and-nothingness/README.md)
 - [存在主义是一种人道主义](existentialism-is-a-humanism/README.md)
-- [墙](wall/README.md)
 - [自由之路](roads-to-freedom/README.md)

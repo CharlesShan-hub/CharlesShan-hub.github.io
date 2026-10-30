@@ -12,7 +12,7 @@ comment:
 > - 生卒：1963–
 > - 国籍/朝代：中国·20世纪
 > - 体裁/流派：小说、科幻
-> - 书目数：47
+> - 书目数：46
 
 ## 简介
 
@@ -52,7 +52,6 @@ comment:
 - [混沌蝴蝶](hundun-hudie/README.md)
 - [吞食者](tunshi-zhe/README.md)
 - [西洋](xiyang/README.md)
-- [思想者](sixiangzhe/README.md)
 - [赡养上帝](shanyang-shangdi/README.md)
 - [欢乐颂](huanlesong/README.md)
 - [2018年4月1日](2018-nian-4-yue-1-ri/README.md)

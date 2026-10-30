@@ -20,4 +20,4 @@ comment:
 
 ## 书目
 
-- [特洛伊妇女](trojan-women/README.md)
+- [特洛伊妇女](trojan-women-1/README.md)

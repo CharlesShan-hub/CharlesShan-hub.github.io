@@ -12,7 +12,7 @@ comment:
 > - 生卒：779–831
 > - 国籍/朝代：中国·唐
 > - 体裁/流派：诗歌、新乐府
-> - 书目数：4
+> - 书目数：3
 
 ## 简介
 
@@ -20,5 +20,4 @@ comment:
 
 - [织妇词](zhifu-ci/README.md)
 - [田家词](tianjia-ci/README.md)
-- [莺莺传](yingying-zhuan/README.md)
 - [莺莺传](yingying-zhuan/README.md)
