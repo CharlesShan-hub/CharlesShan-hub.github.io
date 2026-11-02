@@ -12,7 +12,7 @@ comment:
 > - 生卒：1916–2005
 > - 国籍/朝代：中国·20世纪
 > - 体裁/流派：散文、报告文学
-> - 书目数：5
+> - 书目数：6
 
 ## 简介
 
@@ -23,3 +23,4 @@ comment:
 - [红玛瑙集](hongmanao-ji/README.md)
 - [长江三日](changjiang-sanri/README.md)
 - [平明小札](pingming-xiaozha/README.md)
+- [第二个太阳](di-er-ge-tai-yang/README.md)

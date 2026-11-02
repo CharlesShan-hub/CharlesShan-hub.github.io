@@ -12,10 +12,11 @@ comment:
 > - 生卒：1928–2000
 > - 国籍/朝代：中国·20世纪
 > - 体裁/流派：小说、现实主义
-> - 书目数：1
+> - 书目数：2
 
 ## 简介
 
 ## 书目
 
 - [不能走那条路](buneng-zou-natiao-lu/README.md)
+- [黄河东流去](huang-he-dong-liu-qu/README.md)
