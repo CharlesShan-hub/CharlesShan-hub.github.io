@@ -1,7 +1,7 @@
 ---
 title: 太阳骑士
 tags: [note]
-date: 2026-11-01
+date: 2026-11-02
 comment: 
 ---
 
@@ -12,80 +12,90 @@ comment:
 ## 我来翻译成中文！
 
 [PRELIMINARES]
-LIBRO INTITULADO Peregrinación de la vida del hombre, puesta en batalla debajo de los trabajos que sufrió el Caballero del Sol, en defensa de la Razón Natural. Dirigido al Ilustrísimo Señor Don Pedro Fernández de Velasco, Condestable de Castilla, Duque de Frías, Conde de Haro, Señor de la casa de Lara, etc. CON PRIVILEGIO IMPERIAL. En Medina del Campo por Guillermo de Millis. Está tassado en 20 maravedís. EL REY Por cuanto de parte de vos, Pero Hernández de Villalumbrales, vecino de la villa de Villalumbrales, me fue fecha relación diciendo que vos habíades compuesto un libro intitulado Peregrinación de la vida del hombre, en lengua castellana, el cual era cosa de muy buena doctrina cristiana y ejemplos, suplicándonos, atento el trabajo que en ello habíades puesto, le mandásemos ver y datos licencia para que vos o quien vuestro poder hubiese lo pudiésedes imprimir y vender en estos nuestros reinos y no otra persona alguna por el tiempo que fuésemos servidos. Tasásemos el precio a como habíades de vender cada pliego de molde o como la nuestra merced fuese. El cual dicho libro visto y examinado por los del nuestro consejo, acatando lo susodicho y por os hacer bien y merced, túvelo por bien y por la presente vos doy licencia y facultad o a quien vuestro poder hubiere para que podáis imprimir y vender por tiempo de diez años primeros siguientes, que corren y se cuentan desde el día de la data de esta cédula en adelante, el dicho libro que de suso se hace mención, durante el cual dicho tiempo mando que persona alguna sin vuestra licencia lo pueda imprimir ni vender so pena que el que lo imprimiere y vendiere haya perdido y pierda todos y cualesquier moldes y libros que de él hubiere imprimido o trajere a vender en estos nuestros reinos. La cual dicha merced hacemos con tanto que, después de impreso el dicho libro, antes que lo vendáis, lo traigáis y presentéis ante los de nuestro consejo para que se tase el precio a como habéis de vender cada pliego y que en el principio vaya impresa esta nuestra cédula y junto cabe ella la dicha tassa que por los del nuestro consejo fuere hecha. Y mandamos a los del nuestro consejo, presidentes y oidores de las nuestras audiencias, alcaldes, alguaciles de la nuestra casa y corte y chancillería y a todos los corregidores, asistentes gobernadores, alcaldes mayores, alguaciles y otros jueces y justicias cualquiera de todas las ciudades, villas y lugares de los nuestros reinos y señoríos, así a los que agora son como a los que serán de aquí adelante, que vos guarden y cumplan esta mi cédula y merced que ansí vos hago y contra el tenor y forma de ella no vos vayan, ni pasen, ni consientan ir ni pasar por alguna manera so pena de la nuestra merced y de diez mil maravedís para la nuestra cámara. Fecha en la villa de Valladolid a veinte y dos días del mes de setiembre de mil y quinientos y cincuenta años. MAXIMILIANO LA REINA Por mandado de su Magestad sus Altezas en su nombre Juan Vásquez.
+【前言】
 
-**【前言及书名页】**
+LIBRO INTITULADO Peregrinación de la vida del hombre, puesta en batalla debajo de los trabajos que sufrió el Caballero del Sol, en defensa de la Razón Natural.
+题为《人生朝圣之旅——太阳骑士为捍卫自然理性而历经磨难、投身战斗》的书。
 
-本书题为《人类生命之朝圣：处于太阳骑士为捍卫自然理性所历经之磨难战役中》。
-谨以此书献给最显赫的领主：**唐·佩德罗·费尔南德斯·德·贝拉斯科**（卡斯蒂利亚大元帅、弗里亚斯公爵、哈罗伯爵、拉拉家族领主等）。
+Dirigido al Ilustrísimo Señor Don Pedro Fernández de Velasco, Condestable de Castilla, Duque de Frías, Conde de Haro, Señor de la casa de Lara, etc.
+谨献给最尊贵的堂佩德罗·费尔南德斯·德·贝拉斯科先生——卡斯蒂利亚统帅、弗里亚斯公爵、哈罗伯爵、拉拉家族领主等。
 
-**【帝国特许出版令】**
-于梅迪纳德尔坎波（Medina del Campo），由吉列尔莫·德·米利斯（Guillermo de Millis）印制。官方定价为 20 马拉维迪（maravedís，当时的西班牙货币）。
+CON PRIVILEGIO IMPERIAL.
+附帝国特许出版权。
 
-**【国王诏令】**
+En Medina del Campo por Guillermo de Millis.
+于梅迪纳德尔坎波，由吉列尔莫·德·米利斯印行。
 
-**朕（国王）：**
+Está tassado en 20 maravedís.
+定价为20马拉维迪。
 
-鉴于来自比利亚温布拉莱斯镇的居民——你，**佩罗·埃尔南德斯·德·比利亚温布拉莱斯**（Pero Hernández de Villalumbrales），向朕呈递奏折，称你已用卡斯蒂利亚语（西班牙语）撰写完成一部题为《人类生命之朝圣》的书籍。经查，此书内容极具优秀的基督教教义与道德典范。
+EL REY
+国王
 
-鉴于你在创作此书中所付出的心血辛劳，你恳求朕对该书进行御前审阅，并赐予你（或由你授权之人）在朕之各王国境内独家印刷与销售的许可，且在朕首肯的期限内，严禁任何其他人士进行印售。同时，请求朕对每张印刷纸页的售价进行官方核定评估。
+Por cuanto de parte de vos, Pero Hernández de Villalumbrales, vecino de la villa de Villalumbrales, me fue fecha relación diciendo que vos habíades compuesto un libro intitulado Peregrinación de la vida del hombre, en lengua castellana, el cual era cosa de muy buena doctrina cristiana y ejemplos, suplicándonos, atento el trabajo que en ello habíades puesto, le mandásemos ver y datos licencia para que vos o quien vuestro poder hubiese lo pudiésedes imprimir y vender en estos nuestros reinos y no otra persona alguna por el tiempo que fuésemos servidos.
+鉴于你，佩罗·埃尔南德斯·德·比利亚伦布拉莱斯，比利亚伦布拉莱斯镇居民，向我陈述说你已撰写了一部题为《人生朝圣之旅》的书，以卡斯蒂利亚语写成，书中含有极好的基督教教义与范例，并恳请我念及你所付出的辛劳，下令审阅该书并颁予许可，使你或持有你授权之人得以在我们的这些王国中印行和销售该书，而在我们愿意的期限内不许任何其他人印行销售。
 
-朕之枢密院大臣已对上述书籍进行了严格的审阅与考核。考虑到上述情况，且为了向你表示恩赏与嘉奖，朕准予所请。
+Tasásemos el precio a como habíades de vender cada pliego de molde o como la nuestra merced fuese.
+并请我们规定你每印张的售价，或按我们的恩准办理。
 
-特此颁布本诏令，赐予你（或由你授权之人）特许经营权：自本诏令签署之日起算，在接下来的**头十年内**，你拥有上述书籍的独家印刷与销售权。在此期间，朕严令禁止任何人在未经你许可的情况下印刷或销售该书。违者，一经查实，将没收并充公其在朕之各王国境内印刷或企图贩售的所有印刷模具及书籍。
+El cual dicho libro visto y examinado por los del nuestro consejo, acatando lo susodicho y por os hacer bien y merced, túvelo por bien y por la presente vos doy licencia y facultad o a quien vuestro poder hubiere para que podáis imprimir y vender por tiempo de diez años primeros siguientes, que corren y se cuentan desde el día de la data de esta cédula en adelante, el dicho libro que de suso se hace mención, durante el cual dicho tiempo mando que persona alguna sin vuestra licencia lo pueda imprimir ni vender so pena que el que lo imprimiere y vendiere haya perdido y pierda todos y cualesquier moldes y libros que de él hubiere imprimido o trajere a vender en estos nuestros reinos.
+上述该书经我们的枢密院成员审阅审查，鉴于上述情况，并为对你施以恩惠，我予以准许，并以此文件授予你或持有你授权之人许可与权力，使你们可在自本诏书签署之日起往后十年内印行和销售上述该书；在此期间，我命令任何人未经你的许可不得印行或销售该书，违者将丧失并没收其已印行的或运来我国销售的该书的一切字模和书籍。
 
-朕赐予此项恩赏，亦附带以下条件：在书籍印刷完成后、正式开售前，你必须将样本呈递至朕之枢密院，以便核定每张纸页的具体售价。此外，在书的开篇，必须印上朕的这份诏令，并在紧邻之处附上枢密院所核定的官方定价。
+La cual dicha merced hacemos con tanto que, después de impreso el dicho libro, antes que lo vendáis, lo traigáis y presentéis ante los de nuestro consejo para que se tase el precio a como habéis de vender cada pliego y que en el principio vaya impresa esta nuestra cédula y junto cabe ella la dicha tassa que por los del nuestro consejo fuere hecha.
+我们给予上述恩惠的条件是：该书印行之后、销售之前，你须将其呈交我们的枢密院成员，以便核定你每印张的售价；并且本诏书须印于书首，紧邻其旁附上由我们枢密院成员所作之定价。
 
-为此，朕特此命令枢密院大臣、各皇家法院大法官与听审官、王室及宫廷与大法官官署的执法官，以及朕之各王国与领地内所有城市、城镇和乡村的现任及继任行政长官、助理总督、首席法官、执法官及其他所有司法官员：
+Y mandamos a los del nuestro consejo, presidentes y oidores de las nuestras audiencias, alcaldes, alguaciles de la nuestra casa y corte y chancillería y a todos los corregidores, asistentes gobernadores, alcaldes mayores, alguaciles y otros jueces y justicias cualquiera de todas las ciudades, villas y lugares de los nuestros reinos y señoríos, así a los que agora son como a los que serán de aquí adelante, que vos guarden y cumplan esta mi cédula y merced que ansí vos hago y contra el tenor y forma de ella no vos vayan, ni pasen, ni consientan ir ni pasar por alguna manera so pena de la nuestra merced y de diez mil maravedís para la nuestra cámara.
+我命令我们的枢密院成员、各高等法院院长与法官、王室与宫廷及衡平法院的法官与差役，以及我们各王国与领地所有城市、城镇和村庄的所有市长、助理、总督、高级法官、差役和其他法官与司法官员——无论现任还是今后就任者——须遵守并执行我这份诏书及我如此给予你的恩惠，不得违背、逾越其条款与形式，也不得容许他人以任何方式违背或逾越，违者将受我们的惩戒并罚款一万马拉维迪归入我们的国库。
 
-务必遵守并执行朕赐予你的这份诏令与恩赏。任何人不得以任何方式违反、逾越、或容忍他人违反本诏令的字句与形式。违者将触犯朕之威严，并处以向皇家金库罚款一万马拉维迪的惩罚。
+Fecha en la villa de Valladolid a veinte y dos días del mes de setiembre de mil y quinientos y cincuenta años.
+签署于巴利亚多利德城，一千五百五十年九月二十二日。
 
-本诏令于千五百五十年九月二十二日签发于巴利亚多利德镇（Valladolid）。
+MAXIMILIANO LA REINA
+马克西米利亚诺 女王
 
-**马克西米利安**
-**王后**
-
-奉陛下与殿下之命，由胡安·巴斯克斯（Juan Vásquez）代笔签署。
+Por mandado de su Magestad sus Altezas en su nombre Juan Vásquez.
+奉国王陛下及诸位殿下之命，以其名义，胡安·巴斯克斯。
 
 ---
 
 PRÓLOGO
+序言
 
-Prólogo dirigido al Ilustrísimo Señor Don Pedro Fernández de Velasco, Condestable de Castilla y de León, Duque de Frías, Conde de Haro, Señor de la casa de Lara y de las villas de Villalpando y Pedraza de la Sierra, Camarero mayor de su Magestad y Justicia mayor de Castilla la Vieja. La cantora calandria, muy Ilustrísimo Señor, despierta con la nueva luz del sereno día, y alegre con los pálidos rayos de la hermosa mañana, saliendo de su pequeño nido y sacudiendo sus voladoras alas, con crecida alegría vuela sobre el sereno y templado aire, y con no pensado regocijo, moviendo su polida lengua, comienza una doble y sabrosa música, variando en diversas y sonoras voces su apacible y sonoro canto. El gavilán, su mortal enemigo, hambriento con el transcurso de la noche, despierto con las voces de la pequeña pajarica, saliendo de la espesa floresta, siguiendo al trino de la concertada voz y enderezando su aguda vista contra la temerosa calandria, sigue contra ella su no conocido camino y, moviendo su rápido vuelo, la persigue con crecida saña por los serenos aires. La indefensa pájara, conociendo su mortal enemigo y temiendo sus crueles uñas, aprovechándose de sus ligeras plumas, dando diversas vueltas y haciendo varios círculos, se baja contra la tierra. Pero en fin, viéndose muy acosada, temiendo la cruel muerte, y sintiendo su fin ser llegado, confiando en la bondad acogida y conveniente defensa contra su viejo enemigo y esperando de él libertad para su pequeño cuerpo, se pone en sus manos y se entrega en su poder, pidiendo con sus tristes y temerosos meneos misericordia y socorro. El piadoso hombre, sintiendo la cuita de la mísera pajarica y la maldad del hambriento gavilán, usando de su grandeza y mandándoselo la razón, con piadosas entrañas recibe a la triste pájara y con grande ira y crecida saña y grandes voces persigue a su hambriento y robador enemigo. Después que el perseguidor de la pequeña ave, con temor del defensor, se encerró en la espesa silva y sombrosa floresta, el generoso hombre, usando de su liberalidad, pone en entera libertad a la cantora calandria, prometiéndola continua defensa y perpetua acogida. Con el cual favor y conocida ayuda, la libertada avecita con mayor alegría hace diversas vueltas y señales de eran regocijo, y como de nuevo sin algún temor pública su sonora voz y derrama por el sereno aire su dulce y concertada cantilena. No de otra manera esta pequeña obra despierta con la clara mañana de la juventud y alumbrada con los claros rayos del entendimiento, salió del pequeño nido de la memoria y sacudiendo las voladoras alas de la lengua y escritora pluma, comenzando con no creído regocijo una suave música de la materia de su decir, procuró subir sobre el revoltoso aire de las opiniones de los hombres, no digo de los sabios varones y de perfección, a cuya corrección yo la sujeto, sino de los imprudentes y cavilosos, los cuales, pasando y olvidando lo que es de notar, siempre andan buscando qué reprehender y calumniar. De tal manera que el hambriento gavilán, que es el mordace maldiciente, despierto con la publicación de esta escritura, saliendo de la floresta de su encubierta malicia, sacudiendo las dañosas alas de su envidia, moverá el rápido vuelo de su maldecir contra la indefensa obra, la cual conociendo su mortal enemigo, dando vueltas de una parte a otra, de una ciudad en otra, de una provincia en otra, temiendo su desastrado fin, no halló otro mayor ni mejor defensor que a Vuestra Ilustrísima Señoría; por lo cual, y con cierta esperanza de haber mejor que en otra alguna parte entera defensa y perpetua libertad para libremente andar por toda la redondez de la tierra, se pone debajo del amparo de Vuestra Ilustrísima Señoría, de cuyas manos espera salir, después de huido y temorizado su malévolo enemigo, tan limada, tan corregida, con tanto favor y tan conocida esperanza de defensa, que jamás salida por todo el espacioso orbe de la tierra, publicando la voz de su escritura, hallará quien la contradiga ni perturbe. Tanta será la autoridad que, de tocarla Vuestra Ilustrísima Señoría, la quedará, cuyo ilustrísimo estado prospere quien hasta aquí lo ha hecho tan próspero con acrecentamiento de mayores señoríos.
+Prólogo dirigido al Ilustrísimo Señor Don Pedro Fernández de Velasco, Condestable de Castilla y de León, Duque de Frías, Conde de Haro, Señor de la casa de Lara y de las villas de Villalpando y Pedraza de la Sierra, Camarero mayor de su Magestad y Justicia mayor de Castilla la Vieja.
+致最尊贵的堂佩德罗·费尔南德斯·德·贝拉斯科先生之序言——卡斯蒂利亚与莱昂统帅、弗里亚斯公爵、哈罗伯爵、拉拉家族及比利亚尔潘多镇与佩德拉萨-德拉谢拉镇领主、国王陛下首席侍从、老卡斯蒂利亚首席法官。
 
----
+La cantora calandria, muy Ilustrísimo Señor, despierta con la nueva luz del sereno día, y alegre con los pálidos rayos de la hermosa mañana, saliendo de su pequeño nido y sacudiendo sus voladoras alas, con crecida alegría vuela sobre el sereno y templado aire, y con no pensado regocijo, moviendo su polida lengua, comienza una doble y sabrosa música, variando en diversas y sonoras voces su apacible y sonoro canto.
+最尊贵的先生，善歌的百灵鸟随晴朗白昼的新光而苏醒，因美好清晨的淡淡光芒而欢欣，它离开小巢，振起飞翔的双翼，满怀喜悦地飞翔在晴朗温和的空中，带着意想不到的欢愉，转动它灵巧的舌头，开始一段双重而甜美的音乐，以种种响亮的声音变化着它悦耳而动听的歌唱。
 
-📜 第一部分：百灵鸟与苍鹰的寓言
+El gavilán, su mortal enemigo, hambriento con el transcurso de la noche, despierto con las voces de la pequeña pajarica, saliendo de la espesa floresta, siguiendo al trino de la concertada voz y enderezando su aguda vista contra la temerosa calandria, sigue contra ella su no conocido camino y, moviendo su rápido vuelo, la persigue con crecida saña por los serenos aires.
+它的死敌雀鹰，经过一夜已饥饿难耐，被这小鸟的声音唤醒，从密林中飞出，循着那和谐歌声的婉转啼鸣，将它锐利的目光对准惊恐的百灵鸟，沿着它不曾知晓的路径追去，加快飞速，怀着更大的凶怒在晴朗的空中追赶它。
 
-本序言献给最显赫的领主：唐·佩德罗·费尔南德斯·德·贝拉斯科——卡斯蒂利亚与莱昂大元帅、弗里亚斯公爵、哈罗伯爵、拉拉家族领主、比利亚尔潘多与佩德拉萨德拉谢拉镇领主、国王陛下之首席侍从显贵以及老卡斯蒂利亚大司法官。
+La indefensa pájara, conociendo su mortal enemigo y temiendo sus crueles uñas, aprovechándose de sus ligeras plumas, dando diversas vueltas y haciendo varios círculos, se baja contra la tierra.
+这无力自卫的小鸟，认出自己的死敌，惧怕它残酷的利爪，凭借自己轻捷的羽毛，辗转盘旋、绕出一个个圆圈，向地面降落。
 
-最显赫的领主啊，那善歌的百灵鸟在晴朗日子的新曙光中醒来，为美丽清晨的苍白光芒而欣喜，它飞出小小的鸟巢，振动飞翔的双翼，带着无比的喜悦在晴朗温和的天空中翱翔；它怀着难以想象的欢欣，扇动轻巧的舌尖，开始奏响双重而美妙的乐章，以各种嘹亮的声音变幻着它那温和悦耳的歌声。
+Pero en fin, viéndose muy acosada, temiendo la cruel muerte, y sintiendo su fin ser llegado, confiando en la bondad acogida y conveniente defensa contra su viejo enemigo y esperando de él libertad para su pequeño cuerpo, se pone en sus manos y se entrega en su poder, pidiendo con sus tristes y temerosos meneos misericordia y socorro.
+但最终，它见自己备受逼迫，惧怕惨死，感到末日已至，便信赖那善意的收留与对老敌手的妥善防卫，期望从他那里获得小身体的自由，于是投身于他手中，交付于他的权下，以悲伤而惊恐的摆动作态乞求怜悯与救助。
 
-而它的死敌苍鹰，在度过漫漫长夜后饥肠辘辘，被这只小鸟的声音惊醒，遂飞出茂密的森林，循着那和谐的婉转鸣叫声，将锐利的目光直刺向恐惧的百灵鸟，循着未知的路径朝它逼近，并展翅疾飞，怀着愈发残忍的狂怒在晴朗的空中对它穷追不舍。
+El piadoso hombre, sintiendo la cuita de la mísera pajarica y la maldad del hambriento gavilán, usando de su grandeza y mandándoselo la razón, con piadosas entrañas recibe a la triste pájara y con grande ira y crecida saña y grandes voces persigue a su hambriento y robador enemigo.
+这慈悲的人，感受到这可怜小鸟的危难与饥饿雀鹰的凶恶，施展自己的崇高，依理性之所命，以慈悲心肠接纳这悲伤的小鸟，并怀着盛怒、更大的凶愤和高声喝斥，驱赶那饥饿的掠夺之敌。
 
-这只毫无防备的小鸟深知死敌的厉害，惧怕它那残酷的利爪，只能凭借轻盈的羽翼，在空中不断盘旋、绕圈，企图向地面俯冲逃生。
+Después que el perseguidor de la pequeña ave, con temor del defensor, se encerró en la espesa silva y sombrosa floresta, el generoso hombre, usando de su liberalidad, pone en entera libertad a la cantora calandria, prometiéndola continua defensa y perpetua acogida.
+待那追捕小鸟者因畏惧保护者而躲入茂密的丛林与幽暗的密林之后，这宽宏的人施展自己的慷慨，让善歌的百灵鸟完全获得自由，并向它许诺持续不断的保护与永久的收留。
 
-但最终，它发现自己被逼入绝境，由于惧怕悲惨的死亡并预感到末日将至，它选择信任一位过路人的仁慈接纳与庇护，寄望能从宿敌手中换回这具弱小躯体的自由，于是它飞入这位贵人的手中，顺从地将自己交托给他的力量，用悲伤而恐惧的颤抖乞求着怜悯与救援。
+Con el cual favor y conocida ayuda, la libertada avecita con mayor alegría hace diversas vueltas y señales de gran regocijo, y como de nuevo sin algún temor pública su sonora voz y derrama por el sereno aire su dulce y concertada cantilena.
+得此恩惠与确知的援助，获释的小鸟更加欢欣地辗转盘旋，作出种种大喜的表示，仿佛重获新生般毫无畏惧地发出响亮的声音，在晴朗的空中倾泻它甜美而和谐的歌唱。
 
-这位仁慈的男子感受到了这只可怜小鸟的痛苦，也看到了饥饿苍鹰的邪恶，他彰显出自己的崇高气度，在理性的驱使下，怀着慈悲的心肠接纳了这只悲伤的小鸟，并带着巨大的愤怒、高亢的斥责与威严的声音，去驱逐那饥饿掠夺的恶敌。
+No de otra manera esta pequeña obra despierta con la clara mañana de la juventud y alumbrada con los claros rayos del entendimiento, salió del pequeño nido de la memoria y sacudiendo las voladoras alas de la lengua y escritora pluma, comenzando con no creído regocijo una suave música de la materia de su decir, procuró subir sobre el revoltoso aire de las opiniones de los hombres, no digo de los sabios varones y de perfección, a cuya corrección yo la sujeto, sino de los imprudentes y cavilosos, los cuales, pasando y olvidando lo que es de notar, siempre andan buscando qué reprehender y calumniar.
+这部小作品也正是如此：它随青春的清朗清晨而苏醒，被知性的明亮光芒所照亮，从记忆的小巢中出来，振动舌头与书写之笔的飞翔双翼，带着意想不到的欢愉，就其所言之事奏起一段柔和的音乐，力图飞升于世人意见的纷乱气流之上——我说的不是智慧完美之士的意见（我愿将此作交由他们校正），而是那些轻率而好挑剔者的意见，他们略过并忘却值得注意之处，却总在寻找可以指责和诋毁的东西。
 
-在这只小鸟的迫害者因惧怕庇护者而躲进茂密的丛林与阴暗的森林之后，这位慷慨的男子彰显了他的宽宏大量，给予了这只善歌的百灵鸟完全的自由，并承诺向它提供长久的保护与永远的接纳。
+De tal manera que el hambriento gavilán, que es el mordace maldiciente, despierto con la publicación de esta escritura, saliendo de la floresta de su encubierta malicia, sacudiendo las dañosas alas de su envidia, moverá el rápido vuelo de su maldecir contra la indefensa obra, la cual conociendo su mortal enemigo, dando vueltas de una parte a otra, de una ciudad en otra, de una provincia en otra, temiendo su desastrado fin, no halló otro mayor ni mejor defensor que a Vuestra Ilustrísima Señoría;
+于是那饥饿的雀鹰——即尖刻的诋毁者——被这部作品的问世所唤醒，从他隐藏恶意的密林中出来，振动嫉妒的有害双翼，将急速的诋毁之飞扑向这无力自卫的作品；作品认出自己的死敌，便辗转于一处又一处、一城又一城、一省又一省，惧怕自己不幸的结局，终于找不到比最尊贵的阁下更大更好的保护者；
 
-得到了如此恩赏与显而易见的援助，这只重获自由的小鸟怀着更甚以往的喜悦，在空中翻飞，流露出极大的欢欣，它仿佛脱胎换骨般毫无惧色地公开亮起嘹亮的歌喉，将甜美和谐的歌谣洒满晴朗的天空。
+por lo cual, y con cierta esperanza de haber mejor que en otra alguna parte entera defensa y perpetua libertad para libremente andar por toda la redondez de la tierra, se pone debajo del amparo de Vuestra Ilustrísima Señoría, de cuyas manos espera salir, después de huido y temorizado su malévolo enemigo, tan limada, tan corregida, con tanto favor y tan conocida esperanza de defensa, que jamás salida por todo el espacioso orbe de la tierra, publicando la voz de su escritura, hallará quien la contradiga ni perturbe.
+因此，它怀着确实的希望——期望在此处比在任何别处更能获得完全的防卫与永久的自由，得以自由行走于大地环宇各处——投身于最尊贵阁下的庇护之下，期望从其手中出来时，在它那心怀恶意的敌人被赶走并震惧之后，如此精修、如此校正，蒙受如此厚爱，又有如此确知的防卫希望，以致它将来走遍广阔的大地寰宇，宣扬其书写之声，也永远不会遇到反驳或扰乱它的人。
 
----
-
-✒️ 第二部分：将寓言引申至“新书与批评者”
-
-同理，我这本微不足道的小作，在青年时代的清朗早晨中觉醒，并在理智的明亮光芒照耀下，飞出了记忆的小小巢穴；它振动着语言与书写之笔的飞翔双翼，怀着难以置信的欢欣，就其叙述的主题谱写出一曲柔和的音乐，试图飞升到世人众说纷纭的浮躁半空中——我所指的并非那些博学且完美的智者，我甘愿将本书交给他们去斧正，而是指那些轻率且爱挑剔的小人，他们总是对值得关注的优点视而不见、转头就忘，却永远在搜寻可以指责和诽谤的瑕疵。
-
-因此，那只饥饿的苍鹰——也就是那些刻薄的诽谤者，一旦被本书的出版所惊醒，就会从他们隐蔽的恶意森林中钻出来，煽动嫉妒的有害翅膀，让恶毒的流言疾速飞向这本毫无防备的作品；而本书深知其死敌的厉害，在从一个地方流传到另一个地方、从一座城市流传到另一座城市、从一个省份流传到另一个省份的过程中，由于惧怕遭到毁灭性的厄运，它发现没有谁能比您——最显赫的阁下，成为更大、更好的庇护者。
-
-正因如此，怀着在您这里能获得比其他任何地方都更完美的全然庇护与永久自由、从而能够自由漫步于整个地球的笃定希望，本书特来投奔到最显赫的您之庇护下；它期待从您的手中走出去时，那些不怀好意的敌人已被吓退逃散，而本书也已因您的审阅而变得字斟句酌、完美无瑕，并带着您巨大的恩赏与昭彰的保护牌，从此走向辽阔的世界、公开传播它的文字，届时将再无任何人敢反对或干扰它。
-
-只要得到最显赫的您的垂青与加持，本书就将获得无上的权威。愿那迄今为止让您如此昌盛的神明，继续保佑您显赫的领地繁荣昌盛，并不断为您开疆拓土、增加更宏大的封地。
-
----
+Tanta será la autoridad que, de tocarla Vuestra Ilustrísima Señoría, la quedará, cuyo ilustrísimo estado prospere quien hasta aquí lo ha hecho tan próspero con acrecentamiento de mayores señoríos.
+最尊贵阁下触及它，它便将获得如此大的权威；愿那位迄今使其如此昌盛、并增添更大领地者，使阁下最尊贵的地位日益兴旺。
 
 💡 核心逻辑大白话
 
@@ -95,144 +105,1337 @@ Prólogo dirigido al Ilustrísimo Señor Don Pedro Fernández de Velasco, Condes
 > 2. **揭晓暗喻**：小鸟代表我的新书；苍鹰代表那些嫉妒我、想写差评抹黑我的喷子和小人；伟大的路人就代表您（弗里亚斯公爵）。
 > 3. **最终目的**：公爵阁下，我的书太弱小了，印刷出来流传到各个城市时，肯定会被键盘侠和小人围攻。所以我特意把书献给您。只要书的封面上印着您的大名，有了您这位超级大贵族的“代言”和“罩着”，全天下的喷子就都闭嘴不敢惹我了！
 >
-> 序言部分已经全部翻译完毕，接下来请发给我 **第一章：太阳骑士的诞生与抚养** 的原文，我们马上开始看故事！
 
 ---
 
 ARGUMENTO
-Argumento hecho por el mismo autor sobre la peregrinación y continua batalla de la vida del hombre. Ser el hombre nacido para trabajo, discreto lector, afírmalo la Sagrada Escritura. Nace el hombre turbia la memoria, ofuscado el entendimiento y turbada la voluntad y sin el uso de la razón. Ve con los ojos y no conoce. Nace sordo de los oídos, mudo de la lengua, finalmente, atado de los pies y ligado de las manos. Nace desnudo, pobre y rodeado de toda miseria; y, por tanto, lo primero que hace después de la entrada que ha hecho en este mundo es llorar su nacimiento, su flaqueza y los trabajos que le esperan. Y con razón, porque los otros animales fieros, domésticos, ganados, pescados y aves nacen vestidos de gruesos cueros de pelos, cerdas, lanas, conchas o escamas. Nacen callados y muchos armados. En saliendo del vientre de la madre, o del casco del huevo, andan, maman, buscan su mantenimiento y aun siguen a sus propias madres y las aman y conocen. Por el contrario; es tanta la miseria y flaqueza del hombre que si no le reciben del vientre de su madre, no le apiadan, no le limpian, no le empañan, no le traen entre brazos, y no le llegan y dan la teta, no solamente no anda, no conoce a su madre, no la sigue, pero ni procura, ni atina a mamar, ni busca otro manjar, ni sabe otra cosa sino gemir y llorar y, como una cosa sin poder y sin provecho, se dejaría morir. Pues a quien tantos trabajos acompañan en su nacimiento, en el proceso de la vida ¿quien los contará? Cuántas desgracias, cuántos infortunios, cuántas enfermedades, cuántas pérdidas, cuántas contiendas, cuántas afrentas y cuántos azotes de la adversa fortuna le esperan. De la muerte y sus trabajos no quiero decir más de que es la cosa más terribilísima y espantable que hay en la vida; para probar esto, basta decir que es privación de la misma vida. Allí huyen los amigos y le desamparan los parientes, y si al uno le regala es más por heredarle lo que deja que no para ayudarle a sufrir el dolor de que se queja. Después que el hombre ha pasado y atravesado la edad de la inocencia y llegado a los años de la discreción, cuando ya comienzan las potencias del alma a despertar, la razón a discernir y conocer el bien y el mal, los ojos a ver, las orejas a oír, y la lengua con discreción a hablar, llega por la posta otro mayor trabajo, que es una continua batalla con los desordenados deseos de la carne, una guerra con las tentaciones del demonio y una contienda con los vicios, engaños y trabajos del mundo. Considerando esto, decía Job, VII capítulo, que la vida del hombre es una continua guerra y un tener siempre asentado real sobre la tierra. De manera que, a este real que el hombre tiene asentado sobre la tierra, tres mortales enemigos le dan continua batería noche y día. La carne le lombardea con los continuos aguijones de la inmunda lujuria, convidándole, si se rinde, con placeres, comeres, regalos y fingido descanso. El demonio está en celada y le acecha siempre con turbados y malos pensamientos, le saltea con soberbias y aun le aflige con grandes tentaciones. El mundo le corre el campo, le combate y llega a manos y puñadas con pundonores, bandolerías, honrras, trajes y riquezas. Aunque con todo esto el hombre no está sin defensa contra tres tan mortales enemigos, porque le armó Dios de prudencia, sitióle y fortalecióle con consejo y diole por capitán y defensor a la razón. Armóle la cabeza de un yelmo de la memoria de la muerte para se defender del pecado y del demonio. Armóle de un arnés de temperancia para se amparar de las inmundicias y regalos de la carne. Fortalecióle de un escudo de paciencia para sufrir los encuentros de los trabajos, adversidades y casos desastrados de la fortuna. Guarnecióle de una espada del olvido de la vida para cortar las honras, vanaglorias, trajes, regalos y riquezas del mundo.
+题解
 
+Argumento hecho por el mismo autor sobre la peregrinación y continua batalla de la vida del hombre.
+作者本人就人生朝圣之旅与持续不断的战斗所作之题解。
 
-> 📜 核心译文：内容纲要（作者自序）
->
-> 本章为作者亲自撰写的内容纲要，阐述了人类生命的朝圣之旅与永无休止的战役。
+Ser el hombre nacido para trabajo, discreto lector, afírmalo la Sagrada Escritura.
+明辨的读者啊，人生来即为了劳苦，此乃《圣经》所确证。
 
-聪明的读者啊，圣经早已断言：人的一生注定要经历苦难。人出生时，记忆是模糊的，理智是昏暗的，意志是混乱的，更不具备理性的使用能力。他睁眼看世界却一无所知；他生来耳聋、口哑，手脚更是如同被捆绑般无法动弹。他赤条条、赤贫地来到世间，被无尽的苦难包围。正因如此，他踏入这个世界后的第一件事就是哭泣——哭泣自己的降生，哭泣自己的软弱，哭泣等待着他的重重磨难。
+Nace el hombre turbia la memoria, ofuscado el entendimiento y turbada la voluntad y sin el uso de la razón.
+人生来时记忆混沌、理智蒙蔽、意志紊乱，且不能运用理性。
 
-他的哭泣并非毫无道理。反观其他动物，无论是凶猛的野兽、驯养的家畜、牛羊、鱼类还是鸟类，它们出生时都自带厚实的皮毛、鬃毛、羊毛、贝壳或鳞片作为衣服。它们出生时保持沉静，许多还自带武器。它们一离开母体或破壳而出，就能行走、哺乳、自己寻找食物，甚至能跟随并爱护、认得自己的母亲。
+Ve con los ojos y no conoce.
+他有眼能看，却不认识。
 
-然而人类的凄惨与软弱却远胜于此。如果人出生时没有被母亲接纳，没有人怜悯他、清洗他、用襁褓包裹他、用双臂怀抱他、将乳头送入他的口中，他不仅不会行走，认不出母亲，不会跟随母亲，他甚至连吸吮乳汁都不会、找不到，更不会寻找其他食物。他除了呻吟和哭泣什么都不会，会像个毫无能力、毫无用处的废物一样，活活让自己饿死。
+Nace sordo de los oídos, mudo de la lengua, finalmente, atado de los pies y ligado de las manos.
+他生来双耳失聪、舌头无言，总之，双脚被缚、双手被绑。
 
-一个在出生时就有这么多苦难相伴的人，在他随后的生命旅程中，谁又能数得清他的苦难呢？有多少不幸、多少灾祸、多少疾病、多少损失、多少争斗、多少侮辱以及命运女神无情的鞭笞在等待着他。至于死亡及其带来的痛苦，我不想多说什么，它只是生命中最恐怖、最骇人的事情；要证明这一点，只需说它是对生命的剥夺就足够了。在死亡面前，朋友会逃离，亲人会抛弃，如果有人对濒死者献殷勤，那多半是为了继承他留下的遗产，而不是为了帮他分担痛苦。
+Nace desnudo, pobre y rodeado de toda miseria; y, por tanto, lo primero que hace después de la entrada que ha hecho en este mundo es llorar su nacimiento, su flaqueza y los trabajos que le esperan.
+他生来赤身裸体、贫穷困苦，被一切悲惨所围绕；因此，他进入这个世界之后所做的第一件事，便是为自己出生、为自己软弱、为等待自己的劳苦而哭泣。
 
-当人熬过了无知的童年，到了懂事的年纪，当灵魂的各种能力开始觉醒，理性开始辨别和认识善恶，眼睛开始看清，耳朵开始聆听，舌头开始理智地说话时，另一个更大的苦难却接踵而至——那就是与肉体放纵欲望的持久战、与魔鬼诱惑的交锋，以及与世俗恶习、欺骗和苦难的搏斗。考虑到这一点，约伯在《约伯记》第七章中曾说：人的一生就是一场持续不断的战争，是在大地上永远安营扎寨的对峙。
+Y con razón, porque los otros animales fieros, domésticos, ganados, pescados y aves nacen vestidos de gruesos cueros de pelos, cerdas, lanas, conchas o escamas.
+这自有道理，因为其他野兽、家畜、牲畜、鱼类和禽鸟，生来便披着厚实的皮毛、鬃毛、羊毛、甲壳或鳞片。
 
-在这座人类扎根于大地的营垒前，三个死敌正日夜不停地发起猛烈炮轰。
+Nacen callados y muchos armados.
+它们生来安静无声，许多还天生有武装。
 
-肉体，正用肮脏色欲的连环毒针不断轰炸他，诱惑他只要投降，就能享受享乐、美食、奢华和虚假的安逸。
-魔鬼，正潜伏在暗处，用混乱和邪恶的思想时刻窥视他，用傲慢偷袭他，甚至用巨大的诱惑折磨他。
-世俗，正席卷战场向他发起进攻，用虚荣、拉帮结派、名誉、华服和财富与他肉搏。
+En saliendo del vientre de la madre, o del casco del huevo, andan, maman, buscan su mantenimiento y aun siguen a sus propias madres y las aman y conocen.
+它们一出母腹，或破壳而出，便能行走、吃奶、寻找食物，甚至跟随自己的母亲，爱她们、认得她们。
 
-尽管如此，人在面对这三个死敌时并非手无寸铁。因为上帝用审慎武装了人，用明智的劝诫巩固并防卫了他，并赐予他“理性”作为统帅与捍卫者。
+Por el contrario; es tanta la miseria y flaqueza del hombre que si no le reciben del vientre de su madre, no le apiadan, no le limpian, no le empañan, no le traen entre brazos, y no le llegan y dan la teta, no solamente no anda, no conoce a su madre, no la sigue, pero ni procura, ni atina a mamar, ni busca otro manjar, ni sabe otra cosa sino gemir y llorar y, como una cosa sin poder y sin provecho, se dejaría morir.
+相反，人的悲惨与软弱如此之大，若无人从母腹中接住他、怜悯他、清洁他、给他裹上襁褓、把他抱在怀中、凑近给他哺乳，他不仅不会走、不认得母亲、不跟随她，甚至不会努力、不会设法吃奶，也不会寻找别的食物，除了呻吟哭泣之外一无所知，就像一件毫无能力、毫无用处的东西，任自己死去。
 
-上帝用一顶“铭记死亡”的头盔武装了人的头部，用来抵御罪恶和魔鬼。
-上帝用一副“节制”的铠甲武装了人，用来保护自己免受肉体污秽与奢华的侵害。
-上帝用一面“坚忍”的盾牌加固了人，用来承受命运带来的苦难、逆境和灾难。
-上帝用一把“忘却尘世”的宝剑装饰了人，用来斩断世俗的名誉、虚荣、华服、享乐和财富。
+Pues a quien tantos trabajos acompañan en su nacimiento, en el proceso de la vida ¿quien los contará?
+那么，一个人出生时便有如此多的劳苦相伴，在人生的进程中，谁又能数得清这些劳苦呢？
 
----
+Cuántas desgracias, cuántos infortunios, cuántas enfermedades, cuántas pérdidas, cuántas contiendas, cuántas afrentas y cuántos azotes de la adversa fortuna le esperan.
+多少不幸、多少灾祸、多少疾病、多少损失、多少争斗、多少屈辱、多少厄运的鞭笞在等着他。
 
-💡 核心逻辑大白话
+De la muerte y sus trabajos no quiero decir más de que es la cosa más terribilísima y espantable que hay en la vida; para probar esto, basta decir que es privación de la misma vida.
+关于死亡及其劳苦，我只想说：它是人生中最可怕、最令人惊恐之事；要证明这一点，只需说它是生命本身的剥夺。
 
-> 这一段是整本书的**核心世界观**和**设定集**。作者在这里把人的一生比作了一场\*\*“3对1的城堡攻防战”\*\*：
->
-> 1. **惨烈的新生儿阶段**：作者吐槽人类是自然界最废柴的生物。动物出生自带皮毛武器，生下来就会跑会吃。人出生时什么都不会，不喂就等死。
-> 2. **悲惨的成长阶段**：好不容易长大了，还要经历生老病死。最惨的是死的时候，亲戚朋友都跑了，留下来的也是为了分遗产。
-> 3. **“通关游戏”的敌人设定**：人一成年，三大Boss就派兵来攻打你的心灵城堡了：
->    * **Boss 1（肉体）**：用美食、美女、懒惰来诱惑你（糖衣炮弹）。
->    * **Boss 2（魔鬼）**：在脑海里给你灌输坏思想，让你变得骄傲自大（精神污染）。
->    * **Boss 3（世俗）**：用面子、名利、豪车华服来诱惑你，让你和别人攀比（社会压力）。
-> 4. **玩家的神装道具**：但是别怕，上帝给身为主角的“人类”发了四件神装：
->    * **头盔（记得人终有一死）**：清醒头脑，防魔鬼。
->    * **铠甲（克制与节制）**：保护身体，防肉欲。
->    * **盾牌（耐心与坚忍）**：硬抗命运的打击。
->    * **宝剑（看破红尘）** ：斩断对名利和财富的执念。
+Allí huyen los amigos y le desamparan los parientes, y si al uno le regala es más por heredarle lo que deja que no para ayudarle a sufrir el dolor de que se queja.
+那时朋友们逃开，亲戚们抛弃他；即便有人照料他，也更多是为了继承他留下的东西，而非帮助他忍受他所抱怨的痛苦。
 
+Después que el hombre ha pasado y atravesado la edad de la inocencia y llegado a los años de la discreción, cuando ya comienzan las potencias del alma a despertar, la razón a discernir y conocer el bien y el mal, los ojos a ver, las orejas a oír, y la lengua con discreción a hablar, llega por la posta otro mayor trabajo, que es una continua batalla con los desordenados deseos de la carne, una guerra con las tentaciones del demonio y una contienda con los vicios, engaños y trabajos del mundo.
+人经过并走完天真无知的年龄，到了有辨别力的年岁，当灵魂的各种能力开始苏醒，理性开始辨别、认识善恶，眼睛能看，耳朵能听，舌头能谨慎说话之时，另一项更大的劳苦便快马加鞭地到来，那就是与肉体无序欲望的持续战斗、与魔鬼诱惑的战争，以及与世间恶习、欺诈和劳苦的争斗。
 
-Viniendo pues al propósito, digo que el Caballero del Sol, considerando todas estas cosas y más que con el trabajo se alcanza la prez y la honra de la caballería del hombre y la virtud y renombre de bueno en esta vida y la deseada bienaventuranza en la otra, y de la ociosidad, que es madre de todos los vicios, madrasta de la virtud y arma a dos manos del enemigo, nacen todos los males, determino de se partir de la corte y propia tierra, de desechar el regalo y la holganza y ociosidad e ir desterrado de su voluntad a buscar la prez honra de la cristiana caballería y no cansar hasta hallar y seguir el camino de la virtud. Debajo de lo cual el autor representa a los lectores la peregrinación de toda la vida del hombre, la caballería cristiana y la continua batalla con los vicios, y enseña el estrecho camino de la virtud poniendo dos caminos, el de la perdición, que es el de los placeres, regalos y riquezas de este mundo y vida y su desastrado y lloroso fin, después del cual se sigue la eterna pena; el de la vida, que es el de la virtud, de los trabajos y continua batalla de los vicios y su glorioso fin, después del cual sigue la perpetua holganza. Debe advertir el lector que en aquellos capítulos que se ponen en estilo que parece profano, hasta que Pelio Roseo sale a buscar al Caballero del Sol perdido, ha de considerar más que la letra, porque tienen encubierta su moralidad y debajo del casco está la médula del sabroso manjar, porque todo lo demás va harto entendido aunque también lleva sus maneras de figuras y pasos que van representando cosas que acontecen al hombre en la peregrinación y proceso de su vida, los cuales conviene que sean muy bien entendidos. Y puesto que alguno tome hastío en lo primero, hasta llegar al buscar de Pelio Roseo, no se canse, porque hallara adelante una tan sabrosa historia y tan provechosa que leyendola le dará, como la buena fruta, sabor y olor; pensándola, mirándola le acrecentara la virtud y le huyentará el vicio, le traerá memoria de la muerte, le dará olvido de la vida, le enseñará el camino de la virtud y trabajosa contienda de la vida del hombre, y le hará menospreciar el mundo y sus vanas promesas y huir del camino de la perdición, y finalmente le enseñará a bien vivir y le dirá cómo mejor sepa y pueda acabar y morir en el Señor.
+Considerando esto, decía Job, VII capítulo, que la vida del hombre es una continua guerra y un tener siempre asentado real sobre la tierra.
+约伯在第七章想到这一点，便说人生是一场持续不断的战争，是在地上始终安营扎寨。
 
-YO LA PRUDENCIA, A INSTANCIA Y RUEGO DE LA NATURAL RAZÓN,
-ESTE PEQUEÑO LIBRO ESCRIBÍ DE LOS TRABAJOS QUE EL
+De manera que, a este real que el hombre tiene asentado sobre la tierra, tres mortales enemigos le dan continua batería noche y día.
+因此，人对这在地上安设的营寨，有三个死敌日夜不断地猛攻。
 
-CABALLERO DEL SOL SUFRIÓ EN DEFENSA DE LA MISMA RAZÓN. PROVERB. C.VIII: Nunquid non sapientia clamitat et prudentiam dat vocem suam in summis excelsisque verticibus supremam et mediis semitis trans iuxta portas civitatis in ipsis foribus loquitur dicens: O viri ad vos clamito et vox mea ad filios hominum.
+La carne le lombardea con los continuos aguijones de la inmunda lujuria, convidándole, si se rinde, con placeres, comeres, regalos y fingido descanso.
+肉体以不洁淫欲的持续刺激向他发射，若他屈服，便以享乐、美食、安逸和虚假的休息来引诱他。
+
+El demonio está en celada y le acecha siempre con turbados y malos pensamientos, le saltea con soberbias y aun le aflige con grandes tentaciones.
+魔鬼埋伏着，总以纷乱邪恶的念头窥伺他，以骄傲突袭他，甚至以巨大诱惑折磨他。
+
+El mundo le corre el campo, le combate y llega a manos y puñadas con pundonores, bandolerías, honrras, trajes y riquezas.
+世俗则驰骋战场向他进攻，以名誉、匪盗行径、荣衔、衣饰和财富与他交手搏斗。
+
+Aunque con todo esto el hombre no está sin defensa contra tres tan mortales enemigos, porque le armó Dios de prudencia, sitióle y fortalecióle con consejo y diole por capitán y defensor a la razón.
+尽管如此，人对这三个如此致命的敌人并非毫无防备，因为上帝以谨慎武装他，以谋略围绕并坚固他，并赐予理性作为他的统帅和守护者。
+
+Armóle la cabeza de un yelmo de la memoria de la muerte para se defender del pecado y del demonio.
+上帝以对死亡的记忆为头盔武装他的头，用以抵御罪与魔鬼。
+
+Armóle de un arnés de temperancia para se amparar de las inmundicias y regalos de la carne.
+以上帝以节制为铠甲武装他，用以防备肉体的不洁与享乐。
+
+Fortalecióle de un escudo de paciencia para sufrir los encuentros de los trabajos, adversidades y casos desastrados de la fortuna.
+以上帝以忍耐为盾牌坚固他，用以忍受劳苦、逆境和命运灾祸的袭击。
+
+Guarnecióle de una espada del olvido de la vida para cortar las honras, vanaglorias, trajes, regalos y riquezas del mundo.
+以上帝以对生命的遗忘为剑装备他，用以斩断世间的荣衔、虚荣、衣饰、享乐和财富。
+
+Viniendo pues al propósito, digo que el Caballero del Sol, considerando todas estas cosas y más que con el trabajo se alcanza la prez y la honra de la caballería del hombre y la virtud y renombre de bueno en esta vida y la deseada bienaventuranza en la otra, y de la ociosidad, que es madre de todos los vicios, madrasta de la virtud y arma a dos manos del enemigo, nacen todos los males, determino de se partir de la corte y propia tierra, de desechar el regalo y la holganza y ociosidad e ir desterrado de su voluntad a buscar la prez honra de la cristiana caballería y no cansar hasta hallar y seguir el camino de la virtud.
+那么言归正题，我要说：太阳骑士思虑了这一切，更想到人藉劳苦方能获得骑士的荣光与荣誉、此生中善人的德行与名声，以及来世所渴望的福乐；而懒惰乃一切恶习之母、德行之继母、仇敌双手的武器，一切祸患皆由之而生。于是他决意离开宫廷与故土，摒弃安逸、闲适与懒惰，自愿流放自己去寻求基督教骑士的荣光与荣誉，不找到并走上德行之路便绝不疲倦。
+
+Debajo de lo cual el autor representa a los lectores la peregrinación de toda la vida del hombre, la caballería cristiana y la continua batalla con los vicios, y enseña el estrecho camino de la virtud poniendo dos caminos, el de la perdición, que es el de los placeres, regalos y riquezas de este mundo y vida y su desastrado y lloroso fin, después del cual se sigue la eterna pena; el de la vida, que es el de la virtud, de los trabajos y continua batalla de los vicios y su glorioso fin, después del cual sigue la perpetua holganza.
+在此之下，作者向读者呈现人整个一生的朝圣之旅、基督教骑士精神以及与恶习的持续战斗，并借两条道路来教导德行之路的狭窄：一条是沉沦之路，即此生此世享乐、安逸与财富之路，及其不幸而可悲的结局，之后便是永恒的惩罚；另一条是生命之路，即德行之路、劳苦与对恶习持续战斗之路，及其光荣的结局，之后便是永久的安歇。
+
+Debe advertir el lector que en aquellos capítulos que se ponen en estilo que parece profano, hasta que Pelio Roseo sale a buscar al Caballero del Sol perdido, ha de considerar más que la letra, porque tienen encubierta su moralidad y debajo del casco está la médula del sabroso manjar, porque todo lo demás va harto entendido aunque también lleva sus maneras de figuras y pasos que van representando cosas que acontecen al hombre en la peregrinación y proceso de su vida, los cuales conviene que sean muy bien entendidos.
+读者须注意：在那些以看似世俗风格写成的章节中，直到佩利奥·罗塞奥出发去寻找失踪的太阳骑士为止，应当思虑文字之外的含义，因为它们暗藏着道德寓意，壳下藏着美味食物的精髓；其余部分则相当易懂，虽然也带有其比喻和情节的方式，呈现人在其朝圣之旅与生命进程中所遇之事，这些理应被很好理解。
+
+Y puesto que alguno tome hastío en lo primero, hasta llegar al buscar de Pelio Roseo, no se canse, porque hallara adelante una tan sabrosa historia y tan provechosa que leyendola le dará, como la buena fruta, sabor y olor; pensándola, mirándola le acrecentara la virtud y le huyentará el vicio, le traerá memoria de la muerte, le dará olvido de la vida, le enseñará el camino de la virtud y trabajosa contienda de la vida del hombre, y le hará menospreciar el mundo y sus vanas promesas y huir del camino de la perdición, y finalmente le enseñará a bien vivir y le dirá cómo mejor sepa y pueda acabar y morir en el Señor.
+即便有人对开头部分——直到佩利奥·罗塞奥出发寻找为止——感到厌倦，也不必疲怠，因为他在后面会遇到一段如此甜美而有益的故事，读之会像好果子一样给他滋味与芬芳；思索它、注视它，会增长他的德行、使他避开恶习，带给他对死亡的记忆，使他忘却生命，教他德行之路与人生辛劳的争战，使他轻视世界及其虚妄承诺、逃离沉沦之路，最终教他善生，并告诉他如何最善地懂得并能终结此生、在主内死去。
+
+YO LA PRUDENCIA, A INSTANCIA Y RUEGO DE LA NATURAL RAZÓN, ESTE PEQUEÑO LIBRO ESCRIBÍ DE LOS TRABAJOS QUE EL CABALLERO DEL SOL SUFRIÓ EN DEFENSA DE LA MISMA RAZÓN.
+我，谨慎女神，应自然理性的请求与恳求，写下这部小书，记述太阳骑士为捍卫这同一理性而遭受的种种磨难。
+
+PROVERB. C.VIII: Nunquid non sapientia clamitat et prudentiam dat vocem suam in summis excelsisque verticibus supremam et mediis semitis trans iuxta portas civitatis in ipsis foribus loquitur dicens: O viri ad vos clamito et vox mea ad filios hominum.
+《箴言》第八章：智慧岂不呼唤？谨慎岂不在极高之处、在道路中间、在城门旁、在门口发出声音说：众男子啊，我向你们呼喊，我的声音向世人发出。
 
 CAPÍTULO I Del nacimiento y criança del Caballero del Sol.
-Dice la Prudencia: nació en España un doncel bello en el rostro y bien proporcionado en los miembros, de noble y claro linaje engendrado, cuyos padres, propia patria y nombre, de ruego del mismo, la Prudencia calla. Fue criado a los pechos y en el regaço de su propia madre hasta la edad de los siete años, donde fue tomado y entregado de la mano de su propio padre a un sabio y discreto varón para ser enseñado en las artes liberales. Valieron tanto la buena diligencia del maestro y la aplicación y trabajo del discípulo, que en otros siete años alcançó gran parte de la gramática, retorica filosofía. Pero como el principal intento del padre fuese ensayarle y enseñarle en el arte militar, en el cual él había gastado la mayor parte de su vida, llevólo después de los catorce años a la corte del muy alto y poderoso Don Carlos, quinto de este nombre, Emperador de Roma, Rey de las Españas, etc., del cual no poco fue amado de los grandes y altos hombres de su corte muy mirado y estimado. Pero como la variable fortuna, cansa de dar vueltas a su rueda, mudó la quietud, sosiego y reposo de este caballero en destierro, desasosiego y trabajo, con mayor virtud de su persona y mayor gloria de su fama. Pues como en este caballero ya hiciese fin la edad de la adolescencia y la de la juventud floridamente començase su principio, y como en este tiempo los hombres sean dotados de mayor seso, su entendimiento fue irradiando su ánimo de nuevo pensamiento cercado y su coraçón de grande congoja combatido, representábasele en la imaginación que le sería bueno dejar la corte y peregrinar por los campos buscando su ventura, dejar el bullicio y tantas conversaciones y escoger la soledad, olvidar los pasatiempos y el regalo y hallar los trabajos y aspereza, desechar los delicados paños de brocado y sedas y vestir las fuertes armas, dejar la renta ganada e ir a buscar la fama perdida, desamparar la ociosidad donde nace el vicio e ir a buscar el trabajo y afán que engendran la virtud, según dice el Eccle XXXI: Multam malitiam docuit otiositas c, nisi cum priden de terum. Juntamente con esto, una noche, pensando en muchas cosas a estas semejantes, de muy desvelado se adormió; donde le fue representado cómo habiendo de su propia voluntad desterrádose de la corte, después de largos trabajos y peligros, había venido en una tierra montuosa llena de silvas de arboles diversos de grandes espesuras y matas cerrada, poblada de fieras y otros tímidos y silvestres animales, hermoseada de muchas fuentes que con sus corrientes hacían dulce sonido, rodeada de un gran río donde se criaba abundancia de pescados, de manera que no faltaban fieras con que pelear, animales que caçar, aves que volar, peces que enredar. En lo más alto de estas montañas le parecía
+第一章 太阳骑士的出生与养育
 
-que hallaba un castillo, donde, habiendo reposado de los trabajos pasados, salía por reconocer la tierra, y entraba en una cueva que en lo más escondido de las montañas, entre gran maleza y unas hondas quiebras, se hacia, cuya puerta le parecía estar labrada estremadamente de cantería con figuras de talla muy al natural, en la cual se le representaba ver y hallar cosas tan altas, tan subidas, tan estrañas que le parecía que no eran cosas para comunicar con los hombres. A esta hora por un amigo fue con sobresalto despertado, ca ya gran rato era entrado del día, pero no por eso lo apartaba de su pensamiento, mas antes de día lo pensaba y de noche lo soñaba; tanto que, en esta batalla de sus pensamientos y en esta contienda de sus cuidados, determinó de poner fin con determinarse de se desterrar de la corte y seguir sus pensamientos e incierto viaje donde Dios y su ventura lo guiasen.
+Dice la Prudencia: nació en España un doncel bello en el rostro y bien proporcionado en los miembros, de noble y claro linaje engendrado, cuyos padres, propia patria y nombre, de ruego del mismo, la Prudencia calla.
+谨慎女神说：在西班牙诞生了一位面容俊美、四肢匀称的少年，出身高贵清白的血统；至于他的父母、故土和名字，因他本人请求，谨慎女神缄口不言。
+
+Fue criado a los pechos y en el regaço de su propia madre hasta la edad de los siete años, donde fue tomado y entregado de la mano de su propio padre a un sabio y discreto varón para ser enseñado en las artes liberales.
+他由亲生母亲哺乳，在母亲膝上抚养至七岁，随后被父亲亲手交给一位智慧而审慎的人，学习自由技艺。
+
+Valieron tanto la buena diligencia del maestro y la aplicación y trabajo del discípulo, que en otros siete años alcançó gran parte de la gramática, retorica filosofía.
+老师的勤勉尽责与学生的专心用功都极为见效，以致在又一个七年里，他掌握了语法、修辞和哲学的很大部分。
+
+Pero como el principal intento del padre fuese ensayarle y enseñarle en el arte militar, en el cual él había gastado la mayor parte de su vida, llevólo después de los catorce años a la corte del muy alto y poderoso Don Carlos, quinto de este nombre, Emperador de Roma, Rey de las Españas, etc., del cual no poco fue amado de los grandes y altos hombres de su corte muy mirado y estimado.
+但父亲的主要意图是让他练习并学习军事技艺——父亲一生大部分时光都耗费于此——于是在他十四岁之后，便将他带到极其崇高强大的堂卡洛斯宫廷；这位堂卡洛斯是此名的第五世，罗马皇帝、西班牙诸国国王等。他在那里颇受宫廷中显贵高官们的喜爱，备受敬重与器重。
+
+Pero como la variable fortuna, cansa de dar vueltas a su rueda, mudó la quietud, sosiego y reposo de este caballero en destierro, desasosiego y trabajo, con mayor virtud de su persona y mayor gloria de su fama.
+但反复无常的命运厌倦了转动它的轮子，便将这位骑士的安宁、平静与休憩变为流放、不安与劳苦，却使他本人德行更高、名声更荣耀。
+
+Pues como en este caballero ya hiciese fin la edad de la adolescencia y la de la juventud floridamente començase su principio, y como en este tiempo los hombres sean dotados de mayor seso, su entendimiento fue irradiando su ánimo de nuevo pensamiento cercado y su coraçón de grande congoja combatido, representábasele en la imaginación que le sería bueno dejar la corte y peregrinar por los campos buscando su ventura, dejar el bullicio y tantas conversaciones y escoger la soledad, olvidar los pasatiempos y el regalo y hallar los trabajos y aspereza, desechar los delicados paños de brocado y sedas y vestir las fuertes armas, dejar la renta ganada e ir a buscar la fama perdida, desamparar la ociosidad donde nace el vicio e ir a buscar el trabajo y afán que engendran la virtud, según dice el Eccle XXXI: Multam malitiam docuit otiositas c, nisi cum priden de terum.
+这位骑士的少年期已告结束，青春年华正绚烂地开始；此时人已被赋予更大的智慧，他的理智便以新的思绪照耀他的心灵，巨大的忧苦也袭击他的心房。他想象中浮现出这样的念头：离开宫廷、游历田野去寻找自己的命运，或许是件好事；离开喧嚣与诸多应酬而选择孤独，忘却消遣与安逸而去寻找劳苦与艰辛，抛却锦缎丝绸的华服而穿上坚固的铠甲，放弃已得的收益去追寻失去的名声，离开滋生恶习的懒惰而去寻求孕育德行的劳苦与勤勉。正如《传道书》第三十一章所说：“懒惰教人许多恶事”等等。
+
+Juntamente con esto, una noche, pensando en muchas cosas a estas semejantes, de muy desvelado se adormió; donde le fue representado cómo habiendo de su propia voluntad desterrádose de la corte, después de largos trabajos y peligros, había venido en una tierra montuosa llena de silvas de arboles diversos de grandes espesuras y matas cerrada, poblada de fieras y otros tímidos y silvestres animales, hermoseada de muchas fuentes que con sus corrientes hacían dulce sonido, rodeada de un gran río donde se criaba abundancia de pescados, de manera que no faltaban fieras con que pelear, animales que caçar, aves que volar, peces que enredar.
+与此同时，一天夜里，他思虑着许多诸如此类的事情，因极度失眠而昏昏入睡；梦中向他显现：他自愿流放离开宫廷之后，历经长久的劳苦与危险，来到一片多山之地，那里满是各种树木的丛林，茂密幽深，灌木封闭，栖息着野兽和其他胆怯的野生动物，又有许多泉水点缀其间，流水发出甜美之声，四周环绕着一条大河，河中盛产鱼类；如此便不缺可与之搏斗的野兽、可猎取的动物、可飞翔的禽鸟、可捕捉的鱼。
+
+En lo más alto de estas montañas le parecía que hallaba un castillo, donde, habiendo reposado de los trabajos pasados, salía por reconocer la tierra, y entraba en una cueva que en lo más escondido de las montañas, entre gran maleza y unas hondas quiebras, se hacia, cuya puerta le parecía estar labrada estremadamente de cantería con figuras de talla muy al natural, en la cual se le representaba ver y hallar cosas tan altas, tan subidas, tan estrañas que le parecía que no eran cosas para comunicar con los hombres.
+在这些山的最高处，他仿佛找到一座城堡；在那里歇息过此前的劳苦之后，他出来察看地势，走进一个洞穴——那洞穴开在山中最隐蔽之处，在大片荒草与几道深谷裂缝之间；他仿佛看见洞门以石工极为精美地雕凿而成，上面有极其逼真的雕刻图像；在洞中，他仿佛看见并遇到如此高深、如此崇高、如此奇异的事物，以致他觉得那都不是可以与人交流的事情。
+
+A esta hora por un amigo fue con sobresalto despertado, ca ya gran rato era entrado del día, pero no por eso lo apartaba de su pensamiento, mas antes de día lo pensaba y de noche lo soñaba; tanto que, en esta batalla de sus pensamientos y en esta contienda de sus cuidados, determinó de poner fin con determinarse de se desterrar de la corte y seguir sus pensamientos e incierto viaje donde Dios y su ventura lo guiasen.
+这时，一位朋友惊惶地将他唤醒，因为白昼已过去好一阵了；但他并未因此抛开这个念头，反而白天想着它，夜里梦着它；以致在这场思绪的交战与忧虑的争斗中，他决定做个了结：决意流放自己离开宫廷，追随自己的念头，踏上那不确定的旅程，任凭上帝与他的命运引导。
 
 CAPÍTULO II De lo que avino al Caballero del Sol con los dos caballeros que llevaban un caballero en un carro preso.
-Ya las tinieblas de la pasada noche con la venida de los pálidos rayos de la hermosa mañana desaparecían, cuando el novel caballero, habiéndose despedido de sus amigos, armado de fuertes armas y sobre un negro y gran caballo, con sólo un escudero, al camino se pone, tomando por aquella parte que más le aplacía, y a las veces por donde su caballo lo guiaba. De las armas vos digo que eran blancas, partidas con unas rayas de oro, sembradas entre unos manojos de doradas saetas y unas medias y pequeñas lunas azules. De su cuello pendía un fuerte y bien compasado escudo, el campo azul con un dorado sol que en medio de él resplandecía. De esta manera seguía su voluntario destierro y su incierto camino del Caballero del Sol, que así lo llamaron por el sol que traía en el escudo, aunque él quería llamarse el Caballero Desterrado porque de su patria se había de su propia voluntad desterrado. Por espacio de diez días caminó el Caballero del Sol que cosa que de contar sea no le avino. Ya el undécimo día con el encumbrado sol su mayor hervor mostraba, cuando, caminando por una pequeña senda de una espesa floresta, llegando a un camino que de través se hacía, sintió ruido de caballos y voces de gentes que con prisa caminaban. A poco rato vio cómo diez villanos guarnidos de capellinas y coraças y hachas delante un encubierto carro venían, al cual dos armados caballeros seguían. Pero como el Caballero del Sol atendiese con deseo de saber o que en el carro venía, el mayor de los caballeros de esta manera sus palabras le embía: -Caballero, ¿por ventura tenéis vos cuidado de registrar los que pasan por esta floresta o cogéis vos el pasaje de esta vía? ¿Por qué no seguís vuestro camino, y dejad de estar en atalaya para dar cuenta de lo que pasa? Yo pienso que la priesa que nosotros llevamos debéis vos de tener de vagar y espacio, pues tan asegurado estáis. -Por cierto, dijo el Caballero del Sol, según vuestras desmesuradas palabras, lo que yo por cortesía de vos quería saber ya lo tengo entendido, ca algún preso debéis llevar en el cubierto carro, pues vos no queréis naide lo vea, porque siempre veo los que malhacen aborrecer la luz y la compañía y amar la soledad y la tiniebla. Por ende, o me descubrid y dad razón de lo que va en el carro, o conmigo, aunque descuidado, sois en la batalla. -Andad adelante con el carro, hermano, dijo el Caballero de la Floresta, ca presto entiendo librar este pleito y seguiros. Sin más aguardar, tomando del campo lo que les pareció, al más correr de los caballos, las lanças fueron partidas en muchas pieças. Pero el Caballero de la Floresta huyó falsado el escudo y la loriga, y fue herido en los pechos de una mortal herida, aunque no vino a tierra, pero hubo perdido los estribos. El Caballero del Sol pasó por él sin hacer algún revés; pero, como aquél que tenía muchos enemigos adelante, viendo que le hacía menester poner toda diligencia y esfuerço por vencer, en un punto vuelve sobre el Caballero de la Floresta y, antes que en su entero acuerdo tornase, le hiere de dos tan pesados golpes por cima del yelmo que del todo sin acuerdo vino a tierra, donde en breve espacio fue muerto. Ya el otro caballero en la fuerça de su caballo, la lança baja, contra el Caballero del Sol venía. Pero como aquél en quien no había punto de cobardía, lo sale a recibir, el escudo embraçado y la espada alta. El Caballero de la Floresta encontró al Caballero del Sol en soslayo del escudo y la lança no prendió y el golpe salió vacío, pero
+第二章 太阳骑士与两名押解一位骑士于囚车中的骑士所遇之事
 
-topándose de los cuerpos el Caballero el Sol le hirió de su espada por encima del hombro izquierdo y le cortó las embraçaduras del escudo y lo hirió de una pequeña herida. El Caballero del Sol, con la presteza de su caballo, volvió sobre él y le començó de cargar de duros y espesos golpes, porque el Caballero de la Floresta, como el escudo hubiese perdido, poca defensa hacía, que así se revolvía de unas partes a otras como la oveja que huye del lobo. En tal manera lo començó de herir el Caballero del Sol que en pequeña piaça lo traía tan cansado que a pocas cayera del caballo; lo cual, como bien sintiese el Caballero del Sol, alçándose sobre los estribos y echando el escudo a las espaldas, tomando la espada a dos manos lo hirió por cima del yelmo de tal golpe que armadura ninguna le prestó que no fuese mortalmente herido y viniese a tierra.
+Ya las tinieblas de la pasada noche con la venida de los pálidos rayos de la hermosa mañana desaparecían, cuando el novel caballero, habiéndose despedido de sus amigos, armado de fuertes armas y sobre un negro y gran caballo, con sólo un escudero, al camino se pone, tomando por aquella parte que más le aplacía, y a las veces por donde su caballo lo guiaba.
+前夜的黑暗已随美好清晨淡淡光芒的到来而消散，这时这位新骑士辞别了友人，披着坚固的铠甲，骑着一匹高大的黑马，只带一名侍从，便踏上道路，时而择自己最中意的一方而行，时而又随马匹所引之处而去。
+
+De las armas vos digo que eran blancas, partidas con unas rayas de oro, sembradas entre unos manojos de doradas saetas y unas medias y pequeñas lunas azules.
+说到他的铠甲，那是白色的，以金线分隔，其间点缀着一束束金色箭矢和一些小小的蓝色半月。
+
+De su cuello pendía un fuerte y bien compasado escudo, el campo azul con un dorado sol que en medio de él resplandecía.
+他颈上挂着一面坚固而比例匀称的盾牌，盾地为蓝色，中央一轮金色的太阳闪耀发光。
+
+De esta manera seguía su voluntario destierro y su incierto camino del Caballero del Sol, que así lo llamaron por el sol que traía en el escudo, aunque él quería llamarse el Caballero Desterrado porque de su patria se había de su propia voluntad desterrado.
+太阳骑士就这样继续着他自愿的流放与不确定的旅程；人们因他盾上的太阳而这样称呼他，尽管他自己愿意被称为“流放骑士”，因为他是自愿将自己从故土流放出来的。
+
+Por espacio de diez días caminó el Caballero del Sol que cosa que de contar sea no le avino.
+太阳骑士走了十天，没有遇到什么值得一提的事。
+
+Ya el undécimo día con el encumbrado sol su mayor hervor mostraba, cuando, caminando por una pequeña senda de una espesa floresta, llegando a un camino que de través se hacía, sintió ruido de caballos y voces de gentes que con prisa caminaban.
+到了第十一天，高悬的太阳正显出最炽热的光芒，他正沿着一片茂密丛林的小径行走，来到一条横岔出来的路上，忽然听见马匹的声响和人们匆忙赶路的声音。
+
+A poco rato vio cómo diez villanos guarnidos de capellinas y coraças y hachas delante un encubierto carro venían, al cual dos armados caballeros seguían.
+过了一会儿，他看见十个乡民，戴着铁帽、穿着胸甲、手持斧头，走在一辆遮盖着的囚车前面，两名全副武装的骑士跟在车后。
+
+Pero como el Caballero del Sol atendiese con deseo de saber o que en el carro venía, el mayor de los caballeros de esta manera sus palabras le embía:
+太阳骑士一心想要知道车里载的是什么，那两名骑士中较年长的一位便这样对他说道：
+
+-Caballero, ¿por ventura tenéis vos cuidado de registrar los que pasan por esta floresta o cogéis vos el pasaje de esta vía? ¿Por qué no seguís vuestro camino, y dejad de estar en atalaya para dar cuenta de lo que pasa? Yo pienso que la priesa que nosotros llevamos debéis vos de tener de vagar y espacio, pues tan asegurado estáis.
+“骑士，莫非你负责盘查经过这片丛林的人，还是你在此收取这条路的过路费？你为何不赶自己的路，偏要守在高处查问过往之事？我想，我们这般匆忙，你倒该有闲工夫慢慢来，既然你如此安稳。”
+
+-Por cierto, dijo el Caballero del Sol, según vuestras desmesuradas palabras, lo que yo por cortesía de vos quería saber ya lo tengo entendido, ca algún preso debéis llevar en el cubierto carro, pues vos no queréis naide lo vea, porque siempre veo los que malhacen aborrecer la luz y la compañía y amar la soledad y la tiniebla.
+“的确，”太阳骑士说，“听你这番无礼之言，我本想以礼相询的事，如今已经明白了：你们那遮盖的囚车里必定押着某个囚犯，因为你们不愿让人看见；我总见作恶之人憎恶光明与人群，喜爱孤独与黑暗。
+
+Por ende, o me descubrid y dad razón de lo que va en el carro, o conmigo, aunque descuidado, sois en la batalla.
+因此，要么向我揭开囚车、说明其中所载何物，要么就与我交战——尽管我此刻并未防备。”
+
+-Andad adelante con el carro, hermano, dijo el Caballero de la Floresta, ca presto entiendo librar este pleito y seguiros.
+“兄弟，带着车先走，”丛林骑士说，“我很快就了结这场争执，随后赶上你们。”
+
+Sin más aguardar, tomando del campo lo que les pareció, al más correr de los caballos, las lanças fueron partidas en muchas pieças.
+不再多等，二人各取自己认为合适的距离，纵马疾驰，长矛断成许多碎片。
+
+Pero el Caballero de la Floresta huyó falsado el escudo y la loriga, y fue herido en los pechos de una mortal herida, aunque no vino a tierra, pero hubo perdido los estribos.
+但丛林骑士的盾牌和锁甲被刺穿，胸膛受了致命伤，虽未落马，却已失掉马镫。
+
+El Caballero del Sol pasó por él sin hacer algún revés; pero, como aquél que tenía muchos enemigos adelante, viendo que le hacía menester poner toda diligencia y esfuerço por vencer, en un punto vuelve sobre el Caballero de la Floresta y, antes que en su entero acuerdo tornase, le hiere de dos tan pesados golpes por cima del yelmo que del todo sin acuerdo vino a tierra, donde en breve espacio fue muerto.
+太阳骑士从他身旁冲过，并未回身反击；但他前面还有许多敌人，眼见必须竭尽全力才能取胜，便立刻拨马转向丛林骑士，趁对方尚未完全回过神来，朝头盔上方狠狠砍了两刀，使他完全失去知觉倒在地上，不久便死了。
+
+Ya el otro caballero en la fuerça de su caballo, la lança baja, contra el Caballero del Sol venía.
+这时另一名骑士已催动战马，平放长矛，向太阳骑士冲来。
+
+Pero como aquél en quien no había punto de cobardía, lo sale a recibir, el escudo embraçado y la espada alta.
+但太阳骑士身上毫无半点怯懦，他臂挽盾牌、高举长剑，迎上前去。
+
+El Caballero de la Floresta encontró al Caballero del Sol en soslayo del escudo y la lança no prendió y el golpe salió vacío, pero topándose de los cuerpos el Caballero el Sol le hirió de su espada por encima del hombro izquierdo y le cortó las embraçaduras del escudo y lo hirió de una pequeña herida.
+丛林骑士斜斜刺中太阳骑士的盾牌，长矛未能刺入，这一击落空了；但两骑身体相撞时，太阳骑士挥剑砍中他左肩上方，割断了他盾牌的臂带，并给他留下了一处轻伤。
+
+El Caballero del Sol, con la presteza de su caballo, volvió sobre él y le començó de cargar de duros y espesos golpes, porque el Caballero de la Floresta, como el escudo hubiese perdido, poca defensa hacía, que así se revolvía de unas partes a otras como la oveja que huye del lobo.
+太阳骑士凭借战马的迅捷拨回身来，开始向他密集地猛砍重击；因为丛林骑士既已失去盾牌，便几乎无从防御，只能像躲避狼的绵羊一样，从一边转到另一边。
+
+En tal manera lo començó de herir el Caballero del Sol que en pequeña piaça lo traía tan cansado que a pocas cayera del caballo; lo cual, como bien sintiese el Caballero del Sol, alçándose sobre los estribos y echando el escudo a las espaldas, tomando la espada a dos manos lo hirió por cima del yelmo de tal golpe que armadura ninguna le prestó que no fuese mortalmente herido y viniese a tierra.
+太阳骑士如此不断地砍击他，不多时便使他疲惫不堪，几乎要跌下马来；太阳骑士察觉此情，便在马镫上挺身而起，把盾牌甩到背后，双手握剑，朝头盔上方狠狠一击，任何甲胄都救不了他，他受了致命伤，倒在地上。
 
 CAPÍTULO III De cómo después de haberse el Caballero del Sol desembaraçado de los villanos vio y supo quién era el caballero que iba preso en el carro.
-A esta hora ya los villanos, viendo a sus señores tan maltratados, desamparando el carro, pensando que aún fuesen vivos, a más andar, las hachas altas, se vienen contra el Caballero del Sol, el cual como cerca de sí los viese arremetió con la furia de su caballo y, hallando los dos delante, hiriéndolos de los pechos del caballo, los os puso por tierra tan maltrechos que no bullían pie ni mano. También vos digo que al pasar hirió a otro por cima de la capellina en tal manera que malherido vino a tierra; pero conociendo que volver a ellos aventuraba perder el caballo, haciéndose hacia donde su escudero estaba, en un punto saltó en tierra y, dando su caballo a su escudero, el escudo embraçado, la espada alta, se va contra los villanos, que no eran perezosos en lo salir a recibir, donde se començó una reñida y desigual batalla. Unos le acometían y otros huían, unos le herían y otros se desviaban; pero qué les aprovecha, que aquél que a derecho golpe alcançaba no le prestaba armadura. De tres pequeñas heridas andaba el Caballero del Sol herido, por lo cual andaba tan corajoso que como bravo león de unas partes a otras los seguía y los buscaba y los hería, tanto que en media hora que la riña había durado, los seis estaban por tierra malheridos y los cuatro, huyendo, procuraban el remedio para salvar sus vidas. Pues como el Caballero del Sol vio el campo desembaraçado y que ahí no había más que hacer, allegándose al carro, tales palabras dice: -¿Quién es el que yace allá dentro? -Yo soy, dijo una dolorosa voz que del triste carro salía, el sin ventura que en la cumbre de mi felicidad soy puesto en las manos y prisión de mis enemigos. A esta hora llegando Silvio, que así había nombre el escudero del Caballero del Sol, y descubriendo el carro, pudo ser visto un caballero herido y ligado y aprisionado, el cual, como viese al Caballero del Sol y a sus enemigos por el campo tendidos, conociendo que por aquel caballero había sido librado, en la mejor manera que pudo, levantando la cabeça, dijo así: -Bendito el criador del cielo y de la tierra que tanta bondad y esfuerço puso en un solo caballero, para que de tantos enemigos me haya librado. A él doy yo muchas gracias y a vos, señor caballero, espero yo de agradecerlo con servicios. -Yo pienso, dijo el Caballero del Sol, que la poca razón que aquellos Caballeros tuvieron en vuestra prisión quitó a ellos las fuerças y dio a mí osadía para a ellos vencer y a vos, señor, librar. Así que a Dios se deben los servicios, en cuya mano está la victoria, pero yo os ruego me contéis la causa y hecho de vuestra prisión. -Ya habrá tiempo de lo contar, dijo el caballero preso. Agora conviene proveer a la mayor necesidad. Estamos en tierra de enemigos y conviene que yo sea desligado y armado, para que, si algunos enemigos vienen, pueda serviros con mi ayuda algo de las mercedes recibidas. Con gran prisa fue desatado y suelto por manos de Silvio y tornándole a ligar unas pequeñas heridas que mal ligadas tenía, lo començó de armar de las armas de uno de los dos muertos hermanos. No estaba bien armado, cuando el Caballero del Sol llega con un caballo que de los sueltos había tomado, en el cual el caballero preso cabalgando tomaron al través la vía que a la morada de un florastero se endereçaba, guiando el caballero preso
+第三章 太阳骑士摆脱乡民之后，如何看见并得知囚车中被押骑士的身份
 
-que la tierra bien sabía y al florastero bien conocía, para ahí dar reposo a sus personas y curar de sus heridas. Continuando pues los dos caballeros la senda que a la casa del florastero guiaba, el caballero preso de esta manera començó de decir: -Habéis de saber, buen caballero, que a mí llaman Eulesio de Monte Pesula y hacia esta parte de Oriente, a quince millas de aquí, tengo cinco castillos, los cuales ha poco que yo poseo por la muerte de mi padre, de quien los heredé. Y estos dos caballeros se llamaban Pinato el Valiente y Rieso el Desdichado. Eran señores de tres castillos que a esta otra banda están a tres millas. Entre su padre el mío hubo siempre gran contienda. Y muchas veces el padre de los dos por el mío fue requerido con la paz y con partido y concordia de ciertos heredamientos sobre que era la diferencia, y jamás quiso recibir algún partido hasta que en una batalla murió, del cual quedaron estos dos hijos no menos soberbios que el padre. Agora, muerto mi padre, estos dos caballeros van procurando tomar enmienda de la muerte de su padre y pusiéronse en acecho y celada, como los habéis visto, en una floresta donde yo continuaba la caça. Y como los días pasados yo me apartase de mis servidores en seguimiento de un ciervo, fui acometido de sobresalto de ellos y de su gente. De manera que, como yo estuviese desarmado y mi caballo cansado, en mí hubo poca defensa, y siendo herido de estas dos pequeñas heridas y preso y atado me pusieron en aquel carro donde me sacastes, con pensamiento que, teniéndome en perpetua cárcel, me darían vida peor que muerte y poco a poco me tomarían la tierra, pero Dios lo ordenó de otra manera,
+A esta hora ya los villanos, viendo a sus señores tan maltratados, desamparando el carro, pensando que aún fuesen vivos, a más andar, las hachas altas, se vienen contra el Caballero del Sol, el cual como cerca de sí los viese arremetió con la furia de su caballo y, hallando los dos delante, hiriéndolos de los pechos del caballo, los os puso por tierra tan maltrechos que no bullían pie ni mano.
+这时，那些乡民见他们的主子们被打得如此惨，便丢下囚车，以为主子们还活着，高举斧头，快步向太阳骑士冲来。太阳骑士见他们逼近，便纵马猛冲过去，撞上前面两人，用马胸将他们撞倒在地，伤得他们手脚动弹不得。
+
+También vos digo que al pasar hirió a otro por cima de la capellina en tal manera que malherido vino a tierra; pero conociendo que volver a ellos aventuraba perder el caballo, haciéndose hacia donde su escudero estaba, en un punto saltó en tierra y, dando su caballo a su escudero, el escudo embraçado, la espada alta, se va contra los villanos, que no eran perezosos en lo salir a recibir, donde se començó una reñida y desigual batalla.
+我还要告诉你们，他冲过时又砍中另一人头盔上方，使其重伤倒地；但他知道再回头冲杀有失马之险，便朝侍从所在之处靠去，立刻跳下马，把马交给侍从，臂挽盾牌、高举长剑，向那些乡民冲去；乡民也不怠慢，迎上前来，于是一场激烈而众寡悬殊的战斗开始了。
+
+Unos le acometían y otros huían, unos le herían y otros se desviaban; pero qué les aprovecha, que aquél que a derecho golpe alcanzaba no le prestaba armadura.
+有人向他进攻，有人逃跑；有人砍中他，有人闪避；但又有什么用呢？凡被他正砍中的人，甲胄都救不了。
+
+De tres pequeñas heridas andaba el Caballero del Sol herido, por lo cual andaba tan corajoso que como bravo león de unas partes a otras los seguía y los buscaba y los hería, tanto que en media hora que la riña había durado, los seis estaban por tierra malheridos y los cuatro, huyendo, procuraban el remedio para salvar sus vidas.
+太阳骑士身上已有三处轻伤，因此他怒气更盛，像一头勇猛的狮子，从一处追到另一处，寻找他们、砍杀他们；结果这场厮斗持续了半小时，六人已重伤倒地，其余四人逃跑，设法保全性命。
+
+Pues como el Caballero del Sol vio el campo desembaraçado y que ahí no había más que hacer, allegándose al carro, tales palabras dice:
+太阳骑士见战场已无阻碍、再无事可做，便走近囚车，说了这样一番话：
+
+-¿Quién es el que yace allá dentro?
+“里面躺着的是谁？”
+
+-Yo soy, dijo una dolorosa voz que del triste carro salía, el sin ventura que en la cumbre de mi felicidad soy puesto en las manos y prisión de mis enemigos.
+“是我，”一个痛苦的声音从悲惨的囚车里传出，“我这不幸之人，正在我幸福的顶峰，却落入了敌人的手中与牢狱。”
+
+A esta hora llegando Silvio, que así había nombre el escudero del Caballero del Sol, y descubriendo el carro, pudo ser visto un caballero herido y ligado y aprisionado, el cual, como viese al Caballero del Sol y a sus enemigos por el campo tendidos, conociendo que por aquel caballero había sido librado, en la mejor manera que pudo, levantando la cabeça, dijo así:
+这时，太阳骑士的侍从西尔维奥到了——他名叫西尔维奥——揭开囚车，便看见一位受伤、被绑、被囚禁的骑士；他见太阳骑士和敌人们横卧战场，知道是这位骑士救了自己，便尽力抬起头来，这样说道：
+
+-Bendito el criador del cielo y de la tierra que tanta bondad y esfuerço puso en un solo caballero, para que de tantos enemigos me haya librado.
+“愿天地造物主受赞美，祂把如此大的善良与勇气赋予一位骑士，使他从这么多敌人手中解救了我。
+
+A él doy yo muchas gracias y a vos, señor caballero, espero yo de agradecerlo con servicios.
+我向祂献上许多感谢；而您，骑士先生，我希望能以服务来报答您。”
+
+-Yo pienso, dijo el Caballero del Sol, que la poca razón que aquellos Caballeros tuvieron en vuestra prisión quitó a ellos las fuerças y dio a mí osadía para a ellos vencer y a vos, señor, librar.
+“我想，”太阳骑士说，“那些骑士在囚禁您这件事上毫无道理，这使他们失去了力量，却给了我胆量去战胜他们、解救您，先生。”
+
+Así que a Dios se deben los servicios, en cuya mano está la victoria, pero yo os ruego me contéis la causa y hecho de vuestra prisión.
+所以，功劳应归于上帝，胜利在祂手中；但我请求您告诉我您被囚的原因和经过。”
+
+-Ya habrá tiempo de lo contar, dijo el caballero preso.
+“以后有时间讲这件事，”被囚的骑士说。
+
+Agora conviene proveer a la mayor necesidad.
+眼下应当先应付最紧要的需要。
+
+Estamos en tierra de enemigos y conviene que yo sea desligado y armado, para que, si algunos enemigos vienen, pueda serviros con mi ayuda algo de las mercedes recibidas.
+我们身处敌境，应当把我解开、给我披甲，这样若有敌人来，我能以我的帮助略报您所施的恩惠。”
+
+Con gran prisa fue desatado y suelto por manos de Silvio y tornándole a ligar unas pequeñas heridas que mal ligadas tenía, lo començó de armar de las armas de uno de los dos muertos hermanos.
+西尔维奥连忙将他解开、松绑，又把他几处包扎不当的轻伤重新包好，开始用那两名死去的兄弟中一人的铠甲为他披挂。
+
+No estaba bien armado, cuando el Caballero del Sol llega con un caballo que de los sueltos había tomado, en el cual el caballero preso cabalgando tomaron al través la vía que a la morada de un florastero se endereçaba, guiando el caballero preso que la tierra bien sabía y al florastero bien conocía, para ahí dar reposo a sus personas y curar de sus heridas.
+他尚未披挂妥当，太阳骑士便牵来一匹从散落马匹中取来的马；被囚的骑士骑上马，二人便横穿道路，朝一位花匠的住处而去，由被囚的骑士引路——他熟知此地，也熟识那位花匠——以便在那里让二人歇息、治疗伤势。
+
+Continuando pues los dos caballeros la senda que a la casa del florastero guiaba, el caballero preso de esta manera començó de decir:
+两位骑士沿着通往花匠家的路继续前行，被囚的骑士便这样开口说道：
+
+-Habéis de saber, buen caballero, que a mí llaman Eulesio de Monte Pesula y hacia esta parte de Oriente, a quince millas de aquí, tengo cinco castillos, los cuales ha poco que yo poseo por la muerte de mi padre, de quien los heredé.
+“好骑士，你当知道，人们称我为蒙特佩苏拉的欧莱西奥；在此地以东十五英里处，我有五座城堡，那是我父亲去世后不久我继承来的。”
+
+Y estos dos caballeros se llamaban Pinato el Valiente y Rieso el Desdichado.
+而这两名骑士，一个叫‘勇敢者’皮纳托，一个叫‘不幸者’里埃索。
+
+Eran señores de tres castillos que a esta otra banda están a tres millas.
+他们是三座城堡的领主，那三座城堡在另一边，距此三英里。
+
+Entre su padre el mío hubo siempre gran contienda.
+他们的父亲与我的父亲之间一直有极大的争端。
+
+Y muchas veces el padre de los dos por el mío fue requerido con la paz y con partido y concordia de ciertos heredamientos sobre que era la diferencia, y jamás quiso recibir algún partido hasta que en una batalla murió, del cual quedaron estos dos hijos no menos soberbios que el padre.
+我父亲曾多次要求他们的父亲讲和，并就争执所涉的某些产业提出和解与协议，但他始终不肯接受任何和解，直到在一场战斗中死去；他留下这两个儿子，其傲慢不亚于父亲。
+
+Agora, muerto mi padre, estos dos caballeros van procurando tomar enmienda de la muerte de su padre y pusiéronse en acecho y celada, como los habéis visto, en una floresta donde yo continuaba la caça.
+如今我父亲已死，这两名骑士便一直谋求为他们父亲的死报仇，并如你所见，埋伏在一处我常去打猎的丛林里。
+
+Y como los días pasados yo me apartase de mis servidores en seguimiento de un ciervo, fui acometido de sobresalto de ellos y de su gente.
+前几天，我追赶一头鹿而离开了我的仆从，便遭到他们及其手下的突然袭击。
+
+De manera que, como yo estuviese desarmado y mi caballo cansado, en mí hubo poca defensa, y siendo herido de estas dos pequeñas heridas y preso y atado me pusieron en aquel carro donde me sacastes, con pensamiento que, teniéndome en perpetua cárcel, me darían vida peor que muerte y poco a poco me tomarían la tierra, pero Dios lo ordenó de otra manera,
+于是我因未披甲、马又疲乏，几乎没有防御之力；他们使我受了这两处轻伤，将我捆绑押入你把我救出的那辆囚车，打算把我永远关在牢里，给我比死更糟的生活，并一步步夺走我的土地；但上帝另有安排——
 
 CAPÍTULO IV Cómo el Caballero del Sol halló un caballero malherido y cómo tomó la vengança por él.
-Hablando en estas y otras cosas de la batalla pasada, los dos caballeros llegaron a casa del florastero, donde fueron bien recibidos y servidos de lo que habían menester, y después puestos en sendos lechos y curados de sus pequeñas heridas, Tres días estuvieron ahí reposando. Al cuarto día el Caballero del Sol, despidiéndose de Elesio de Monte Pesulano, aunque con mucho pesar del mesmo por no querer ir a sus castillos con él a recibir algún servicio, y despidiéndose del florastero, tornó a continuar su incierto camino guiando por donde el caballo lo llevaba . Todo aquel día caminó sin que algún poblado hallar pudiese. Y como la obscura noche con sus ciegas tinieblas las tierras ocupase, hallándose cerca de unos pocos y espesos robles que en torno de una dulce fuente parecían, determinó de albergar ahí esa noche. Otro día por la mañana, como començase de entrar por una floresta que cerca parecía, a pequeño rato que por ella había caminado, hacia la diestra mano, oyó una dolorosa voz que en esta manera decía: -¡Oh muerte, cuánta injuria me has hecho en mi tierna edad con la primera batalla quisiste dar fin a mis tiernos años! ¡Oh Fortuna ciega, que me diste buen caballo para que por robármele, me robasen la vida! Y lo que peor es que no hay aquí persona que procure el remedio de mi ánima, pues me falta el remedio del cuerpo. Ve presto, Corinto, mi leal escudero, busca si por esta floresta hay algún hermitaño, para que, dando a Dios cuenta de mi vida; perdone mis pecados y reciba mi ánima. ¡Ay!, ¡Ay! No te vayas que tardarás y moriré. El Caballero del Sol, al tino de las palabras, asomó entre las ramas y en esta manera començó de decir: -Esforçaos, caballero, pues en las necesidades se parecen los esforçados coraçones. Aquí está quien no os desamparará hasta dar remedio a vuestro cuerpo o esperar y esforçaros y ayudaros y consolaros hasta que del cuerpo se aparte el ánima. -Muchas gracias, caballero, por tan gran merced, dijo el herido caballero. Dios os envíe consuelo al tiempo que vos estéis más desconsolado y ayuda cuando más desfavorecido. Diciendo estas palabras, los dos escuderos, por mandado del Caballero del Sol, lo ligaron las heridas como mejor supieron, y poniéndole sobre el caballo de Silvio, cavalgando él a las ancas por le tener, començaron de caminar hacia una torre que en un valle, en lo más espeso de la floresta, parecía por buscar ahí remedio para el herido caballero.
+第四章 太阳骑士如何遇见一位重伤的骑士，并如何为他复仇
+
+Hablando en estas y otras cosas de la batalla pasada, los dos caballeros llegaron a casa del florastero, donde fueron bien recibidos y servidos de lo que habían menester, y después puestos en sendos lechos y curados de sus pequeñas heridas, Tres días estuvieron ahí reposando.
+两位骑士谈论着刚才那场战斗以及其他诸事，来到了花匠的家；他们在那里受到款待，所需之物皆有人侍奉，随后各自躺在床上，治疗轻伤。他们在那里休养了三天。
+
+Al cuarto día el Caballero del Sol, despidiéndose de Elesio de Monte Pesulano, aunque con mucho pesar del mesmo por no querer ir a sus castillos con él a recibir algún servicio, y despidiéndose del florastero, tornó a continuar su incierto camino guiando por donde el caballo lo llevaba.
+第四天，太阳骑士辞别了蒙特佩苏拉的欧莱西奥——后者十分难过，因为太阳骑士不愿随他回城堡接受任何款待——又辞别了花匠，重新继续他那不确定的旅程，任凭马匹引路而行。
+
+Todo aquel día caminó sin que algún poblado hallar pudiese.
+他走了一整天，也没能找到任何村落。
+
+Y como la obscura noche con sus ciegas tinieblas las tierras ocupase, hallándose cerca de unos pocos y espesos robles que en torno de una dulce fuente parecían, determinó de albergar ahí esa noche.
+当漆黑的夜晚以其盲目的黑暗笼罩大地时，他发现自己来到几棵稀疏而茂密的橡树旁，树下似有一泓清泉，便决定在那里过夜。
+
+Otro día por la mañana, como començase de entrar por una floresta que cerca parecía, a pequeño rato que por ella había caminado, hacia la diestra mano, oyó una dolorosa voz que en esta manera decía:
+第二天早晨，他刚走进附近一片丛林，没走多久，便听到右边传来一个痛苦的声音，这样说道：
+
+-¡Oh muerte, cuánta injuria me has hecho en mi tierna edad con la primera batalla quisiste dar fin a mis tiernos años!
+“噢，死亡啊，你在我年纪尚轻时对我何等不公！初次上阵，你便想结束我年轻的生命！
+
+¡Oh Fortuna ciega, que me diste buen caballo para que por robármele, me robasen la vida!
+噢，盲目的命运啊，你给了我一匹好马，却让人为了夺马而夺去我的性命！
+
+Y lo que peor es que no hay aquí persona que procure el remedio de mi ánima, pues me falta el remedio del cuerpo.
+更糟的是，这里没有人来照料我灵魂的救赎，因为我连身体的救治都没有。
+
+Ve presto, Corinto, mi leal escudero, busca si por esta floresta hay algún hermitaño, para que, dando a Dios cuenta de mi vida; perdone mis pecados y reciba mi ánima.
+快去，科林托，我忠实的侍从，看看这片丛林里有没有隐修士，好让我向上帝交代我的一生，使他赦免我的罪过、接纳我的灵魂。
+
+¡Ay!, ¡Ay! No te vayas que tardarás y moriré.
+哎呀！哎呀！你别走，你会耽搁，我就死了。”
+
+El Caballero del Sol, al tino de las palabras, asomó entre las ramas y en esta manera començó de decir:
+太阳骑士循着话音的方向，从树枝间探出身来，这样开口说道：
+
+-Esforçaos, caballero, pues en las necesidades se parecen los esforçados coraçones.
+“振作起来，骑士，因为勇敢的心正是在危难中才显露出来。
+
+Aquí está quien no os desamparará hasta dar remedio a vuestro cuerpo o esperar y esforçaros y ayudaros y consolaros hasta que del cuerpo se aparte el ánima.
+这里有个人不会抛弃你，直到为你的身体找到救治之法，或者一直等待、鼓励你、帮助你、安慰你，直到灵魂离开躯体。”
+
+-Muchas gracias, caballero, por tan gran merced, dijo el herido caballero.
+“多谢你，骑士，感谢你如此大的恩惠，”受伤的骑士说。
+
+Dios os envíe consuelo al tiempo que vos estéis más desconsolado y ayuda cuando más desfavorecido.
+“愿上帝在你最无助的时候赐你安慰，在你最失意的时候给你帮助。”
+
+Diciendo estas palabras, los dos escuderos, por mandado del Caballero del Sol, lo ligaron las heridas como mejor supieron, y poniéndole sobre el caballo de Silvio, cavalgando él a las ancas por le tener, començaron de caminar hacia una torre que en un valle, en lo más espeso de la floresta, parecía por buscar ahí remedio para el herido caballero.
+说着这些话，两名侍从奉太阳骑士之命，尽力为他包扎好伤口，把他扶上西尔维奥的马，太阳骑士则坐在马臀上扶着他，一行人朝丛林最深处一座山谷中隐约可见的塔楼走去，好为受伤的骑士寻求救治。
 
 CAPÍTULO V De la batalla que hubo el Caballero del Sol con los Caballeros de la Torre.
-No estaban el Caballero del Sol y su compaña dos tiros de piedra de la torre, cuando pudieron ver dos caballeros armados de todas armas que, saliendo de la morada a mucha priesa, sobre dos caballos cabalgan, y siendo conocidos por el escudero del herido caballero, en altavoz dijo: ¡Válame el alto Dios! Estos son los matadores de mi señor y robadores de nuestros caballos. ¡Oh Caballero del Sol, cuánto valdría aquí vuestro esfuerço, porque, vengando a mi señor, quitarías dos robadores de esta floresta! No les temas, que traidores son. Guárdate de ellos. Uno acomete y el otro hiere; el uno huye y el otro sigue. La razón está de nuestra parte. Dios te dé victoria. Estas palabras no eran bien acabadas cuando, llegando los dos Caballeros de la Torre, el más anciano con una soberbia voz dio principio a tales palabras: -Caballero de las Lunetas , ¿por ventura tráenos esos dos caballos por pensar de con ellos rescatar los que tomamos a ese caballero? Mal pensamiento traes. A ti, ni a él, ni a vuestros escuderos no queremos, pero danos esos caballos y esas tus armas, que ricas y buenas me parecen, y dejaros hemos a todos ir en paz. En otra manera, si emprender quieres batalla, pagando con la vida tu atrevimiento, así como así dejarás el despojo del campo. -¡Oh, soberbio y sin razón caballero!, dijo el Caballero del Sol, ¿tomaste tú por ventura la orden de caballería para mantener robo o para matar [a] los robadores, para mantener a cada uno su derecho o para tomar a cada uno a tuerto su hacienda, para defender justicia y razón o para hacer sin justicia y hacer sin razón? Gran villanía cometiste maltratar un caballero por robarle un caballo, y sobre esta razón no te aguardo más palabras, sino conmigo ven a la batalla. Con estas palabras embravecido, el Caballero de la Torre andaba por el campo braveando y, tomando de él lo que le pareció, contra el Caballero del Sol endereça, dejándose venir el uno contra el otro al más correr de los caballos, las lanças bajas, se encontraron en medio de aquel campo. Pero como los Caballeros de la Torre el uno viniese tras el otro, recibiendo el Caballero del Sol el encuentro del primero en soslayo del escudo, levantó su lança e hiriendo de ella al segundo, que más descuidado venía en descubierto del escudo, falsándole el arnés y loriga con un troço de lança por un costado en soslayo, lo lançó por tierra malherido, y fue tal la caída que quedó tan quebrantado que no pudo mas volver a la batalla aunque la herida no era mortal. Pues ver la braveza del anciano caballero cuando vio al hijo por tierra tendido, pensando que muerto fuese, no hubiera caballero que no espantara. Acometía y hería tan bravamente y tan sin piedad que apenas daba lugar al Caballero del Sol a se revolver. Pero como conociese que bien le era menester su esfuerço, porque el Caballero de la Torre era membrudo y orgulloso, poniendo mano por su espada, le començó de dar la respuesta, heriéndole de tantos y tan espesos golpes que, mal de su grado, lo hacía revolver por el campo de unas partes a otras. Bien había una hora que la batalla duraba, cuando siendo los escudos despedaçados y las lorigas falsadas, ya sus carnes començaban de sentir los filos de sus espadas. Tanto era en este punto el Caballero de la Torre cansado, que desfalleciendo por la mucha sangre que de él salía, en él no había defensa. Lo cual, como bien sintiese el Caballero del Sol, alçando su espada, le hiere de tres pesados golpes por cima del yelmo, uno tras otro, de tal manera que sin sentido vino a tierra. No fue perezoso el Caballero del Sol, ca
+第五章 太阳骑士与塔楼骑士之战
 
-saltando de su caballo vino sobre él y, como conoció que no fuese mortal, esperando que en su acuerdo volviese, de esta manera le dice: -Di, anciano caballero, ¿qué te aprovechan tus años, qué te aprovecha tu discreción, pues viniste a robar [a] los caballeros? Tus soberbias y malas obras te han traído a este desastrado fin. O yo te cortaré la cabeça, o te otorga por vencido, a tal condición, que, satisfaciendo lo mal llevado, has de hacer y jurar lo que yo te mandare. -A punto soy, dijo el Caballero de la Torre, de conocer mi maldad y soberbia y el castigo que por ello Dios me ha dado. Yo lo he hecho como malo. Yo lo emendaré como bueno. Dios ha sido conmigo misericordioso, pues, siendo yo pecador, me ha dado conocimiento de mi pecado y me ha dejado tiempo para hacer de él penitencia. Yo otorgo lo que dices y haré y juraré todo lo que me pides juntamente con mi hijo, si vivo es. Diciendo estas palabras, el Caballero del Sol por las manos lo levanta y juntamente se van todos a la morada de la Torre, donde para todos fueron parados lechos, y, siendo de lo necesario proveídos, de sus heridas fueron curados.
+No estaban el Caballero del Sol y su compaña dos tiros de piedra de la torre, cuando pudieron ver dos caballeros armados de todas armas que, saliendo de la morada a mucha priesa, sobre dos caballos cabalgan, y siendo conocidos por el escudero del herido caballero, en altavoz dijo:
+太阳骑士一行离塔楼还不到两箭之地，便看见两名全副武装的骑士从住所匆忙出来，骑上两匹马；受伤骑士的侍从认出他们，便高声说道：
+
+¡Válame el alto Dios! Estos son los matadores de mi señor y robadores de nuestros caballos.
+“至高上帝保佑我！这些就是杀害我主人、抢走我们马匹的凶手。
+
+¡Oh Caballero del Sol, cuánto valdría aquí vuestro esfuerço, porque, vengando a mi señor, quitarías dos robadores de esta floresta!
+噢，太阳骑士，你的勇气在这里可要大显身手了，因为你为我主人报仇，就能从这片丛林里除掉两个强盗！
+
+No les temas, que traidores son. Guárdate de ellos.
+别怕他们，他们是叛徒。小心提防。
+
+Uno acomete y el otro hiere; el uno huye y el otro sigue.
+一个进攻，另一个砍杀；一个逃，另一个追。
+
+La razón está de nuestra parte. Dios te dé victoria.
+道理在我们这边。愿上帝赐你胜利。”
+
+Estas palabras no eran bien acabadas cuando, llegando los dos Caballeros de la Torre, el más anciano con una soberbia voz dio principio a tales palabras:
+话音未落，塔楼的两名骑士已到跟前，较年长的那位以傲慢的声音这样开口说道：
+
+-Caballero de las Lunetas, ¿por ventura tráenos esos dos caballos por pensar de con ellos rescatar los que tomamos a ese caballero?
+“戴月纹的骑士，莫非你带来这两匹马，是想用它们赎回我们从那个骑士手里夺来的马？
+
+Mal pensamiento traes.
+你打错了算盘。
+
+A ti, ni a él, ni a vuestros escuderos no queremos, pero danos esos caballos y esas tus armas, que ricas y buenas me parecen, y dejaros hemos a todos ir en paz.
+我们不要你、不要他、也不要你们的侍从，但把这两匹马和你这身铠甲给我们——我看它们又华丽又好——我们就放你们大家平安离去。
+
+En otra manera, si emprender quieres batalla, pagando con la vida tu atrevimiento, así como así dejarás el despojo del campo.
+否则，你若想开战，就以性命为你的胆大妄为付出代价，反正你也得把战场上的战利品留下。”
+
+-¡Oh, soberbio y sin razón caballero!, dijo el Caballero del Sol, ¿tomaste tú por ventura la orden de caballería para mantener robo o para matar [a] los robadores, para mantener a cada uno su derecho o para tomar a cada uno a tuerto su hacienda, para defender justicia y razón o para hacer sin justicia y hacer sin razón?
+“噢，傲慢无理的骑士！”太阳骑士说，“你受骑士封号，究竟是为了维护抢劫，还是为了杀死强盗？是为了维护每个人的权利，还是为了不正当地夺取每个人的财产？是为了捍卫正义与理性，还是为了不义无理地行事？
+
+Gran villanía cometiste maltratar un caballero por robarle un caballo, y sobre esta razón no te aguardo más palabras, sino conmigo ven a la batalla.
+你为抢一匹马而虐待一位骑士，犯下了极大的卑劣行径；就此而言，我不再与你多费口舌，来与我交战吧。”
+
+Con estas palabras embravecido, el Caballero de la Torre andaba por el campo braveando y, tomando de él lo que le pareció, contra el Caballero del Sol endereça, dejándose venir el uno contra el otro al más correr de los caballos, las lanças bajas, se encontraron en medio de aquel campo.
+塔楼骑士听了这番话，勃然大怒，在场上耀武扬威地来回驰骋，取好距离，便朝太阳骑士冲去；二人平放长矛，纵马疾驰，在场地中央相遇。
+
+Pero como los Caballeros de la Torre el uno viniese tras el otro, recibiendo el Caballero del Sol el encuentro del primero en soslayo del escudo, levantó su lança e hiriendo de ella al segundo, que más descuidado venía en descubierto del escudo, falsándole el arnés y loriga con un troço de lança por un costado en soslayo, lo lançó por tierra malherido, y fue tal la caída que quedó tan quebrantado que no pudo mas volver a la batalla aunque la herida no era mortal.
+塔楼的两名骑士一前一后冲来；太阳骑士斜举盾牌接住第一人的冲击，随即抬起长矛刺向第二人——那人较为大意，盾牌未遮住身体——一段矛尖斜斜刺穿他的铠甲和锁甲，从肋侧刺入，将他重伤挑落马下；他摔得极重，虽非致命伤，却已损毁到无法再上阵。
+
+Pues ver la braveza del anciano caballero cuando vio al hijo por tierra tendido, pensando que muerto fuese, no hubiera caballero que no espantara.
+且看那年长骑士见儿子倒地、以为他已死时的凶猛之状，任何骑士见了都要心惊。
+
+Acometía y hería tan bravamente y tan sin piedad que apenas daba lugar al Caballero del Sol a se revolver.
+他进攻砍杀如此勇猛、如此毫不留情，几乎不给太阳骑士转身的余地。
+
+Pero como conociese que bien le era menester su esfuerço, porque el Caballero de la Torre era membrudo y orgulloso, poniendo mano por su espada, le començó de dar la respuesta, heriéndole de tantos y tan espesos golpes que, mal de su grado, lo hacía revolver por el campo de unas partes a otras.
+但太阳骑士知道自己正需要拿出勇气，因为塔楼骑士体格强壮、骄横不可一世；他伸手拔剑，开始还击，砍出又多又密的剑招，逼得对方不由自主地在场上东转西转。
+
+Bien había una hora que la batalla duraba, cuando siendo los escudos despedaçados y las lorigas falsadas, ya sus carnes començaban de sentir los filos de sus espadas.
+战斗已持续了整整一个小时，盾牌被砍碎，锁甲被刺穿，他们的皮肉已开始感受到剑刃的锋利。
+
+Tanto era en este punto el Caballero de la Torre cansado, que desfalleciendo por la mucha sangre que de él salía, en él no había defensa.
+此时塔楼骑士已疲惫至极，因失血过多而虚弱不堪，再无防御之力。
+
+Lo cual, como bien sintiese el Caballero del Sol, alçando su espada, le hiere de tres pesados golpes por cima del yelmo, uno tras otro, de tal manera que sin sentido vino a tierra.
+太阳骑士察觉此情，便举起剑来，朝头盔上方接连砍下三记重击，使他失去知觉倒在地上。
+
+No fue perezoso el Caballero del Sol, ca saltando de su caballo vino sobre él y, como conoció que no fuese mortal, esperando que en su acuerdo volviese, de esta manera le dice:
+太阳骑士毫不怠慢，跳下马来到他跟前；见他伤不致死，便等他恢复知觉，这样对他说道：
+
+-Di, anciano caballero, ¿qué te aprovechan tus años, qué te aprovecha tu discreción, pues viniste a robar [a] los caballeros?
+“说吧，年长的骑士，你的年纪对你有什么好处？你的明智对你有什么好处？你竟来抢劫骑士？
+
+Tus soberbias y malas obras te han traído a este desastrado fin.
+你的傲慢与恶行把你带到了这个不幸的结局。
+
+O yo te cortaré la cabeça, o te otorga por vencido, a tal condición, que, satisfaciendo lo mal llevado, has de hacer y jurar lo que yo te mandare.
+要么我砍下你的头，要么你认输投降，条件是你须赔偿所抢之物，并照我所吩咐的去做、去发誓。”
+
+-A punto soy, dijo el Caballero de la Torre, de conocer mi maldad y soberbia y el castigo que por ello Dios me ha dado.
+“我此刻正要认清我的邪恶与傲慢，以及上帝因此给我的惩罚，”塔楼骑士说。
+
+Yo lo he hecho como malo. Yo lo emendaré como bueno.
+“我作恶多端，我要改过向善。
+
+Dios ha sido conmigo misericordioso, pues, siendo yo pecador, me ha dado conocimiento de mi pecado y me ha dejado tiempo para hacer de él penitencia.
+上帝对我慈悲，因为我虽是罪人，祂却让我认识自己的罪，并给我时间为之忏悔。
+
+Yo otorgo lo que dices y haré y juraré todo lo que me pides juntamente con mi hijo, si vivo es.
+我同意你所说的，并愿与我儿子——如果他活着——一同照你所要求的去做、去发誓。”
+
+Diciendo estas palabras, el Caballero del Sol por las manos lo levanta y juntamente se van todos a la morada de la Torre, donde para todos fueron parados lechos, y, siendo de lo necesario proveídos, de sus heridas fueron curados.
+说着这些话，太阳骑士扶着他的手将他拉起，一行人便一同前往塔楼的住所；那里为众人铺好了床，所需之物也一一备齐，他们的伤都得到了治疗。
 
 CAPÍTULO VI En que se cuenta quien era el caballero herido y quiénes eran los Caballeros de la Torre y Floresta.
-Ya vos dijimos cómo los Caballeros de la Torre, por tomar el hermoso caballo del caballero que el Caballero del Sol halló herido en la floresta, lo maltrataron en tal manera que si no fuera por el Caballero del Sol, de su vida había poca esperança. Agora vos diremos quién era el caballero y quiénes eran los Caballeros de la Torre que lo maltrataron. Habéis de saber que este caballero había nombre Perseo, el galán señor del Valle de las Tres Riberas. Había de niño heredado el estado y, como llegase a los diez y ocho años, salió de su tierra por se probar y ejercitar en las armas. Pero no fue bien salido que, en la primera batalla, le aconteció lo que habéis oído, no por falta de esfuerço, sino por ser contraria ventura y ser contra un novel caballero dos caballeros membrudos y esforçados, aunque perversos en condición. Ya vos dijimos cómo los Caballeros de la Torre eran padre e hijo. Al anciano padre llamaban Silvano el valiente y a su hijo Sotelo de la Torre. Estos caballeros eran señores de aquella torre y morada y de aquella floresta donde criaban muchos ganados y labraban grandes posesiones. Así que el gran vicio y no tener en qué entender les trajo a tan mala costumbre, que por su pasatiempo solían por las floresta y maltrataban [a] los caballeros andantes y les robaban los caballos y esto tenían ellos por vicio y salían a ello como quien sale a caça. Pero el Caballero del Sol con su batalla, y después con sus buenas palabras, los apartó de tan malos hechos y mala costumbre. Ya después de quince días que la batalla era pasada, los tres caballeros, Silvano y Sotelo, queriendo cumplir lo que habían prometido al Caballero del Sol, se van a él y, siendo presente Perseo, señor del Valle de las Tres Riberas, hicieron homenaje de jamás emprender batalla con algún caballero a tuerto o sin razón, ni tomar cosa alguna a los andantes caballeros o a otra persona alguna, mas antes los favorecer y recibir y hospedar en su morada, haciéndoles el tratamiento que de caballero a caballero se debe hacer y más de su voluntad prometieron de dar favor y ayuda con sus personas a Perseo, el galán señor del Valle de las Tres Riberas, como a vecino, en todas sus necesidades, en satisfación del mal y daño que le habían hecho en su persona. Contento el Caballero del Sol de su nueva bondad, les agradeció el favor y ayuda que prometían a Perseo y así tuvo por cierto que lo cumplirían y guardarían porque en aquellos pocos de días que juntos estuvieron entró entre ellos tanta amistad que no se hallaban el uno sin el otro, así que ya Perseo estaba tan bien hallado con ellos que se le hacía caro de se apartar porque, en la verdad, eran buenos caballeros, sino por aquella mala costumbre que poco habían tomado. El Caballero del Sol, reprehendiendo su tardança, no con poco pesar de los caballeros de la morada de la Torre y con muchas lágrimas de Perseo, que muy caramente lo amaba, tornó a su començado camino y, habiendo caminado tres jornadas, sin que cosa de contar sea le aviniese, a la puesta del sol, a la falda de una peña sobre una ribera entre unos frondosos árboles donde albergó esa noche.
+第六章 说明受伤骑士是谁，以及塔楼与丛林骑士是些什么人
+
+Ya vos dijimos cómo los Caballeros de la Torre, por tomar el hermoso caballo del caballero que el Caballero del Sol halló herido en la floresta, lo maltrataron en tal manera que si no fuera por el Caballero del Sol, de su vida había poca esperança.
+我们已经告诉过你们，塔楼骑士为了夺取太阳骑士在丛林中遇见的那位受伤骑士的骏马，将他虐待到若非太阳骑士相救、他生还希望便十分渺茫的地步。
+
+Agora vos diremos quién era el caballero y quiénes eran los Caballeros de la Torre que lo maltrataron.
+现在我们要告诉你们，这位骑士是谁，虐待他的塔楼骑士又是什么人。
+
+Habéis de saber que este caballero había nombre Perseo, el galán señor del Valle de las Tres Riberas.
+你们当知道，这位骑士名叫佩尔塞奥，是“三河之谷”的俊美领主。
+
+Había de niño heredado el estado y, como llegase a los diez y ocho años, salió de su tierra por se probar y ejercitar en las armas.
+他年幼时便继承了领地，到了十八岁，便离开故土，去历练和演习武艺。
+
+Pero no fue bien salido que, en la primera batalla, le aconteció lo que habéis oído, no por falta de esfuerço, sino por ser contraria ventura y ser contra un novel caballero dos caballeros membrudos y esforçados, aunque perversos en condición.
+但他刚出门，便在第一次战斗中遭遇了你们所听闻的事；这并非因为缺乏勇气，而是命运不济，且一名新骑士要对抗两名体格强壮、勇猛却品性恶劣的骑士。
+
+Ya vos dijimos cómo los Caballeros de la Torre eran padre e hijo.
+我们已经告诉过你们，塔楼骑士是父子二人。
+
+Al anciano padre llamaban Silvano el valiente y a su hijo Sotelo de la Torre.
+年长的父亲叫“勇敢者”西尔瓦诺，儿子叫塔楼的索特洛。
+
+Estos caballeros eran señores de aquella torre y morada y de aquella floresta donde criaban muchos ganados y labraban grandes posesiones.
+这两位骑士是那座塔楼及其住所和那片丛林的主人；他们在那里饲养许多牲畜，耕种大片产业。
+
+Así que el gran vicio y no tener en qué entender les trajo a tan mala costumbre, que por su pasatiempo solían por las floresta y maltrataban [a] los caballeros andantes y les robaban los caballos y esto tenían ellos por vicio y salían a ello como quien sale a caça.
+他们因极度闲逸、无所事事，竟养成了如此恶习：常到丛林中去，虐待游侠骑士、抢夺他们的马匹，并把这种事当作消遣，像去打猎一样出动。
+
+Pero el Caballero del Sol con su batalla, y después con sus buenas palabras, los apartó de tan malos hechos y mala costumbre.
+但太阳骑士先以战斗、后以善言，使他们脱离了如此恶劣的行径与恶习。
+
+Ya después de quince días que la batalla era pasada, los tres caballeros, Silvano y Sotelo, queriendo cumplir lo que habían prometido al Caballero del Sol, se van a él y, siendo presente Perseo, señor del Valle de las Tres Riberas, hicieron homenaje de jamás emprender batalla con algún caballero a tuerto o sin razón, ni tomar cosa alguna a los andantes caballeros o a otra persona alguna, mas antes los favorecer y recibir y hospedar en su morada, haciéndoles el tratamiento que de caballero a caballero se debe hacer y más de su voluntad prometieron de dar favor y ayuda con sus personas a Perseo, el galán señor del Valle de las Tres Riberas, como a vecino, en todas sus necesidades, en satisfación del mal y daño que le habían hecho en su persona.
+战斗过后十五天，西尔瓦诺与索特洛两位骑士想要履行对太阳骑士的承诺，便来到他面前；当着“三河之谷”领主佩尔塞奥的面，他们宣誓：今后绝不再不正当地或无理由地与任何骑士交战，也绝不夺取游侠骑士或任何别人的财物，反而要优待、接待他们，让他们在自己住处留宿，以骑士对骑士应有的礼数相待；他们还自愿承诺，将以自身之力在佩尔塞奥——“三河之谷”的俊美领主——作为邻人的一切需要上给予支持与帮助，以补偿他们曾对他本人造成的伤害。
+
+Contento el Caballero del Sol de su nueva bondad, les agradeció el favor y ayuda que prometían a Perseo y así tuvo por cierto que lo cumplirían y guardarían porque en aquellos pocos de días que juntos estuvieron entró entre ellos tanta amistad que no se hallaban el uno sin el otro, así que ya Perseo estaba tan bien hallado con ellos que se le hacía caro de se apartar porque, en la verdad, eran buenos caballeros, sino por aquella mala costumbre que poco habían tomado.
+太阳骑士见他们改过向善，十分欣慰，感谢他们承诺帮助佩尔塞奥，并确信他们会履行和遵守诺言；因为在共处的这几天里，他们之间建立了如此深厚的友谊，彼此形影不离。佩尔塞奥与他们相处得如此融洽，竟舍不得分开，因为说实话，他们本是善良的骑士，只是沾染了那点不良习惯不久。
+
+El Caballero del Sol, reprehendiendo su tardança, no con poco pesar de los caballeros de la morada de la Torre y con muchas lágrimas de Perseo, que muy caramente lo amaba, tornó a su començado camino y, habiendo caminado tres jornadas, sin que cosa de contar sea le aviniese, a la puesta del sol, a la falda de una peña sobre una ribera entre unos frondosos árboles donde albergó esa noche.
+太阳骑士责备他们耽搁太久，便在塔楼骑士们颇感难过、深爱他的佩尔塞奥泪流满面之中，重新踏上原先的旅程；他走了三天的路程，未遇到什么值得一提的事，日落时分来到一处河岸上方、岩壁脚下枝叶繁茂的树间，在那里过了一夜。
 
 CAPÍTULO VII De la batalla que pasó entre el Caballero del Sol y el gigante Brutano, usurpador del castillo y Roca de Tres Cabeças.
-Otro día, que los collados de la Cretense ínsula con los rayos de los esparcidos cabellos del hijo de Latona resplandecían, en lo alto de la roca, fue dada una señal de bocina a la cual, levantando sus ojos el Caballero del Sol, pudo ver un hermoso y muy fuerte castillo bien murado, almenado y torreado, el cual estaba encasado en un pequeño espacio que entre tres puntos, o collados de la roca, se hacía, y, como las cabeças de la roca estuviesen una a medio día y otra a poniente y otra a septentrión, y hacia oriente estuviese desembaraçado, el hermoso castillo, herido de los nuevos rayos del sol, daba de sí tan hermoso parecer que a la vista otro más hermoso en el mundo no parecía haber. Pues como el Caballero del Sol, por la seña que había oído, pensase que de ahí no le convenía partir sin batalla, o sin saber cuyo era aquel castillo, armándose de sus fuertes y ricas armas, sobre su caballo, a la falda de la peña se acerca, donde halló una gruesa columna de piedra, alta de un estado. Sobre ella estaba un grande escudo de piedra tan blanca que transparente parecía, en el cual estaba entretallado un gigante anciano armado, salvo de manos y cara, como que del caballo caído hubiese, un troço de lança por los pechos, tan al natural que el espíritu parecía en aquella hora rendir, con una letra en torno que decía: No te llegues, caballero, a mirar esta figura, que será tu sepultura. No tardó mucho que, en tanto que el Caballero del Sol estas cosas notaba, del alto castillo un fiero y desemejado gigante abaja, armado de unas fuertes y ricas armas a cuarteles con fino oro partidas, sobre un grande y fiero caballo. Pues como al llano de la columna hubo llegado, con alta y soberbia voz, al Caballero del Sol en esta manera dice: -Di, desdichado caballero, ¿cuál desventura te trajo aquí [donde] tu mísera vida en mis manos cuitadamente acabase? Vente luego a mi castillo. Ternás compañía al que injusto señor de él era, el cual muy solo está en la prisión. Pero yo le daré presto asaz de compañeros y tú serás el primero, si de grado lo quieres hacer, porque de otra manera no pagarás menos de que con muy cruel muerte. -Di, soberbia bestia, bruto animal en los hechos, dijo el Caballero del Sol, ¿cómo pudiste cometer tan gran maldad y traición que no te bastase privarlo de su propio castillo sino meterle en tu cruel prisión? ¿No te bastaba hacer una crueldad, sino dos? Yo te juro, por la orden de caballería, que yo muera en tus crueles manos o yo vengaré ese caballero, el cual yo no conozco, ni jamás oí decir, aunque bien creo que debe ser muy mejor que tú. -¡Oh hombre de poco valor!, dijo el bruto jayán, en mi presencia osaste ultrajarme de tal manera, Aguárdame, que yo te mostraré cómo se tratan los caballeros como yo. A esa hora, sin mas aguardar, se apartaron el uno del otro cuanto convenía y, las lanças bajas, al más correr de los caballos, se vinieron a encontrar en medio del llano de la columna. Pero como el Caballero del Sol conoció que la fuerça del desemejado jayán era muy aventajada y su lança muy gruesa, quiso más usar y aprovecharse de la destreza que no tentar la enemiga fortuna, y, en aquel punto que se vinieron a juntar, el Caballero del Sol hurtó el cuerpo y volvió el escudo hacia la mano izquierda y así la lança del bestial jayán pasó en soslayo del escudo. En aquella hora el Caballero del Sol encontró al fiero gigante por la visera, que algún tanto era grande de tal manera que aunque el hierro de la lança no le faltase, por su gran fortaleza, pero, como la lança se rajó, una astilla delgada
+第七章 太阳骑士与巨人布鲁塔诺之战——此人篡夺了三峰岩城堡
 
-acertó por la visera y le hirió sobre los ojos, de tal manera que la mucha sangre que perdía, la vista le cegaba y su muy feroz caballo, como el gigante perdiese la rienda, espantado con el juntar y ruido de los golpes, corrió con él por el campo hasta que el gigante tornó más en su acuerdo. Pero el Caballero del Sol siempre iba en su alcance, pensando poderle acabar de derribar. Al tiempo que paró el caballo del bestial gigante, el Caballero del Sol llegó y lo hirió de dos muy pesados golpes sobre el acerado yelmo, pero ni el yelmo ni el caballero hicieron por eso algún sentimiento, pues como el gigante, después que fue vuelto en su entero acuerdo, se vio ciego y la lança perdida y que el Caballero del Sol le hería tan de coraçón, començó a bramar y, meneando su braço con gran furia, echó mano a la descompasada porra de acero que al arçón de la silla traía y fuese hacia donde sintió que los pasos del caballo del Caballero del Sol sonaban, el cual, esperándole en el campo, con viril coraçón, así dijo: -Mira, bestia fiera, como Dios amansa los soberbios como tú. Al tino de estas palabras, llegó donde el Caballero del Sol estaba atendiendo y, como tan cerca se vio que con su descompasada porra le podía alcançar, arrojó un fuerte golpe, pero como la vista, con la sangre turbada casi ciego estuviese, por herir al Caballero del Sol, dio a su caballo tan grande golpe sobre la testera que, partiéndole la cabeça, vino a tierra con su señor. Fue la caída tan grande que el ciego gigante dio, que tal como muerto quedó tendido sobre las verdes hierbas juntamente con su caballo. Pues como el Caballero del Sol en tal punto le viese, con grande ligereza saltó de la silla en el campo y, yendo sobre él, quitóle el yelmo y vio como perdía mucha sangre por aquel lugar que la raja de la lança estaba metida, la cual luego fue por el Caballero del Sol sacada, por ver si tornaría en su acuerdo, pero, no fue bien acabada de sacar, cuando, con un grande estremecido, la ánima cruel se apartó de aquellas salvajinas carnes. A esa hora, dentro en el castillo se había començado una muy reñida batalla, tanto que abajo en lo llano se oían los golpes de espada y el ruido y meneo de las armas. Y como el Caballero del Sol no pudiese alcançar qué cosa fuese, no se osaba determinar a subir, pensando que hubiese alguna traición arriba en el castillo. Estando en esta duda, vínole a la memoria lo que era obligado a hacer por librar al caballero preso y no mirando algún peligro de los que venir le pudiesen, acordó de tomar la senda y subir a saber qué contienda era y a poner su persona en deliberación del señor natural del castillo, si quien se lo defendiese hallase, y así como hubo mirado la columna y el cristalino escudo, leyó las letras que en él estaban escritas. Y así, a pie como estaba, començó de subir hasta lo más alto de la peña, no con poco trabajo de los fatigados miembros por el peso de las armas. Pero como en el patio del castillo entrase, donde era la vuelta de la ferida y muy trabada contienda, vio cuatro caballeros estar malheridos, tendidos por tierra, y doce caballeros en una desigual batalla, ocho contra cuatro, los cuales, acogidos y retraídos, estaban a un callejón que al canto del patio se hacía, porque los ocho, como fuesen dos para uno, ya los traían muy acosados. Pero como el Caballero del Sol de los cuatro fue visto, cobrándole mucho ánimo y nuevo esfuerço, començaron a salir de aquel lugar en que retraídos estaban, diciendo: -A ellos, buen caballero, que tus enemigos son, servidores del muy soberbio y alevoso gigante que tú mataste. Socórrenos, por cortesía, contra estos traidores que a nuestro señor tienen en áspera prisión. Movido a piedad con estas palabras, el Caballero del Sol arremetió furiosamente contra los caballeros del jayán, defensores de la maldad y traición, y en poco rato, con el favor de los cuatro caballeros, los venció y desbarató, y, quitándoles las armas, los enviaron malheridos de la batalla pasada.
+Otro día, que los collados de la Cretense ínsula con los rayos de los esparcidos cabellos del hijo de Latona resplandecían, en lo alto de la roca, fue dada una señal de bocina a la cual, levantando sus ojos el Caballero del Sol, pudo ver un hermoso y muy fuerte castillo bien murado, almenado y torreado, el cual estaba encasado en un pequeño espacio que entre tres puntos, o collados de la roca, se hacía, y, como las cabeças de la roca estuviesen una a medio día y otra a poniente y otra a septentrión, y hacia oriente estuviese desembaraçado, el hermoso castillo, herido de los nuevos rayos del sol, daba de sí tan hermoso parecer que a la vista otro más hermoso en el mundo no parecía haber.
+又一天，克里特岛的山丘在拉托娜之子四散光芒的照耀下熠熠生辉；岩石高处传来一声号角，太阳骑士抬眼望去，看见一座美丽而坚固的城堡，城墙、雉堞和塔楼齐备，嵌在三处岩峰之间的狭小空间里；这三座岩峰一朝南、一朝西、一朝北，朝东一面则开阔无阻；美丽的城堡被初升的阳光一照，显得如此秀美，放眼世间似乎再没有比它更美的了。
+
+Pues como el Caballero del Sol, por la seña que había oído, pensase que de ahí no le convenía partir sin batalla, o sin saber cuyo era aquel castillo, armándose de sus fuertes y ricas armas, sobre su caballo, a la falda de la peña se acerca, donde halló una gruesa columna de piedra, alta de un estado.
+太阳骑士听了那号声，觉得不应未经战斗、也未弄清城堡归属便离开此地，于是披上坚固华丽的铠甲，骑上马，走近岩壁脚下，在那里发现一根粗大的石柱，高约一人。
+
+Sobre ella estaba un grande escudo de piedra tan blanca que transparente parecía, en el cual estaba entretallado un gigante anciano armado, salvo de manos y cara, como que del caballo caído hubiese, un troço de lança por los pechos, tan al natural que el espíritu parecía en aquella hora rendir, con una letra en torno que decía: No te llegues, caballero, a mirar esta figura, que será tu sepultura.
+柱上立着一面巨大的石盾，白得仿佛透明，上面雕刻着一位披甲的老巨人，只有双手和脸未着甲，仿佛刚从马上跌落，一截长矛刺穿胸膛，雕得栩栩如生，仿佛那一刻灵魂正要离去；盾周刻着一行字：“骑士，勿近前观看此像，否则此处便是你的坟墓。”
+
+No tardó mucho que, en tanto que el Caballero del Sol estas cosas notaba, del alto castillo un fiero y desemejado gigante abaja, armado de unas fuertes y ricas armas a cuarteles con fino oro partidas, sobre un grande y fiero caballo.
+没过多久，太阳骑士正在留意这些事物时，一个凶猛丑陋的巨人从高处的城堡下来，披着坚固华丽的铠甲，甲上分格嵌着纯金纹饰，骑着一匹高大凶猛的骏马。
+
+Pues como al llano de la columna hubo llegado, con alta y soberbia voz, al Caballero del Sol en esta manera dice:
+他来到石柱前的平地，便以高亢傲慢的声音这样对太阳骑士说道：
+
+-Di, desdichado caballero, ¿cuál desventura te trajo aquí [donde] tu mísera vida en mis manos cuitadamente acabase?
+“说吧，倒霉的骑士，是哪桩不幸把你带到这里，让你悲惨的性命在我手中痛苦地了结？
+
+Vente luego a mi castillo.
+立刻到我的城堡来。
+
+Ternás compañía al que injusto señor de él era, el cual muy solo está en la prisión.
+你要去给那城堡原来的不义之主作伴，他如今在牢里孤零零一人。
+
+Pero yo le daré presto asaz de compañeros y tú serás el primero, si de grado lo quieres hacer, porque de otra manera no pagarás menos de que con muy cruel muerte.
+不过我会很快给他送去足够的伙伴，而你就是第一个——如果你愿意自愿前去的话；否则，你付出的不会少于极其残酷的死亡。”
+
+-Di, soberbia bestia, bruto animal en los hechos, dijo el Caballero del Sol, ¿cómo pudiste cometer tan gran maldad y traición que no te bastase privarlo de su propio castillo sino meterle en tu cruel prisión?
+“说吧，傲慢的畜生，行径野蛮的禽兽，”太阳骑士说，“你怎能犯下如此大的邪恶与背叛，夺去他本人的城堡还不够，还要把他关进你残酷的牢狱？
+
+¿No te bastaba hacer una crueldad, sino dos?
+做一桩残忍之事还不够，还要做两桩？
+
+Yo te juro, por la orden de caballería, que yo muera en tus crueles manos o yo vengaré ese caballero, el cual yo no conozco, ni jamás oí decir, aunque bien creo que debe ser muy mejor que tú.
+我以骑士团体的名义向你发誓：要么我死在你这残忍的手中，要么我为那位骑士报仇——我虽不认识他，也从未听人说起过他，但我深信他必定远胜于你。”
+
+-¡Oh hombre de poco valor!, dijo el bruto jayán, en mi presencia osaste ultrajarme de tal manera, Aguárdame, que yo te mostraré cómo se tratan los caballeros como yo.
+“噢，无足轻重的人！”这粗野的巨人说，“你竟敢在我面前如此侮辱我。等着，我来让你看看像我这样的骑士是如何被对待的。”
+
+A esa hora, sin mas aguardar, se apartaron el uno del otro cuanto convenía y, las lanças bajas, al más correr de los caballos, se vinieron a encontrar en medio del llano de la columna.
+这时，二人不再多等，拉开适当距离，平放长矛，纵马疾驰，在石柱前的平地中央相遇。
+
+Pero como el Caballero del Sol conoció que la fuerça del desemejado jayán era muy aventajada y su lança muy gruesa, quiso más usar y aprovecharse de la destreza que no tentar la enemiga fortuna, y, en aquel punto que se vinieron a juntar, el Caballero del Sol hurtó el cuerpo y volvió el escudo hacia la mano izquierda y así la lança del bestial jayán pasó en soslayo del escudo.
+太阳骑士知道这丑陋巨人力气远胜于己、长矛又极粗大，便更愿运用灵巧、发挥技艺，而不去试探敌对的命运；就在二人即将相交之际，太阳骑士侧身闪避，把盾牌转向左手一侧，那野兽般巨人的长矛便斜斜擦过盾牌。
+
+En aquella hora el Caballero del Sol encontró al fiero gigante por la visera, que algún tanto era grande de tal manera que aunque el hierro de la lança no le faltase, por su gran fortaleza, pero, como la lança se rajó, una astilla delgada acertó por la visera y le hirió sobre los ojos, de tal manera que la mucha sangre que perdía, la vista le cegaba y su muy feroz caballo, como el gigante perdiese la rienda, espantado con el juntar y ruido de los golpes, corrió con él por el campo hasta que el gigante tornó más en su acuerdo.
+这时，太阳骑士刺中凶猛巨人的面甲；那面甲开口颇大，虽然长矛的铁尖因其坚固而未能刺入，但长矛裂开，一根细木刺从面甲缝隙钻入，刺伤了他的眼睛上方，以致他流血甚多、视线模糊；他那匹极凶猛的坐骑因主人松了缰绳，又被两骑相交与击打的声响惊吓，便驮着他狂奔，直到巨人稍稍恢复知觉。
+
+Pero el Caballero del Sol siempre iba en su alcance, pensando poderle acabar de derribar.
+但太阳骑士始终紧追不舍，想把他彻底击落马下。
+
+Al tiempo que paró el caballo del bestial gigante, el Caballero del Sol llegó y lo hirió de dos muy pesados golpes sobre el acerado yelmo, pero ni el yelmo ni el caballero hicieron por eso algún sentimiento, pues como el gigante, después que fue vuelto en su entero acuerdo, se vio ciego y la lança perdida y que el Caballero del Sol le hería tan de coraçón, començó a bramar y, meneando su braço con gran furia, echó mano a la descompasada porra de acero que al arçón de la silla traía y fuese hacia donde sintió que los pasos del caballo del Caballero del Sol sonaban, el cual, esperándole en el campo, con viril coraçón, así dijo:
+待那野兽般巨人的马停住，太阳骑士赶到，朝钢盔上方狠狠砍了两剑，但头盔和骑士本人都似乎毫无感觉；巨人完全恢复知觉后，发现自己目不能视、长矛已失，而太阳骑士又如此勇猛地砍他，便咆哮起来，狂怒地挥动手臂，抓起挂在鞍桥上的那柄巨大钢锤，朝他所听到的太阳骑士马蹄声的方向冲去；太阳骑士在场上以男子汉的勇气等着他，这样说道：
+
+-Mira, bestia fiera, como Dios amansa los soberbios como tú.
+“看吧，凶猛的野兽，上帝如何驯服像你这样傲慢的人。”
+
+Al tino de estas palabras, llegó donde el Caballero del Sol estaba atendiendo y, como tan cerca se vio que con su descompasada porra le podía alcançar, arrojó un fuerte golpe, pero como la vista, con la sangre turbada casi ciego estuviese, por herir al Caballero del Sol, dio a su caballo tan grande golpe sobre la testera que, partiéndole la cabeça, vino a tierra con su señor.
+话音方落，他冲到太阳骑士等候之处，见距离已近、巨锤可以够到，便猛力一击；但因血污视线、几乎失明，他本想打太阳骑士，却重重击中太阳骑士坐骑的额甲，打裂了马头，马便连同主人一起倒地。
+
+Fue la caída tan grande que el ciego gigante dio, que tal como muerto quedó tendido sobre las verdes hierbas juntamente con su caballo.
+这盲眼巨人摔得极重，与马一同倒在青草上，仿佛死了一般。
+
+Pues como el Caballero del Sol en tal punto le viese, con grande ligereza saltó de la silla en el campo y, yendo sobre él, quitóle el yelmo y vio como perdía mucha sangre por aquel lugar que la raja de la lança estaba metida, la cual luego fue por el Caballero del Sol sacada, por ver si tornaría en su acuerdo, pero, no fue bien acabada de sacar, cuando, con un grande estremecido, la ánima cruel se apartó de aquellas salvajinas carnes.
+太阳骑士见此情形，极为轻捷地从马上跳到地上，走到他跟前，取下他的头盔，见他被长矛裂片刺入之处流血甚多；太阳骑士随即拔出木刺，想看他是否会恢复知觉，但木刺刚拔出，那残忍的灵魂便随着一阵剧烈抽搐，离开了那野蛮的躯体。
+
+A esa hora, dentro en el castillo se había començado una muy reñida batalla, tanto que abajo en lo llano se oían los golpes de espada y el ruido y meneo de las armas.
+这时，城堡内已开始一场激烈的战斗，连下方平地都能听见剑击之声和兵器的碰撞挥动声。
+
+Y como el Caballero del Sol no pudiese alcançar qué cosa fuese, no se osaba determinar a subir, pensando que hubiese alguna traición arriba en el castillo.
+太阳骑士弄不清是怎么回事，不敢贸然上去，心想城堡里或许有什么奸诈。
+
+Estando en esta duda, vínole a la memoria lo que era obligado a hacer por librar al caballero preso y no mirando algún peligro de los que venir le pudiesen, acordó de tomar la senda y subir a saber qué contienda era y a poner su persona en deliberación del señor natural del castillo, si quien se lo defendiese hallase, y así como hubo mirado la columna y el cristalino escudo, leyó las letras que en él estaban escritas.
+正在犹豫之际，他想起自己有义务去解救被囚的骑士，便不顾可能遭遇的任何危险，决定沿路上山，弄清那是什么争斗，并把自己的身体交付给城堡的合法主人处置——如果他能找到为之辩护的人；他也再次看了看石柱和水晶般的盾牌，读了上面所写的字。
+
+Y así, a pie como estaba, començó de subir hasta lo más alto de la peña, no con poco trabajo de los fatigados miembros por el peso de las armas.
+于是他就这样徒步开始攀登，直到岩顶，因铠甲沉重、四肢疲乏，颇为费力。
+
+Pero como en el patio del castillo entrase, donde era la vuelta de la ferida y muy trabada contienda, vio cuatro caballeros estar malheridos, tendidos por tierra, y doce caballeros en una desigual batalla, ocho contra cuatro, los cuales, acogidos y retraídos, estaban a un callejón que al canto del patio se hacía, porque los ocho, como fuesen dos para uno, ya los traían muy acosados.
+他进入城堡庭院，那里正是战斗最激烈、厮杀最胶着之处，看见四名骑士重伤倒地，另有十二名骑士在进行一场众寡悬殊的战斗——八人对四人；那四人退守到庭院一角形成的小巷里，因为八人二对一，已把他们逼得很紧。
+
+Pero como el Caballero del Sol de los cuatro fue visto, cobrándole mucho ánimo y nuevo esfuerço, començaron a salir de aquel lugar en que retraídos estaban, diciendo:
+那四人一见太阳骑士，便大为振奋、勇气倍增，开始从退守之处出来，说道：
+
+-A ellos, buen caballero, que tus enemigos son, servidores del muy soberbio y alevoso gigante que tú mataste.
+“冲向他们，好骑士，他们是你的敌人，是那极其傲慢奸诈的巨人的仆从——你已杀了他。
+
+Socórrenos, por cortesía, contra estos traidores que a nuestro señor tienen en áspera prisión.
+请你仗义援助我们，对抗这些叛徒，他们把我们的主人关在严酷的牢狱中。”
+
+Movido a piedad con estas palabras, el Caballero del Sol arremetió furiosamente contra los caballeros del jayán, defensores de la maldad y traición, y en poco rato, con el favor de los cuatro caballeros, los venció y desbarató, y, quitándoles las armas, los enviaron malheridos de la batalla pasada.
+太阳骑士听了这番话，心生怜悯，便猛冲向巨人的骑士们——那些邪恶与背叛的护卫者；不多时，在四位骑士的协助下，他击败并击溃了他们，夺下他们的武器，将他们带着伤逐出了刚才的战斗。
 
 CAPÍTULO VIII En que se cuenta quién era el señor del Castillo de la Roca de Tres Cabeças y por cuál razón el gigante le había preso.
-Acabada que fue esta tan brava lid, los caballeros del castillo, veniéndose para el Caballero del Sol, se hincaban de hinojos ante él, rindiéndole muchas gracias por el socorro que les había hecho y principalmente porque a ellos y a su señor había librado del duro y áspero cautiverio del bravo y cruel jayán; pero el Caballero del Sol no lo consentía, ante[s], tomándolos por las manos, los alçaba y hacía toda la mesura y cortesía que un caballero debe hacer a otro y los recibía con tanta criança como si cada uno fuera señor del castillo. Pasadas estas cortesías, el Caballero del Sol les preguntó por cuál razón habían tomado la contienda con los caballeros del gigante. El uno de ellos, que más anciano parecía, en esta manera respondió: -Debes saber, venturoso caballero, que, después de la prisión de nuestro señor Licionio, no escapamos con las vidas de mano del gigante y sus malos caballeros más de seis caballeros de los del castillo, los cuales el gigante aherrojados nos tenía para servicio de casa. Y, como por nosotros fue vista la batalla que entre la vuestra merced y el gigante pasaba, después que los diez caballeros del gigante fueron armados y salían para ir a ayudar a su señor, nosotros, entrando en la sala de las armas, nos cerramos; y como los caballeros del gigante de esto fueron avisados, volvieron por nos matar; pero, entretanto que quebrantaban las puertas, nos desaferramos y, armados, salimos con tanto esfuerço que, aunque seis eramos contra diez, los llevamos hasta el patio, donde nos hallaste llevando lo peor de la batalla, y fue la causa porque los dos que más esfuerço nos ponían ya estaban por tierra caídos y malheridos, según la vuestra merced bien vio. Alabando su bondad y esfuerço, el Caballero del Sol demandó por las llaves y prisión del señor del castillo, el cual ya por uno de los servidores del castillo estaba suelto, y como de la obscura tiniebla a la clara y deseada luz saliese, pudo ver al Caballero del Sol, y, conociendo por el dicho de aquél que le había suelto, ser aquél el caballero que le había restituido la libertad de la persona y el señorío del castillo, quiso arrojarse por tierra, pero el Caballero del Sol, que asimismo fue avisado de quien era, arremetió y le tomó entre sus armados braços, donde el buen caballero Licionio le rindió muchas gracias, ofreciendole la persona y el castillo con todo su estado y haber por los beneficios recibidos. Después de pasadas muchas cortesías de la una parte a la otra y hablando de la peligrosa batalla del gigante y en cuánto debía Licionio a aquellos pocos servidores que en el castillo le habían quedado, se entraron en una gran sala donde, después de ser servidos de lo que habían menester y haber curado de los heridos, las tablas fueron puestas, donde fueron tan altamente servidos como en casa de un gran señor lo pudieran ser. Después que las tablas fueron alçadas, el Caballero del Sol rogó a Licionio le contase y dijese cómo se llamaba aquel castillo y cómo se llamaba el jayán y todo su hecho. -Pláceme, dijo el buen caballero Licionio. Este castillo se llama el castillo de la Roca de Tres Cabeças porque, como la vuestra merced bien ve, tiene esta roca tres puntas que llamamos cabeças de la roca y el gigante se llamaba Brutano, hijo de Brutaneo, señor del castillo de la Peña Partida, que es en el reino de Persia, donde fue nacido y criado este Brutano. La causa porque este Brutano vino a este castillo a me hacer traición fue que
+第八章 说明三峰岩城堡之主是谁，以及巨人为何囚禁他
 
-como mi padre, llamado Liciano, siendo mancebo, andando a buscar las aventuras por el reino de Persia oyese decir que Brutaneo, señor de la Peña Partida, hacía grandes crueldades en las dueñas y doncellas y prendía alevosa y traidoramente los caballeros andantes, poniéndolos en muy áspera y tenebrosa cárcel, ya que llegaba a tres millas de la Peña Partida, donde el cruel gigante Brutaneo hacía su habitación y hacía todo género de maldad y traición, vínole al encuentro una doncella que poco había se había de sus manos escapado y huía a buscar algún caballero que con Brutaneo hiciese batalla sobre razón que esa mañana a gran tuerto hubiese preso dos hermanas suyas y ella se había escapado por una floresta entre unas espesas matas. Pues como la llorosa doncella le contase por orden, no con poco dolor y pasión, la villanía que Brutaneo había cometido contra sus hermanas, en grande manera creció a mi padre Liciano la voluntad de con él se ver ya en el campo. Luego aceptó la batalla, y, continuando su camino, acompañado de un escudero y de la triste y temerosa doncella, llegaron a vista del castillo en aquella hora que el sol con su ausencia las tierras entristecía; por lo cual, albergaron esa noche en aquella floresta [de la] que la doncella, por la mañana, se había escapado de las manos del cruel gigante. Venida la mañana del siguiente día, Liciano y su escudero, quedando la doncella en la floresta, se van al castillo de la Peña Partida y, hiriendo las aldavas de las puertas, un feo hombre a una ventana se paró diciendo: -¿Quién es el desdichado caballero que tan de mañana viene en busca de su muerte? -Ábreme, dijo Liciano, que tengo que hablar con el señor de este castillo sobre la prisión de las doncellas que a sinrazón robó anoche. -Aguarda un poco, dijo el feo hombre, que mi señor te meterá acá, aunque tú no quieras y así se cumplirá lo que agora pides. Diciendo estas palabras, el feo hombre se va para dentro y en poco espacio salió el bravo gigante bien armado, donde hubieron su batalla en un campo que ante la puerta del castillo se hacía en manera que el gigante fue muerto y las doncellas puestas en su libertad, juntamente con otros muchos presos que en el castillo había. Esto así pasó, siendo este Brutano niño de diez años, al cual mi padre Liciano dejó por señor del castillo de la Peña Partida. Pues como este Brutano bien se acordase de este hecho, y como en edad se vido que podía bien vengar la muerte de su padre, acordó de dejar su castillo y venir a buscar el mío, ca ya, según él contaba, sabía que mí padre era muerto y yo le había sucedido; y como a dos leguas de este castillo estubiese, envió cuatro de sus servidores en hábito de andantes caballeros a este mi castillo con cartas contrahechas de mi hermano Lineo, el cual ha dos años que busca su ventura por reinos estraños, avisandoles de todo lo que habían de hacer y decir. Los cuales, venidos a este mi castillo, fueron por mí bien recibidos y honradamente hospedados por causa de las cartas que por mi muy deseadas eran, las cuales venían también contrahechas, y ellos eran tan sagaces en responder a lo que yo les preguntaba, que por muy ciertas las tenía y a ellos por fieles amigos y ciertos mensajeros. Pero todo era al revés, que las cartas eran falsas y ellos alevosos y mortales enemigos. Y fue así que, venida la medianoche, en aquel tiempo que todas las cosas tienen callado silencio, los cuatro malos y desleales caballeros, poniendo por obra la pensada traición, levantándose de sus lechos y armándose de sus armas, sin hacer algún bullicio, se fueron por las puertas de este castillo y, matando las dormidas guardas y salendo fuera, llamaron y dieron seña a su señor Brutano, que a la falda de la peña estaba en celada, aguardando la seña con veinte caballeros. El cual, sin más aguardar, començó de subir la roca y, entrando sin alguna resistencia en el castillo, y como en tal tiempo nos tomase a todos durmiendo y desarmados, fácilmente fue señor de nuestras personas y del castillo y, por bien se vengar de la muerte de su perverso padre, a mí puso en tan áspera prisión que por peor la tenía que sufrir la oscura muerte, y a mis servidores de ellos mató y a los cuatro maltrató, según la vuestra merced bien ha visto.
+Acabada que fue esta tan brava lid, los caballeros del castillo, veniéndose para el Caballero del Sol, se hincaban de hinojos ante él, rindiéndole muchas gracias por el socorro que les había hecho y principalmente porque a ellos y a su señor había librado del duro y áspero cautiverio del bravo y cruel jayán; pero el Caballero del Sol no lo consentía, ante[s], tomándolos por las manos, los alçaba y hacía toda la mesura y cortesía que un caballero debe hacer a otro y los recibía con tanta criança como si cada uno fuera señor del castillo.
+这场激烈的战斗结束后，城堡里的骑士们来到太阳骑士面前，跪倒在地，再三感谢他的救助，尤其因为他把他们和他们的主人从那个凶猛残忍的巨人严酷的囚禁中解救出来；但太阳骑士不肯受此礼，反而握住他们的手将他们扶起，尽了一个骑士对另一个骑士应有的全部礼数和殷勤，待他们如每位都是城堡之主一般周到。
 
-Pero el verdadero Dios, que es socorro de los atribulados y remedio de los afligidos, lo ha ordenado de otra manera que el bestial gigante pensaba, por lo cual, le doy infinitos loores y a la vuestra merced muchas gracias. Acabado que hubo de decir estas palabras, mano a mano el Caballero del Sol y Licionio se bajaron la roca abajo por ver el muerto gigante y holgar por la verde ribera donde gastaron el tiempo hasta hora de cena que se recogieron al castillo por reposar del trabajo pasado.
+Pasadas estas cortesías, el Caballero del Sol les preguntó por cuál razón habían tomado la contienda con los caballeros del gigante.
+礼数过后，太阳骑士问他们为何与巨人的骑士们交战。
+
+El uno de ellos, que más anciano parecía, en esta manera respondió:
+其中显得最年长的一位这样答道：
+
+-Debes saber, venturoso caballero, que, después de la prisión de nuestro señor Licionio, no escapamos con las vidas de mano del gigante y sus malos caballeros más de seis caballeros de los del castillo, los cuales el gigante aherrojados nos tenía para servicio de casa.
+“幸运的骑士，你当知道，我们的主人利西奥尼奥被囚之后，我们从巨人和他那些恶骑士手中逃得性命的，只有城堡里六名骑士；巨人给我们戴上镣铐，留我们做城堡里的杂役。
+
+Y, como por nosotros fue vista la batalla que entre la vuestra merced y el gigante pasaba, después que los diez caballeros del gigante fueron armados y salían para ir a ayudar a su señor, nosotros, entrando en la sala de las armas, nos cerramos; y como los caballeros del gigante de esto fueron avisados, volvieron por nos matar; pero, entretanto que quebrantaban las puertas, nos desaferramos y, armados, salimos con tanto esfuerço que, aunque seis eramos contra diez, los llevamos hasta el patio, donde nos hallaste llevando lo peor de la batalla, y fue la causa porque los dos que más esfuerço nos ponían ya estaban por tierra caídos y malheridos, según la vuestra merced bien vio.
+我们看见阁下与巨人交战，待巨人的十名骑士披甲出来要去援助他们的主子时，我们便进入兵器厅，把自己关在里面；巨人的骑士得知后，回来要杀我们；但他们破门之际，我们挣脱镣铐，披甲出战，奋勇冲杀，虽然我们六人对十人，仍把他们逼到庭院，你在那里找到我们时，我们正处劣势，原因是两个最奋勇的人已经倒地重伤，正如阁下亲眼所见。”
+
+Alabando su bondad y esfuerço, el Caballero del Sol demandó por las llaves y prisión del señor del castillo, el cual ya por uno de los servidores del castillo estaba suelto, y como de la obscura tiniebla a la clara y deseada luz saliese, pudo ver al Caballero del Sol, y, conociendo por el dicho de aquél que le había suelto, ser aquél el caballero que le había restituido la libertad de la persona y el señorío del castillo, quiso arrojarse por tierra, pero el Caballero del Sol, que asimismo fue avisado de quien era, arremetió y le tomó entre sus armados braços, donde el buen caballero Licionio le rindió muchas gracias, ofreciendole la persona y el castillo con todo su estado y haber por los beneficios recibidos.
+太阳骑士称赞他们的善良与勇气，随即询问城堡之主的钥匙与囚禁之处；城堡之主已由一名仆人放出，他从黑暗的幽牢来到光明可盼之处，看见了太阳骑士，并从放他之人的话中得知，正是这位骑士恢复了他的人身自由与城堡的统治权，便想扑倒在地；但太阳骑士也已得知他的身份，抢上前去，用披甲的臂膀将他抱住；好骑士利西奥尼奥在那里向他再三致谢，为所受恩惠献上自己、城堡及其全部产业与财富。
+
+Después de pasadas muchas cortesías de la una parte a la otra y hablando de la peligrosa batalla del gigante y en cuánto debía Licionio a aquellos pocos servidores que en el castillo le habían quedado, se entraron en una gran sala donde, después de ser servidos de lo que habían menester y haber curado de los heridos, las tablas fueron puestas, donde fueron tan altamente servidos como en casa de un gran señor lo pudieran ser.
+双方互尽许多礼数，谈论了那场危险的巨人之战，以及利西奥尼奥多么感激留城堡里那少数几名仆人之后，众人进入一座大厅；在得到所需侍奉、伤员包扎完毕之后，餐桌摆好，他们受到的款待之隆重，不亚于在一位大领主家中。
+
+Después que las tablas fueron alçadas, el Caballero del Sol rogó a Licionio le contase y dijese cómo se llamaba aquel castillo y cómo se llamaba el jayán y todo su hecho.
+餐桌撤下后，太阳骑士请利西奥尼奥告诉他这座城堡叫什么名字、巨人叫什么名字，以及事情的全部经过。
+
+-Pláceme, dijo el buen caballero Licionio.
+“我很愿意，”好骑士利西奥尼奥说。
+
+Este castillo se llama el castillo de la Roca de Tres Cabeças porque, como la vuestra merced bien ve, tiene esta roca tres puntas que llamamos cabeças de la roca y el gigante se llamaba Brutano, hijo de Brutaneo, señor del castillo de la Peña Partida, que es en el reino de Persia, donde fue nacido y criado este Brutano.
+“这座城堡叫三峰岩城堡，因为正如阁下所见，这岩石有三处尖峰，我们称之为岩峰；巨人名叫布鲁塔诺，是布鲁塔内奥之子，后者是裂岩城堡之主，位于波斯王国，布鲁塔诺便在那里出生成长。
+
+La causa porque este Brutano vino a este castillo a me hacer traición fue que como mi padre, llamado Liciano, siendo mancebo, andando a buscar las aventuras por el reino de Persia oyese decir que Brutaneo, señor de la Peña Partida, hacía grandes crueldades en las dueñas y doncellas y prendía alevosa y traidoramente los caballeros andantes, poniéndolos en muy áspera y tenebrosa cárcel, ya que llegaba a tres millas de la Peña Partida, donde el cruel gigante Brutaneo hacía su habitación y hacía todo género de maldad y traición, vínole al encuentro una doncella que poco había se había de sus manos escapado y huía a buscar algún caballero que con Brutaneo hiciese batalla sobre razón que esa mañana a gran tuerto hubiese preso dos hermanas suyas y ella se había escapado por una floresta entre unas espesas matas.
+布鲁塔诺来此城堡对我行此背叛之事的缘由是：我父亲名叫利西亚诺，年轻时在波斯王国游历寻险，听说裂岩城堡之主布鲁塔内奥对贵妇和少女大肆残暴，又奸诈背叛地囚禁游侠骑士，把他们关进极其严酷黑暗的牢狱；当他来到离裂岩城堡三英里处——那残忍巨人布鲁塔内奥的居所，他在那里作尽各种邪恶与背叛之事——一位少女迎面而来，她不久前才从他手中逃出，正逃着去寻找骑士去与布鲁塔内奥交战，因为那天早晨他极不公正地囚禁了她的两个姐妹，而她则从一片丛林茂密灌木中逃了出来。
+
+Pues como la llorosa doncella le contase por orden, no con poco dolor y pasión, la villanía que Brutaneo había cometido contra sus hermanas, en grande manera creció a mi padre Liciano la voluntad de con él se ver ya en el campo.
+那哭泣的少女悲愤交加，一一诉说布鲁塔内奥对她姐妹所犯的卑劣行径，我父亲利西亚诺与他在战场上相见的意愿便大大增强。
+
+Luego aceptó la batalla, y, continuando su camino, acompañado de un escudero y de la triste y temerosa doncella, llegaron a vista del castillo en aquella hora que el sol con su ausencia las tierras entristecía; por lo cual, albergaron esa noche en aquella floresta [de la] que la doncella, por la mañana, se había escapado de las manos del cruel gigante.
+他当即接受了这场战斗，继续赶路，由一名侍从和那悲伤惊恐的少女陪同，在太阳西沉、大地因失其光而黯淡之时望见了城堡；因此他们那夜便在那片丛林中歇宿——正是少女早晨从残忍巨人手中逃出的那片丛林。
+
+Venida la mañana del siguiente día, Liciano y su escudero, quedando la doncella en la floresta, se van al castillo de la Peña Partida y, hiriendo las aldavas de las puertas, un feo hombre a una ventana se paró diciendo:
+第二天早晨，利西亚诺和侍从让少女留在丛林中，前往裂岩城堡，敲打门上的门环；一个丑陋的人站到窗前说道：
+
+-¿Quién es el desdichado caballero que tan de mañana viene en busca de su muerte?
+“是哪个倒霉骑士这么早来寻死？”
+
+-Ábreme, dijo Liciano, que tengo que hablar con el señor de este castillo sobre la prisión de las doncellas que a sinrazón robó anoche.
+“给我开门，”利西亚诺说，“我要和这座城堡之主谈谈他昨夜无理掳走的少女们被囚之事。”
+
+-Aguarda un poco, dijo el feo hombre, que mi señor te meterá acá, aunque tú no quieras y así se cumplirá lo que agora pides.
+“等一会儿，”那丑人说，“我主人会把你弄进来，哪怕你不愿意；这样你此刻所求的就会如愿。”
+
+Diciendo estas palabras, el feo hombre se va para dentro y en poco espacio salió el bravo gigante bien armado, donde hubieron su batalla en un campo que ante la puerta del castillo se hacía en manera que el gigante fue muerto y las doncellas puestas en su libertad, juntamente con otros muchos presos que en el castillo había.
+说着，那丑人便进去了；不多时，勇猛的巨人全副武装出来，二人在城堡门前的一片场地上交战，结果巨人被杀，少女们获释，城堡中许多别的囚徒也一同获释。
+
+Esto así pasó, siendo este Brutano niño de diez años, al cual mi padre Liciano dejó por señor del castillo de la Peña Partida.
+这事发生时，这布鲁塔诺还是个十岁的孩子；我父亲利西亚诺留下他做裂岩城堡之主。
+
+Pues como este Brutano bien se acordase de este hecho, y como en edad se vido que podía bien vengar la muerte de su padre, acordó de dejar su castillo y venir a buscar el mío, ca ya, según él contaba, sabía que mí padre era muerto y yo le había sucedido; y como a dos leguas de este castillo estubiese, envió cuatro de sus servidores en hábito de andantes caballeros a este mi castillo con cartas contrahechas de mi hermano Lineo, el cual ha dos años que busca su ventura por reinos estraños, avisandoles de todo lo que habían de hacer y decir.
+布鲁塔诺对此事记忆犹新，等到年纪足以替父报仇时，便决定离开自己的城堡来找我的城堡；据他说，他已知道我父亲去世、由我继承；他来到离此城堡两里格处，派了四名仆人假扮游侠骑士，带着伪造的我兄弟利内奥的信来到我的城堡——利内奥两年来一直在异国他乡寻找自己的命运——并吩咐他们该做什么、说什么。
+
+Los cuales, venidos a este mi castillo, fueron por mí bien recibidos y honradamente hospedados por causa de las cartas que por mi muy deseadas eran, las cuales venían también contrahechas, y ellos eran tan sagaces en responder a lo que yo les preguntaba, que por muy ciertas las tenía y a ellos por fieles amigos y ciertos mensajeros.
+他们来到我的城堡，我因那些我极想得到的信件而好好接待他们、体面地留他们住宿；那些信也是伪造的，而他们回答我提问时又如此狡猾，我便信以为真，把他们当作忠实的朋友和可靠的信使。
+
+Pero todo era al revés, que las cartas eran falsas y ellos alevosos y mortales enemigos.
+但一切恰恰相反：信是假的，他们是奸诈的死敌。
+
+Y fue así que, venida la medianoche, en aquel tiempo que todas las cosas tienen callado silencio, los cuatro malos y desleales caballeros, poniendo por obra la pensada traición, levantándose de sus lechos y armándose de sus armas, sin hacer algún bullicio, se fueron por las puertas de este castillo y, matando las dormidas guardas y salendo fuera, llamaron y dieron seña a su señor Brutano, que a la falda de la peña estaba en celada, aguardando la seña con veinte caballeros.
+事情是这样：午夜时分，万物寂静无声，那四个邪恶不忠的骑士实施预谋的背叛，从床上起来，披上铠甲，不发出一点声响，来到城堡各门，杀死熟睡的守卫，出到外面，呼唤并给他们的主子布鲁塔诺发信号——他正带着二十名骑士埋伏在岩壁脚下等候信号。
+
+El cual, sin más aguardar, començó de subir la roca y, entrando sin alguna resistencia en el castillo, y como en tal tiempo nos tomase a todos durmiendo y desarmados, fácilmente fue señor de nuestras personas y del castillo y, por bien se vengar de la muerte de su perverso padre, a mí puso en tan áspera prisión que por peor la tenía que sufrir la oscura muerte, y a mis servidores de ellos mató y a los cuatro maltrató, según la vuestra merced bien ha visto.
+他不再等待，开始攀登岩石，毫无抵抗地进入城堡；因他趁我们都在沉睡、未披甲时下手，便轻易成了我们人身与城堡的主人；为好好报复他那邪恶父亲的死，他把我关进极其严酷的牢狱，我宁愿忍受黑暗的死亡也不愿受此；我的仆从有的被他杀死，有的被他虐待，正如阁下亲眼所见。”
+
+Pero el verdadero Dios, que es socorro de los atribulados y remedio de los afligidos, lo ha ordenado de otra manera que el bestial gigante pensaba, por lo cual, le doy infinitos loores y a la vuestra merced muchas gracias.
+但真正的上帝——受难者的救助、受苦者的慰藉——另有安排，不同于那野兽般巨人所料想的；因此，我向祂献上无尽的赞美，也向阁下献上许多感谢。
+
+Acabado que hubo de decir estas palabras, mano a mano el Caballero del Sol y Licionio se bajaron la roca abajo por ver el muerto gigante y holgar por la verde ribera donde gastaron el tiempo hasta hora de cena que se recogieron al castillo por reposar del trabajo pasado.
+说完这些话，太阳骑士与利西奥尼奥手挽着手下到岩下，去看死去的巨人，并在青翠的河岸上消遣，直到晚餐时分才回到城堡，以歇息此前的劳顿。
 
 CAPÍTULO IX De cómo el Caballero del Sol, estando en el castillo de Licionio, soñó que le era mandado que de allí partiese y de lo que en aquel viaje le avino.
-Quince días estuvo el Caballero del Sol, por importunación de Licionio, en el castillo de la Roca de las Tres Cabeças. Cuando estaban en el castillo, cuando abajo en la ribera de una rica tienda, cuando barqueaban por el hondo río mirando cómo los criados de Licionio paraban redes a los peces, cuando iban a caça a las florestas que en torno de aquella roca había, cuando volaban garças por la ribera. De esta manera pasaron aquel poco tiempo con gran placer. La última noche de los quince días, en aquella hora que las cosas animadas tienen silencio en este valle de lágrimas y miseria, estando el Caballero del Sol reposando en su lecho, le pareció que un hombre anciano, su cabeça cubierta de blancas canas, le tocó la cara con sus rugosas manos diciendo estas palabras: -Levántate, Caballero del Sol, pues te reprehendo de perezoso y descuidado. Torna a seguir tu començado viaje. Despide de tu compañía la holgança y busca trabajo. Mira que ya no es tiempo de estar encastillado, sino de andar por los campos buscando tu ventura. A estas palabras, el Caballero del Sol despertó muy fatigado del sueño, y puesto que ante sí no viese a nadie pero bien tenía en la memoria las palabras que oído había y, como de todo bien se acordase, levantóse luego, ca ya la luz del nuevo día andaba peleando con las hórridas tinieblas de la oscura noche, y yéndose para donde el buen caballero Licionio en su lecho yacía, en esta manera le dice: -Licionio, mi caro amigo, luego me conviene partir de tu castillo. Por tanto, dame licencia, ca no puedo ende hacer al porque mi descuido ha seído grande y a ello soy forçado. Mucho le pesó a Licionio por ser la partida tan breve y no pensada, pero como conoció aquélla ser la voluntad del Caballero del Sol, mostrando alegre cara, le rogó que, cuando diese vuelta de aquella jornada, la vuelta fuese por aquel castillo. El Caballero del Sol se lo prometió, si otra aventura no se lo estorbase. De esta manera el Caballero del Sol, despedido de Licionio, acompañado de su escudero, tomó la senda que antes traía, la cual endereçaba su camino hacia oriente por una espesa floresta, por la cual caminó cuatro días que no le avino cosa que de contar sea; al cabo de los cuales, albergó una noche entre unas espesas matas junto a una clara y dulce fuente, pero temiéndose que en aquellas montañas hubiese algunas fieras, mandó a su escudero que velase una pieça, en tanto que dormía y reposaba del trabajo del camino y peso de las armas. Poco rato de la noche era pasado, cuando dos bravos osos los acometieron tan sin pensar que, si no fuera por la vela, la cual como sintió ruido dio voces, gran daño recibiera el Caballero del Sol porque estaba desarmado de manos y cara y, como estuviese durmiendo, lo pudieran haber maltratado; mas, como a las voces de su escudero muy despavorido se levantase, tomó el yelmo y enlazólo y, echando el escudo al cuello, acudió a la parte del ruido y, como con la clara luna pudo ver lo que era, poniendo mano a su espada, arremetió con toda furia y entrando con ellos sin algún temor tal golpe dio al primero con su buena y cortadora espada, que el braço derecho con parte de la espalda le
+第九章 太阳骑士在利西奥尼奥城堡中梦见奉命离开，以及此行所遇之事
 
-puso por tierra, de tal manera que le hizo caer sobre el otro braço y sin tardar le acudió con una punta de espada atravesándole por la parte que herido estaba hasta la otra espalda, con el cual golpe lo acabó de matar. A esa hora, el otro oso hacía muy gran contienda con su escudero, aunque ya le tenía herido de un gran golpe de lança en una pierna, lo cual muy grande estorbo le hacía porque con el gran dolor no se podía levantar sobre los dos pies, aunque todavía Silvio lo pasara mal, sino por la llegada del Caballero del Sol con cuya venida el escudero, recobrando nuevo ánimo, arremetió y lo hirió de su lança por medio de la boca y el Caballero del Sol entró sin pavor e hiriéndole de mortales golpes con su llegada luego fue muerto. En esta contienda paso gran parte de la noche. Otro día por la mañana, el Caballero del Sol tornó a su començado camino por aquel desierto lugar, bien poblado de sierras y árboles y solo de gente, pero ya que había caminado la mayor parte del día, llegó sobre unas ásperas montañas a vista de un muy hondo río que por un valle de gran hondura corría. Por la una parte el valle era algún tanto espacioso, pero por la parte de la derecha mano estaban las peñas de la una parte del río y de la otra tan altas y tan tajadas que casi por cima del hondo río tocarse querían. En lo más bajo, por donde el hondo río corría, había entre las dos peñas tanta hondura y sus sonoras y rápidas aguas hacían tanto ruido que no parecía sino un muy profundo infierno. Pero como fuese necesario al Caballero del Sol bajar allá para su viaje seguir, desechando la pereza, començó de bajar por una senda no muy trillada y, descendiendo poco a poco, vino en lo más profundo de aquel valle en par del sonoro río, en aquella hora que las hórridas tinieblas, con su apresurada venida, obscurecían la clara luz del día.
+Quince días estuvo el Caballero del Sol, por importunación de Licionio, en el castillo de la Roca de las Tres Cabeças.
+应利西奥尼奥的再三挽留，太阳骑士在三峰岩城堡住了十五天。
+
+Cuando estaban en el castillo, cuando abajo en la ribera de una rica tienda, cuando barqueaban por el hondo río mirando cómo los criados de Licionio paraban redes a los peces, cuando iban a caça a las florestas que en torno de aquella roca había, cuando volaban garças por la ribera.
+他们时而在城堡中，时而在河岸上华丽的帐篷里，时而在深河上泛舟，看利西奥尼奥的仆人们张网捕鱼，时而到岩周丛林中去打猎，时看鹭鸟在河岸飞翔。
+
+De esta manera pasaron aquel poco tiempo con gran placer.
+他们就这样十分愉快地度过了那段短暂时光。
+
+La última noche de los quince días, en aquella hora que las cosas animadas tienen silencio en este valle de lágrimas y miseria, estando el Caballero del Sol reposando en su lecho, le pareció que un hombre anciano, su cabeça cubierta de blancas canas, le tocó la cara con sus rugosas manos diciendo estas palabras:
+第十五天的最后一夜，在这泪与苦之谷中一切生灵皆寂静无声之时，太阳骑士正躺卧歇息，仿佛看见一位白发苍苍的老人用满是皱纹的手摸了摸他的脸，说道：
+
+-Levántate, Caballero del Sol, pues te reprehendo de perezoso y descuidado.
+“起来，太阳骑士，我责备你懒惰疏忽。
+
+Torna a seguir tu començado viaje.
+重新踏上你已经开始的旅程。
+
+Despide de tu compañía la holganza y busca trabajo.
+辞去你身边的安逸，去寻找劳苦。
+
+Mira que ya no es tiempo de estar encastillado, sino de andar por los campos buscando tu ventura.
+看哪，现在不是困守城堡的时候，而是走遍田野寻找命运的时候。”
+
+A estas palabras, el Caballero del Sol despertó muy fatigado del sueño, y puesto que ante sí no viese a nadie pero bien tenía en la memoria las palabras que oído había y, como de todo bien se acordase, levantóse luego, ca ya la luz del nuevo día andaba peleando con las hórridas tinieblas de la oscura noche, y yéndose para donde el buen caballero Licionio en su lecho yacía, en esta manera le dice:
+听了这些话，太阳骑士从梦中醒来，十分疲惫；虽然眼前不见一人，却清楚记得所听到的话，并把一切都记在心上，便立刻起身——新日之光已在与黑夜的可怕黑暗搏斗——他走到好骑士利西奥尼奥躺卧的床边，这样说道：
+
+-Licionio, mi caro amigo, luego me conviene partir de tu castillo.
+“利西奥尼奥，我亲爱的朋友，我须立刻离开你的城堡。
+
+Por tanto, dame licencia, ca no puedo ende hacer al porque mi descuido ha seído grande y a ello soy forçado.
+因此，请准许我离去，我不得不如此，因为我疏忽已久，如今是被迫而行。”
+
+Mucho le pesó a Licionio por ser la partida tan breve y no pensada, pero como conoció aquélla ser la voluntad del Caballero del Sol, mostrando alegre cara, le rogó que, cuando diese vuelta de aquella jornada, la vuelta fuese por aquel castillo.
+利西奥尼奥因这离别如此仓促、出人意料而十分难过；但他知道这是太阳骑士的意愿，便装出欢欣的面容，请求他此行归来时再绕道来这座城堡。
+
+El Caballero del Sol se lo prometió, si otra aventura no se lo estorbase.
+太阳骑士答应了他，除非另有奇遇阻挠。
+
+De esta manera el Caballero del Sol, despedido de Licionio, acompañado de su escudero, tomó la senda que antes traía, la cual endereçaba su camino hacia oriente por una espesa floresta, por la cual caminó cuatro días que no le avino cosa que de contar sea; al cabo de los cuales, albergó una noche entre unas espesas matas junto a una clara y dulce fuente, pero temiéndose que en aquellas montañas hubiese algunas fieras, mandó a su escudero que velase una pieça, en tanto que dormía y reposaba del trabajo del camino y peso de las armas.
+太阳骑士就这样辞别利西奥尼奥，由侍从陪同，踏上原先的道路，朝东穿过一片茂密丛林；他走了四天，未遇值得一提之事；第四天夜里，他在一泓清泉旁茂密的灌木丛中歇宿，但担心那些山中或有野兽，便吩咐侍从守候一阵，自己则睡下歇息旅途劳顿与铠甲重负。
+
+Poco rato de la noche era pasado, cuando dos bravos osos los acometieron tan sin pensar que, si no fuera por la vela, la cual como sintió ruido dio voces, gran daño recibiera el Caballero del Sol porque estaba desarmado de manos y cara y, como estuviese durmiendo, lo pudieran haber maltratado; mas, como a las voces de su escudero muy despavorido se levantase, tomó el yelmo y enlazólo y, echando el escudo al cuello, acudió a la parte del ruido y, como con la clara luna pudo ver lo que era, poniendo mano a su espada, arremetió con toda furia y entrando con ellos sin algún temor tal golpe dio al primero con su buena y cortadora espada, que el braço derecho con parte de la espalda le puso por tierra, de tal manera que le hizo caer sobre el otro braço y sin tardar le acudió con una punta de espada atravesándole por la parte que herido estaba hasta la otra espalda, con el cual golpe lo acabó de matar.
+夜未过多久，两头凶猛的熊便猝不及防地扑来；若不是守夜的侍从听到声响便呼喊起来，太阳骑士必受大害，因为他双手和脸都未披甲，又正在睡觉，很可能遭到伤害；但他听到侍从的喊声，惊惶起身，抓起头盔系好，把盾牌挂上脖子，便朝声响处赶去；借着明朗的月光看清是什么之后，他拔剑全力冲去，毫不畏惧地闯入熊群，用他那把锋利的好剑朝第一头猛砍一击，将它的右臂连同部分肩背砍落在地，使它倒向另一条臂上；随即又用剑尖从受伤处刺穿到另一侧肩背，这一击结果了它的性命。
+
+A esa hora, el otro oso hacía muy gran contienda con su escudero, aunque ya le tenía herido de un gran golpe de lança en una pierna, lo cual muy grande estorbo le hacía porque con el gran dolor no se podía levantar sobre los dos pies, aunque todavía Silvio lo pasara mal, sino por la llegada del Caballero del Sol con cuya venida el escudero, recobrando nuevo ánimo, arremetió y lo hirió de su lança por medio de la boca y el Caballero del Sol entró sin pavor e hiriéndole de mortales golpes con su llegada luego fue muerto.
+这时，另一头熊正与侍从激烈搏斗，虽然侍从已用长矛猛刺伤它一条腿，使它行动大受阻碍，因剧痛无法用两脚站起，但西尔维奥仍处境不妙；幸亏太阳骑士赶到，侍从重获勇气，冲上前用长矛刺中熊的口中，太阳骑士也毫不畏惧地冲入，连连致命砍击，那熊随即死去。
+
+En esta contienda paso gran parte de la noche.
+这场搏斗占去了大半夜。
+
+Otro día por la mañana, el Caballero del Sol tornó a su començado camino por aquel desierto lugar, bien poblado de sierras y árboles y solo de gente, pero ya que había caminado la mayor parte del día, llegó sobre unas ásperas montañas a vista de un muy hondo río que por un valle de gran hondura corría.
+第二天早晨，太阳骑士重新踏上原路，穿过那片荒野之地——那里山峦树木繁茂，却人烟稀少；走了大半天后，他来到一些崎岖的山上，望见一条极深的河流在一个极深的山谷中奔流。
+
+Por la una parte el valle era algún tanto espacioso, pero por la parte de la derecha mano estaban las peñas de la una parte del río y de la otra tan altas y tan tajadas que casi por cima del hondo río tocarse querían.
+山谷一侧还算开阔，但右边河岸两旁的岩石如此高峻陡峭，几乎要在深河上方相接。
+
+En lo más bajo, por donde el hondo río corría, había entre las dos peñas tanta hondura y sus sonoras y rápidas aguas hacían tanto ruido que no parecía sino un muy profundo infierno.
+在最下方河流奔流之处，两岩之间深不见底，那轰鸣湍急的水声如此之大，简直像一座极深的地狱。
+
+Pero como fuese necesario al Caballero del Sol bajar allá para su viaje seguir, desechando la pereza, començó de bajar por una senda no muy trillada y, descendiendo poco a poco, vino en lo más profundo de aquel valle en par del sonoro río, en aquella hora que las hórridas tinieblas, con su apresurada venida, obscurecían la clara luz del día.
+但太阳骑士为继续行程必须下到那里，便抛开惰怠，沿一条不甚有人走的小径开始下行，缓缓下降，来到那山谷最深处、轰鸣的河旁；此时可怕的黑暗正匆匆降临，遮蔽了白昼的明亮光辉。
 
 CAPÍTULO X De lo que avino al Caballero del Sol con el salvaje Nigromato de las obscuras letras.
-Venida la luz del siguiente día, saliendo el Caballero del Sol entre los árboles de la honda ribera, quiso tornar a su començado camino, pero no hallaba puente para pasar el muy vasto y rápido río, ni barca para le navegar; y, ya que pasado lo hubiera, le parecía cosa imposible poder subir la peña que estaba de la otra parte del río porque, ultra de ser falsada, era tan alta que la vista cansaba mirando arriba. Pues como muy triste anduviese de unas partes a otras por ver si algún paso o vado hubiese, volviendo los ojos hacia aquella parte por donde las cumbres de las peñas se acercaban, pudo ver una muy alta y hermosa puente, por lo cual su animo fue lleno de entero gozo, ca bien pensó que, pues había puente, que había desembaraçado camino, hacia la que él luego endereça sus pasos. Y como a ella hubo llegado, pudo claramente ver que la puente era la más rica que jamás hubiese visto; toda losada de piedras blancas y negras en tal manera que su suelo todo parecía ser hecho a modo de tablero de ajedrez. Cosa era ver su ancho y su largo, ca tenía de ancho cincuenta pies y de largo doscientos pasos. En medio de esta puente estaba una columna de piedra negra. Sobre ella estaba una tabla de cedro, asaz grande y pesada. Estaba encajada sobre la columna en tal manera que fácilmente se podía quitar y poner, porque la columna no tenía de alto más de cuatro pies. En esta tabla estaban escritas y entretalladas unas letras plomadas que así decían: El venturoso o desventurado caballero que a esta tabla y columna llegare ayúdese de las letras que en esta cedrina tabla están escritas, porque de otra manera mal podrá pasar por la puerta de los marcos. En la mesma tabla, en bajo de estas letras, estaban otras de la mesma forma, salvo que eran griegas y serían dos versos que tenían hasta cuarenta sílabas, las cuales el Caballero del Sol jamás pudo leer ni entender. Pero, como hubo leído las muy claras de arriba, bien entendió que tenía necesidad de las obscuras de abajo para pasar el peligroso paso de la puente. Parándose, pues, el Caballero del Sol a pensar en ellas, ni alcançaba a entender si le era necesario entenderlas para hacer lo en ellas contenido, o si tomarlas en la memoria para las ir rezando, o si de otra manera de ellas se había de ayudar. Estando así pensativo y dudoso, viendo que [ni] leer[las] ni entenderlas podía, acordó de tomar la tabla y llevarla consigo, por probar si así de ella se podría ayudar. La cual luego quitó con ayuda de su escudero, porque tanto era pesada que a grande afán un caballero la podiera llevar de una parte de la puente a la otra, así que poniéndola sobre el caballo de su escudero pasó la puente adelante hasta llegar al cabo, donde pudo conocer que no había por donde pasar adelante porque la puente firmaba en la peña tajada, sino era por una entrada de gruta que sobre la puente se hacía en la tajada peña, la cual era cercada de cuatro tablas de fino acero bien anchas y largas gruesas en manera que en la boca de la cueva estaban por umbrales y hacían una puerta cuadrada. Estas tablas estaban sutil y fuertemente encajadas con la viva piedra de la tajada peña y reciamente plomadas, y puesto que esta puerta no tuviese con qué se cerrar, tenía cuatro descompasados maços de acero, los cabos de los dos estaban fuertemente asidos y engoznados en la tabla de la mano derecha y los otros dos en la de la mano izquierda. Estos maços se movían como los del batán, aunque más apriesa y con más crecida furia. Cuando los dos herían en la tabla del suelo de la entrada, los otros dos daban sus desmesurados golpes en la tabla de lo alto de la mesma puerta, de
+第十章 太阳骑士与通晓幽暗文字的野人尼格罗马托所遇之事
 
-manera que nadie podía entrar que no le desmenuzasen con sus apresurados golpes, ni hubiera armadura tan fuerte que escusara de no ser muerto el que lo tal tentara hacer. Viendo al Caballero del Sol una tan estraña aventura, estuvo una gran pieça espantado y atónito, pensando que cosa podían traer aquellos maços o por cuál arte o manera cosa tan pesada con tanta ligereza, moverse podía; pero ya que hubo tornado de su desacuerdo, conoció que porfiar a pasar por entre los bravos golpes de los maços era tomar voluntariamente la muerte. A vuelta de estos pensamientos, consideró que volver atrás y haber de tornar a pasar las ásperas y despobladas montañas, especialmente que ya la provisión les faltaba, era asímesmo como gustar la amarga muerte. De esta manera, dudoso de lo que debía hacer, tornó a pensar en las obscuras letras de la cedrina tabla, ca bien tenía entendido que le eran menester las griegas letras para pasar por la peligrosa puerta, y, como una pieça estuvo mirando por ver si algo de ellas entendería, poco le aprovechaba, que cuanto más las miraba menos entendía. En este punto el coraçón, que a las veces adivina lo que sale verdad, se le representó una imaginación de poner la cedrina tabla en el lugar que los maços herían. No lo hubo bien pasado por el pensamiento, cuando tomando la cedrina tabla juntamente con su escudero y llegando a la puerta de la tajada peña, poco a poco, la metió sobre la tabla que en lo bajo de la entrada estaba, diciendo estas palabras: Tomad vuestra tabla. Despedaçalda, pues para vosotros está hecha; o la despedaçad, o nos dejaréis la entrada desocupada. No fue bien acabada de poner donde los golpes se daban, cuando los descompasados maços se alçaron y pegaron con la acerada tabla de lo alto de la entrada y esto por la grande virtud de las obscuras letras de la cedrina tabla, que para aquello era hecha, y juntamente cesó un gran ruido que en lo bajo de la puente se hacía. Grandemente fue maravillado el Caballero del Sol viendo que por la virtud de tan pocas letras, habían cesado los fuertes golpes de los pesados maços. Pero, porque no le sucediese algún peligro en la tardança, con grande presteza pasó por cima de la cedrina tabla y siguiéndole su escudero; no estaban bien dentro en las obscuras entrañas de la peña, cuando un desemejado salvaje salió al más correr de una cámara que a la una parte de la cueva se hacía y endereçando su correr derecho a la puerta de los maços, saliendo fuera, quitó la tabla de las obscuras letras y, echándola a sus cuestas, la llevó hasta ponerla en la columna como antes estaba. La tabla no fue bien quitada, cuando el ruido se començó en lo hondo del río, en lo bajo de la puente, y los maços se començaron a mover en la manera y con la furia que solían, por tal manera que nadie fuera podía salir. Y el Caballero del Sol fue muy triste por haber tan mal guardado la tabla, pensando que no había otra salida, sino por la puerta de los maços, porque la mina parecía estar tan obscura que parecía no haber en ella alguna salida. Pero con toda su fatiga allegándose cerca de los maços por ver si podría ver por cuál arte se moviesen, vio cómo por un labrado pozo abajo descendían unas cadenas y unas barras de hierro, las cuales con furor subían unas veces hacia arriba y otras bajaban abajo; y, según el ruido [que] con su continuo movimiento hacían, bien entendió que en bajo de la puente andaba alguna rueda que todo aquello movía. Ya el fuerte salvaje volvía a la puerta de los malos y, subiendo en el antepecho de la puente, por unas pequeñas gradas se baja y por un secreto lugar pareció dentro en la cueva. Atónito y embobecido el Caballero del Sol de las cosas que veía hacer al salvaje ni sabía qué le hablase ni le ocurría qué preguntarle pudiese. En este medio, el peloso salvaje, con apresurados pasos, a la cámara se va, y como el Caballero del Sol le siguiese por se informar de él de aquellos secretos y del camino, si le había, para pasar adelante, no pudo tanto que no se le encerrase; pero no tardó mucho que no salió armado de muy fuertes pieles y de un acerado yelmo con un escudo de nervios tejidos en su izquierdo braço embraçado y, sin hablar palabra, poniendo mano a un descompasado cuchillo,
+Venida la luz del siguiente día, saliendo el Caballero del Sol entre los árboles de la honda ribera, quiso tornar a su començado camino, pero no hallaba puente para pasar el muy vasto y rápido río, ni barca para le navegar; y, ya que pasado lo hubiera, le parecía cosa imposible poder subir la peña que estaba de la otra parte del río porque, ultra de ser falsada, era tan alta que la vista cansaba mirando arriba.
+翌日天明，太阳骑士从深谷河岸的树间出来，想重新踏上原路，却找不到桥渡过那极其宽阔湍急的河，也找不到船可渡；即便过了河，他也觉得不可能爬上对岸的岩壁，因为那岩壁不仅陡峭，而且高得仰望都会使眼睛疲倦。
 
-contra el Caballero del Sol se va, el cual, temiéndose de semejantes acometimientos, siempre andaba a punto y como aquél que en semejantes casos no era perezoso, poniendo mano por su espada y embraçando su escudo, lo sale a recibir, donde tuvo con él una brava contienda ca bien se defendía. Pero como los caballeros y armas fuesen desiguales y la espada del Caballero del Sol muy buena, cortaba en aquellos cueros y nervios tanto que ya casi nada había quedado del nervoso escudo en el belloso braço del fiero salvaje; el cual, como se vido perdido y sin escudo, sus armas despedaçadas y rotas por muchos lugares, fuese retrayendo de poco en poco, disimuladamente, hasta la cámara y, entrándose dentro, con gran presteza cerró la puerta, en tal manera que por mucho que el Caballero del Sol se apresuró, no pudo entrar con él. Muy enojado fue de sí mesmo por le haber así dejado encerrar, y no cesaba de se reprehender de cuantos descuidos en aquella cueva había cometido y con gran furia, poniendo toda su fuerça, trabajaba por le quebrantar la puerta, pero poco le aprovechaba porque era muy fuerte y bien barrada de gruesas barras de hierro. Pues como el peloso salvaje conociese que el Caballero del Sol se trabajaba por quebrantarle la cerrada puerta, en esta manera le dice: -Bástete, buen caballero, la mucha honra que aquí has ganado. Conténtate, ca en balde te trabajas que jamás podrás abrir mi puerta, si yo no quiero. Sigue tu camino que ya te digo que en esta cueva no hallarás impedimento alguno, salvo la puerta que está en fin de esta gruta, la cual está fuertemente cerrada. Pero si tú me das la fe de seguro, como buen caballero, yo te acompañaré hasta en el cabo y te la abriré. El Caballero del Sol, muy contento de la nueva amistad, le prometió el seguro, y el peloso salvaje, desarmándose de sus pieles, salió de la camara y saludó cortesmente al Caballero del Sol y él le tornó las saludes, preguntándole juntamente cómo se llamaba y cuál era el hecho de aquella aventura y por cuál arte los acerados maços se meneaban. El desfigurado salvaje, mostrando rostro alegre, començó de esta manera: -Sabrás, buen caballero, que yo me llamo Nigromato de las obscuras letras y mi nacimiento fue en una ciudad que ha nombre Polistona, la cual está cabo las montañas, por donde tú pasaste a esta cueva, y como yo fuese de mi nacimiento aficionado a las cosas del campo continuamente me venía a estas montañas a caça de venados y fieras, y, un día, permitiéndolo así mi ventura, [me] encontré en las entrañas de los montes con una vieja mujer, gran sabidora en las mágicas artes, la cual tenía su morada en una cueva que ahí había, y, por ella rogado e importunado, acepté de la tener compañía en su soledad, en pago de lo cual me enseñó cosas maravillosas en su arte. Pues, como esta sabidora en lo último de su vejez fuese arrebatada por la cruel muerte, yo determiné de me volver a mi ciudad y hacer allí mi morada según solía. Mas, como fuese acostumbrado a la soledad, no podía asegurar en la ciudad y, así, vendí lo que tenía y, tornándome a estas montañas, determiné de hacer esto que veis con mi mucho saber y haber, porque quedase alguna memoria de mí y también porque, si a caso alguno bajase por estas montañas, hallase por donde pudiese pasar adelante. Este artificio, que aquí veis, de los maços se rodea con una gran rueda que anda embajo de la puente en lo hondo de este gran río, la cual, movida con la rápida agua, hace menear los maços con gran violencia y fuerça. Pues, como en este puente yo hubiese gastado todo lo que tenía, pareciéndome que sería bien que, pues a mí tanto me había costado, que también sería justo que el que por ella hubiese de pasar pusiese algún trabajo y algo de su entender, acordé de hacer este artificio de maços y poner aquella tabla con aquellas griegas letras con tanta virtud que por ella se hiciese lo que tú has experimentado, aunque mi voluntad es que, si alguno viene y no lo acaba de entender, al fin yo le doy libre el paso y así lo he usado y acostumbrado hacer, y, si con la vuestra merced he tomado esta poca de cuestión, fue por probarme en lo que yo tenía olvidado. Esta es toda la verdad de este hecho, dijo Nigromato.
+Pues como muy triste anduviese de unas partes a otras por ver si algún paso o vado hubiese, volviendo los ojos hacia aquella parte por donde las cumbres de las peñas se acercaban, pudo ver una muy alta y hermosa puente, por lo cual su animo fue lleno de entero gozo, ca bien pensó que, pues había puente, que había desembaraçado camino, hacia la que él luego endereça sus pasos.
+他十分忧愁地四处走动，看看是否有可通行的路径或浅滩；当他转眼望向岩峰相接近的那一边时，看见一座极高而美丽的桥，心中顿时充满完全的喜悦，因为他想，既然有桥，路便通了，于是立刻朝桥走去。
+
+Y como a ella hubo llegado, pudo claramente ver que la puente era la más rica que jamás hubiese visto; toda losada de piedras blancas y negras en tal manera que su suelo todo parecía ser hecho a modo de tablero de ajedrez.
+来到桥前，他清楚地看到这座桥是他从未见过的最华丽的桥；桥面全用黑白石块铺成，整个地面仿佛做成棋盘的样子。
+
+Cosa era ver su ancho y su largo, ca tenía de ancho cincuenta pies y de largo doscientos pasos.
+它的宽长颇为可观：宽五十英尺，长二百步。
+
+En medio de esta puente estaba una columna de piedra negra.
+桥中央立着一根黑色石柱。
+
+Sobre ella estaba una tabla de cedro, asaz grande y pesada.
+柱上放着一块雪松木板，相当大而沉重。
+
+Estaba encajada sobre la columna en tal manera que fácilmente se podía quitar y poner, porque la columna no tenía de alto más de cuatro pies.
+木板嵌在柱上，可以轻易取下和放上，因为柱子高不过四英尺。
+
+En esta tabla estaban escritas y entretalladas unas letras plomadas que así decían: El venturoso o desventurado caballero que a esta tabla y columna llegare ayúdese de las letras que en esta cedrina tabla están escritas, porque de otra manera mal podrá pasar por la puerta de los marcos.
+这块木板上刻写着并镶嵌着铅字，这样写道：“来到此板此柱的幸运或不幸骑士，须借助这雪松木板上所写的文字，否则难以通过那框架之门。”
+
+En la mesma tabla, en bajo de estas letras, estaban otras de la mesma forma, salvo que eran griegas y serían dos versos que tenían hasta cuarenta sílabas, las cuales el Caballero del Sol jamás pudo leer ni entender.
+同一块木板下方，还有同样形式的文字，只是它们是希腊文，约有两行，多达四十个音节，太阳骑士怎么也读不出、看不懂。
+
+Pero, como hubo leído las muy claras de arriba, bien entendió que tenía necesidad de las obscuras de abajo para pasar el peligroso paso de la puente.
+但他读了上面那些十分清楚的字之后，便明白自己需要下面那些晦暗的文字，才能通过桥上的险关。
+
+Parándose, pues, el Caballero del Sol a pensar en ellas, ni alcançaba a entender si le era necesario entenderlas para hacer lo en ellas contenido, o si tomarlas en la memoria para las ir rezando, o si de otra manera de ellas se había de ayudar.
+太阳骑士停下来思索这些文字，却弄不清究竟是必须理解它们才能照其中所载去做，还是把它们记在脑中一路念诵，抑或以别的方式借助它们。
+
+Estando así pensativo y dudoso, viendo que [ni] leer[las] ni entenderlas podía, acordó de tomar la tabla y llevarla consigo, por probar si así de ella se podría ayudar.
+他这样沉思犹豫，见自己既读不出也看不懂，便决定取下木板带在身边，试试这样是否能得到帮助。
+
+La cual luego quitó con ayuda de su escudero, porque tanto era pesada que a grande afán un caballero la podiera llevar de una parte de la puente a la otra, así que poniéndola sobre el caballo de su escudero pasó la puente adelante hasta llegar al cabo, donde pudo conocer que no había por donde pasar adelante porque la puente firmaba en la peña tajada, sino era por una entrada de gruta que sobre la puente se hacía en la tajada peña, la cual era cercada de cuatro tablas de fino acero bien anchas y largas gruesas en manera que en la boca de la cueva estaban por umbrales y hacían una puerta cuadrada.
+他随即在侍从帮助下取下木板，因为它重得即使一名骑士从桥的一头搬到另一头也要费很大力气；于是把它放在侍从的马上，过了桥走到尽头，才发现前方无路可通，因为桥止于陡峭岩壁，唯有岩壁上在桥上方开出的一个洞穴入口可走；洞口围着四块精钢厚板，又宽又长又厚，像门槛一样立在洞口，构成一扇方形门。
+
+Estas tablas estaban sutil y fuertemente encajadas con la viva piedra de la tajada peña y reciamente plomadas, y puesto que esta puerta no tuviese con qué se cerrar, tenía cuatro descompasados maços de acero, los cabos de los dos estaban fuertemente asidos y engoznados en la tabla de la mano derecha y los otros dos en la de la mano izquierda.
+这些钢板精巧而牢固地嵌在陡岩的活石中，并以铅牢牢固定；这扇门虽无门扇可关，却有四柄巨大钢锤，其中两柄的柄端牢牢固定在右侧钢板上，另两柄固定在左侧钢板上。
+
+Estos maços se movían como los del batán, aunque más apriesa y con más crecida furia.
+这些钢锤像漂布机的锤一样运动，只是更快、更猛烈。
+
+Cuando los dos herían en la tabla del suelo de la entrada, los otros dos daban sus desmesurados golpes en la tabla de lo alto de la mesma puerta, de manera que nadie podía entrar que no le desmenuzasen con sus apresurados golpes, ni hubiera armadura tan fuerte que escusara de no ser muerto el que lo tal tentara hacer.
+当两柄锤击打入口下方的钢板时，另两柄便猛击同一门洞上方的钢板；因此无人能进去而不被这急速的锤击砸得粉碎，也没有哪副铠甲坚固到能让胆敢尝试者免于一死。
+
+Viendo al Caballero del Sol una tan estraña aventura, estuvo una gran pieça espantado y atónito, pensando que cosa podían traer aquellos maços o por cuál arte o manera cosa tan pesada con tanta ligereza, moverse podía; pero ya que hubo tornado de su desacuerdo, conoció que porfiar a pasar por entre los bravos golpes de los maços era tomar voluntariamente la muerte.
+太阳骑士见如此奇异的险关，惊愕失神了好一阵，心想那些钢锤究竟有何作用，又究竟以何种技艺或方式，如此沉重之物竟能如此轻捷地运动；但他从失神中恢复后，便明白硬要从猛烈的锤击间穿过，无异于自愿寻死。
+
+A vuelta de estos pensamientos, consideró que volver atrás y haber de tornar a pasar las ásperas y despobladas montañas, especialmente que ya la provisión les faltaba, era asímesmo como gustar la amarga muerte.
+思及此，他又想到若折返回去，重新翻越那些崎岖荒无人烟的山岭，尤其粮草已尽，那也如同品尝苦死。
+
+De esta manera, dudoso de lo que debía hacer, tornó a pensar en las obscuras letras de la cedrina tabla, ca bien tenía entendido que le eran menester las griegas letras para pasar por la peligrosa puerta, y, como una pieça estuvo mirando por ver si algo de ellas entendería, poco le aprovechaba, que cuanto más las miraba menos entendía.
+于是他不知如何是好，又想起雪松木板上的晦暗文字，因为他很清楚，要通过那危险之门，正需要那些希腊文字；他盯着看了一阵，想看看能否看懂一些，却毫无用处，越看越不明白。
+
+En este punto el coraçón, que a las veces adivina lo que sale verdad, se le representó una imaginación de poner la cedrina tabla en el lugar que los maços herían.
+此时，那颗有时能预感成真的心，使他想到一个主意：把雪松木板放到钢锤击打之处。
+
+No lo hubo bien pasado por el pensamiento, cuando tomando la cedrina tabla juntamente con su escudero y llegando a la puerta de la tajada peña, poco a poco, la metió sobre la tabla que en lo bajo de la entrada estaba, diciendo estas palabras: Tomad vuestra tabla. Despedaçalda, pues para vosotros está hecha; o la despedaçad, o nos dejaréis la entrada desocupada.
+这个念头刚一闪过，他便与侍从一起抬起雪松木板，来到陡岩门前，慢慢把它放在入口下方的钢板上，说道：“拿你们的木板吧。把它砸碎吧，它本就是为你们做的；要么把它砸碎，要么给我们让开入口。”
+
+No fue bien acabada de poner donde los golpes se daban, cuando los descompasados maços se alçaron y pegaron con la acerada tabla de lo alto de la entrada y esto por la grande virtud de las obscuras letras de la cedrina tabla, que para aquello era hecha, y juntamente cesó un gran ruido que en lo bajo de la puente se hacía.
+木板刚放到位，那些巨大的钢锤便高高抬起，贴住了入口上方的钢板；这是因雪松木板上晦暗文字的巨大效力，那木板正是为此而造；同时，桥下发出的一阵巨大声响也停止了。
+
+Grandemente fue maravillado el Caballero del Sol viendo que por la virtud de tan pocas letras, habían cesado los fuertes golpes de los pesados maços.
+太阳骑士见仅凭寥寥几个字的力量，沉重钢锤的猛烈击打便停了下来，大为惊奇。
+
+Pero, porque no le sucediese algún peligro en la tardança, con grande presteza pasó por cima de la cedrina tabla y siguiéndole su escudero; no estaban bien dentro en las obscuras entrañas de la peña, cuando un desemejado salvaje salió al más correr de una cámara que a la una parte de la cueva se hacía y endereçando su correr derecho a la puerta de los maços, saliendo fuera, quitó la tabla de las obscuras letras y, echándola a sus cuestas, la llevó hasta ponerla en la columna como antes estaba.
+但为免耽搁生险，他急忙从雪松木板上跨过，侍从紧随其后；他们刚进入岩壁的幽暗深处，一个丑陋的野人便从洞穴一侧的 chamber 中飞奔而出，直奔钢锤之门，出到外面，取下那块刻有晦暗文字的木板，扛在肩上，把它送回石柱上照原样放好。
+
+La tabla no fue bien quitada, cuando el ruido se començó en lo hondo del río, en lo bajo de la puente, y los maços se començaron a mover en la manera y con la furia que solían, por tal manera que nadie fuera podía salir.
+木板刚一取下，桥下深河处便又响起声音，钢锤也照旧方式和猛烈程度开始运动，以致外面的人再也无法出去。
+
+Y el Caballero del Sol fue muy triste por haber tan mal guardado la tabla, pensando que no había otra salida, sino por la puerta de los maços, porque la mina parecía estar tan obscura que parecía no haber en ella alguna salida.
+太阳骑士因自己如此不慎丢失木板而十分懊恼，心想除了那钢锤之门便再无出口，因为矿道似乎漆黑一片，仿佛没有任何出口。
+
+Pero con toda su fatiga allegándose cerca de los maços por ver si podría ver por cuál arte se moviesen, vio cómo por un labrado pozo abajo descendían unas cadenas y unas barras de hierro, las cuales con furor subían unas veces hacia arriba y otras bajaban abajo; y, según el ruido [que] con su continuo movimiento hacían, bien entendió que en bajo de la puente andaba alguna rueda que todo aquello movía.
+但他不辞辛劳，走近钢锤，想看看它们究竟如何运动，便见从一个凿好的竖井中垂下一些铁链和铁杆，时而猛烈上升，时而下降；根据它们持续运动发出的声响，他明白桥下有什么轮子在驱动这一切。
+
+Ya el fuerte salvaje volvía a la puerta de los malos y, subiendo en el antepecho de la puente, por unas pequeñas gradas se baja y por un secreto lugar pareció dentro en la cueva.
+那强壮的野人已回到钢锤门前，登上桥栏，沿几级小台阶下来，从一个隐秘处出现在洞穴内。
+
+Atónito y embobecido el Caballero del Sol de las cosas que veía hacer al salvaje ni sabía qué le hablase ni le ocurría qué preguntarle pudiese.
+太阳骑士见野人所做之事，惊愕发呆，既不知该对他说什么，也想不出能问他什么。
+
+En este medio, el peloso salvaje, con apresurados pasos, a la cámara se va, y como el Caballero del Sol le siguiese por se informar de él de aquellos secretos y del camino, si le había, para pasar adelante, no pudo tanto que no se le encerrase; pero no tardó mucho que no salió armado de muy fuertes pieles y de un acerado yelmo con un escudo de nervios tejidos en su izquierdo braço embraçado y, sin hablar palabra, poniendo mano a un descompasado cuchillo,
+这时，那毛茸茸的野人快步走向那个房间；太阳骑士跟上去，想向他打听这些秘密以及是否有路可继续前行，却没能赶上，野人把自己关了进去；但没过多久，他便出来了，披着极坚韧的兽皮，戴着钢盔，左臂挽着一面用筋腱编成的盾牌，一言不发，伸手抓起一柄巨大的刀——
+
+contra el Caballero del Sol se va, el cual, temiéndose de semejantes acometimientos, siempre andaba a punto y como aquél que en semejantes casos no era perezoso, poniendo mano por su espada y embraçando su escudo, lo sale a recibir, donde tuvo con él una brava contienda ca bien se defendía.
+他朝太阳骑士冲来；太阳骑士早已提防这类袭击，始终戒备着，像在这种场合从不懈怠的人一样，拔剑挽盾，迎上前去；二人展开一场激烈的搏斗，因为野人防守得很好。
+
+Pero como los caballeros y armas fuesen desiguales y la espada del Caballero del Sol muy buena, cortaba en aquellos cueros y nervios tanto que ya casi nada había quedado del nervoso escudo en el belloso braço del fiero salvaje; el cual, como se vido perdido y sin escudo, sus armas despedaçadas y rotas por muchos lugares, fuese retrayendo de poco en poco, disimuladamente, hasta la cámara y, entrándose dentro, con gran presteza cerró la puerta, en tal manera que por mucho que el Caballero del Sol se apresuró, no pudo entrar con él.
+但双方骑士与武器优劣悬殊，太阳骑士的剑又极好，砍在那兽皮和筋腱上，凶猛野人毛茸茸手臂上那面筋腱盾牌几乎已荡然无存；野人见自己势穷无盾，兵器多处破损，便不动声色地一步步退到房间，进去后急忙关门，太阳骑士尽管竭力快赶，也没能随他进去。
+
+Muy enojado fue de sí mesmo por le haber así dejado encerrar, y no cesaba de se reprehender de cuantos descuidos en aquella cueva había cometido y con gran furia, poniendo toda su fuerça, trabajaba por le quebrantar la puerta, pero poco le aprovechaba porque era muy fuerte y bien barrada de gruesas barras de hierro.
+他因自己就这样让野人关进去而十分恼怒，不断责备自己在洞穴中所犯的种种疏忽，并狂怒地使出全力想砸开那门，却毫无用处，因为门极坚固，又有粗铁杠牢牢闩住。
+
+Pues como el peloso salvaje conociese que el Caballero del Sol se trabajaba por quebrantarle la cerrada puerta, en esta manera le dice:
+那毛茸茸的野人知道太阳骑士正设法砸开他关上的门，便这样说道：
+
+-Bástete, buen caballero, la mucha honra que aquí has ganado.
+“好骑士，你在此赢得的莫大荣誉已经够了。
+
+Conténtate, ca en balde te trabajas que jamás podrás abrir mi puerta, si yo no quiero.
+知足吧，你白费力气，我不愿意，你永远打不开我的门。
+
+Sigue tu camino que ya te digo que en esta cueva no hallarás impedimento alguno, salvo la puerta que está en fin de esta gruta, la cual está fuertemente cerrada.
+走你的路吧，我告诉你，这洞穴中你不会再遇到任何阻碍，只有这洞穴尽头那扇门，它关得很牢。
+
+Pero si tú me das la fe de seguro, como buen caballero, yo te acompañaré hasta en el cabo y te la abriré.
+但若你以好骑士的身份向我保证安全，我就陪你走到尽头，为你开门。”
+
+El Caballero del Sol, muy contento de la nueva amistad, le prometió el seguro, y el peloso salvaje, desarmándose de sus pieles, salió de la camara y saludó cortesmente al Caballero del Sol y él le tornó las saludes, preguntándole juntamente cómo se llamaba y cuál era el hecho de aquella aventura y por cuál arte los acerados maços se meneaban.
+太阳骑士对这份新结的友谊十分高兴，向他许诺安全；那毛茸茸的野人脱下兽皮，从房间出来，礼貌地向太阳骑士致意，太阳骑士也回礼，并同时问他叫什么名字、这桩奇遇的经过如何，以及那些钢锤究竟靠什么技艺运动。
+
+El desfigurado salvaje, mostrando rostro alegre, començó de esta manera:
+这相貌丑陋的野人露出欢欣之色，这样开始说道：
+
+-Sabrás, buen caballero, que yo me llamo Nigromato de las obscuras letras y mi nacimiento fue en una ciudad que ha nombre Polistona, la cual está cabo las montañas, por donde tú pasaste a esta cueva, y como yo fuese de mi nacimiento aficionado a las cosas del campo continuamente me venía a estas montañas a caça de venados y fieras, y, un día, permitiéndolo así mi ventura, [me] encontré en las entrañas de los montes con una vieja mujer, gran sabidora en las mágicas artes, la cual tenía su morada en una cueva que ahí había, y, por ella rogado e importunado, acepté de la tener compañía en su soledad, en pago de lo cual me enseñó cosas maravillosas en su arte.
+“好骑士，你当知道，我叫‘幽暗文字’尼格罗马托，出生在一座名叫波利斯托纳的城市，就在你翻越来此洞穴的那些山脚下；我生性喜爱田野之事，常到这些山里猎鹿捕兽。有一天，我的命运允许，我在山腹中遇见一位老妇人，她精通魔法之术，住在那里一个洞穴中；经她请求再三，我答应在她孤寂中与她作伴，作为回报，她教了我她那技艺中的奇妙之事。
+
+Pues, como esta sabidora en lo último de su vejez fuese arrebatada por la cruel muerte, yo determiné de me volver a mi ciudad y hacer allí mi morada según solía.
+后来，这位女智者到了暮年为残酷的死亡夺去，我便决定回城，照旧在那里安家。
+
+Mas, como fuese acostumbrado a la soledad, no podía asegurar en la ciudad y, así, vendí lo que tenía y, tornándome a estas montañas, determiné de hacer esto que veis con mi mucho saber y haber, porque quedase alguna memoria de mí y también porque, si a caso alguno bajase por estas montañas, hallase por donde pudiese pasar adelante.
+但我已习惯孤独，在城里无法安心，于是变卖了所有，回到这些山中，决定以我广博的学识和财富造出你眼前所见之物，好留下一点关于我的纪念，也为了让偶尔下山经过这些山岭的人有路可继续前行。
+
+Este artificio, que aquí veis, de los maços se rodea con una gran rueda que anda embajo de la puente en lo hondo de este gran río, la cual, movida con la rápida agua, hace menear los maços con gran violencia y fuerça.
+你在这里看到的这钢锤装置，由桥下这大河深处转动的一个大轮环绕驱动；轮子被急流推动，使钢锤以极大的猛烈和力量运动。
+
+Pues, como en este puente yo hubiese gastado todo lo que tenía, pareciéndome que sería bien que, pues a mí tanto me había costado, que también sería justo que el que por ella hubiese de pasar pusiese algún trabajo y algo de su entender, acordé de hacer este artificio de maços y poner aquella tabla con aquellas griegas letras con tanta virtud que por ella se hiciese lo que tú has experimentado, aunque mi voluntad es que, si alguno viene y no lo acaba de entender, al fin yo le doy libre el paso y así lo he usado y acostumbrado hacer, y, si con la vuestra merced he tomado esta poca de cuestión, fue por probarme en lo que yo tenía olvidado.
+我在这桥上花尽了所有，觉得既然它耗费我如此之多，那么过桥之人付出一点辛劳、动一点脑筋，也算公道；于是我便造了这钢锤装置，并放上那块带有希腊文字的木牌，赋予它如此大的效力，使之产生你所经历的效果。不过我的本意是：若有人来而不能完全参透，最终我也会放他自由通行，我一向如此行事。至于与阁下有此小小交锋，不过是想试试我久已生疏的武艺。
+
+Esta es toda la verdad de este hecho, dijo Nigromato.
+这就是此事全部的真相，”尼格罗马托说。
 
 Hablando en esta sabrosa historia, caminaron el Caballero del Sol y el salvaje, no con mucho trabajo por ser espaciosa y llana aunque con alguna pena por su obscuridad, por aquella cueva hasta que pudieron ver a poco rato la salida por la cual asaz claridad entraba, porque la puerta era de gruesa red de hierro. A la cual llegando, Nigromato con una gruesa llave abrió, la cual salía entre unas ásperas penas de unas deshabitadas sierras. Despidiéndose el Caballero del Sol del peloso salvaje y rindiéndole muchas gracias por el trabajo de le haber acompañado, tomo el áspero camino sin camino, acompañado de su escudero; por el cual no anduvo mucho, cuando se hallo en un llano, donde estaban unos árboles puestos por buen concierto entre los cuales estaba una muy clara fuente de dulce agua. Allí reposó el Caballero del Sol lo poco que quedaba del día y la siguiente noche, ca bien lo había menester, según el trabajo [que] había pasado en las desiertas montañas.
+两人一边谈论这段有趣的故事，一边前行；太阳骑士和野人穿过那个洞穴，因洞中宽敞平坦，倒不太费力，只是黑暗使他们有些难受。不多时，他们便看见出口，那里透进相当明亮的光，因为门是用粗铁网做成的。走到门前，尼格罗马托用一把粗大的钥匙开了门，门外通向一些荒无人烟的崎岖山岭之间。太阳骑士辞别了那毛茸茸的野人，再三感谢他一路陪同的辛劳，便带着侍从踏上那条没有路的崎岖道路；没走多远，他便来到一片平地，那里有一些排列整齐的树木，树间有一泓清澈甘甜的泉水。太阳骑士在那里歇息了当天剩下的一点时光和随后的夜晚，因为他确实需要休息，鉴于他在荒山野岭中所受的劳苦。
 
 CAPÍTULO XI De lo que avino al Caballero del Sol en la plaça de la fuente salvajina con Epirón de la fuente.
-Otro día por la mañana, en aquella hora que la clara luz del día con las obscuras tinieblas de la noche traía batalla, el Caballero del Sol continuó el començado viaje por el cual anduvo tanto que, una hora ante[s] de la siguiente noche, llegó a una muy verde y sombrosa floresta, por la cual, como poco hubiese caminado, vino a dar en una espaciosa plaça que en medio de la floresta había, bien cercada de espesos árboles con espinas y çarças entretejidos en tal manera que de fuerte muro parecía estar cercada, en la cual había dos puertas muy estraña y polidamente hechas, no de otra cosa, sino de los mesmos árboles que en manera de un redondo arco, los de la una parte con los de la otra, tejidos y torcidos, estaban. De los torcidos árboles estaba colgado un morado escudo con un verde cordón, con una letra que en esta manera decía: El amor que está pendiente con el cordón de esperanza no permite ni consiente que mi esfuerço muy valiente tenga quietud ni holgança. Un poco más abajo, en el mesmo escudo, estaba otro letrero que en esta manera decía: Si en la plaça defendida, caballero, entrar quisieres, perderás lo que trajeres. Luego que el Caballero del Sol hubo leído los letreros del morado escudo, como gran deseo tuviese de saber las tales cosas y de probar las semejantes aventuras, entró por la puerta de los torcidos árboles en la plaça, cuya entrada las letras del morado escudo defendían. En medio de ella estaba una cuadrada piedra de claro mármol, de ocho pies de largo y tantos de ancho y alta hasta la rodilla, allanada sobre el verde campo. Sobre esta piedra estaban dos pelosos salvajes de piedra parda, bien al natural tallados, de mediana grandeza, trabados cada uno de los largos cabellos del otro tirando con gran porfía, las cabeças muy inclinadas hacia la mesma piedra donde los pies tenían. Por sus abiertas bocas salían dos caños de muy dulce y clara agua, la cual caía en la marmórea piedra en un espacio que entre los dos en medio estaba cavado a manera de una gran bacía, en cuyo medio había un sumidero por donde la salvajina agua, por un secreto lugar, tornaba a salir de la cercada plaça con un sonoro ruido que en su despedida hacía. Como todas estas cosas el Caballero del Sol hubiese mirado, descabalgando de su caballo, a una parte de la plaça con su escudero se recoge por reposar y dar descanso a los trabajados miembros. Otro día, al tiempo que el alba rompía, el Caballero del Sol despertó del sabroso sueño con el dulce canto de las aves, ca muchas y diversas había en aquella floresta, así por gozar de aquella suave armonía como por gozar del frescor de la mañana. Con espaciosos pasos el Caballero del Sol va para la salvajina fuente, ca gran sabor había de mirar su estraña hechura, y cuán bien y al propio los dos salvajes se estaban mesando.
+第十一章 太阳骑士在野泉广场与“泉水骑士”埃皮隆所遇之事
 
-Estando de esta manera embebecido, oyendo las pajaricas y mirando la muy hermosa fuente, oyó pasos de caballo, y, como la cabeça volviese hacia aquella parte, vio cómo en la plaça había entrado un caballero grande de cuerpo, armado de unas armas pardas sembradas por ellas unas tocas pequeñas. Traía sobre el yelmo una rica toca atada. Venteávasela el muy sabroso aire de la mañana, volviéndola a unas partes y a otras en tal manera que a su gentil continente, meneo y grande apostura mucha gracia ponía. De su cuello pendía un fuerte escudo, el campo pardo, pintada en él la salvajina fuente y una hermosa doncella acostada sobre la mesma fuente, sobre el codo y la mano en la mejilla; el cual, como hubo llegado, en alta voz, contra el Caballero del Sol, en esta manera dice: -Caballero quebrantador de la ley del morado escudo, deja todo lo que has metido en esta plaça, ca lo tienes perdido, y vete luego tú y tu escudero, si no conmigo eres en la batalla, porque forçadamente has de hacer una de las dos cosas, o irte vergonçosamente dejándolo, o defenderlo venciendo. -Por cierto, dijo el Caballero del Sol, no sé yo qué razón tenéis de me pedir lo que yo he menester para mi viaje, pues no he cometido algún yerro contra vos. Mas como sea caballero que peregrino por el mundo, tomándome aquí la noche, me fue forçado albergar esta pasada noche en esta plaça. -Gastar palabras es porfiar otra cosa, dijo el Caballero de la Fuente, porque si tu eres caballero andante y tenías necesidad de tus armas y caballo no debieras entrar en esta plaça, pues por la ley del morado escudo lo tienes perdido, y, pues la quebrantaste, justo es que pagues la pena por ella puesta. Deja ya de perecear y dame tu caballo y esas armas, que muy preciadas parecen, y más, si otra cosa tienes dentro en esta plaça, o ve a cabalgar en tu caballo, que si de grado no lo quieres hacer yo te lo haré dejar en esta plaça por fuerça. -No dejaré de lo que yo tanta necesidad tengo, dijo el Caballero del Sol, ca grande afrenta y peligro me sería caminar a pie y desarmado por tierras estrañas. Pero, pues tanto deseas la batalla, aguárdame un poco que prestamente seré contigo en el campo. Diciendo estas palabras el Caballero del Sol, enlaçando su yelmo, cabalgó en su caballo, y, tomando su lança, se va para el Caballero de la Fuente preguntándole por cuál razón le pedía su caballo y armas y le desafiaba a mortal batalla. -Pláceme de te lo decir, dijo el Caballero de la Fuente, aunque a ello no me mueve necesidad; pero porque sepas que tengo razón de te lo pedir. Sabrás, buen caballero, que, como yo sea señor de esta tierra, muchas veces acostumbro venir a caça a esta floresta, agora y antes que esta plaça y fuente se hiciesen, y conteció que, como un día padeciese gran sed, vine como el corrido ciervo a esta fuente, en la cual hallé una muy bella y apuesta doncella, hija del duque Ditreo, gran señor y mi vecino en la tierra, la cual aquí fue traída por una muy estraña aventura que dejo de contar por no ser prolijo, de cuyos amores yo fui luego preso, y jamás me quiso otorgar su amor debajo de casto matrimonio, ni aun recibirme por su caballero, hasta que hiciese esta plaça y fuente como agora la veis y en la mesma forma ella la pidió, porque de su venida a este lugar quedase memoria, y con tanto que por espacio de un año la guardase, quitando a todos los caballeros todo lo que en esta plaça metiesen. Y pues tú eres caballero, y habrás gustado el veneno del amor y sabes cuánta razón tengo de te lo pedir, déjame tus armas y caballo, ca diez meses ha que guardo esta salvajina plaça y no he visto en ella otro más apuesto caballero ni otras mas galanes armas, y, sino [fuera] por lo que traigo prometido, yo te dejaría ir en paz. -Pues las mejores armas que has tomado son estas, dijo el Caballero del Sol, razón es que más caro las compres que las otras que no eran de tanto valor. Por tanto, pues tú no me quieres dejar en paz, yo quiero que en la batalla las ganes.
+Otro día por la mañana, en aquella hora que la clara luz del día con las obscuras tinieblas de la noche traía batalla, el Caballero del Sol continuó el començado viaje por el cual anduvo tanto que, una hora ante[s] de la siguiente noche, llegó a una muy verde y sombrosa floresta, por la cual, como poco hubiese caminado, vino a dar en una espaciosa plaça que en medio de la floresta había, bien cercada de espesos árboles con espinas y çarças entretejidos en tal manera que de fuerte muro parecía estar cercada, en la cual había dos puertas muy estraña y polidamente hechas, no de otra cosa, sino de los mesmos árboles que en manera de un redondo arco, los de la una parte con los de la otra, tejidos y torcidos, estaban.
+第二天早晨，在明亮白昼之光与黑夜幽暗相争之时，太阳骑士继续已开始的旅程，走了很远，在次日夜晚前一小时，来到一片非常翠绿幽暗的丛林；他在林中没走多久，便来到丛林中央一个宽敞的广场，四周密密围着带刺的树木和灌木，交错缠绕，仿佛一道坚固的围墙；广场有两扇门，造得极其奇特而精致，材料不是别的，正是那些树木本身，两边的树像圆拱一样彼此交织、弯曲在一起。
+
+De los torcidos árboles estaba colgado un morado escudo con un verde cordón, con una letra que en esta manera decía: El amor que está pendiente con el cordón de esperanza no permite ni consiente que mi esfuerço muy valiente tenga quietud ni holgança.
+弯曲的树上挂着一面紫色盾牌，系着一条绿色绳带，上面写着这样一行字：“那以希望之绳悬系的爱，不容也不许我极勇猛的力量有安宁与歇息。”
+
+Un poco más abajo, en el mesmo escudo, estaba otro letrero que en esta manera decía: Si en la plaça defendida, caballero, entrar quisieres, perderás lo que trajeres.
+同一面盾牌稍下方还有另一行字，这样写道：“骑士，你若想进入这被守卫的广场，你将失去你所带来的一切。”
+
+Luego que el Caballero del Sol hubo leído los letreros del morado escudo, como gran deseo tuviese de saber las tales cosas y de probar las semejantes aventuras, entró por la puerta de los torcidos árboles en la plaça, cuya entrada las letras del morado escudo defendían.
+太阳骑士读完紫色盾牌上的字后，因极想知道这类事情、也想试试这类奇遇，便从弯曲树木的门进入了广场——那入口正是紫色盾牌上的文字所禁止的。
+
+En medio de ella estaba una cuadrada piedra de claro mármol, de ocho pies de largo y tantos de ancho y alta hasta la rodilla, allanada sobre el verde campo.
+广场中央有一块方形白大理石，长八英尺，宽也八英尺，高及膝，平放在绿草地上。
+
+Sobre esta piedra estaban dos pelosos salvajes de piedra parda, bien al natural tallados, de mediana grandeza, trabados cada uno de los largos cabellos del otro tirando con gran porfía, las cabeças muy inclinadas hacia la mesma piedra donde los pies tenían.
+石上立着两个褐色石雕的毛茸茸野人，雕得十分逼真，中等大小，各自抓住对方的长发拼命拉扯，头深深低向它们脚所踏的同一块石头。
+
+Por sus abiertas bocas salían dos caños de muy dulce y clara water, la cual caía en la marmórea piedra en un espacio que entre los dos en medio estaba cavado a manera de una gran bacía, en cuyo medio había un sumidero por donde la salvajina agua, por un secreto lugar, tornaba a salir de la cercada plaça con un sonoro ruido que en su despedida hacía.
+从它们张开的嘴里流出两股非常甘甜清澈的水，落入大理石上两像之间挖出的一个空间，形如一个大水盆；盆中央有一个排水孔，那野泉之水便经由隐秘之处重新流出这围起的广场，离去时发出响亮的声响。
+
+Como todas estas cosas el Caballero del Sol hubiese mirado, descabalgando de su caballo, a una parte de la plaça con su escudero se recoge por reposar y dar descanso a los trabajados miembros.
+太阳骑士看过这一切后，便下了马，与侍从退到广场一角，歇息并让劳顿的肢体得到休息。
+
+Otro día, al tiempo que el alba rompía, el Caballero del Sol despertó del sabroso sueño con el dulce canto de las aves, ca muchas y diversas había en aquella floresta, así por gozar de aquella suave armonía como por gozar del frescor de la mañana.
+第二天黎明破晓时，太阳骑士在鸟儿甜美的歌声中从香甜的梦中醒来——那片丛林中有许多各式各样的鸟——他既为享受那柔和的和谐，也为享受清晨的凉爽。
+
+Con espaciosos pasos el Caballero del Sol va para la salvajina fuente, ca gran sabor había de mirar su estraña hechura, y cuán bien y al propio los dos salvajes se estaban mesando.
+太阳骑士缓步走向那野泉，因为他极爱看它奇特的造型，也爱看那两个野人如何惟妙惟肖地互相扯着头发。
+
+Estando de esta manera embebecido, oyendo las pajaricas y mirando la muy hermosa fuente, oyó pasos de caballo, y, como la cabeça volviese hacia aquella parte, vio cómo en la plaça había entrado un caballero grande de cuerpo, armado de unas armas pardas sembradas por ellas unas tocas pequeñas.
+他正这样出神地听着小鸟鸣叫、望着那美丽的泉水，忽然听到马蹄声；他转头望去，看见一位身材高大的骑士已进入广场，穿着一身褐色铠甲，甲上点缀着一些小布饰。
+
+Traía sobre el yelmo una rica toca atada.
+他头盔上系着一块华美的头巾。
+
+Venteávasela el muy sabroso aire de la mañana, volviéndola a unas partes y a otras en tal manera que a su gentil continente, meneo y grande apostura mucha gracia ponía.
+清晨宜人的风将它吹得飘来飘去，为他优雅的举止、动作和堂堂仪态增添了许多风度。
+
+De su cuello pendía un fuerte escudo, el campo pardo, pintada en él la salvajina fuente y una hermosa doncella acostada sobre la mesma fuente, sobre el codo y la mano en la mejilla; el cual, como hubo llegado, en alta voz, contra el Caballero del Sol, en esta manera dice:
+他颈上挂着一面坚固的盾牌，盾地为褐色，上面画着那野泉，以及一位美丽少女斜倚在泉上，以肘支撑、手托面颊；他来到近前，便高声对太阳骑士这样说道：
+
+-Caballero quebrantador de la ley del morado escudo, deja todo lo que has metido en esta plaça, ca lo tienes perdido, y vete luego tú y tu escudero, si no conmigo eres en la batalla, porque forçadamente has de hacer una de las dos cosas, o irte vergonçosamente dejándolo, o defenderlo venciendo.
+“破坏紫色盾牌律法的骑士，把你带进这广场的一切都留下，因为你已经失去了它们；然后你和你的侍从立刻离开，否则就与我交战，因为你必须二者择一：要么羞耻地丢下东西离开，要么以胜利捍卫它。”
+
+-Por cierto, dijo el Caballero del Sol, no sé yo qué razón tenéis de me pedir lo que yo he menester para mi viaje, pues no he cometido algún yerro contra vos.
+“的确，”太阳骑士说，“我不知道你有什么理由向我索要我旅途所需之物，因为我并未对你犯下什么过错。
+
+Mas como sea caballero que peregrino por el mundo, tomándome aquí la noche, me fue forçado albergar esta pasada noche en esta plaça.
+但我作为在世间朝圣的骑士，昨夜在此被夜色所困，不得已在这广场过了一夜。”
+
+-Gastar palabras es porfiar otra cosa, dijo el Caballero de la Fuente, porque si tu eres caballero andante y tenías necesidad de tus armas y caballo no debieras entrar en esta plaça, pues por la ley del morado escudo lo tienes perdido, y, pues la quebrantaste, justo es que pagues la pena por ella puesta.
+“多费口舌只是另作争执，”泉水骑士说，“因为你若是游侠骑士，又需要自己的武器和马匹，就不该进入这广场；按紫色盾牌的律法，你已失去了它们；既然你破坏了律法，就该付上所定的代价。
+
+Deja ya de perecear y dame tu caballo y esas armas, que muy preciadas parecen, y más, si otra cosa tienes dentro en esta plaça, o ve a cabalgar en tu caballo, que si de grado no lo quieres hacer yo te lo haré dejar en esta plaça por fuerça.
+别再拖延，把你的马和这身看似很珍贵的铠甲给我，还有你在这广场里的其他东西；否则就上马吧，你若不愿自愿交出，我就强迫你把它们留在这广场上。”
+
+-No dejaré de lo que yo tanta necesidad tengo, dijo el Caballero del Sol, ca grande afrenta y peligro me sería caminar a pie y desarmado por tierras estrañas.
+“我不会放弃我如此需要的东西，”太阳骑士说，“因为徒步无甲地在异乡行走，对我是极大的耻辱和危险。
+
+Pero, pues tanto deseas la batalla, aguárdame un poco que prestamente seré contigo en el campo.
+但既然你如此渴望战斗，等我片刻，我立刻就到场上与你相见。”
+
+Diciendo estas palabras el Caballero del Sol, enlaçando su yelmo, cabalgó en su caballo, y, tomando su lança, se va para el Caballero de la Fuente preguntándole por cuál razón le pedía su caballo y armas y le desafiaba a mortal batalla.
+说着这些话，太阳骑士系好头盔，骑上马，拿起长矛，走向泉水骑士，问他为何索要自己的马和铠甲，并向他挑战生死之战。
+
+-Pláceme de te lo decir, dijo el Caballero de la Fuente, aunque a ello no me mueve necesidad; pero porque sepas que tengo razón de te lo pedir.
+“我乐意告诉你，”泉水骑士说，“虽然并非必要；但为了让你知道我有理由向你索要。
+
+Sabrás, buen caballero, que, como yo sea señor de esta tierra, muchas veces acostumbro venir a caça a esta floresta, agora y antes que esta plaça y fuente se hiciesen, y conteció que, como un día padeciese gran sed, vine como el corrido ciervo a esta fuente, en la cual hallé una muy bella y apuesta doncella, hija del duque Ditreo, gran señor y mi vecino en la tierra, la cual aquí fue traída por una muy estraña aventura que dejo de contar por no ser prolijo, de cuyos amores yo fui luego preso, y jamás me quiso otorgar su amor debajo de casto matrimonio, ni aun recibirme por su caballero, hasta que hiciese esta plaça y fuente como agora la veis y en la mesma forma ella la pidió, porque de su venida a este lugar quedase memoria, y con tanto que por espacio de un año la guardase, quitando a todos los caballeros todo lo que en esta plaça metiesen.
+好骑士，你当知道，我既是此地之主，常来这片丛林打猎，无论现在还是这广场和泉水建成之前都是如此；有一次我渴得厉害，像被追逐的鹿一样来到这泉边，在那里遇见一位非常美丽俊俏的少女，是迪特雷奥公爵之女——他是此地的大领主，也是我的邻居；她因一桩极其奇特的奇遇被带到这里，我略去不讲，以免啰嗦。我随即被她的爱情所俘，可她始终不肯在贞洁婚姻之外答应我的爱，甚至不肯接受我做她的骑士，直到我建成你们现在所见的这广场和泉水，且须照她所要求的样式建成，好让她来到此地之事留下纪念；条件是我须守卫它一年，夺走所有骑士带进这广场的一切。
+
+Y pues tú eres caballero, y habrás gustado el veneno del amor y sabes cuánta razón tengo de te lo pedir, déjame tus armas y caballo, ca diez meses ha que guardo esta salvajina plaça y no he visto en ella otro más apuesto caballero ni otras mas galanes armas, y, sino [fuera] por lo que traigo prometido, yo te dejaría ir en paz.
+既然你是骑士，想必也尝过爱情的毒，知道我有多少理由向你索要；把你的铠甲和马留给我吧，因为我守卫这野泉广场已十个月，从未见过比这更英挺的骑士、比这更俊美的铠甲；若不是我已立下承诺，我会放你平安离去。”
+
+-Pues las mejores armas que has tomado son estas, dijo el Caballero del Sol, razón es que más caro las compres que las otras que no eran de tanto valor.
+“既然你夺到的最好铠甲就是这一身，”太阳骑士说，“那么你理应为它付出比那些不值钱的铠甲更高的代价。
+
+Por tanto, pues tú no me quieres dejar en paz, yo quiero que en la batalla las ganes.
+因此，既然你不肯放我平安离去，我就要你在战斗中赢得它们。”
 
 CAPÍTULO XII De la batalla que hubo el Caballero del Sol con Epirón de la fuente de los salvajes.
-Dejando las palabras, los caballeros vinieron a las armas, y tomando de aquella plaça cuanto les pareció que era menester, las lanças bajas, al más correr, se vinieron a encontrar en medio de aquella plaça, de tal poder que las lanças volaron por el aire en menudas pieças, tales y de tanta fuerça fueron los encuentros que, por poco entrambos los caballeros vinieran a tierra. Pero luego que fueron vueltos de los encuentros y afirmados en las sillas, metiendo manos a las espadas, se van el uno para el otro, dándose tales y tan pesados golpes que entre si parecían hacer la música de los herreros. Así anduvieron una gran pieça que jamás tomaron algún descanso, tanto que los caballos andaban tan lasos y cansados que apenas contornearlos podían. En esta hora, sin hablar palabra, se apartaron por dar descanso a los braços, ca muy atormentados de dar y recebir golpes los tenían. No pasó mucho que començaron a mover el uno contra el otro, pero los caballos estaban tan cansados que apenas moverlos podían, así que les fue forçado hacer de ahí adelante su batalla a pie. Descabalgando, pues, a mucha priesa de los caballos, los escudos embraçados, las espadas altas, tornaron a la començada batalla no con menos esfuerço y rigor que al principio, antes como ya el uno del otro estuviesen gravemente enojados, se herían de tan duros y espesos golpes que los escudos eran cortados y las lorigas por muchas partes falsadas. En tal manera que ya los desarmados miembros padecían gran detrimento, sintiendo los acerados filos de las espadas en sus carnes. Andando en esta porfiosa batalla, no cansando de dar y recibir golpes, el Caballero del Sol miraba cómo podría dar cabo a aquella contienda, ca bien entendía que le era menester su esfuerço, según el caballero de las armas pardas era valiente y esforçado. Echando los ojos contra su enemigo, pudo ver cómo por el muslo izquierdo tenía las armas rotas. Pensando poderlo por allí herir, alçando muy alta la espada, hizo semblante de lo herir sobre el yelmo, y, como el Caballero de la Fuente alçase el escudo por en él recibir el duro golpe, el Caballero del Sol bajó con un mañoso tajo y alcançándole en lo descubierto del muslo le hizo una peligrosa herida, tal que a pocas cayera en tierra. A esa hora, por la puerta de la salvajina plaça, entró una hermosa doncella, ricamente guarnida y bien acompañada. No [apenas] fue bien vista de los dos caballeros, cuando cada uno se apartó a su parte hasta saber lo que tan alta señora quería mandar. La cual, como hubo llegado, viendo al caballero de las armas pardas, al cual ella por marido esperaba, tan malherido, dijo en esta manera: -Caballero del Sol, que hayáis ventura, yo soy la que tengo puestas las leyes porque es vuestra batalla, y, pues yo las hice, yo las puedo deshacer. Yo os ruego que dejéis la batalla y os doy licencia que estéis en esta salvajina plaça todo lo que fuere vuestra voluntad, y yo creo que el caballero de las armas pardas ,por mi amor, dejará también la batalla y os dará por libre lo que os tiene pedido. -Gran yerro haría, dijo el Caballero del Sol, el caballero que no obedeciese mandamiento de tan alta y hermosa doncella, yo soy contento de hacer lo que me es mandado, con tanto que la vuestra merced soltéis la palabra a este caballero que conmigo hace batalla, en tal manera que él no sea tenido a pedir a algún caballero que en esta plaga entrare, cosa alguna, ni lo desafíe. Pero si todavía quisiere guardarla hasta que el año sea
+第十二章 太阳骑士与野泉骑士埃皮隆之战
 
-cumplido, sea a tal condición que pida solamente justa y no forçada, si no a la voluntad del caballero que en esta plaça entrare y no en otra manera. -Yo soy contenta de lo así hacer, dijo la noble doncella. Desde agora suelto al caballero la palabra y revoco las condiciones puestas en esta plaça. El caballero de las armas pardas lo confirmó y prometió de lo ansí guardar y cumplir. Y con importunación rogó al Caballero del Sol que él mantuviese la justa, en tanto que él guarecía de sus heridas y así mesmo se fuese con él a un su castillo que de ahí se parecía por reposar y ser curado de dos pequeñas heridas que tenía. El Caballero del Sol aceptó su ruego y tomó el cuidado de la guarda de la plaça, y después de haber v apretado la herida al caballero de la plaça salvajina, ayudándolo a cabalgar en su caballo, se van mano a mano al castillo, preguntando el Caballero del Sol al Caballero de la Fuente Salvajina su nombre y el de aquella plaça, pues la causa de su principio ya la sabía. -Mucho me place, dijo el Caballero de las Armas Pardas, de lo decir. Yo me llamo Epirón de la Salvajina Fuente. Soy hijo de Rieso de la Gran Fama, si algún tiempo oíste decir. Hablando en estas cosas llegaron al fuerte y hermoso castillo donde, siendo Epirón de la Fuente puesto en un rico lecho, después de ser curado de sus heridas, las tablas fueron puestas a tanto contento del Caballero del Sol por haber cobrado un tal amigo de mortal enemigo, que puesto que muy altamente fue servido, mucho más le parecía a él por haber conocido un caballero tan noble y tan bien acondicionado, ca así parecía que lo amaba como si propio hermano fuera. De esta manera y con mucho contento estuvo el Caballero del Sol seis días en el castillo de Epirón de la Fuente Salvajina que no vino alguna aventura a la fuente de los salvajes.
+Dejando las palabras, los caballeros vinieron a las armas, y tomando de aquella plaça cuanto les pareció que era menester, las lanças bajas, al más correr, se vinieron a encontrar en medio de aquella plaça, de tal poder que las lanças volaron por el aire en menudas pieças, tales y de tanta fuerça fueron los encuentros que, por poco entrambos los caballeros vinieran a tierra.
+话不多说，两位骑士便动起兵器；他们在那广场上取好各自认为需要的距离，平放长矛，纵马疾驰，在广场中央相遇，力道之大，使长矛碎成细片飞散空中；双方冲撞如此猛烈，两位骑士差点都落马倒地。
+
+Pero luego que fueron vueltos de los encuentros y afirmados en las sillas, metiendo manos a las espadas, se van el uno para el otro, dándose tales y tan pesados golpes que entre si parecían hacer la música de los herreros.
+但他们从冲撞中回身、在鞍上坐稳之后，便拔剑相向，彼此砍出又重又狠的剑招，仿佛在合奏铁匠的音乐。
+
+Así anduvieron una gran pieça que jamás tomaron algún descanso, tanto que los caballos andaban tan lasos y cansados que apenas contornearlos podían.
+他们这样打了很久，始终不曾歇息，以致马匹疲惫不堪，几乎难以驱转。
+
+En esta hora, sin hablar palabra, se apartaron por dar descanso a los braços, ca muy atormentados de dar y recebir golpes los tenían.
+这时，他们一言不发地分开，让手臂歇息，因为不断地砍杀与受击已使双臂备受折磨。
+
+No pasó mucho que començaron a mover el uno contra el otro, pero los caballos estaban tan cansados que apenas moverlos podían, así que les fue forçado hacer de ahí adelante su batalla a pie.
+没过多久，他们又催马向对方冲去，但马已疲惫得几乎无法走动，因此他们不得不从那时起下马步战。
+
+Descabalgando, pues, a mucha priesa de los caballos, los escudos embraçados, las espadas altas, tornaron a la començada batalla no con menos esfuerço y rigor que al principio, antes como ya el uno del otro estuviesen gravemente enojados, se herían de tan duros y espesos golpes que los escudos eran cortados y las lorigas por muchas partes falsadas.
+于是他们急忙下马，臂挽盾牌、高举长剑，重新开始战斗，勇气与猛烈不亚于起初；而且由于彼此已深怀怒意，他们砍出的剑招又硬又密，盾牌被砍破，锁甲多处被刺穿。
+
+En tal manera que ya los desarmados miembros padecían gran detrimento, sintiendo los acerados filos de las espadas en sus carnes.
+以致未被铠甲遮住的肢体已大受损伤，皮肉尝到了钢剑的锋刃。
+
+Andando en esta porfiosa batalla, no cansando de dar y recibir golpes, el Caballero del Sol miraba cómo podría dar cabo a aquella contienda, ca bien entendía que le era menester su esfuerço, según el caballero de las armas pardas era valiente y esforçado.
+在这场顽强的战斗中，太阳骑士一边不停地砍杀与受击，一边寻思如何了结这场争斗，因为他深知自己必须竭尽全力，那褐色铠甲的骑士确实勇敢强悍。
+
+Echando los ojos contra su enemigo, pudo ver cómo por el muslo izquierdo tenía las armas rotas.
+他抬眼望向敌人，看见对方左腿的铠甲已经破损。
+
+Pensando poderlo por allí herir, alçando muy alta la espada, hizo semblante de lo herir sobre el yelmo, y, como el Caballero de la Fuente alçase el escudo por en él recibir el duro golpe, el Caballero del Sol bajó con un mañoso tajo y alcançándole en lo descubierto del muslo le hizo una peligrosa herida, tal que a pocas cayera en tierra.
+他想着可以从那里下手，便高高举剑，做出要砍向头盔的样子；泉水骑士果然举起盾牌去接这沉重一击，太阳骑士却手腕一转，剑锋落下，砍中他大腿裸露之处，造成一处危险的伤口，使他险些倒地。
+
+A esa hora, por la puerta de la salvajina plaça, entró una hermosa doncella, ricamente guarnida y bien acompañada.
+这时，一位美丽少女从野泉广场的门进来，衣着华贵，随从众多。
+
+No [apenas] fue bien vista de los dos caballeros, cuando cada uno se apartó a su parte hasta saber lo que tan alta señora quería mandar.
+两位骑士刚一看见她，便各自退到一边，等候这位高贵夫人有何吩咐。
+
+La cual, como hubo llegado, viendo al caballero de las armas pardas, al cual ella por marido esperaba, tan malherido, dijo en esta manera:
+她来到近前，看见那褐色铠甲的骑士——她正期待他做自己的丈夫——伤得如此之重，便这样说道：
+
+-Caballero del Sol, que hayáis ventura, yo soy la que tengo puestas las leyes porque es vuestra batalla, y, pues yo las hice, yo las puedo deshacer.
+“太阳骑士，愿你走运；我就是立下这些律法、致使你们交战的人；既然律法是我立的，我也能废除它们。
+
+Yo os ruego que dejéis la batalla y os doy licencia que estéis en esta salvajina plaça todo lo que fuere vuestra voluntad, y yo creo que el caballero de las armas pardas ,por mi amor, dejará también la batalla y os dará por libre lo que os tiene pedido.
+我请你们停止战斗，并准许你在这野泉广场随意停留；我相信那褐色铠甲的骑士看在我的情面上，也会停止战斗，免去他向你所索要之物。”
+
+-Gran yerro haría, dijo el Caballero del Sol, el caballero que no obedeciese mandamiento de tan alta y hermosa doncella, yo soy contento de hacer lo que me es mandado, con tanto que la vuestra merced soltéis la palabra a este caballero que conmigo hace batalla, en tal manera que él no sea tenido a pedir a algún caballero que en esta plaga entrare, cosa alguna, ni lo desafíe.
+“若有不听从如此高贵美丽少女吩咐的骑士，那才是大错，”太阳骑士说，“我乐意照吩咐去做，但须请阁下解除这位与我交战的骑士的诺言，使他不再有义务向任何进入这广场的骑士索要任何东西，也不再向人挑战。
+
+Pero si todavía quisiere guardarla hasta que el año sea cumplido, sea a tal condición que pida solamente justa y no forçada, si no a la voluntad del caballero que en esta plaça entrare y no en otra manera.
+但他若仍愿守满一年，则须以这样的条件：只可提出公正而非强迫的要求，且须出于进入这广场的骑士自愿，不得另作他法。”
+
+-Yo soy contenta de lo así hacer, dijo la noble doncella.
+“我乐意这样办，”高贵少女说。
+
+Desde agora suelto al caballero la palabra y revoco las condiciones puestas en esta plaça.
+“从现在起，我解除这位骑士的诺言，并撤销在这广场上定下的条件。”
+
+El caballero de las armas pardas lo confirmó y prometió de lo ansí guardar y cumplir.
+褐色铠甲的骑士予以确认，并承诺如此遵守履行。
+
+Y con importunación rogó al Caballero del Sol que él mantuviese la justa, en tanto que él guarecía de sus heridas y así mesmo se fuese con él a un su castillo que de ahí se parecía por reposar y ser curado de dos pequeñas heridas que tenía.
+他又再三请求太阳骑士在他养伤期间替他维持这比试，并请太阳骑士随他一同去那边可见的一座城堡，好歇息并治疗自己受的两处轻伤。
+
+El Caballero del Sol aceptó su ruego y tomó el cuidado de la guarda de la plaça, y después de haber v apretado la herida al caballero de la plaça salvajina, ayudándolo a cabalgar en su caballo, se van mano a mano al castillo, preguntando el Caballero del Sol al Caballero de la Fuente Salvajina su nombre y el de aquella plaça, pues la causa de su principio ya la sabía.
+太阳骑士接受了他的请求，承担起守卫广场之责；随后他为这野泉广场的骑士包扎紧伤口，扶他上马，二人手挽手前往城堡；太阳骑士向野泉骑士询问他和那广场的名字，因为广场的由来他已知道了。
+
+-Mucho me place, dijo el Caballero de las Armas Pardas, de lo decir.
+“我很乐意告诉，”褐色铠甲的骑士说。
+
+Yo me llamo Epirón de la Salvajina Fuente.
+“我叫野泉的埃皮隆。
+
+Soy hijo de Rieso de la Gran Fama, si algún tiempo oíste decir.
+我是‘大名鼎鼎者’里埃索之子，你若曾听说过的话。”
+
+Hablando en estas cosas llegaron al fuerte y hermoso castillo donde, siendo Epirón de la Fuente puesto en un rico lecho, después de ser curado de sus heridas, las tablas fueron puestas a tanto contento del Caballero del Sol por haber cobrado un tal amigo de mortal enemigo, que puesto que muy altamente fue servido, mucho más le parecía a él por haber conocido un caballero tan noble y tan bien acondicionado, ca así parecía que lo amaba como si propio hermano fuera.
+他们一路谈着这些，来到那座坚固美丽的城堡；野泉的埃皮隆被安置在华丽的床上，伤口治疗之后，餐桌摆上；太阳骑士因化死敌为好友而十分欢喜，虽然受到隆重款待，他更因结识一位如此高贵、品性如此良好的骑士而高兴，仿佛已把他当作亲兄弟一般喜爱。
+
+De esta manera y con mucho contento estuvo el Caballero del Sol seis días en el castillo de Epirón de la Fuente Salvajina que no vino alguna aventura a la fuente de los salvajes.
+太阳骑士就这样十分愉快地在野泉的埃皮隆城堡住了六天，期间野泉那边没有发生任何奇遇。
 
 CAPÍTULO XIII De una justa que mantuvo el Caballero del Sol a unos caballeros que vinieron a la plaça de los salvajes.
-Ya el sexto día después que el Caballero del Sol hubo la batalla con Epirón de la Fuente era pasado y el séptimo con su nueva luz los campos alumbraba, cuando Silvio, habiendo salido hacia la plaça de los salvajes por tomar el frescor de la mañana, con mucha prisa volvía. Y el Caballero del Sol codiciando saber a qué tan presto volvía, en esta manera le habla. -¿Qué prisa es esa, Silvio, mi fiel escudero? Señor, dijo Silvio, cuatro caballeros han venido a la fuente de los salvajes, los cuales me demandaron cúya era aquella plaça, y cómo estaba ahí aquella huella de caballos. Esta plaça, dije yo, es de Epirón de la Fuente Salvajina. En ella mantiene justa un caballero estraño a los caballeros que por su voluntad la quisieren, y si las vuestras mercedes quieren, yo lo iré a llamar que en aquel castillo, que de aquí se parece, está. -En eso nos haréis placer, dijeron los cuatro caballeros. -Luego yo con la priesa que, señor, veis, me vine para este castillo. La vuestra merced haga como sea servido. Oído que hubo el Caballero del Sol a su escudero, con mucha priesa se comiença de armar, y tomando licencia de Epirón de la Salvajina Fuente, cabalgando en su caballo, el derecho camino de la salvajina plaça tomó, y, como hubo llegado, yéndose para los caballeros que en torno de la fuente estaban, en esta manera los saluda: -Dios os salve, caballeros. Perdonad mi tardança, ca si yo supiera de la vuestra venida, yo fuera luego aquí. Si os place de ejercitar la justa, cabalgad en vuestros caballos y ensayarnos hemos un rato. -Gentil caballero, dijo el que entre ellos principal y señor parecía, vuestras corteses y bien criadas palabras a toda amistad nos convidan, la cual nosotros ganamos en la tener con un tal caballero, pero pues la justa, según me parece, no es forçada entre amigos se puede ejercitar. Por lo cual, yo por mí y por estos caballeros acepto la justa. Pero, decidme, que hayáis ventura, ¿cuántas lanças ha de correr cada uno? -Tres o cuatro, dijo el Caballero del Sol, más o menos, como quisiere el que la justa pide. Como estas palabras fueron acabadas, los cuatro caballeros cabalgaron en sus caballos y el primero, que de los otros señor parecía, se va al puesto, el cual era armado de unas armas saldes , ricas a marabilla, partidas con oro. Traía en el escudo una torre y un preso caballero en ella, puesto en una ventana con una gruesa cadena de hierro al cuello. Alançando pues la voz el Caballero de la Torre, dijo: -Vente para mí, Caballero de las Lunetas, y verás una hermosa justa. A esa hora, los dos esforçados caballeros se vinieron el uno contra el otro al más correr de los caballos, y topándose en medio de aquella plaça, las lanças fueron partidas en muchas pieças, quedando cada uno en la silla sin hacer revés alguno, y, volviendo con gentil continente, tomaron otras lanças y las pasaron como las primeras; por lo cual, en mucho tuvo el Caballero del Sol al Caballero de la Torre, ca muy diestramente justaba. Así como las segundas lanças fueron quebradas, fueron de las terceras servidos, porque Epirón había ya muchas ahí enviado. Las terceras lanças bajas, se vinieron los dos caballeros el uno contra el otro en la fuerça de sus caballos, y encontrándose en medio de
+第十三章 太阳骑士在野人广场与前来挑战的几位骑士举行的一次比试
 
-aquel campo, las lanças fueron partidas en menudas rajas y el Caballero de la Torre encontró al Caballero del Sol en el escudo de tal poder que le hizo perder la una estribera, pero el escudo no fue falsado por su gran fortaleza. El Caballero del Sol encontró al Caballero de la Torre de tal poder que le hizo otra ventana en la torre de su escudo, pero el arnés no fue falsado y el caballero hubo perdidos los estribos y el escudo hubo quebradas las embraçaduras y vino a tierra; pero, como el caballero fuese muy diestro, afirmándose presto en la silla y volviéndose contra el Caballero del Sol, en alta voz dijo: -Fuerte y hermoso caballero, vos habéis justado como uno de los mejores caballeros del mundo y como a tal yo os doy la gloria de ello. -Puesto, señor caballero, dijo el Caballero del Sol, que la justa esté bien partida, vos señor merecéis el premio de ella. Y diciendo esto el Caballero del Sol se tornó al puesto, porque ya otro caballero movía para salir a la justa. Sus armas eran blancas, sembrados por ellas unos manojos de oro. En el escudo traía dos enanos de estraña figura con gruesos correones en las manos, con un caballero en medio, desnudo, atado a una columna como que con los açotes los enanos lo herían. -Guárdate de mi lança, dijo el Caballero de los Enanos al Caballero del Sol, que hiere con cuchilla tajante. -Guarda bien tus enanos, dijo el Caballero del Sol, porque no te los castigue la mía en pago de la crueldad que cometen contra el caballero atado. Acabadas estas palabras, movieron el uno contra el otro cuanto los caballos llevarlos podían, y viniéndose a juntar en medio del campo, las lanças fueron quebradas y el Caballero de los Enanos vino a tierra con el arçón de la silla trasero, que fue causa de su caída, así que luego cesó la justa con el Caballero de los Enanos, reyendo mucho sus compañeros de las palabras que había dicho y de cómo le había sucedido. El tercero, que las mesmas armas que el segundo y cuarto traía, començó de pasar hacia aquella parte donde sus compañeros tenían el puesto, diciendo estas palabras: -Caballero cortés, no uséis de tanto rigor conmigo ca yo mansamente me quiero haber con la vuestra merced. -¿Cómo?, dijo el Caballero del Sol, así os responderé. Diciendo esto y dando de las espuelas a los caballos se vinieron a encontrar en medio del campo, de tal manera que las lanças fueron quebradas y, tomando otras, pasaron como las primeras. Luego fueron servidos de las terceras, con las cuales movieron al más correr de los caballos y, topándose de muy fuertes encuentros, el Caballero de los Enanos hubo el escudo falsado y apenas hubiera caído del caballo, sino fuera socorrido de uno de sus compañeros. El Caballero del Sol pasó muy recio por él con muy gentil continente. El cuarto caballero sin hablar palabra se va al puesto y la lança baja, se vino contra el Caballero del Sol, que ya asimesmo iba contra él, y topándose en medio de la salvajina plaça las lanças volaron partidas por el aire. Pero con la gran fuerça de los rigurosos encuentros, los caballos se hicieron atrás tres o cuatro pasos. Tornando pues a la començada justa tomaron otras lanças, y corriendo el uno contra el otro cuanto los caballos llevarlos podían, el Caballero de los Enanos encontró al Caballero del Sol en soslayo del escudo y su lança no fue quebrada. El Caballero del Sol le encontró entre los dos enanos del escudo de tal poder que el Caballero de los Enanos viniera a tierra, sino se abraçara con el cuello del caballo. Vueltos que fueron los caballeros del duro encuentro, tomaron las terceras lanças y movieron el uno para el otro al más correr de los caballos. El Caballero del Sol encontró al Caballero de los Enanos sobre el yelmo y la lança no prendió y quedó sana y el Caballero de los Enanos perdió el encuentro por un corcobo que hizo su caballo en medio de la carrera.
+Ya el sexto día después que el Caballero del Sol hubo la batalla con Epirón de la Fuente era pasado y el séptimo con su nueva luz los campos alumbraba, cuando Silvio, habiendo salido hacia la plaça de los salvajes por tomar el frescor de la mañana, con mucha prisa volvía.
+太阳骑士与野泉的埃皮隆交战后的第六天已经过去，第七天以其新光普照田野；这时，西尔维奥为享受清晨凉爽而出到野人广场，又匆匆赶回。
 
-De esta manera se partió la justa con los cuatro caballeros, diciendo el Caballero de los Enanos: Bien lo hemos hecho, Caballero del Sol, por no echar en costa a Epirón de la Salvajina Fuente. De lo cual todos muchos rieron. Luego los cuatro caballeros se querían partir de la Plaça de la Fuente Salvajina, mas el Caballero del Sol les rogó se desarmasen y reposasen y comiesen con él, ca bien menester lo habían todos, lo cual ellos de voluntad aceptaron por hacer placer al Caballero del Sol y dar descanso a sus trabajados cuerpos. Los caballeros fueron desarmados y las mesas fueron paradas sobre el herboso campo, donde fueron bien servidos de lo que Epirón de la Fuente había enviado. Las tablas fueron alçadas y el Caballero del Sol rogó al caballero de las armas saldes le dijese por cuál razón traían aquella divisa de la torre y enanos, ca ganoso era de saber tales y semejantes cosas. -Pláceme, hermoso caballero, de te lo decir, dijo el Caballero de la Torre. Yo traigo la torre con el caballero preso y estos tres caballeros, que mis primos son, los enanos con el caballero desnudo porque yo tengo un solo hermano el cual como saliese a buscar sus aventuras acertó a llegar en esta tierra, en la cual oyó decir que en el Castillo del Hondo Valle, que XXX millas está de aquí, había dos jayanes, el uno llamado Zuaço y el otro Crozoneo, los cuales mantenían toda soberbia, cautivando los andantes caballeros y forçando las honestas doncellas, y como su intención fuese quitar las tales fuerças y vengar los semejantes agravios, tomó el derecho camino para el Castillo del Hondo Valle, y como muy cerca llegase, siendo visto de los hombres del castillo, fueron los gigantes avisados de su venida y salió el mayor, que Zuaço había por nombre, con el cual después de haber pasado muchas palabras hubo su batalla, en la cual acabó su miserable vida el soberbio y desemejado jayán, quedando mi hermano muy laso y cansado de la batalla y con dos pequeñas heridas. No había bien mi hermano levantándose sobre el muerto gigante Zuaço, cuando llegó el otro, que Crozoneo había por nombre, y lo acometió tan bravamente que, como muy fatigado de la pasada batalla estuviese, después de se haber contra él por más de una hora mantenido en campo en porfiosa contienda, fue vencido por el bravo y sin piedad Crozoneo, el cual mandó a cuatro caballeros de los suyos lo llevasen a la muy fuerte torre del castillo y lo echasen prisiones a los pies y a la garganta, porque muchas muertes muriese en pago de la que al desemejado Zuaço había dado. De aquella torre le sacan cada ocho días al lugar donde fue la batalla en el cual el valiente Crozoneo hizo poner una columna a la cual le atan y con duros correones dos enanos fuertemente le açotan. Por la cual causa que has oído, Caballero del Sol, yo traigo la torre con el caballero preso y estos caballeros los enanos. Después que este hecho vino a nuestros oídos, haciendo estas armas y de ellas armados, salimos de nuestra tierra con propósito de no dejar la demanda ni la divisa hasta sacarle de poder de aquel soberbio gigante o morir en ella. Gran sabor había el Caballero del Sol de se lo ver contar, ca cuerdo y gracioso caballero era y no con menos gracia sabía decir que en el campo bien justar, aunque mucho le pesó que un tan buen caballero así encarcelado y maltratado por un cruel jayán fuese y sino por lo que había prometido a Epirón de la Fuente Salvajina los acompañara en la demanda y fuera en la deliberación. Los cuatro caballeros se lo agradecieron mucho, ca eran tan buenos y tan diestros en batallar que no les hacía menester otra ayuda para destruir al gigante y a sus caballeros. Luego que hubo puesto fin a su hablar el Caballero de la Torre, todos cuatro se despidieron cortésmente, tomando el derecho camino para el Castillo del Hondo Valle. De esta manera estuvo el Caballero del Sol en la plaça y castillo de Epirón de la Salvajina Fuente por espacio de veinte días, en los cuales hubo muy hermosas justas de buenos caballeros y hermosas invenciones, que aquí se dejan de contar por evitar
+Y el Caballero del Sol codiciando saber a qué tan presto volvía, en esta manera le habla.
+太阳骑士想知道他为何回来得这么快，便这样对他说道：
 
-prolijidad, en cabo de los cuales Epirón de la Fuente fue sano de su herida y recio para tomar armas.
+-¿Qué prisa es esa, Silvio, mi fiel escudero?
+“西尔维奥，我忠实的侍从，这么急是为什么？”
+
+Señor, dijo Silvio, cuatro caballeros han venido a la fuente de los salvajes, los cuales me demandaron cúya era aquella plaça, y cómo estaba ahí aquella huella de caballos.
+“主人，”西尔维奥说，“四位骑士来到野人泉，问我这广场是谁的，以及那里的马蹄印是怎么回事。
+
+Esta plaça, dije yo, es de Epirón de la Fuente Salvajina.
+我说，这广场是野泉的埃皮隆的。
+
+En ella mantiene justa un caballero estraño a los caballeros que por su voluntad la quisieren, y si las vuestras mercedes quieren, yo lo iré a llamar que en aquel castillo, que de aquí se parece, está.
+这里有一位外乡骑士，凡自愿前来的骑士，他都与之比试；若诸位愿意，我去叫他，他就在那边看得见的那座城堡里。”
+
+-En eso nos haréis placer, dijeron los cuatro caballeros.
+“那就劳烦你了，”四位骑士说。
+
+-Luego yo con la priesa que, señor, veis, me vine para este castillo.
+“于是我就急忙赶回这座城堡，主人您也看见了。
+
+La vuestra merced haga como sea servido.
+请阁下随意吩咐。”
+
+Oído que hubo el Caballero del Sol a su escudero, con mucha priesa se comiença de armar, y tomando licencia de Epirón de la Salvajina Fuente, cabalgando en su caballo, el derecho camino de la salvajina plaça tomó, y, como hubo llegado, yéndose para los caballeros que en torno de la fuente estaban, en esta manera los saluda:
+太阳骑士听完侍从的话，急忙披挂，向野泉的埃皮隆告辞，骑上马，径直朝野人广场而去；到达后，他走向围在泉边的骑士们，这样向他们致意：
+
+-Dios os salve, caballeros.
+“愿上帝保佑你们，骑士们。
+
+Perdonad mi tardança, ca si yo supiera de la vuestra venida, yo fuera luego aquí.
+请原谅我来迟了，若早知道诸位光临，我早就来了。
+
+Si os place de ejercitar la justa, cabalgad en vuestros caballos y ensayarnos hemos un rato.
+若你们愿意比试枪术，就请上马，我们练习一番。”
+
+-Gentil caballero, dijo el que entre ellos principal y señor parecía, vuestras corteses y bien criadas palabras a toda amistad nos convidan, la cual nosotros ganamos en la tener con un tal caballero, pero pues la justa, según me parece, no es forçada entre amigos se puede ejercitar.
+“文雅的骑士，”他们中看似为首领主的那位说，“你这番有礼而教养良好的话邀请我们建立全部友谊，我们很乐意与这样一位骑士结交；不过在我看来，比试并非强迫之事，朋友之间也可以进行。
+
+Por lo cual, yo por mí y por estos caballeros acepto la justa.
+因此，我代表自己和这几位骑士接受比试。
+
+Pero, decidme, que hayáis ventura, ¿cuántas lanças ha de correr cada uno?
+但请告诉我们，愿你得运，每人要跑几枪？”
+
+-Tres o cuatro, dijo el Caballero del Sol, más o menos, como quisiere el que la justa pide.
+“三四枪吧，”太阳骑士说，“或多或少，随请求比试者之意。”
+
+Como estas palabras fueron acabadas, los cuatro caballeros cabalgaron en sus caballos y el primero, que de los otros señor parecía, se va al puesto, el cual era armado de unas armas saldes , ricas a marabilla, partidas con oro.
+话一说完，四位骑士便上马；第一位——看似其余人之主——进入场位，他穿着一身极其华美的淡黄铠甲，以金色分隔。
+
+Traía en el escudo una torre y un preso caballero en ella, puesto en una ventana con una gruesa cadena de hierro al cuello.
+他盾上画着一座塔楼，塔中一扇窗里有一位被囚骑士，颈上套着粗铁链。
+
+Alançando pues la voz el Caballero de la Torre, dijo:
+塔楼骑士提高声音说道：
+
+-Vente para mí, Caballero de las Lunetas, y verás una hermosa justa.
+“到我这儿来，戴月纹的骑士，你会看到一场精彩的比试。”
+
+A esa hora, los dos esforçados caballeros se vinieron el uno contra el otro al más correr de los caballos, y topándose en medio de aquella plaça, las lanças fueron partidas en muchas pieças, quedando cada uno en la silla sin hacer revés alguno, y, volviendo con gentil continente, tomaron otras lanças y las pasaron como las primeras; por lo cual, en mucho tuvo el Caballero del Sol al Caballero de la Torre, ca muy diestramente justaba.
+这时，两位勇猛的骑士纵马疾驰，相向冲来，在广场中央相遇，长矛碎成许多片，二人却都稳坐鞍上，未分高下；他们优雅地回身，取来新矛，又如第一枪般冲过；太阳骑士因此十分看重塔楼骑士，因为他比试枪术极为娴熟。
+
+Así como las segundas lanças fueron quebradas, fueron de las terceras servidos, porque Epirón había ya muchas ahí enviado.
+第二枪刚折断，他们便得到第三枪，因为埃皮隆早已送了许多矛来。
+
+Las terceras lanças bajas, se vinieron los dos caballeros el uno contra el otro en la fuerça de sus caballos, y encontrándose en medio de aquel campo, las lanças fueron partidas en menudas rajas y el Caballero de la Torre encontró al Caballero del Sol en el escudo de tal poder que le hizo perder la una estribera, pero el escudo no fue falsado por su gran fortaleza.
+二人平放第三枪，借马匹之力相向冲来，在场中相遇，长矛碎成细片；塔楼骑士击中太阳骑士的盾牌，力道之大使他失去一侧马镫，但盾牌因其坚固而未被刺穿。
+
+El Caballero del Sol encontró al Caballero de la Torre de tal poder que le hizo otra ventana en la torre de su escudo, pero el arnés no fue falsado y el caballero hubo perdidos los estribos y el escudo hubo quebradas las embraçaduras y vino a tierra; pero, como el caballero fuese muy diestro, afirmándose presto en la silla y volviéndose contra el Caballero del Sol, en alta voz dijo:
+太阳骑士击中塔楼骑士，力道之大，在他盾上的塔楼图案中又开了一扇“窗”；但铠甲未被刺穿，那骑士却失掉马镫，盾牌的臂带也被砍断，盾牌落地；但他极为灵巧，迅速在鞍上坐稳，转向太阳骑士，高声说道：
+
+-Fuerte y hermoso caballero, vos habéis justado como uno de los mejores caballeros del mundo y como a tal yo os doy la gloria de ello.
+“强壮而英俊的骑士，你比试得像世上最好的骑士之一；作为这样的骑士，我把这份荣耀归给你。”
+
+-Puesto, señor caballero, dijo el Caballero del Sol, que la justa esté bien partida, vos señor merecéis el premio de ella.
+“骑士先生，”太阳骑士说，“虽然这场比试难分高下，但您先生更配得这奖赏。”
+
+Y diciendo esto el Caballero del Sol se tornó al puesto, porque ya otro caballero movía para salir a la justa.
+说着，太阳骑士回到场位，因为另一位骑士已催马准备出场比试。
+
+Sus armas eran blancas, sembrados por ellas unos manojos de oro.
+他的铠甲是白色的，上面点缀着一束束金色纹饰。
+
+En el escudo traía dos enanos de estraña figura con gruesos correones en las manos, con un caballero en medio, desnudo, atado a una columna como que con los açotes los enanos lo herían.
+盾上画着两个形貌怪异的矮人，手持粗皮鞭，中间一位骑士赤身绑在柱上，仿佛两个矮人正用鞭子抽打他。
+
+-Guárdate de mi lança, dijo el Caballero de los Enanos al Caballero del Sol, que hiere con cuchilla tajante.
+“小心我的长矛，”矮人骑士对太阳骑士说，“它带着锋利刃口。”
+
+-Guarda bien tus enanos, dijo el Caballero del Sol, porque no te los castigue la mía en pago de la crueldad que cometen contra el caballero atado.
+“好好看住你的矮人，”太阳骑士说，“免得我的长矛因他们对那被绑骑士的残忍而惩罚他们。”
+
+Acabadas estas palabras, movieron el uno contra el otro cuanto los caballos llevarlos podían, y viniéndose a juntar en medio del campo, las lanças fueron quebradas y el Caballero de los Enanos vino a tierra con el arçón de la silla trasero, que fue causa de su caída, así que luego cesó la justa con el Caballero de los Enanos, reyendo mucho sus compañeros de las palabras que había dicho y de cómo le había sucedido.
+话毕，二人纵马全力相冲，在场中相遇，长矛折断，矮人骑士连同后鞍桥一起落马，这正是他坠地的原因；于是与矮人骑士的比试随即停止，他的同伴们对他所说的话和这番结局大笑不已。
+
+El tercero, que las mesmas armas que el segundo y cuarto traía, començó de pasar hacia aquella parte donde sus compañeros tenían el puesto, diciendo estas palabras:
+第三位穿着与第二、第四位相同的铠甲，开始朝同伴们所在的场位走去，说道：
+
+-Caballero cortés, no uséis de tanto rigor conmigo ca yo mansamente me quiero haber con la vuestra merced.
+“有礼的骑士，请不要对我如此严厉，我想温和地与阁下较量。”
+
+-¿Cómo?, dijo el Caballero del Sol, así os responderé.
+“怎么？”太阳骑士说，“那我就这样回应你。”
+
+Diciendo esto y dando de las espuelas a los caballos se vinieron a encontrar en medio del campo, de tal manera que las lanças fueron quebradas y, tomando otras, pasaron como las primeras.
+说着，二人踢马相冲，在场中相遇，长矛折断；他们又取新矛，如第一枪般冲过。
+
+Luego fueron servidos de las terceras, con las cuales movieron al más correr de los caballos y, topándose de muy fuertes encuentros, el Caballero de los Enanos hubo el escudo falsado y apenas hubiera caído del caballo, sino fuera socorrido de uno de sus compañeros.
+随即他们得到第三枪，纵马疾驰，猛烈相撞；矮人骑士的盾牌被刺穿，若非一名同伴扶住，他几乎落马。
+
+El Caballero del Sol pasó muy recio por él con muy gentil continente.
+太阳骑士以极为优雅的姿态从他身旁疾驰而过。
+
+El cuarto caballero sin hablar palabra se va al puesto y la lança baja, se vino contra el Caballero del Sol, que ya asimesmo iba contra él, y topándose en medio de la salvajina plaça las lanças volaron partidas por el aire.
+第四位骑士一言不发进入场位，平放长矛，向太阳骑士冲来；太阳骑士也已迎上，二人在野人广场中央相遇，长矛碎散飞入空中。
+
+Pero con la gran fuerça de los rigurosos encuentros, los caballos se hicieron atrás tres o cuatro pasos.
+但因猛烈冲撞之力，两匹马都后退了三四步。
+
+Tornando pues a la començada justa tomaron otras lanças, y corriendo el uno contra el otro cuanto los caballos llevarlos podían, el Caballero de los Enanos encontró al Caballero del Sol en soslayo del escudo y su lança no fue quebrada.
+他们重新开始比试，取来新矛，纵马全力相冲；矮人骑士斜斜刺中太阳骑士的盾牌，他的长矛没有折断。
+
+El Caballero del Sol le encontró entre los dos enanos del escudo de tal poder que el Caballero de los Enanos viniera a tierra, sino se abraçara con el cuello del caballo.
+太阳骑士刺中他盾上两个矮人之间，力道之大，矮人骑士若不是抱住马颈，早已落马。
+
+Vueltos que fueron los caballeros del duro encuentro, tomaron las terceras lanças y movieron el uno para el otro al más correr de los caballos.
+两位骑士从猛烈冲撞中回身，取来第三枪，纵马疾驰相向而去。
+
+El Caballero del Sol encontró al Caballero de los Enanos sobre el yelmo y la lança no prendió y quedó sana y el Caballero de los Enanos perdió el encuentro por un corcobo que hizo su caballo en medio de la carrera.
+太阳骑士刺中矮人骑士的头盔，长矛未刺入，完好无损；矮人骑士则因马在奔跑途中突然一颠而未能命中。
+
+De esta manera se partió la justa con los cuatro caballeros, diciendo el Caballero de los Enanos: Bien lo hemos hecho, Caballero del Sol, por no echar en costa a Epirón de la Salvajina Fuente.
+与四位骑士的比试就这样结束了，矮人骑士说：“太阳骑士，我们干得不错，免得让野泉的埃皮隆破费。”
+
+De lo cual todos muchos rieron.
+众人都大笑起来。
+
+Luego los cuatro caballeros se querían partir de la Plaça de la Fuente Salvajina, mas el Caballero del Sol les rogó se desarmasen y reposasen y comiesen con él, ca bien menester lo habían todos, lo cual ellos de voluntad aceptaron por hacer placer al Caballero del Sol y dar descanso a sus trabajados cuerpos.
+随后四位骑士想离开野泉广场，但太阳骑士请他们卸甲歇息，与他一同用餐，因为众人都很需要；他们乐意接受，既为让太阳骑士高兴，也让疲惫的身体得到休息。
+
+Los caballeros fueron desarmados y las mesas fueron paradas sobre el herboso campo, donde fueron bien servidos de lo que Epirón de la Fuente había enviado.
+骑士们卸了甲，餐桌摆在青草地上，埃皮隆送来的食物丰盛地款待了他们。
+
+Las tablas fueron alçadas y el Caballero del Sol rogó al caballero de las armas saldes le dijese por cuál razón traían aquella divisa de la torre y enanos, ca ganoso era de saber tales y semejantes cosas.
+餐桌撤下后，太阳骑士请那穿淡黄铠甲的骑士告诉他，为何他们佩带那塔楼与矮人的徽记，因为他很想了解这类事情。
+
+-Pláceme, hermoso caballero, de te lo decir, dijo el Caballero de la Torre.
+“我很乐意告诉你，英俊的骑士，”塔楼骑士说。
+
+Yo traigo la torre con el caballero preso y estos tres caballeros, que mis primos son, los enanos con el caballero desnudo porque yo tengo un solo hermano el cual como saliese a buscar sus aventuras acertó a llegar en esta tierra, en la cual oyó decir que en el Castillo del Hondo Valle, que XXX millas está de aquí, había dos jayanes, el uno llamado Zuaço y el otro Crozoneo, los cuales mantenían toda soberbia, cautivando los andantes caballeros y forçando las honestas doncellas, y como su intención fuese quitar las tales fuerças y vengar los semejantes agravios, tomó el derecho camino para el Castillo del Hondo Valle, y como muy cerca llegase, siendo visto de los hombres del castillo, fueron los gigantes avisados de su venida y salió el mayor, que Zuaço había por nombre, con el cual después de haber pasado muchas palabras hubo su batalla, en la cual acabó su miserable vida el soberbio y desemejado jayán, quedando mi hermano muy laso y cansado de la batalla y con dos pequeñas heridas.
+“我佩带那塔楼与被囚骑士，我这三位表兄弟佩带那两个矮人与赤裸骑士，是因为我只有一个兄弟。他外出寻险时来到此地，听说离此三十英里的深谷城堡里有两个巨人，一个叫苏阿索，一个叫克罗索内奥，他们骄横不可一世，囚禁游侠骑士，强暴贞洁少女。他决心铲除这等暴行、为这类冤屈报仇，便径直前往深谷城堡。快到那里时，城堡里的人看见了他，巨人得知他来，较年长的那个——名叫苏阿索——便出来，与他交谈许多之后交战，那傲慢丑陋的巨人在这场战斗中结束了悲惨的性命，我兄弟也因这场战斗疲惫不堪，身负两处轻伤。
+
+No había bien mi hermano levantándose sobre el muerto gigante Zuaço, cuando llegó el otro, que Crozoneo había por nombre, y lo acometió tan bravamente que, como muy fatigado de la pasada batalla estuviese, después de se haber contra él por más de una hora mantenido en campo en porfiosa contienda, fue vencido por el bravo y sin piedad Crozoneo, el cual mandó a cuatro caballeros de los suyos lo llevasen a la muy fuerte torre del castillo y lo echasen prisiones a los pies y a la garganta, porque muchas muertes muriese en pago de la que al desemejado Zuaço había dado.
+我兄弟刚从那死去的巨人苏阿索身上站起，另一个巨人——名叫克罗索内奥——便到了，凶猛向他进攻；我兄弟因方才那场战斗已十分疲惫，与他又顽强相持了一个多小时，终于被那勇猛无情的克罗索内奥打败。克罗索内奥命手下四名骑士把他押到城堡那座极坚固的塔楼里，给他脚上、颈上都戴上镣铐，要让他受尽许多次死亡，以偿他杀死丑陋苏阿索之命。
+
+De aquella torre le sacan cada ocho días al lugar donde fue la batalla en el cual el valiente Crozoneo hizo poner una columna a la cual le atan y con duros correones dos enanos fuertemente le açotan.
+每隔八天，他们便把他从塔里带到当年交战之处；勇敢的克罗索内奥命人在那里立了一根柱子，把他绑在柱上，两个矮人用粗硬皮鞭狠狠抽打他。
+
+Por la cual causa que has oído, Caballero del Sol, yo traigo la torre con el caballero preso y estos caballeros los enanos.
+太阳骑士，正因你听到的这缘故，我佩带塔楼与被囚骑士的徽记，而这几位的徽记则是那两个矮人。
+
+Después que este hecho vino a nuestros oídos, haciendo estas armas y de ellas armados, salimos de nuestra tierra con propósito de no dejar la demanda ni la divisa hasta sacarle de poder de aquel soberbio gigante o morir en ella.
+此事传到我们耳中后，我们打造了这身铠甲，披挂起来，离开故土，决心不放弃这桩诉求和这徽记，直到把他从那傲慢巨人手中救出，或为此而死。”
+
+Gran sabor había el Caballero del Sol de se lo ver contar, ca cuerdo y gracioso caballero era y no con menos gracia sabía decir que en el campo bien justar, aunque mucho le pesó que un tan buen caballero así encarcelado y maltratado por un cruel jayán fuese y sino por lo que había prometido a Epirón de la Fuente Salvajina los acompañara en la demanda y fuera en la deliberación.
+太阳骑士极爱听他讲述，因为这位骑士既明智又风趣，谈吐的优雅不亚于他在场上比试枪术的本领；但他也为这样一位好骑士竟被残忍巨人如此囚禁虐待而十分难过，若不是已答应野泉的埃皮隆，他便会与他们同行去完成这桩诉求，参与解救。
+
+Los cuatro caballeros se lo agradecieron mucho, ca eran tan buenos y tan diestros en batallar que no les hacía menester otra ayuda para destruir al gigante y a sus caballeros.
+四位骑士十分感谢他，因为他们本就如此善战娴熟，无需别的援助便能消灭那巨人和他的骑士们。
+
+Luego que hubo puesto fin a su hablar el Caballero de la Torre, todos cuatro se despidieron cortésmente, tomando el derecho camino para el Castillo del Hondo Valle.
+塔楼骑士说完后，四人便礼貌告辞，径直取道前往深谷城堡。
+
+De esta manera estuvo el Caballero del Sol en la plaça y castillo de Epirón de la Salvajina Fuente por espacio de veinte días, en los cuales hubo muy hermosas justas de buenos caballeros y hermosas invenciones, que aquí se dejan de contar por evitar prolijidad, en cabo de los cuales Epirón de la Fuente fue sano de su herida y recio para tomar armas.
+太阳骑士就这样在野泉的埃皮隆的广场和城堡里住了二十天，期间有好骑士们举行的许多精彩比试和巧妙发明，此处为免冗长略去不叙；二十天后，野泉的埃皮隆伤愈，强壮得可以重新披甲了。
 
 CAPÍTULO XIV De la batalla que hubo entre el Caballero del Sol y Atilonio del Río Sangriento.
-Ya que Epirón de la Salvajina Fuente fue bien sano de sus heridas y en disposición de sufrir y ejercitar las armas, el Caballero del Sol, ganoso de continuar su viaje, cada día daba priesa porque Epirón de la Fuente le dejase partir; pero como en aquellos pocos días grande amistad entre los dos hubiese entrado, muy grave se le hacía a Epirón de la Fuente su partida. Ya esta causa de día en día lo dilataba y detenía por tenerlo consigo, pero ya vencido de importunación vino a consentir en la partida. Después que con mucho pesar del uno y del otro se partió, el Caballero del Sol tornó a su incierto camino. Tres días eran pasados que no le avino cosa que de contar sea. Ya el cuarto, con el encumbrado sol mediaba, cuando el Caballero del Sol començó de entrar y subir por unas muy altas sierras de muy gran maleza por las cuales camino dos días, cuando se hallaba en valles tan hondos, que mirar las altas peñas la vista turbaba, cuando subía tan alto por aquellas altas y arriscadas sierras, que mirar a los hondos valles, la cabeça enflaquecía. Los caballos iban tan cansados y molidos del áspero camino que apenas podían andar adelante. De esta manera el Caballero del Sol, con gran trabajo, pasó por muchos peligros de ríos y de fieros animales que en aquellas montañas había, los cuales, así pasados, se halló cerca de un espacioso valle por el cual pasaba un gran río, y, así como el que con muchos peligros ha navegado con gran deseo y placer de se ver de ellos libre salta en tierra, así el Caballero del Sol, descabalgando de su caballo, se tiende en la herbosa ribera por tomar algún tanto de reposo del trabajo pasado lo que restaba del día, y la siguiente noche albergó ahí a la sombra de unos frescos arboles. Otro día, ya el sol tornaba por su acostumbrado camino, el Caballero del Sol, cabalgando en su caballo, acompañado de su escudero, començó de andar por el río arriba, y cuando fue alongado un poco de su estancia, vio una hermosa y fuerte fortaleza, cual otra mejor él no había visto, la cual hirmaba sobre la punta de una gran puente que en el gran río había. Y como más cerca llegase, pudo ver un caballero que por la otra parte de la puente llegaba a la fortaleza. El Caballero del Sol, entendiendo que podría ser aquél algún paso defendido, porque el otro caballero no le ganase por la mano, dando de la espuela al caballo, llegó a las puertas de la fortaleza y començó de herir las aldabas fuertemente, pidiendo le dejasen pasar. A esa hora, un bravo gigante, que señor de la casa era, se paró a una gran ventana, que sobre la puerta parecía, al cual el Caballero del Sol, de esta manera dice: -Caballero que hayas ventura, mándame abrir la puerta y dame paso por tu rica puente, ca mucho tengo que hacer de esa otra parte. Luego la gran bestia, con su ronca voz, dio principio a tales palabras: -di, vil hombre, ¿por qué quiebras esas puertas con tu porfioso golpear, no sabiendo quién está en la fortaleza que te pida estrecha cuenta? Vuelve a leer la letra de aquellas columnas, yo te doy licencia, porque no peques de ignorante, ca yo te digo que si las ves que no tornarás a dar más golpes en las puertas que no te lo han merecido. -Mándame abrir, gigante, dijo el Caballero del Sol, que poco me aprovecha leer la letra de las columnas para lo que yo de esa parte tengo de hacer. -Espera, no huyas, con espantoso semblante dijo el desemejado gigante, que pues tu quieres pasar por mi puente, yo te bajaré a abrir a puerta.
+第十四章 太阳骑士与血河骑士阿蒂洛尼奥之战
 
-A esa hora llegó al gigante uno de sus hombres, diciendo cómo otro caballero llamaba a la puerta de la otra parte de la fortaleza. -De habla vienen hechos estos falsos caballeros, dijo el valiente ante. Piensan que ya me tienen en el lazo, como si yo no bastase hacer pedaços de una docena tales como ellos. Anda, dile que atienda un poco, que no hallas la llave, mientras yo traigo este otro a la prisión. Diciendo esto, se fue para dentro y en breve salió de la fortaleza armado de muy lucientes hojas de acero. Sobre ellas vestía un muy fuerte y acerado peto. En su cabeça traía un luciente yelmo con un descompasado escudo echado a las espaldas. De esta manera, cabalgando sobre un gran caballo, el fiero gigante de su fortaleza al campo sale. El Caballero del Sol, que algún tanto afuera se había tirado, yéndose para el gigante, de esta manera le dice: -Paréceme, gigante, que no me quieres dejar pasar sin batalla. -¡Oh, cuitado caballero!, dijo el bravo jayán, bien te podrás loar si algún tiempo de mi prisión salieres, que, estando en campo con Atilonio del Río Sangriento, osaste delante de él hablar. Vente para mí, que yo te haré volar sin alas. Estas palabras acabadas, tomando del campo lo que les pareció, se fueron el uno contra el otro en la furia y fuerça de los caballos, las lanças bajas. Pero el bravo gigante perdió el encuentro porque su caballo, premiado con el peso del disforme gigante, tropeçó en medio de la carrera y por poco vinieran entrambos a tierra, mas el jayán como era muy diestro, hirmando la lança en tierra, escusando su caída juntamente con la del caballo, la lança fue quebrada en dos partes. A esa hora, el Caballero del Sol no estaba despacio, ca, llegando, lo encontró entre el peto y las fuertes fojas de azero en descubierto del escudo de tal poder que malamente lo llagó en el costado izquierdo y, si la lança no quebrara, Atilonio no esperara otro encuentro en campo. Pues como aquella fiera se sintió malherida, bramando con gran furia, se volvió contra el Caballero del Sol, dando grandes palos a su caballo con lo que de la lança le había quedado. Y como el Caballero del Sol viese que mucha sangre perdía, andábase guardando de sus duros golpes, hiriéndole de su espada cuando a su salvo hacerlo podía, porque, vertiendo la sangre, perdiese la fuerça. En poco espacio andaba el gigante tan laso por la mucha sangre que había perdido que a pocas cayera del caballo. Como el Caballero del Sol bien conociese su flaqueza, yéndose contra él, lo hirió de dos grandes golpes, tanto que lo hizo caer sobre el cuello del caballo y, arremetiendo de presto, lo empujo y dio con él del caballo abajo tan desacordado como si muerto fuese. No fue perezoso, que, saltando de la silla en el verde campo, fue sobre él y, quitándole el yelmo, vio en la color ser mortal y, mirándole la herida, pudo ver cómo le pasaba a lo hueco por bajo de la tetilla izquierda, por la cual reciamente soplaba, echando borbollones de negra sangre, en tal manera que en breve espacio fue muerto. Gran placer mostraban los [del] castillo por la muerte de Atilonio del Río Sangriento, ca todos lo servían contra su voluntad por ser él follón y cruel. Luego que la batalla fue partida, por la muerte de Atilonio, acordándose el Caballero del Sol de las columnas, fue a ver lo que en ella[s] estaba escrito, y, como a ellas hubo llegado, vio eran doce columnas delgadas hasta los hombros. Encima de ellas estaba una piedra de llano, redonda como una gran rueda. Sobre ésta estaba Atilonio, hecho de una piedra vermeja, desarmando a un caballero que en bajo de sus rodillas tenía. En torno de la redonda piedra estaban escritas unas letras que decían: Guárdate, caballero, de llamar a esta fortaleza, porque en ella está Atilonio del Río Sangriento que hará de ti sacrificio a sus dioses. Luego que las letras hubo leído, fuese contra la fortaleza, y, como de los servidores del gigante fue visto, las puertas fueron abiertas con grandes vozes que daban, diciendo: Bien venga el esforçado Caballero del Sol que nos ha librado del cautiverio del muy soberbio Atilonio del Río Sangriento.
+Ya que Epirón de la Salvajina Fuente fue bien sano de sus heridas y en disposición de sufrir y ejercitar las armas, el Caballero del Sol, ganoso de continuar su viaje, cada día daba priesa porque Epirón de la Fuente le dejase partir; pero como en aquellos pocos días grande amistad entre los dos hubiese entrado, muy grave se le hacía a Epirón de la Fuente su partida.
+野泉的埃皮隆伤势已完全痊愈，能够承受并操练兵器；太阳骑士渴望继续旅程，每天都催埃皮隆放他离去；但二人在这短短几天里已结下深厚友谊，埃皮隆对他的离去十分难过。
+
+Ya esta causa de día en día lo dilataba y detenía por tenerlo consigo, pero ya vencido de importunación vino a consentir en la partida.
+他借此一日推一日，挽留太阳骑士在身边，但最终被再三请求所打动，同意让他离去。
+
+Después que con mucho pesar del uno y del otro se partió, el Caballero del Sol tornó a su incierto camino.
+二人依依惜别之后，太阳骑士重新踏上不确定的旅程。
+
+Tres días eran pasados que no le avino cosa que de contar sea.
+三天过去，他未遇值得一提之事。
+
+Ya el cuarto, con el encumbrado sol mediaba, cuando el Caballero del Sol començó de entrar y subir por unas muy altas sierras de muy gran maleza por las cuales camino dos días, cuando se hallaba en valles tan hondos, que mirar las altas peñas la vista turbaba, cuando subía tan alto por aquellas altas y arriscadas sierras, que mirar a los hondos valles, la cabeça enflaquecía.
+到了第四天，高悬的太阳正当中天，太阳骑士开始进入并攀登一些极高、灌木极密的山岭；他在其中走了两天，时而身处极深的山谷，仰望高岩便目眩眼花，时而又爬上那些高峻陡峭的山岭，俯视深谷便头晕目弱。
+
+Los caballos iban tan cansados y molidos del áspero camino que apenas podían andar adelante.
+马匹因崎岖道路疲惫不堪、浑身酸痛，几乎无法前行。
+
+De esta manera el Caballero del Sol, con gran trabajo, pasó por muchos peligros de ríos y de fieros animales que en aquellas montañas había, los cuales, así pasados, se halló cerca de un espacioso valle por el cual pasaba un gran río, y, así como el que con muchos peligros ha navegado con gran deseo y placer de se ver de ellos libre salta en tierra, así el Caballero del Sol, descabalgando de su caballo, se tiende en la herbosa ribera por tomar algún tanto de reposo del trabajo pasado lo que restaba del día, y la siguiente noche albergó ahí a la sombra de unos frescos arboles.
+太阳骑士就这样艰难地闯过那些山中河流与猛兽的许多危险；过后，他来到一个宽敞山谷附近，一条大河从谷中流过。就像历经许多危险航行的人，怀着摆脱危险的强烈愿望与喜悦跳上岸一样，太阳骑士下了马，躺在青草河岸上，以在当天剩余时光里稍事歇息此前的劳顿，当夜便在那里的清凉树荫下过夜。
+
+Otro día, ya el sol tornaba por su acostumbrado camino, el Caballero del Sol, cabalgando en su caballo, acompañado de su escudero, començó de andar por el río arriba, y cuando fue alongado un poco de su estancia, vio una hermosa y fuerte fortaleza, cual otra mejor él no había visto, la cual hirmaba sobre la punta de una gran puente que en el gran río había.
+第二天，太阳照常升起，太阳骑士骑上马，由侍从陪同，沿河上行；离开宿处不远，便看见一座美丽坚固的堡垒，他从未见过更好的，它矗立在大河上一座大桥的桥头。
+
+Y como más cerca llegase, pudo ver un caballero que por la otra parte de la puente llegaba a la fortaleza.
+走近些后，他看见一位骑士从桥的另一边来到堡垒。
+
+El Caballero del Sol, entendiendo que podría ser aquél algún paso defendido, porque el otro caballero no le ganase por la mano, dando de la espuela al caballo, llegó a las puertas de la fortaleza y començó de herir las aldabas fuertemente, pidiendo le dejasen pasar.
+太阳骑士心想这或许是有人守卫的关口，为免那骑士抢先，便踢马赶到堡垒门前，用力敲打门环，请求放行。
+
+A esa hora, un bravo gigante, que señor de la casa era, se paró a una gran ventana, que sobre la puerta parecía, al cual el Caballero del Sol, de esta manera dice:
+这时，一个勇猛的巨人——这宅邸之主——站到门上方一扇大窗前，太阳骑士便这样对他说道：
+
+-Caballero que hayas ventura, mándame abrir la puerta y dame paso por tu rica puente, ca mucho tengo que hacer de esa otra parte.
+“愿你得运的骑士，请命人开门，让我从你这华丽的桥上通过，因为我在对岸有许多事要做。”
+
+Luego la gran bestia, con su ronca voz, dio principio a tales palabras:
+那巨兽随即以沙哑的声音这样说道：
+
+-di, vil hombre, ¿por qué quiebras esas puertas con tu porfioso golpear, no sabiendo quién está en la fortaleza que te pida estrecha cuenta?
+“说吧，卑贱的人，你为何这样一味猛敲，要把门砸坏，却不知道堡垒里是谁要向你严加算账？
+
+Vuelve a leer la letra de aquellas columnas, yo te doy licencia, porque no peques de ignorante, ca yo te digo que si las ves que no tornarás a dar más golpes en las puertas que no te lo han merecido.
+回去读读那些柱子上的文字吧，我准你去读，免得你因无知而犯错；因为我告诉你，你若看了，就不会再来敲这并未冒犯你的门了。”
+
+-Mándame abrir, gigante, dijo el Caballero del Sol, que poco me aprovecha leer la letra de las columnas para lo que yo de esa parte tengo de hacer.
+“命人开门吧，巨人，”太阳骑士说，“读柱子上的文字对我到对岸要做的事没什么用。”
+
+-Espera, no huyas, con espantoso semblante dijo el desemejado gigante, que pues tu quieres pasar por mi puente, yo te bajaré a abrir a puerta.
+“等着，别跑，”那丑陋巨人以可怕的面容说，“既然你想过我的桥，我这就下去给你开门。”
+
+A esa hora llegó al gigante uno de sus hombres, diciendo cómo otro caballero llamaba a la puerta de la otra parte de la fortaleza.
+这时，巨人的一个手下到来，说另一位骑士正在堡垒另一边的门前叫门。
+
+-De habla vienen hechos estos falsos caballeros, dijo el valiente ante.
+“这些假骑士是来说话的，”那勇士说。
+
+Piensan que ya me tienen en el lazo, como si yo no bastase hacer pedaços de una docena tales como ellos.
+“他们以为已经把我套住了，好像我连十几个这样的人都不能剁成碎片似的。
+
+Anda, dile que atienda un poco, que no hallas la llave, mientras yo traigo este otro a la prisión.
+去，告诉他稍等，就说你找不到钥匙，等我把另一个带来关进牢里。”
+
+Diciendo esto, se fue para dentro y en breve salió de la fortaleza armado de muy lucientes hojas de acero.
+说着，他便进去了；不多时，他出了堡垒，穿着闪亮钢片制成的铠甲。
+
+Sobre ellas vestía un muy fuerte y acerado peto.
+铠甲外罩着一件坚固的钢胸甲。
+
+En su cabeça traía un luciente yelmo con un descompasado escudo echado a las espaldas.
+头上戴着一顶闪亮的头盔，背后甩着一面巨大的盾牌。
+
+De esta manera, cabalgando sobre un gran caballo, el fiero gigante de su fortaleza al campo sale.
+那凶猛巨人就这样骑着一匹高大的马，从堡垒中来到场上。
+
+El Caballero del Sol, que algún tanto afuera se había tirado, yéndose para el gigante, de esta manera le dice:
+太阳骑士已稍稍退到外面，他走向巨人，这样说道：
+
+-Paréceme, gigante, que no me quieres dejar pasar sin batalla.
+“巨人，我看你是不肯让我不经战斗就过去。”
+
+-¡Oh, cuitado caballero!, dijo el bravo jayán, bien te podrás loar si algún tiempo de mi prisión salieres, que, estando en campo con Atilonio del Río Sangriento, osaste delante de él hablar.
+“噢，可怜的骑士！”那勇猛巨人说，“你若有一天能从我的牢里出去，尽可夸口，说你曾与血河的阿蒂洛尼奥对阵，还敢在他面前说话。
+
+Vente para mí, que yo te haré volar sin alas.
+到我这儿来，我要让你没翅膀也飞起来。”
+
+Estas palabras acabadas, tomando del campo lo que les pareció, se fueron el uno contra el otro en la furia y fuerça de los caballos, las lanças bajas.
+话毕，二人取好各自认为合适的距离，平放长矛，借马匹的狂怒与力量相向冲去。
+
+Pero el bravo gigante perdió el encuentro porque su caballo, premiado con el peso del disforme gigante, tropeçó en medio de la carrera y por poco vinieran entrambos a tierra, mas el jayán como era muy diestro, hirmando la lança en tierra, escusando su caída juntamente con la del caballo, la lança fue quebrada en dos partes.
+但那勇猛巨人这一枪落空了，因为他的马被那畸形巨人的重量压着，跑到半途绊了一下，二人差点都摔到地上；但巨人十分灵巧，把长矛撑在地上，连同马一起稳住了，长矛却断成两截。
+
+A esa hora, el Caballero del Sol no estaba despacio, ca, llegando, lo encontró entre el peto y las fuertes fojas de azero en descubierto del escudo de tal poder que malamente lo llagó en el costado izquierdo y, si la lança no quebrara, Atilonio no esperara otro encuentro en campo.
+这时太阳骑士并未闲着，他冲上前去，刺中巨人胸甲与坚固钢片之间、盾牌未遮住之处，力道之大，狠狠刺伤了他的左侧肋部；若非长矛折断，阿蒂洛尼奥根本等不到第二回合。
+
+Pues como aquella fiera se sintió malherida, bramando con gran furia, se volvió contra el Caballero del Sol, dando grandes palos a su caballo con lo que de la lança le había quedado.
+那野兽感到自己受了重伤，狂怒咆哮，转向太阳骑士，用手中剩下的半截长矛猛打自己的马。
+
+Y como el Caballero del Sol viese que mucha sangre perdía, andábase guardando de sus duros golpes, hiriéndole de su espada cuando a su salvo hacerlo podía, porque, vertiendo la sangre, perdiese la fuerça.
+太阳骑士见他流血甚多，便一面提防他的重击，一面在能安全出手时用剑刺他，好让他因失血而耗尽力气。
+
+En poco espacio andaba el gigante tan laso por la mucha sangre que había perdido que a pocas cayera del caballo.
+不多时，巨人因失血过多已疲惫不堪，差点从马上跌落。
+
+Como el Caballero del Sol bien conociese su flaqueza, yéndose contra él, lo hirió de dos grandes golpes, tanto que lo hizo caer sobre el cuello del caballo y, arremetiendo de presto, lo empujo y dio con él del caballo abajo tan desacordado como si muerto fuese.
+太阳骑士深知他虚弱，便冲上前去，狠狠砍了两剑，使他伏倒在马颈上；随即猛冲过去，将他从马上推落，摔得他失去知觉，仿佛死了一般。
+
+No fue perezoso, que, saltando de la silla en el verde campo, fue sobre él y, quitándole el yelmo, vio en la color ser mortal y, mirándole la herida, pudo ver cómo le pasaba a lo hueco por bajo de la tetilla izquierda, por la cual reciamente soplaba, echando borbollones de negra sangre, en tal manera que en breve espacio fue muerto.
+太阳骑士毫不怠慢，从鞍上跳到青草地上，来到他跟前，取下他的头盔，见他面色已显死相；再看伤口，只见那伤穿透了左乳下方的体腔，伤口处猛烈地冒着气，涌出一股股黑血，因此他不久便死了。
+
+Gran placer mostraban los [del] castillo por la muerte de Atilonio del Río Sangriento, ca todos lo servían contra su voluntad por ser él follón y cruel.
+城堡里的人见血河的阿蒂洛尼奥死去，大为欢喜，因为众人都是不得已才服侍他，他为人凶暴残忍。
+
+Luego que la batalla fue partida, por la muerte de Atilonio, acordándose el Caballero del Sol de las columnas, fue a ver lo que en ella[s] estaba escrito, y, como a ellas hubo llegado, vio eran doce columnas delgadas hasta los hombros.
+战斗因阿蒂洛尼奥之死而结束后，太阳骑士想起那些柱子，便去看上面写了什么；走到近前，他看见那是十二根细柱，高及肩头。
+
+Encima de ellas estaba una piedra de llano, redonda como una gran rueda.
+柱上架着一块平坦的石头，圆如大车轮。
+
+Sobre ésta estaba Atilonio, hecho de una piedra vermeja, desarmando a un caballero que en bajo de sus rodillas tenía.
+石上立着阿蒂洛尼奥的雕像，以红石雕成，正给一个跪在他膝下的骑士卸甲。
+
+En torno de la redonda piedra estaban escritas unas letras que decían: Guárdate, caballero, de llamar a esta fortaleza, porque en ella está Atilonio del Río Sangriento que hará de ti sacrificio a sus dioses.
+圆石周围写着一行字：“骑士，小心叩叫这座堡垒，因为里面有血河的阿蒂洛尼奥，他会把你献祭给他的神祇。”
+
+Luego que las letras hubo leído, fuese contra la fortaleza, y, como de los servidores del gigante fue visto, las puertas fueron abiertas con grandes vozes que daban, diciendo: Bien venga el esforçado Caballero del Sol que nos ha librado del cautiverio del muy soberbio Atilonio del Río Sangriento.
+他读完文字，便朝堡垒走去；巨人的仆人们看见他，便打开大门，高声喊道：“欢迎勇敢的太阳骑士，他把我们从极其傲慢的血河阿蒂洛尼奥的奴役中解救出来了！”
 
 No fue bien dentro en la fortaleza el Caballero del Sol, cuando los caballeros de la fortaleza, que de la Puente Vedada había nombre, veniéndose para él, le entregaron las llaves, recibiéndolo por señor con aquella reverencia que a Atilonio solían hacer, pero como el Caballero del Sol no hubiese olvidado al caballero que a la otra puerta estaba cansado de dar vozes, mando que luego fuese abierto y que de allí adelante libremente dejasen pasar a cuántos fuesen y viniesen, con tanto que, si caballeros fuesen, pasasen uno a uno o dos a dos, porque podrían venir algunos parientes del jayán y cometer alguna traición.
+太阳骑士刚进堡垒，这座名为“禁桥堡”的骑士们便来到他面前，献上钥匙，以从前对阿蒂洛尼奥惯有的敬意尊他为领主；但太阳骑士没有忘记在另一扇门前喊得声嘶力竭的那位骑士，便下令立刻开门，并从今以后让所有来往之人自由通行，但若是骑士，则须一个一个或两个两个地过，因为巨人的一些亲属可能会来，图谋不轨。
 
 CAPÍTULO XV De la batalla que hubieron el Caballero del Sol y el caballero que llamaba de la parte de la puente.
 Luego que la puerta de la torre que estaba sobre la puente fue abierta, entrando por la puerta el caballero que ahí esperaba, fue para el Caballero del Sol, armado de unas armas celestes con un muy fuerte escudo blanco, entallados en él dos caballeros del color de sus armas, armados y trabados de las manos. Tenían un letrero que por cima de las cabeças estaba escrito, cuyas palabras eran éstas: Los bienes que la fortuna a ojos ciegos suele dar los que fueron de la cuna dos cuerpos y alma una entre sí han comunicar. Sobre sus pechos tenían escritos sus propios nombres, cubiertos con unas sutiles portecicas. El cual, como ante el Caballero del Sol llegase, dijo así: -Caballero, bien sabes que, ante que llegases a esta fortaleza, yo había llamado a la puerta de la torre, y, pues yo primero pedí el paso y la batalla, a mí convenía tomarla primero con el jayán, porque según disponen las leyes, el que es primero en tiempo es primero en derecho, y cuando yo faltara, o muriera en ella, quedara asaz tiempo para hacer la vuestra, y, pues así no lo habéis querido guardar, yo os desafío mortalmente y os doy este guante en señal y gaje. Diciendo esto el caballero estraño, sin aguardar respuesta, se salió al campo donde había sido la batalla entre el Caballero del Sol y el gigante Atilonio. Pues como el Caballero del Sol viese que no podía escusar la batalla, puesto que conociese que el caballero estraño no tenía razón para le desafiar, tornó otra vez al campo, aunque bien cansado de la batalla pasada y, yéndose para el caballero estraño, estas palabras le dice: -Caballero que hayáis ventura, id vuestro camino, pues el paso que os doy desembaraçado, y dejad la batalla, pues os falta razón para la pedir y a mi no me faltan fuerças para me defender y, aunque me faltasen, no me falta ánimo para morir. Muy rebelde estaba con todo esto el caballero estraño, diciendo al Caballero del Sol: -Aparéjate de yelmo y escudo y lança, sino así como estás te acometeré. No fueron bien oídas estas palabras por el Caballero del Sol, cuando, pidiendo su escudo y lança y enlazando su yelmo, tomó del campo lo que le pareció ca ya su enemigo su parte tenía. Sin más hablar palabras, se vinieron el uno contra el otro, las lanças bajas, con la furia de los caballos, dándose tales encuentros que, desacordados, cayeron sobre los arçones de las sillas y por poco vinieran entrambos a tierra, pero como los caballos eran muy diestros, como pasaron los encuentros, estuvieron quedos, tanto que hubo espacio de volver en su acuerdo. Muy maravillado fue el Caballero del Sol de ver tan fuerte encuentro como había recibido, pensando qué caballero podría ser aquél que tan diestramente hería de la lança. Y parecióle que podría ser el valiente Floramante, agora nuevamente nombrado, o el bastardo animal, Vitoraldo por nombre, su hermano.
