@@ -1,7 +1,8 @@
 ---
-title:
+title: history
 tags:
-date:
+  - note
+date: 2026-10-31
 comment:
 ---
 

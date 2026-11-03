@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>chapter2</title>
+<link id="theme-css" rel="stylesheet" href="../../../themes/phycat-abyss.css">
+<link rel="stylesheet" href="../../../ui.css?v=f124b6a0">
+</head>
+<body class="done">
+
+<div id="pkm-content">
+<h1 id="mqtt5">MQTT5 第二章 控制包格式</h1>
+<div class="pkm-meta"><span class="pkm-badge pkm-tag-c0"><span class="pkm-badge-ico"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M4.75 0a.75.75 0 0 1 .75.75V2h5V.75a.75.75 0 0 1 1.5 0V2h1.25c.966 0 1.75.784 1.75 1.75v10.5A1.75 1.75 0 0 1 12.25 16H2.75A1.75 1.75 0 0 1 1 14.25V3.75C1 2.784 1.784 2 2.75 2H4V.75A.75.75 0 0 1 4.75 0ZM2.5 7.5v6.75c0 .138.112.25.25.25h9.5a.25.25 0 0 0 .25-.25V7.5Z"/></svg></span><span class="pkm-badge-val">2026-11-03</span></span><span class="pkm-badge pkm-tag-c0"><span class="pkm-badge-val">note</span></span></div>
+<h2 id="mqtt">MQTT 数据包整结构</h2>
+<p><img alt="mqtt-package" src="../assets/mqtt-package.webp" /><a class="ref-link" href="#ref-1">[1]</a></p>
+<p>主要包含三部分：<br />
+1. 固定头（Fixed Header）<br />
+    1. 控制字段（Control Field）<br />
+        1. 报文类型（Packet Type，第 1 字节高 4 位）<br />
+        2. 标志位（Flags，第 1 字节低 4 位）<br />
+    2. 剩余长度（Remaining Length，可变字节整数编码）<br />
+2. 可变头（Variable Header）：内容随报文类型而定，如报文标识符、主题名、属性。<br />
+3. 载荷（Payload）：内容随报文类型而定，如消息内容、客户端 ID。</p>
+<h2 id="fixed-header">固定头（Fixed Header）</h2>
+<p><img alt="mqtt-fixed-header" src="../assets/mqtt-fixed-header.webp" /><a class="ref-link" href="#ref-1">[1]</a></p>
+<h3 id="packet-type">报文类型（Packet Type）</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;"><strong>Name</strong></th>
+<th style="text-align: center;"><strong>Value</strong></th>
+<th style="text-align: center;"><strong>Direction of flow</strong></th>
+<th style="text-align: center;"><strong>Description</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">Reserved</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">Forbidden</td>
+<td style="text-align: center;">Reserved</td>
+</tr>
+<tr>
+<td style="text-align: center;">CONNECT</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">Client to Server</td>
+<td style="text-align: center;">Connection request</td>
+</tr>
+<tr>
+<td style="text-align: center;">CONNACK</td>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">Server to Client</td>
+<td style="text-align: center;">Connect acknowledgment</td>
+</tr>
+<tr>
+<td style="text-align: center;">PUBLISH</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">Client to Server or<br><br>Server to Client</td>
+<td style="text-align: center;">Publish message</td>
+</tr>
+<tr>
+<td style="text-align: center;">PUBACK</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">Client to Server or<br><br>Server to Client</td>
+<td style="text-align: center;">Publish acknowledgment (QoS 1)</td>
+</tr>
+<tr>
+<td style="text-align: center;">PUBREC</td>
+<td style="text-align: center;">5</td>
+<td style="text-align: center;">Client to Server or<br><br>Server to Client</td>
+<td style="text-align: center;">Publish received (QoS 2 delivery part 1)</td>
+</tr>
+<tr>
+<td style="text-align: center;">PUBREL</td>
+<td style="text-align: center;">6</td>
+<td style="text-align: center;">Client to Server or<br><br>Server to Client</td>
+<td style="text-align: center;">Publish release (QoS 2 delivery part 2)</td>
+</tr>
+<tr>
+<td style="text-align: center;">PUBCOMP</td>
+<td style="text-align: center;">7</td>
+<td style="text-align: center;">Client to Server or<br><br>Server to Client</td>
+<td style="text-align: center;">Publish complete (QoS 2 delivery part 3)</td>
+</tr>
+<tr>
+<td style="text-align: center;">SUBSCRIBE</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">Client to Server</td>
+<td style="text-align: center;">Subscribe request</td>
+</tr>
+<tr>
+<td style="text-align: center;">SUBACK</td>
+<td style="text-align: center;">9</td>
+<td style="text-align: center;">Server to Client</td>
+<td style="text-align: center;">Subscribe acknowledgment</td>
+</tr>
+<tr>
+<td style="text-align: center;">UNSUBSCRIBE</td>
+<td style="text-align: center;">10</td>
+<td style="text-align: center;">Client to Server</td>
+<td style="text-align: center;">Unsubscribe request</td>
+</tr>
+<tr>
+<td style="text-align: center;">UNSUBACK</td>
+<td style="text-align: center;">11</td>
+<td style="text-align: center;">Server to Client</td>
+<td style="text-align: center;">Unsubscribe acknowledgment</td>
+</tr>
+<tr>
+<td style="text-align: center;">PINGREQ</td>
+<td style="text-align: center;">12</td>
+<td style="text-align: center;">Client to Server</td>
+<td style="text-align: center;">PING request</td>
+</tr>
+<tr>
+<td style="text-align: center;">PINGRESP</td>
+<td style="text-align: center;">13</td>
+<td style="text-align: center;">Server to Client</td>
+<td style="text-align: center;">PING response</td>
+</tr>
+<tr>
+<td style="text-align: center;">DISCONNECT</td>
+<td style="text-align: center;">14</td>
+<td style="text-align: center;">Client to Server or<br><br>Server to Client</td>
+<td style="text-align: center;">Disconnect notification</td>
+</tr>
+<tr>
+<td style="text-align: center;">AUTH</td>
+<td style="text-align: center;">15</td>
+<td style="text-align: center;">Client to Server or Server to Client</td>
+<td style="text-align: center;">Authentication exchange</td>
+</tr>
+<tr>
+<td style="text-align: center;">### 标志位（Flags）</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+</tbody>
+</table>
+<p>Flags 只有 PUBLISH 用到，其他报文都填固定值。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;"><strong>MQTT Control Packet</strong></th>
+<th style="text-align: center;"><strong>Fixed Header flags</strong></th>
+<th style="text-align: center;"><strong>Bit 3</strong></th>
+<th style="text-align: center;"><strong>Bit 2</strong></th>
+<th style="text-align: center;"><strong>Bit 1</strong></th>
+<th style="text-align: center;"><strong>Bit 0</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">CONNECT</td>
+<td style="text-align: center;">Reserved</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr>
+<td style="text-align: center;">CONNACK</td>
+<td style="text-align: center;">Reserved</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr>
+<td style="text-align: center;">PUBLISH</td>
+<td style="text-align: center;">Used in MQTT v5.0</td>
+<td style="text-align: center;">DUP</td>
+<td style="text-align: center;">QoS (this &amp; next bit)</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;">RETAIN</td>
+</tr>
+<tr>
+<td style="text-align: center;">PUBACK</td>
+<td style="text-align: center;">Reserved</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr>
+<td style="text-align: center;">PUBREC</td>
+<td style="text-align: center;">Reserved</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr>
+<td style="text-align: center;">PUBREL</td>
+<td style="text-align: center;">Reserved</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr>
+<td style="text-align: center;">PUBCOMP</td>
+<td style="text-align: center;">Reserved</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr>
+<td style="text-align: center;">SUBSCRIBE</td>
+<td style="text-align: center;">Reserved</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr>
+<td style="text-align: center;">SUBACK</td>
+<td style="text-align: center;">Reserved</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr>
+<td style="text-align: center;">UNSUBSCRIBE</td>
+<td style="text-align: center;">Reserved</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr>
+<td style="text-align: center;">UNSUBACK</td>
+<td style="text-align: center;">Reserved</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr>
+<td style="text-align: center;">PINGREQ</td>
+<td style="text-align: center;">Reserved</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr>
+<td style="text-align: center;">PINGRESP</td>
+<td style="text-align: center;">Reserved</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr>
+<td style="text-align: center;">DISCONNECT</td>
+<td style="text-align: center;">Reserved</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr>
+<td style="text-align: center;">AUTH</td>
+<td style="text-align: center;">Reserved</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr>
+<td style="text-align: center;">* 详细内容可以看 <a href="https://docs.oasis-open.org/mqtt/mqtt/v5.0/os/mqtt-v5.0-os.html#_CONNECT_Fixed_Header">section 3.3.1</a></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;">* DUP = Duplicate delivery of a PUBLISH packet</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;">* QoS = PUBLISH Quality of Service</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+<tr>
+<td style="text-align: center;">* RETAIN = PUBLISH retained message flag</td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+<td style="text-align: center;"></td>
+</tr>
+</tbody>
+</table>
+<h3 id="remaining-length">剩余长度（Remaining Length）</h3>
+<p>标准这里写的很罗嗦，其实就是，后两部分的长度和：<br />
+<strong>剩余长度 = 这条报文里，固定头之后所有字节的数量</strong>。</p>
+<h2 id="variable-header">可变头（Variable Header）</h2>
+<p><img alt="mqtt-variable-header" src="../assets/mqtt-variable-header.webp" /><a class="ref-link" href="#ref-1">[1]</a></p>
+<blockquote>
+<p>可变头就像每种报文的“专属表格”：类型一定，该填哪几栏、每栏填什么就都定了，换一种报文换一张表。</p>
+</blockquote>
+<h3 id="packet-identifier">报文标识符（Packet  Identifier）</h3>
+<p><strong>“报文标识符字段”是</strong> MQTT 报文可变头里的一个 <strong>2 字节整数</strong>，用来把“请求”和“对应的确认”配对。<br />
+* 有报文标识符：PUBLISH（QoS &gt; 0）、PUBACK、PUBREC、PUBREL、PUBCOMP、SUBSCRIBE、SUBACK、UNSUBSCRIBE、UNSUBACK<br />
+* 无报文标识符：CONNECT、CONNACK、PINGREQ、PINGRESP、DISCONNECT、AUTH</p>
+<p><strong>报文标识符的分配与回收规则</strong>。拆成四条：<br />
+1. <strong>什么时候必须有</strong>：PUBLISH 在 QoS &gt; 0 时必须带；QoS 0 时不得带。客户端发 SUBSCRIBE、UNSUBSCRIBE、PUBLISH（QoS &gt; 0）时，必须分配一个<strong>当前未使用的非零</strong>标识符。服务器发 PUBLISH（QoS &gt; 0）也一样。<br />
+2. <strong>什么时候可以回收</strong>：发送方处理完对应的确认报文后，这个标识符才能再次使用。QoS 1 的 PUBLISH 对应 PUBACK；QoS 2 的 PUBLISH 对应 PUBCOMP，或者原因码 ≥ 128 的 PUBREC；SUBSCRIBE / UNSUBSCRIBE 分别对应 SUBACK / UNSUBACK。<br />
+3. <strong>谁和谁共享一套</strong>：PUBLISH、SUBSCRIBE、UNSUBSCRIBE 用的是<strong>同一个池子</strong>，但客户端和服务器<strong>各自独立</strong>维护自己的池子。所以同一时刻，一个标识符不能被同一个发送方的两条命令同时占用，但客户端用 0x1234 和服务器用 0x1234 互不影响。<br />
+4. <strong>确认报文必须回同一个号</strong>：PUBACK / PUBREC / PUBREL / PUBCOMP 必须带上原 PUBLISH 的标识符；SUBACK / UNSUBACK 必须带上原 SUBSCRIBE / UNSUBSCRIBE 的标识符。</p>
+<h3 id="properties">属性（Properties）</h3>
+<blockquote>
+<p>属性系统是 MQTT5 新增的内容。</p>
+</blockquote>
+<p><strong>一、属性放在哪</strong>  </p>
+<p>CONNECT、CONNACK、PUBLISH、PUBACK、PUBREC、PUBREL、PUBCOMP、SUBSCRIBE、SUBACK、UNSUBSCRIBE、UNSUBACK、DISCONNECT、AUTH 这 13 种报文的可变头最后一个字段是属性集合。CONNECT 的载荷里还有一组 Will Properties（遗嘱属性），结构相同。</p>
+<p><strong>二、属性集合长什么样</strong></p>
+<ul>
+<li>结构：属性长度（可变字节整数）+ 若干属性。</li>
+<li>属性长度：不包含它自己占的字节，只数后面属性部分的字节数。没有属性时写 0，不能省略。</li>
+<li>单个属性：标识符（可变字节整数）+ 值。标识符决定属性是什么、值是什么类型。当前版本所有属性标识符都只占 1 个字节。</li>
+<li>出错处理：报文出现不该有的标识符，或值类型不对，即为 Malformed Packet，回 CONNACK 或 DISCONNECT，原因码 0x81。</li>
+<li>顺序：属性之间顺序无所谓。</li>
+</ul>
+<p><strong>三、下面的大表。</strong>  </p>
+<p>表里每一行是一个属性的定义：十进制编号、十六进制编号、名称、值类型、能出现在哪些报文里。比如 0x11 是 Session Expiry Interval，四字节整数，只能出现在 CONNECT、CONNACK、DISCONNECT；0x23 是 Topic Alias，两字节整数，只能出现在 PUBLISH。</p>
+<table>
+<thead>
+<tr>
+<th><strong>Identifier</strong></th>
+<th></th>
+<th><strong>Name (usage)</strong></th>
+<th><strong>Type</strong></th>
+<th><strong>Packet / Will Properties</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Dec</strong></td>
+<td><strong>Hex</strong></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>2</td>
+<td>0x02</td>
+<td>Message Expiry Interval</td>
+<td>Four Byte Integer</td>
+<td>PUBLISH, Will Properties</td>
+</tr>
+<tr>
+<td>3</td>
+<td>0x03</td>
+<td>Content Type</td>
+<td>UTF-8 Encoded String</td>
+<td>PUBLISH, Will Properties</td>
+</tr>
+<tr>
+<td>8</td>
+<td>0x08</td>
+<td>Response Topic</td>
+<td>UTF-8 Encoded String</td>
+<td>PUBLISH, Will Properties</td>
+</tr>
+<tr>
+<td>9</td>
+<td>0x09</td>
+<td>Correlation Data</td>
+<td>Binary Data</td>
+<td>PUBLISH, Will Properties</td>
+</tr>
+<tr>
+<td>11</td>
+<td>0x0B</td>
+<td>Subscription Identifier</td>
+<td>Variable Byte Integer</td>
+<td>PUBLISH, SUBSCRIBE</td>
+</tr>
+<tr>
+<td>17</td>
+<td>0x11</td>
+<td>Session Expiry Interval</td>
+<td>Four Byte Integer</td>
+<td>CONNECT, CONNACK, DISCONNECT</td>
+</tr>
+<tr>
+<td>18</td>
+<td>0x12</td>
+<td>Assigned Client Identifier</td>
+<td>UTF-8 Encoded String</td>
+<td>CONNACK</td>
+</tr>
+<tr>
+<td>19</td>
+<td>0x13</td>
+<td>Server Keep Alive</td>
+<td>Two Byte Integer</td>
+<td>CONNACK</td>
+</tr>
+<tr>
+<td>21</td>
+<td>0x15</td>
+<td>Authentication Method</td>
+<td>UTF-8 Encoded String</td>
+<td>CONNECT, CONNACK, AUTH</td>
+</tr>
+<tr>
+<td>22</td>
+<td>0x16</td>
+<td>Authentication Data</td>
+<td>Binary Data</td>
+<td>CONNECT, CONNACK, AUTH</td>
+</tr>
+<tr>
+<td>23</td>
+<td>0x17</td>
+<td>Request Problem Information</td>
+<td>Byte</td>
+<td>CONNECT</td>
+</tr>
+<tr>
+<td>24</td>
+<td>0x18</td>
+<td>Will Delay Interval</td>
+<td>Four Byte Integer</td>
+<td>Will Properties</td>
+</tr>
+<tr>
+<td>25</td>
+<td>0x19</td>
+<td>Request Response Information</td>
+<td>Byte</td>
+<td>CONNECT</td>
+</tr>
+<tr>
+<td>26</td>
+<td>0x1A</td>
+<td>Response Information</td>
+<td>UTF-8 Encoded String</td>
+<td>CONNACK</td>
+</tr>
+<tr>
+<td>28</td>
+<td>0x1C</td>
+<td>Server Reference</td>
+<td>UTF-8 Encoded String</td>
+<td>CONNACK, DISCONNECT</td>
+</tr>
+<tr>
+<td>31</td>
+<td>0x1F</td>
+<td>Reason String</td>
+<td>UTF-8 Encoded String</td>
+<td>CONNACK, PUBACK, PUBREC, PUBREL, PUBCOMP, SUBACK, UNSUBACK, DISCONNECT, AUTH</td>
+</tr>
+<tr>
+<td>33</td>
+<td>0x21</td>
+<td>Receive Maximum</td>
+<td>Two Byte Integer</td>
+<td>CONNECT, CONNACK</td>
+</tr>
+<tr>
+<td>34</td>
+<td>0x22</td>
+<td>Topic Alias Maximum</td>
+<td>Two Byte Integer</td>
+<td>CONNECT, CONNACK</td>
+</tr>
+<tr>
+<td>35</td>
+<td>0x23</td>
+<td>Topic Alias</td>
+<td>Two Byte Integer</td>
+<td>PUBLISH</td>
+</tr>
+<tr>
+<td>36</td>
+<td>0x24</td>
+<td>Maximum QoS</td>
+<td>Byte</td>
+<td>CONNACK</td>
+</tr>
+<tr>
+<td>37</td>
+<td>0x25</td>
+<td>Retain Available</td>
+<td>Byte</td>
+<td>CONNACK</td>
+</tr>
+<tr>
+<td>38</td>
+<td>0x26</td>
+<td>User Property</td>
+<td>UTF-8 String Pair</td>
+<td>CONNECT, CONNACK, PUBLISH, Will Properties, PUBACK, PUBREC, PUBREL, PUBCOMP, SUBSCRIBE, SUBACK, UNSUBSCRIBE, UNSUBACK, DISCONNECT, AUTH</td>
+</tr>
+<tr>
+<td>39</td>
+<td>0x27</td>
+<td>Maximum Packet Size</td>
+<td>Four Byte Integer</td>
+<td>CONNECT, CONNACK</td>
+</tr>
+<tr>
+<td>40</td>
+<td>0x28</td>
+<td>Wildcard Subscription Available</td>
+<td>Byte</td>
+<td>CONNACK</td>
+</tr>
+<tr>
+<td>41</td>
+<td>0x29</td>
+<td>Subscription Identifier Available</td>
+<td>Byte</td>
+<td>CONNACK</td>
+</tr>
+<tr>
+<td>42</td>
+<td>0x2A</td>
+<td>Shared Subscription Available</td>
+<td>Byte</td>
+<td>CONNACK</td>
+</tr>
+<tr>
+<td>## 载荷（Payload）</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>一些 MQTT 控制包包含一个有效载荷作为包的最后部分。</p>
+<p>必需：CONNECT、SUBSCRIBE、SUBACK、UNSUBSCRIBE、UNSUBACK<br />
+可选：PUBLISH<br />
+无：CONNACK、PUBACK、PUBREC、PUBREL、PUBCOMP、PINGREQ、PINGRESP、DISCONNECT、AUTH</p>
+<h2 id="reason-code">原因码（Reason Code）</h2>
+<p><strong>原因码（Reason Code）</strong>：1 字节无符号值，表示操作结果。</p>
+<ul>
+<li>小于 0x80：成功。成功通常写 0。</li>
+<li>0x80 及以上：失败。</li>
+</ul>
+<p><strong>带原因码的报文分两种放法：</strong></p>
+<ul>
+<li>可变头里放<strong>一个</strong>原因码：CONNACK、PUBACK、PUBREC、PUBREL、PUBCOMP、DISCONNECT、AUTH。</li>
+<li>载荷里放<strong>一组</strong>原因码：SUBACK、UNSUBACK。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th><strong>Reason Code</strong></th>
+<th></th>
+<th><strong>Name</strong></th>
+<th><strong>Packets</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Decimal</strong></td>
+<td><strong>Hex</strong></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>0</td>
+<td>0x00</td>
+<td>Normal disconnection</td>
+<td>DISCONNECT</td>
+</tr>
+<tr>
+<td>0</td>
+<td>0x00</td>
+<td>Granted QoS 0</td>
+<td>SUBACK</td>
+</tr>
+<tr>
+<td>1</td>
+<td>0x01</td>
+<td>Granted QoS 1</td>
+<td>SUBACK</td>
+</tr>
+<tr>
+<td>2</td>
+<td>0x02</td>
+<td>Granted QoS 2</td>
+<td>SUBACK</td>
+</tr>
+<tr>
+<td>4</td>
+<td>0x04</td>
+<td>Disconnect with Will Message</td>
+<td>DISCONNECT</td>
+</tr>
+<tr>
+<td>16</td>
+<td>0x10</td>
+<td>No matching subscribers</td>
+<td>PUBACK, PUBREC</td>
+</tr>
+<tr>
+<td>17</td>
+<td>0x11</td>
+<td>No subscription existed</td>
+<td>UNSUBACK</td>
+</tr>
+<tr>
+<td>24</td>
+<td>0x18</td>
+<td>Continue authentication</td>
+<td>AUTH</td>
+</tr>
+<tr>
+<td>25</td>
+<td>0x19</td>
+<td>Re-authenticate</td>
+<td>AUTH</td>
+</tr>
+<tr>
+<td>128</td>
+<td>0x80</td>
+<td>Unspecified error</td>
+<td>CONNACK, PUBACK, PUBREC, SUBACK, UNSUBACK, DISCONNECT</td>
+</tr>
+<tr>
+<td>129</td>
+<td>0x81</td>
+<td>Malformed Packet</td>
+<td>CONNACK, DISCONNECT</td>
+</tr>
+<tr>
+<td>130</td>
+<td>0x82</td>
+<td>Protocol Error</td>
+<td>CONNACK, DISCONNECT</td>
+</tr>
+<tr>
+<td>131</td>
+<td>0x83</td>
+<td>Implementation specific error</td>
+<td>CONNACK, PUBACK, PUBREC, SUBACK, UNSUBACK, DISCONNECT</td>
+</tr>
+<tr>
+<td>132</td>
+<td>0x84</td>
+<td>Unsupported Protocol Version</td>
+<td>CONNACK</td>
+</tr>
+<tr>
+<td>133</td>
+<td>0x85</td>
+<td>Client Identifier not valid</td>
+<td>CONNACK</td>
+</tr>
+<tr>
+<td>134</td>
+<td>0x86</td>
+<td>Bad User Name or Password</td>
+<td>CONNACK</td>
+</tr>
+<tr>
+<td>135</td>
+<td>0x87</td>
+<td>Not authorized</td>
+<td>CONNACK, PUBACK, PUBREC, SUBACK, UNSUBACK, DISCONNECT</td>
+</tr>
+<tr>
+<td>136</td>
+<td>0x88</td>
+<td>Server unavailable</td>
+<td>CONNACK</td>
+</tr>
+<tr>
+<td>137</td>
+<td>0x89</td>
+<td>Server busy</td>
+<td>CONNACK, DISCONNECT</td>
+</tr>
+<tr>
+<td>138</td>
+<td>0x8A</td>
+<td>Banned</td>
+<td>CONNACK</td>
+</tr>
+<tr>
+<td>139</td>
+<td>0x8B</td>
+<td>Server shutting down</td>
+<td>DISCONNECT</td>
+</tr>
+<tr>
+<td>140</td>
+<td>0x8C</td>
+<td>Bad authentication method</td>
+<td>CONNACK, DISCONNECT</td>
+</tr>
+<tr>
+<td>141</td>
+<td>0x8D</td>
+<td>Keep Alive timeout</td>
+<td>DISCONNECT</td>
+</tr>
+<tr>
+<td>142</td>
+<td>0x8E</td>
+<td>Session taken over</td>
+<td>DISCONNECT</td>
+</tr>
+<tr>
+<td>143</td>
+<td>0x8F</td>
+<td>Topic Filter invalid</td>
+<td>SUBACK, UNSUBACK, DISCONNECT</td>
+</tr>
+<tr>
+<td>144</td>
+<td>0x90</td>
+<td>Topic Name invalid</td>
+<td>CONNACK, PUBACK, PUBREC, DISCONNECT</td>
+</tr>
+<tr>
+<td>145</td>
+<td>0x91</td>
+<td>Packet Identifier in use</td>
+<td>PUBACK, PUBREC, SUBACK, UNSUBACK</td>
+</tr>
+<tr>
+<td>146</td>
+<td>0x92</td>
+<td>Packet Identifier not found</td>
+<td>PUBREL, PUBCOMP</td>
+</tr>
+<tr>
+<td>147</td>
+<td>0x93</td>
+<td>Receive Maximum exceeded</td>
+<td>DISCONNECT</td>
+</tr>
+<tr>
+<td>148</td>
+<td>0x94</td>
+<td>Topic Alias invalid</td>
+<td>DISCONNECT</td>
+</tr>
+<tr>
+<td>149</td>
+<td>0x95</td>
+<td>Packet too large</td>
+<td>CONNACK, DISCONNECT</td>
+</tr>
+<tr>
+<td>150</td>
+<td>0x96</td>
+<td>Message rate too high</td>
+<td>DISCONNECT</td>
+</tr>
+<tr>
+<td>151</td>
+<td>0x97</td>
+<td>Quota exceeded</td>
+<td>CONNACK, PUBACK, PUBREC, SUBACK, DISCONNECT</td>
+</tr>
+<tr>
+<td>152</td>
+<td>0x98</td>
+<td>Administrative action</td>
+<td>DISCONNECT</td>
+</tr>
+<tr>
+<td>153</td>
+<td>0x99</td>
+<td>Payload format invalid</td>
+<td>CONNACK, PUBACK, PUBREC, DISCONNECT</td>
+</tr>
+<tr>
+<td>154</td>
+<td>0x9A</td>
+<td>Retain not supported</td>
+<td>CONNACK, DISCONNECT</td>
+</tr>
+<tr>
+<td>155</td>
+<td>0x9B</td>
+<td>QoS not supported</td>
+<td>CONNACK, DISCONNECT</td>
+</tr>
+<tr>
+<td>156</td>
+<td>0x9C</td>
+<td>Use another server</td>
+<td>CONNACK, DISCONNECT</td>
+</tr>
+<tr>
+<td>157</td>
+<td>0x9D</td>
+<td>Server moved</td>
+<td>CONNACK, DISCONNECT</td>
+</tr>
+<tr>
+<td>158</td>
+<td>0x9E</td>
+<td>Shared Subscriptions not supported</td>
+<td>SUBACK, DISCONNECT</td>
+</tr>
+<tr>
+<td>159</td>
+<td>0x9F</td>
+<td>Connection rate exceeded</td>
+<td>CONNACK, DISCONNECT</td>
+</tr>
+<tr>
+<td>160</td>
+<td>0xA0</td>
+<td>Maximum connect time</td>
+<td>DISCONNECT</td>
+</tr>
+<tr>
+<td>161</td>
+<td>0xA1</td>
+<td>Subscription Identifiers not supported</td>
+<td>SUBACK, DISCONNECT</td>
+</tr>
+<tr>
+<td>162</td>
+<td>0xA2</td>
+<td>Wildcard Subscriptions not supported</td>
+<td>SUBACK, DISCONNECT</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_1">参考资料</h2>
+<ol>
+<li id="ref-1"><a href="https://www.hivemq.com/blog/mqtt-packets-comprehensive-guide/">MQTT 数据包：全面指南</a></li>
+</ol>
+</div>
+<script>window.PKM = {"themes": ["phycat-abyss", "phycat-caramel", "phycat-cherry", "phycat-forest", "phycat-mauve", "phycat-mint", "phycat-prussian", "phycat-radiation", "phycat-sakura", "phycat-sky", "phycat-vampire", "vlook-fancy", "vlook-geek", "vlook-hope", "vlook-joint", "vlook-note", "vlook-solaris", "vlook-thinking"], "themesBase": "../../../themes/", "defaultTheme": "phycat-abyss", "themesKind": {"phycat-abyss": "dark", "phycat-caramel": "light", "phycat-cherry": "light", "phycat-forest": "light", "phycat-mauve": "light", "phycat-mint": "light", "phycat-prussian": "light", "phycat-radiation": "dark", "phycat-sakura": "light", "phycat-sky": "light", "phycat-vampire": "dark", "vlook-fancy": "light", "vlook-geek": "light", "vlook-hope": "light", "vlook-joint": "light", "vlook-note": "light", "vlook-solaris": "light", "vlook-thinking": "light"}, "siteTree": "../../../site-tree.json", "hasMath": false, "short": "tnmnqf"};</script>
+<script src="../../../ui.js?v=ff3d5167"></script>
+</body>
+</html>

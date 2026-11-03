@@ -1,11 +1,15 @@
 ---
-title:
+title: background
 tags:
-date:
+  - note
+date: 2026-10-31
 comment:
 ---
 
 # Background
+---
+## Program Language
+* 👉
 
 ---
 ## C Standard
