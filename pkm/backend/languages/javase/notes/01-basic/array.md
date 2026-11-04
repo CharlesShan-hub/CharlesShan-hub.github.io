@@ -1,7 +1,7 @@
 ---
 title: array
 tags:
-  - note
+  - catalog
 date: 2026-10-12
 comment:
 ---

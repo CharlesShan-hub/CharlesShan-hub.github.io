@@ -1,7 +1,7 @@
 ---
 title: 变量与数据类型
 tags:
-  - note
+  - catalog
 date: 2026-10-10
 comment: 变量、基本类型、进制，自动与强制类型转换规则
 ---

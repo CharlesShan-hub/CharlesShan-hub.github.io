@@ -7,23 +7,23 @@ comment:
 ---
 # MQTT5 第三章 控制包
 
-| 3.x | 报文（链接）                                                | 方向  | 低 4 位          | Properties          | Reason Code       | Packet Identifier | Payload |
-| --- | ----------------------------------------------------- | --- | -------------- | ------------------- | ----------------- | ----------------- | ------- |
-| 1   | [CONNECT](https://tencent.yuanbao/chapter3-1.md)      | C→S | 0000           | ✓ + Will Properties | —                 | —                 | 必       |
-| 2   | [CONNACK](https://tencent.yuanbao/chapter3-2.md)      | S→C | 0000           | ✓                   | 单值 / VH           | —                 | —       |
-| 3   | [PUBLISH](https://tencent.yuanbao/chapter3-3.md)      | 双向  | DUP·QoS·RETAIN | ✓                   | —                 | QoS > 0           | 可选      |
-| 4   | [PUBACK](https://tencent.yuanbao/chapter3-4.md)       | 双向  | 0000           | ✓                   | 单值 / VH           | ✓                 | —       |
-| 5   | [PUBREC](https://tencent.yuanbao/chapter3-5.md)       | 双向  | 0000           | ✓                   | 单值 / VH           | ✓                 | —       |
-| 6   | [PUBREL](https://tencent.yuanbao/chapter3-6.md)       | 双向  | **0010**​      | ✓                   | 单值 / VH           | ✓                 | —       |
-| 7   | [PUBCOMP](https://tencent.yuanbao/chapter3-7.md)      | 双向  | 0000           | ✓                   | 单值 / VH           | ✓                 | —       |
-| 8   | [SUBSCRIBE](https://tencent.yuanbao/chapter3-8.md)    | C→S | **0010**​      | ✓                   | —                 | ✓                 | 必       |
-| 9   | [SUBACK](https://tencent.yuanbao/chapter3-9.md)       | S→C | 0000           | ✓                   | **列表 / Payload**​ | ✓                 | 必       |
-| 10  | [UNSUBSCRIBE](https://tencent.yuanbao/chapter3-10.md) | C→S | **0010**​      | ✓                   | —                 | ✓                 | 必       |
-| 11  | [UNSUBACK](https://tencent.yuanbao/chapter3-11.md)    | S→C | 0000           | ✓                   | **列表 / Payload**​ | ✓                 | 必       |
-| 12  | [PINGREQ](https://tencent.yuanbao/chapter3-12.md)     | C→S | 0000           | —                   | —                 | —                 | —       |
-| 13  | [PINGRESP](https://tencent.yuanbao/chapter3-13.md)    | S→C | 0000           | —                   | —                 | —                 | —       |
-| 14  | [DISCONNECT](https://tencent.yuanbao/chapter3-14.md)  | 双向  | 0000           | ✓                   | 单值 / VH           | —                 | —       |
-| 15  | [AUTH](https://tencent.yuanbao/chapter3-15.md)        | 双向  | 0000           | ✓                   | 单值 / VH           | —                 | —       |
+| 3.x | 报文（链接）                        | 方向  | 低 4 位          | Properties          | Reason Code       | Packet Identifier | Payload |
+| --- | ----------------------------- | --- | -------------- | ------------------- | ----------------- | ----------------- | ------- |
+| 1   | [CONNECT](chapter3-1.md)      | C→S | 0000           | ✓ + Will Properties | —                 | —                 | 必       |
+| 2   | [CONNACK](chapter3-2.md)      | S→C | 0000           | ✓                   | 单值 / VH           | —                 | —       |
+| 3   | [PUBLISH](chapter3-3.md)      | 双向  | DUP·QoS·RETAIN | ✓                   | —                 | QoS > 0           | 可选      |
+| 4   | [PUBACK](chapter3-4.md)       | 双向  | 0000           | ✓                   | 单值 / VH           | ✓                 | —       |
+| 5   | [PUBREC](chapter3-5.md)       | 双向  | 0000           | ✓                   | 单值 / VH           | ✓                 | —       |
+| 6   | [PUBREL](chapter3-6.md)       | 双向  | **0010**​      | ✓                   | 单值 / VH           | ✓                 | —       |
+| 7   | [PUBCOMP](chapter3-7.md)      | 双向  | 0000           | ✓                   | 单值 / VH           | ✓                 | —       |
+| 8   | [SUBSCRIBE](chapter3-8.md)    | C→S | **0010**​      | ✓                   | —                 | ✓                 | 必       |
+| 9   | [SUBACK](chapter3-9.md)       | S→C | 0000           | ✓                   | **列表 / Payload**​ | ✓                 | 必       |
+| 10  | [UNSUBSCRIBE](chapter3-10.md) | C→S | **0010**​      | ✓                   | —                 | ✓                 | 必       |
+| 11  | [UNSUBACK](chapter3-11.md)    | S→C | 0000           | ✓                   | **列表 / Payload**​ | ✓                 | 必       |
+| 12  | [PINGREQ](chapter3-12.md)     | C→S | 0000           | —                   | —                 | —                 | —       |
+| 13  | [PINGRESP](chapter3-13.md)    | S→C | 0000           | —                   | —                 | —                 | —       |
+| 14  | [DISCONNECT](chapter3-14.md)  | 双向  | 0000           | ✓                   | 单值 / VH           | —                 | —       |
+| 15  | [AUTH](chapter3-15.md)        | 双向  | 0000           | ✓                   | 单值 / VH           | —                 | —       |
 
 > 一眼能看出的三件事：只有 **12、13**​ 是纯 Fixed Header；**6、8、10**​ 的低 4 位非零，写错就是 Malformed；**9、11**​ 的 Reason Code 在 Payload 里且是列表，最容易和单值搞混。
 
